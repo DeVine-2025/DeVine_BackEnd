@@ -1,0 +1,35 @@
+name: DeVine Backend CD
+
+on:
+  workflow_run:
+    workflows: ["DeVine Backend CI"]
+    types:
+      - completed
+    branches: [ main ]
+
+env:
+  DOCKER_IMAGE_NAME: devine-backend
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    if: ${{ github.event.workflow_run.conclusion == 'success' }}
+
+    steps:
+      - name: Deploy to EC2
+        uses: appleboy/ssh-action@v1.0.0
+        with:
+          host: ${{ secrets.EC2_HOST }}
+          username: ${{ secrets.EC2_USERNAME }}
+          key: ${{ secrets.EC2_SSH_KEY }}
+          port: 22
+          script: |
+            cd ~/Devine_Deploy/service
+            
+            # S3에서 .env 파일 다운로드
+            aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env .env
+            
+            export DOCKER_IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
+            docker-compose pull backend
+            docker-compose up -d backend
+            docker image prune -f
