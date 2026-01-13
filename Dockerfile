@@ -1,4 +1,4 @@
-FROM gradle:8.5-jdk17 AS build
+FROM gradle:8.12-jdk21 AS build
 
 WORKDIR /app
 
@@ -11,7 +11,7 @@ RUN ./gradlew dependencies --no-daemon
 COPY src src
 RUN ./gradlew clean build -x test --no-daemon
 
-FROM eclipse-temurin:17-jre-alpine
+FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 

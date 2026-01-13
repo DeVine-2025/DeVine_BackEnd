@@ -25,11 +25,48 @@ jobs:
           port: 22
           script: |
             cd ~/Devine_Deploy/service
-            
+
             # S3에서 .env 파일 다운로드
             aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env .env
-            
-            export DOCKER_IMAGE_TAG=${{ github.event.workflow_run.head_sha }}
+
+            IMAGE="${{ secrets.DOCKER_USERNAME }}/devine-backend"
+            NEW_TAG="${{ github.event.workflow_run.head_sha }}"
+
+            # 1. 현재 이미지 백업 (롤백용)
+            docker tag ${IMAGE}:latest ${IMAGE}:previous 2>/dev/null || true
+
+            # 2. 새 이미지 pull
+            export DOCKER_IMAGE_TAG=${NEW_TAG}
             docker-compose pull backend
-            docker-compose up -d backend
-            docker image prune -f
+
+            # 3. 배포
+            docker-compose up -d --no-deps backend
+
+            # 4. 헬스체크 (실패 시 롤백)
+            CONTAINER_ID=$(docker-compose ps -q backend)
+            TIMEOUT=90
+            HEALTHY=false
+
+            while [ $TIMEOUT -gt 0 ]; do
+              STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+              if [ "$STATUS" = "healthy" ]; then
+                HEALTHY=true
+                break
+              fi
+              sleep 2
+              TIMEOUT=$((TIMEOUT - 2))
+            done
+
+            # 5. 헬스체크 실패 시 롤백
+            if [ "$HEALTHY" = "false" ]; then
+              echo "Health check failed, rolling back..."
+              docker tag ${IMAGE}:previous ${IMAGE}:latest
+              export DOCKER_IMAGE_TAG=latest
+              docker-compose up -d --no-deps backend
+              exit 1
+            fi
+
+            echo "Deployment successful!"
+
+            # 6. 오래된 이미지 정리
+            docker image prune -f --filter "until=168h"
