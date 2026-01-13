@@ -1,0 +1,43 @@
+# Server Configuration
+server:
+  port: ${PORT}
+
+# Spring Configuration
+spring:
+  # PostgreSQL Configuration
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+    driver-class-name: ${DB_DRIVER}
+
+  # Redis Configuration
+  data:
+    redis:
+      host: ${REDIS_HOST}
+      port: ${REDIS_PORT}
+      password: ${REDIS_PASSWORD}
+      timeout: ${REDIS_TIMEOUT}
+
+  # JPA Configuration
+  jpa:
+    hibernate:
+      ddl-auto: update
+    show-sql: true
+    properties:
+      hibernate:
+        format_sql: true
+
+# JWT Configuration
+jwt:
+  secret: ${JWT_SECRET}
+  accessTokenExpiration: ${JWT_ACCESS_EXPIRATION}
+  refreshTokenExpiration: ${JWT_REFRESH_EXPIRATION}
+
+# Logging Configuration
+logging:
+  level:
+    root: INFO
+    com.umc.devine: INFO
+    org.hibernate.SQL: ERROR
+    org.springframework.web: WARN
