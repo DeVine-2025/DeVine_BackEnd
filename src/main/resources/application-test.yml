@@ -15,7 +15,7 @@ spring:
   data:
     redis:
       host: localhost
-      port: 0
+      port: 6379
 
   # JPA Configuration
   jpa:
