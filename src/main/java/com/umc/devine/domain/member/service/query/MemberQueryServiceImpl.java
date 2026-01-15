@@ -6,19 +6,45 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.project.converter.ProjectConverter;
+import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.entity.ProjectImage;
+import com.umc.devine.domain.project.repository.ProjectImageRepository;
+import com.umc.devine.domain.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
 public class MemberQueryServiceImpl implements MemberQueryService {
 
     private final MemberRepository memberRepository;
+    private final ProjectRepository projectRepository;
+    private final ProjectImageRepository projectImageRepository;
 
     @Override
     public MemberResDTO.MemberDetailDTO findMemberById(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
         return MemberConverter.toMemberDetailDTO(member);
+    }
+
+    @Override
+    public ProjectResDTO.ProjectListDTO findMyProjects(Long memberId) {
+        Member member = memberRepository.findById(memberId)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        List<Project> projects = projectRepository.findByMember(member);
+
+        List<ProjectResDTO.ProjectDetailDTO> projectList = projects.stream().map(project -> {
+            List<ProjectImage> images = projectImageRepository.findByProject(project);
+            return ProjectConverter.toProjectDetail(project, images);
+        }).collect(Collectors.toList());
+
+        return ProjectConverter.toProjectList(projectList);
     }
 }

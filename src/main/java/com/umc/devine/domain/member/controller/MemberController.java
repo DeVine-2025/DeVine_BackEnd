@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
+import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -28,6 +29,17 @@ public class MemberController implements MemberControllerDocs {
         Long memberId = 1L;
 
         return ApiResponse.onSuccess(code, memberQueryService.findMemberById(memberId));
+    }
+
+    @Override
+    @GetMapping("/projects")
+    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects() {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_PROJECT;
+
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findMyProjects(memberId));
     }
 
     @Override
