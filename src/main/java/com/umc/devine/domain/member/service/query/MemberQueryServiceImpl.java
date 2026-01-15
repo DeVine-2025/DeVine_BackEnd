@@ -12,6 +12,8 @@ import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -25,12 +27,22 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
     private final ProjectImageRepository projectImageRepository;
+    private final DevTechstackRepository devTechstackRepository;
 
     @Override
     public MemberResDTO.MemberDetailDTO findMemberById(Long memberId) {
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
         return MemberConverter.toMemberDetailDTO(member);
+    }
+
+    @Override
+    public MemberResDTO.UserProfileDTO findMemberByNickname(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+        List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
+
+        return MemberConverter.toUserProfileDTO(member, devTechstacks);
     }
 
     @Override

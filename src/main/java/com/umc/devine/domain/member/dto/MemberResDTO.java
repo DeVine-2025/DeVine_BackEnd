@@ -2,10 +2,10 @@ package com.umc.devine.domain.member.dto;
 
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
-import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class MemberResDTO {
     @Builder
@@ -19,5 +19,15 @@ public class MemberResDTO {
             String body,
             MemberStatus used,
             LocalDateTime createdAt
+    ){}
+
+    @Builder
+    public record UserProfileDTO(
+        String nickname,
+        String address,
+        String image,
+        String body,
+        List<String> techstacks,
+        List<String> techGenres
     ){}
 }

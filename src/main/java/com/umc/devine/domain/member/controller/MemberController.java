@@ -32,6 +32,13 @@ public class MemberController implements MemberControllerDocs {
     }
 
     @Override
+    @GetMapping("/{nickname}")
+    public ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(@PathVariable("nickname") String nickname) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        return ApiResponse.onSuccess(code, memberQueryService.findMemberByNickname(nickname));
+    }
+
+    @Override
     @GetMapping("/projects")
     public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects() {
         MemberSuccessCode code = MemberSuccessCode.FOUND_PROJECT;

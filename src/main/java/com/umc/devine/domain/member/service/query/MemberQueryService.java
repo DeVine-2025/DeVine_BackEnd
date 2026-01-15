@@ -5,5 +5,6 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 
 public interface MemberQueryService {
     MemberResDTO.MemberDetailDTO findMemberById(Long memberId);
+    MemberResDTO.UserProfileDTO findMemberByNickname(String nickname);
     ProjectResDTO.ProjectListDTO findMyProjects(Long memberId);
 }
