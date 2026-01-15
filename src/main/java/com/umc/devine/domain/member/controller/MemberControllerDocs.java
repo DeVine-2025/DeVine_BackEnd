@@ -91,4 +91,11 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<MemberResDTO.ContributionListDTO> getContribution();
+
+    @Operation(summary = "특정 회원 깃허브 기록 조회 API", description = "특정 회원의 깃허브 기록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. 외부 api 호출하지 않은 상태입니다. 반환 값은 Mock 데이터 입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
+    })
+    ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(String nickname);
 }

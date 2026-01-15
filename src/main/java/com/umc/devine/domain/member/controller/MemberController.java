@@ -102,4 +102,13 @@ public class MemberController implements MemberControllerDocs {
 
         return ApiResponse.onSuccess(code, memberQueryService.findContributionsById(memberId));
     }
+
+    @Override
+    @GetMapping("/{nickname}/contributions")
+    public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
+            @PathVariable("nickname") String nickname
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        return ApiResponse.onSuccess(code, memberQueryService.findContributionsByNickname(nickname));
+    }
 }

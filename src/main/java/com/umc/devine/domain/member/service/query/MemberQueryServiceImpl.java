@@ -164,4 +164,27 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .contributionList(contributions)
                 .build();
     }
+
+    @Override
+    public MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname) {
+        // 닉네임으로 회원 존재 여부 확인
+        memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        // TODO: GITHUB api 연동하기 및 방식 정하기
+        // Mock data : https://github.com/strfunctionk/GithubAPITest 참고
+        List<MemberResDTO.ContributionDTO> contributions = List.of(
+                MemberResDTO.ContributionDTO.builder().date("2024-01-01").count(3).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-02").count(5).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-03").count(0).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-04").count(2).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-05").count(7).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-06").count(1).build(),
+                MemberResDTO.ContributionDTO.builder().date("2024-01-07").count(4).build()
+        );
+
+        return MemberResDTO.ContributionListDTO.builder()
+                .contributionList(contributions)
+                .build();
+    }
 }
