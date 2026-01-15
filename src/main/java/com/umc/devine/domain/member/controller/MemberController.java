@@ -91,4 +91,15 @@ public class MemberController implements MemberControllerDocs {
         MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
         return ApiResponse.onSuccess(code, memberQueryService.findReportsByNickname(nickname));
     }
+
+    @Override
+    @GetMapping("/contributions")
+    public ApiResponse<MemberResDTO.ContributionListDTO> getContribution() {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findContributionsById(memberId));
+    }
 }

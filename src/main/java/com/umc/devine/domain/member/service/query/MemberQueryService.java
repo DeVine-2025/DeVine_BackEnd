@@ -11,4 +11,5 @@ public interface MemberQueryService {
     MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname);
     DevReportResDTO.ReportListDTO findMyReports(Long memberId);
     DevReportResDTO.ReportListDTO findReportsByNickname(String nickname);
+    MemberResDTO.ContributionListDTO findContributionsById(Long memberId);
 }

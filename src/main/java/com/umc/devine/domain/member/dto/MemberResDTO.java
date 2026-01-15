@@ -36,4 +36,14 @@ public class MemberResDTO {
         String nickname,
         Boolean isDuplicate
     ){}
+
+    @Builder
+    public record ContributionDTO(
+        String date,
+        Integer count
+    ){}
+    @Builder
+    public record ContributionListDTO(
+            List<ContributionDTO>  contributionList
+    ){}
 }
