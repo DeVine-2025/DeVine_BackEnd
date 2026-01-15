@@ -24,6 +24,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     CREATED(HttpStatus.CREATED,
             "MEMBER201_1",
             "성공적으로 사용자를 생성했습니다."),
+    FOUND_REPORT(HttpStatus.OK,
+            "MEMBER200_4",
+            "성공적으로 리포트를 조회했습니다."),
     ;
 
     private final HttpStatus status;

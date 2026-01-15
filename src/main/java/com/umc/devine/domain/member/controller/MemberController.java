@@ -6,6 +6,7 @@ import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -69,5 +70,16 @@ public class MemberController implements MemberControllerDocs {
     ) {
         MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
         return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
+    }
+
+    @Override
+    @GetMapping("/reports")
+    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports() {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
+
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findMyReports(memberId));
     }
 }
