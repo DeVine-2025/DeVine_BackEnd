@@ -112,4 +112,37 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .reports(reportDTOs)
                 .build();
     }
+
+    @Override
+    public DevReportResDTO.ReportListDTO findReportsByNickname(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
+        List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
+
+        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream().map(report -> {
+            List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+
+            List<ReportTechStackResDTO.ReportTechstackDTO> techstackDTOs = reportTechstacks.stream()
+                    .map(rt -> ReportTechStackResDTO.ReportTechstackDTO.builder()
+                            .techstackName(rt.getTechstack().getName().toString())
+                            .techGenre(rt.getTechstack().getGenre().toString())
+                            .rate(rt.getRate())
+                            .build())
+                    .collect(Collectors.toList());
+
+            return DevReportResDTO.ReportDTO.builder()
+                    .reportId(report.getId())
+                    .gitUrl(report.getGitRepoUrl().getGitUrl())
+                    .content(report.getContent())
+                    .techstacks(techstackDTOs)
+                    .createdAt(report.getCreatedAt())
+                    .build();
+        }).collect(Collectors.toList());
+
+        return DevReportResDTO.ReportListDTO.builder()
+                .reports(reportDTOs)
+                .build();
+    }
 }
