@@ -59,4 +59,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         return ProjectConverter.toProjectList(projectList);
     }
+
+    @Override
+    public MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname) {
+        boolean isDuplicate = memberRepository.existsByNickname(nickname);
+        return MemberResDTO.NicknameDuplicateDTO.builder()
+                .nickname(nickname)
+                .isDuplicate(isDuplicate)
+                .build();
+    }
 }

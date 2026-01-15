@@ -61,4 +61,13 @@ public class MemberController implements MemberControllerDocs {
 
         return ApiResponse.onSuccess(code, memberCommandService.updateMember(memberId, dto));
     }
+
+    @Override
+    @GetMapping("/nickname/{nickname}")
+    public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
+            @PathVariable("nickname") String nickname
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
+        return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
+    }
 }

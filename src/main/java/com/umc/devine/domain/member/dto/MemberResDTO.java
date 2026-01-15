@@ -30,4 +30,10 @@ public class MemberResDTO {
         List<String> techstacks,
         List<String> techGenres
     ){}
+
+    @Builder
+    public record NicknameDuplicateDTO(
+        String nickname,
+        Boolean isDuplicate
+    ){}
 }

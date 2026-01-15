@@ -54,4 +54,10 @@ public interface MemberControllerDocs {
     ApiResponse<MemberResDTO.MemberDetailDTO> patchMember(
             @Valid @RequestBody MemberReqDTO.UpdateMemberDTO dto
     );
+
+    @Operation(summary = "닉네임 중복 체크 API", description = "닉네임 중복 여부를 확인하는 API입니다. isDuplicate가 true이면 이미 사용 중인 닉네임입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공")
+    })
+    ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(String nickname);
 }

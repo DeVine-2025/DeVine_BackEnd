@@ -7,4 +7,5 @@ public interface MemberQueryService {
     MemberResDTO.MemberDetailDTO findMemberById(Long memberId);
     MemberResDTO.UserProfileDTO findMemberByNickname(String nickname);
     ProjectResDTO.ProjectListDTO findMyProjects(Long memberId);
+    MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname);
 }
