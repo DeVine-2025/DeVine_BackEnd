@@ -4,6 +4,7 @@ import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
@@ -185,6 +186,31 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         return MemberResDTO.ContributionListDTO.builder()
                 .contributionList(contributions)
+                .build();
+    }
+
+    @Override
+    public MemberResDTO.DeveloperListDTO findAllDevelopers(Long memberId) {
+        // TODO: memberId를 활용한 추천 로직 구현
+        List<Member> developers = memberRepository.findAllByMainType(MemberMainType.DEVELOPER);
+
+        // TODO: mainType에서 방식 변경할 것
+        List<MemberResDTO.DeveloperDTO> developerDTOs = developers.stream().map(member -> {
+            List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
+            List<String> techstackNames = devTechstacks.stream()
+                    .map(dt -> dt.getTechstack().getName().toString())
+                    .collect(Collectors.toList());
+
+            return MemberResDTO.DeveloperDTO.builder()
+                    .nickname(member.getNickname())
+                    .image(member.getImage())
+                    .body(member.getBody())
+                    .techstacks(techstackNames)
+                    .build();
+        }).collect(Collectors.toList());
+
+        return MemberResDTO.DeveloperListDTO.builder()
+                .developers(developerDTOs)
                 .build();
     }
 }

@@ -13,4 +13,5 @@ public interface MemberQueryService {
     DevReportResDTO.ReportListDTO findReportsByNickname(String nickname);
     MemberResDTO.ContributionListDTO findContributionsById(Long memberId);
     MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname);
+    MemberResDTO.DeveloperListDTO findAllDevelopers(Long memberId);
 }

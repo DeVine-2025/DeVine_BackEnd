@@ -46,4 +46,17 @@ public class MemberResDTO {
     public record ContributionListDTO(
             List<ContributionDTO>  contributionList
     ){}
+
+    @Builder
+    public record DeveloperDTO(
+            String nickname,
+            String image,
+            String body,
+            List<String> techstacks
+    ){}
+
+    @Builder
+    public record DeveloperListDTO(
+            List<DeveloperDTO> developers
+    ){}
 }

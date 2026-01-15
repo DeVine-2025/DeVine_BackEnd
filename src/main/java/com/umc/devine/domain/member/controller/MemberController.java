@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Validated
 @RequiredArgsConstructor
+// TODO: 도메인 분리하기 member, members
 @RequestMapping("/api/v1/member")
 public class MemberController implements MemberControllerDocs {
     private final MemberCommandService memberCommandService;
@@ -110,5 +111,16 @@ public class MemberController implements MemberControllerDocs {
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         return ApiResponse.onSuccess(code, memberQueryService.findContributionsByNickname(nickname));
+    }
+
+    @Override
+    @GetMapping("/recommend")
+    public ApiResponse<MemberResDTO.DeveloperListDTO> getRecommendDevelopers() {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(memberId));
     }
 }
