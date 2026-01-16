@@ -10,15 +10,15 @@ import lombok.*;
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "domain")
+@Table(name = "category")
 public class Category extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "domain_id")
+    @Column(name = "category_id")
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "domain_genre", nullable = false)
+    @Column(name = "genre", nullable = false)
     private CategoryGenre genre;
 }
