@@ -4,18 +4,20 @@ server:
 
 # Spring Configuration
 spring:
-  # H2 In-Memory Database Configuration
-  datasource:
-    url: jdbc:h2:mem:devine;MODE=PostgreSQL;DB_CLOSE_DELAY=-1;DATABASE_TO_UPPER=false
-    username: sa
-    password:
-    driver-class-name: org.h2.Driver
+  # PostgreSQL Configuration - Testcontainers가 자동으로 설정
+  # @ServiceConnection이 PostgreSQL 컨테이너의 동적 포트를 자동으로 연결합니다
+  # datasource:
+  #   url: jdbc:postgresql://localhost:5432/testdb
+  #   username: test
+  #   password: test
+  #   driver-class-name: org.postgresql.Driver
 
-  # Redis Configuration
-  data:
-    redis:
-      host: localhost
-      port: 0
+  # Redis Configuration - Testcontainers가 자동으로 설정
+  # @DynamicPropertySource가 Valkey 컨테이너의 동적 포트를 주입합니다
+  # data:
+  #   redis:
+  #     host: localhost
+  #     port: 6379
 
   # JPA Configuration
   jpa:
