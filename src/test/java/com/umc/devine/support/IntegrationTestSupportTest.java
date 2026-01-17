@@ -3,6 +3,7 @@ package com.umc.devine.support;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.data.redis.core.StringRedisTemplate;
 
 import javax.sql.DataSource;
 import java.sql.Connection;
@@ -16,6 +17,9 @@ class IntegrationTestSupportTest extends IntegrationTestSupport {
 
     @Autowired
     private DataSource dataSource;
+
+    @Autowired
+    private StringRedisTemplate stringRedisTemplate;
 
     @Test
     @DisplayName("PostgreSQL 컨테이너가 정상적으로 실행되고 연결된다")
@@ -69,6 +73,54 @@ class IntegrationTestSupportTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("Valkey 컨테이너가 정상적으로 실행되고 연결된다")
+    void testValkeyConnection() {
+        // given: Testcontainers가 Valkey 컨테이너를 실행하고 StringRedisTemplate을 주입
+
+        System.out.println("=== Valkey 연결 테스트 ===");
+
+        // when: Redis 기본 명령어 실행 (SET/GET)
+        stringRedisTemplate.opsForValue().set("test-key", "test-value");
+        System.out.println("✓ SET 명령어 실행 성공: test-key = test-value");
+
+        String value = stringRedisTemplate.opsForValue().get("test-key");
+        System.out.println("✓ GET 명령어 실행 성공: test-key = " + value);
+
+        // then: 값이 정상적으로 저장되고 조회됨
+        assertThat(value)
+            .as("Valkey에서 값이 정상적으로 저장되고 조회되어야 함")
+            .isEqualTo("test-value");
+
+        System.out.println("✓ Valkey 컨테이너 연결 및 동작 확인 완료");
+    }
+
+    @Test
+    @DisplayName("@AfterEach에 의해 각 테스트 후 Redis 데이터가 자동으로 정리된다")
+    void testRedisIsolation() {
+        // given: 이전 테스트에서 저장한 데이터가 있을 수 있음
+
+        System.out.println("=== Redis 테스트 격리 확인 ===");
+
+        // when: 이전 테스트 키를 조회
+        String previousValue = stringRedisTemplate.opsForValue().get("test-key");
+        System.out.println("이전 테스트 키 조회 결과: " + previousValue);
+
+        // then: 이전 테스트의 데이터가 정리되어 없어야 함
+        assertThat(previousValue)
+            .as("@AfterEach cleanupRedis()에 의해 이전 테스트 데이터가 정리되어야 함")
+            .isNull();
+
+        // when: 새로운 데이터 저장
+        stringRedisTemplate.opsForValue().set("isolation-test-key", "isolated-value");
+        System.out.println("✓ 새로운 키 저장 성공: isolation-test-key = isolated-value");
+
+        // then: 현재 테스트 데이터는 정상 조회
+        String currentValue = stringRedisTemplate.opsForValue().get("isolation-test-key");
+        assertThat(currentValue).isEqualTo("isolated-value");
+        System.out.println("✓ Redis 테스트 격리 확인 완료 (각 테스트는 깨끗한 상태에서 시작)");
+    }
+
+    @Test
     @DisplayName("@Transactional에 의해 각 테스트는 격리되어 자동 롤백된다")
     void testTransactionalRollback() throws Exception {
         // given: 임시 테이블 생성 및 데이터 삽입
@@ -101,13 +153,21 @@ class IntegrationTestSupportTest extends IntegrationTestSupport {
     @DisplayName("컨테이너 정보를 확인할 수 있다")
     void testContainerInfo() {
         // when: 컨테이너가 실행 중이고 정보를 확인
-        System.out.println("=== Testcontainers 정보 ===");
+        System.out.println("=== PostgreSQL 컨테이너 정보 ===");
         System.out.println("컨테이너 실행 상태: " + POSTGRES_CONTAINER.isRunning());
         System.out.println("Docker 이미지: " + POSTGRES_CONTAINER.getDockerImageName());
         System.out.println("JDBC URL: " + POSTGRES_CONTAINER.getJdbcUrl());
         System.out.println("데이터베이스 이름: " + POSTGRES_CONTAINER.getDatabaseName());
         System.out.println("사용자 이름: " + POSTGRES_CONTAINER.getUsername());
         System.out.println("컨테이너 ID: " + POSTGRES_CONTAINER.getContainerId());
+        System.out.println("Reuse 활성화: true");
+
+        System.out.println("\n=== Valkey 컨테이너 정보 ===");
+        System.out.println("컨테이너 실행 상태: " + VALKEY_CONTAINER.isRunning());
+        System.out.println("Docker 이미지: " + VALKEY_CONTAINER.getDockerImageName());
+        System.out.println("호스트: " + VALKEY_CONTAINER.getHost());
+        System.out.println("포트: " + VALKEY_CONTAINER.getMappedPort(6379));
+        System.out.println("컨테이너 ID: " + VALKEY_CONTAINER.getContainerId());
         System.out.println("Reuse 활성화: true");
 
         // then: 컨테이너가 실행 중이고 올바른 설정을 가짐
@@ -126,5 +186,13 @@ class IntegrationTestSupportTest extends IntegrationTestSupport {
         assertThat(POSTGRES_CONTAINER.getDockerImageName())
             .as("Docker 이미지 확인")
             .contains("pgvector/pgvector:pg17");
+
+        assertThat(VALKEY_CONTAINER.isRunning())
+            .as("Valkey 컨테이너가 실행 중이어야 함")
+            .isTrue();
+
+        assertThat(VALKEY_CONTAINER.getDockerImageName())
+            .as("Docker 이미지 확인")
+            .contains("valkey/valkey:9-alpine");
     }
 }
