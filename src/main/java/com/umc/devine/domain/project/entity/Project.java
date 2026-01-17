@@ -67,6 +67,20 @@ public class Project extends BaseEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    // 전체 조회수 (누적)
+    @Column(name = "total_view_count", nullable = false)
+    @Builder.Default
+    private Long totalViewCount = 0L;
+
+    // 이번 주 조회수 (매주 월요일 자정에 리셋)
+    @Column(name = "weekly_view_count", nullable = false)
+    @Builder.Default
+    private Long weeklyViewCount = 0L;
+
+    // 마지막 조회수 리셋 날짜 (월요일 자정)
+    @Column(name = "last_view_reset_date")
+    private LocalDate lastViewResetDate;
+
     @Builder.Default
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectImage> images = new ArrayList<>();
@@ -123,5 +137,27 @@ public class Project extends BaseEntity {
 
     public void clearRequirements() {
         this.requirements.clear();
+    }
+
+    public void incrementViewCount() {
+        this.totalViewCount++;
+        this.weeklyViewCount++;
+    }
+
+    // 주간 조회수 리셋 (매주 월요일 자정에 실행)
+
+    public void resetWeeklyViewCount(LocalDate resetDate) {
+        this.weeklyViewCount = 0L;
+        this.lastViewResetDate = resetDate;
+    }
+
+    /**
+     * 주간 조회수 리셋이 필요한지 확인
+     * @param currentMonday 현재 주의 월요일 날짜
+     * @return 리셋 필요 여부
+     */
+    public boolean needsWeeklyReset(LocalDate currentMonday) {
+        // lastViewResetDate가 null이거나, 현재 주의 월요일보다 이전이면 리셋 필요
+        return lastViewResetDate == null || lastViewResetDate.isBefore(currentMonday);
     }
 }
