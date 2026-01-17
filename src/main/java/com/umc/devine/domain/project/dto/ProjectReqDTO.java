@@ -1,8 +1,10 @@
 package com.umc.devine.domain.project.dto;
 
+import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.global.annotation.ValidPage;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
@@ -143,11 +145,81 @@ public class ProjectReqDTO {
                 @Max(value = 10, message = "모집 인원은 최대 10명까지 가능합니다.")
                 Integer count,
 
-                @Schema(description = "기술 스택 ID 목록 (1 이상, 선택사항 - 빈 배열 가능)", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+                @Schema(description = "기술 스택 ID 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
                 @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.")
                 List<
                         @Min(value = 1, message = "기술 스택 ID는 1 이상이어야 합니다.")
                                 Long
                         > techStackIds
         ) {}
+
+        // 프로젝트 검색 요청 DTO (프로젝트/개발자 보기 탭 하단)
+        @Builder
+        public record SearchProjectReq(
+                @Schema(description = "프로젝트 유형 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+                List<ProjectField> projectFields,
+
+                @Schema(description = "카테고리(도메인) 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[1]")
+                List<Long> categoryIds,
+
+                @Schema(description = "포지션 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+                List<ProjectPart> positions,
+
+                @Schema(description = "기술 스택 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[1]")
+                List<Long> techStackIds,
+
+                @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)",
+                        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+                        example = "ONE_TO_THREE")
+                DurationRange durationRange,
+
+                @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1")
+                @ValidPage
+                Integer page,
+
+                @Schema(description = "페이지 크기", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "4", example = "4")
+                @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+                @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+                Integer size
+        ) {
+                public SearchProjectReq {
+                        if (page == null) page = 1;
+                        if (size == null) size = 4;
+                }
+        }
+
+        // 추천 프로젝트 검색 요청 DTO (추천 프로젝트/개발자 탭)
+        @Builder
+        public record SearchRecommendedProjectReq(
+                @Schema(description = "프로젝트 유형 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+                List<ProjectField> projectFields,
+
+                @Schema(description = "카테고리(도메인) 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[1]")
+                List<Long> categoryIds,
+
+                @Schema(description = "포지션 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
+                List<ProjectPart> positions,
+
+                @Schema(description = "기술 스택 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[1]")
+                List<Long> techStackIds,
+
+                @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)",
+                        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+                        example = "ONE_TO_THREE")
+                DurationRange durationRange,
+
+                @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1")
+                @ValidPage
+                Integer page,
+
+                @Schema(description = "페이지 크기", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "4", example = "4")
+                @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+                @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+                Integer size
+        ) {
+                public SearchRecommendedProjectReq {
+                        if (page == null) page = 1;
+                        if (size == null) size = 4;
+                }
+        }
 }

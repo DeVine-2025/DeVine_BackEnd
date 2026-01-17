@@ -70,4 +70,63 @@ public class ProjectController implements ProjectControllerDocs {
         ProjectResDTO.UpdateProjectRes response = projectQueryService.getProjectDetail(memberId, projectId);
         return ApiResponse.onSuccess(code, response);
     }
+
+    // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
+    @Override
+    @GetMapping("/weekly-best")
+    public ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects() {
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.WeeklyBestProjectsRes response = projectQueryService.getWeeklyBestProjects();
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 나에게 맞는 추천 프로젝트 조회 (메인 화면 하단)
+    @Override
+    @GetMapping("/for-me")
+    public ApiResponse<ProjectResDTO.ForMeProjectsRes> getForMeProjects() {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.ForMeProjectsRes response = projectQueryService.getForMeProjects(memberId);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 상단 추천 프로젝트 조회 (프로젝트/개발자 보기 탭 상단)
+    @Override
+    @GetMapping("/top-recommendations")
+    public ApiResponse<ProjectResDTO.TopRecommendedProjectsRes> getTopRecommendedProjects() {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.TopRecommendedProjectsRes response = projectQueryService.getTopRecommendedProjects(memberId);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 프로젝트 검색 (프로젝트/개발자 보기 탭 하단)
+    @Override
+    @PostMapping("/search")
+    public ApiResponse<ProjectResDTO.SearchProjectsRes> searchProjects(
+            @RequestBody @Valid ProjectReqDTO.SearchProjectReq request
+    ) {
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.SearchProjectsRes response = projectQueryService.searchProjects(request);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 추천 프로젝트 검색 (추천 프로젝트/개발자 탭)
+    @Override
+    @PostMapping("/recommendations/search")
+    public ApiResponse<ProjectResDTO.SearchRecommendedProjectsRes> searchRecommendedProjects(
+            @RequestBody @Valid ProjectReqDTO.SearchRecommendedProjectReq request
+    ) {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.SearchRecommendedProjectsRes response =
+                projectQueryService.searchRecommendedProjects(memberId, request);
+        return ApiResponse.onSuccess(code, response);
+    }
 }

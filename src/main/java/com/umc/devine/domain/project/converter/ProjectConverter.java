@@ -118,6 +118,101 @@ public class ProjectConverter {
                 .build();
     }
 
+    // Project → ProjectSummary 변환 (검색 결과 요약 - 포지션별 모집 정보 포함)
+    public static ProjectResDTO.ProjectSummary toProjectSummary(
+            Project project,
+            ProjectRequirementTechstackRepository techstackRepository
+    ) {
+        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
+                .map(req -> {
+                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
+                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
+                                    .techStackId(reqTechstack.getTechstack().getId())
+                                    .techStackName(reqTechstack.getTechstack().getName().name())
+                                    .build())
+                            .toList();
+
+                    return ProjectResDTO.PositionSummary.builder()
+                            .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
+                            .count(req.getRequirementNum())
+                            .currentCount(req.getCurrentCount())
+                            .techStacks(techStacks)
+                            .build();
+                })
+                .toList();
+
+        return ProjectResDTO.ProjectSummary.builder()
+                .projectId(project.getId())
+                .title(project.getTitle())
+                .projectField(project.getProjectField())
+                .projectFieldName(project.getProjectField().getDisplayName())
+                .categoryName(project.getCategory().getGenre().getDisplayName())
+                .mode(project.getMode())
+                .modeName(project.getMode().getDisplayName())
+                .durationMonths(project.getDurationMonths())
+                .location(project.getLocation())
+                .recruitmentDeadline(project.getRecruitmentDeadline())
+                .status(project.getStatus())
+                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
+                .positions(positions)
+                .creatorName(project.getMember().getName())
+                .build();
+    }
+
+    // Project → RecommendedProjectSummary 변환 (추천 프로젝트 요약 - 점수 포함, 포지션별 모집 정보 포함)
+    public static ProjectResDTO.RecommendedProjectSummary toRecommendedProjectSummary(
+            Project project,
+            ProjectRequirementTechstackRepository techstackRepository
+    ) {
+        // TODO: 실제 추천 알고리즘 기반 점수 계산
+        // 현재는 더미 점수 반환
+        int techScore = 4;
+        int domainScore = 4;
+        int techStackCountScore = 3;
+        int totalScore = calculateTotalScore(techScore, domainScore, techStackCountScore);
+
+        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
+                .map(req -> {
+                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
+                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
+                                    .techStackId(reqTechstack.getTechstack().getId())
+                                    .techStackName(reqTechstack.getTechstack().getName().name())
+                                    .build())
+                            .toList();
+
+                    return ProjectResDTO.PositionSummary.builder()
+                            .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
+                            .count(req.getRequirementNum())
+                            .currentCount(req.getCurrentCount())
+                            .techStacks(techStacks)
+                            .build();
+                })
+                .toList();
+
+        return ProjectResDTO.RecommendedProjectSummary.builder()
+                .projectId(project.getId())
+                .title(project.getTitle())
+                .projectField(project.getProjectField())
+                .projectFieldName(project.getProjectField().getDisplayName())
+                .categoryName(project.getCategory().getGenre().getDisplayName())
+                .mode(project.getMode())
+                .modeName(project.getMode().getDisplayName())
+                .durationMonths(project.getDurationMonths())
+                .location(project.getLocation())
+                .recruitmentDeadline(project.getRecruitmentDeadline())
+                .status(project.getStatus())
+                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
+                .positions(positions)
+                .creatorName(project.getMember().getName())
+                .techScore(techScore)
+                .domainScore(domainScore)
+                .techStackCountScore(techStackCountScore)
+                .totalScore(totalScore)
+                .build();
+    }
+
     // ProjectRequirementMember 리스트 → RecruitmentInfo 리스트 변환 (기술 스택 포함)
     private static List<ProjectResDTO.RecruitmentInfo> toRecruitmentInfoList(
             List<ProjectRequirementMember> requirements,
@@ -154,5 +249,13 @@ public class ProjectConverter {
         return images.stream()
                 .map(ProjectImage::getImage)
                 .collect(Collectors.toList());
+    }
+
+    // 총점 계산 (5점 만점 점수들을 100점 만점으로 환산)
+    private static int calculateTotalScore(int techScore, int domainScore, int techStackCountScore) {
+        double techWeight = (techScore / 5.0) * 100 / 3.0;
+        double domainWeight = (domainScore / 5.0) * 100 / 3.0;
+        double techStackWeight = (techStackCountScore / 5.0) * 100 / 3.0;
+        return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
 }
