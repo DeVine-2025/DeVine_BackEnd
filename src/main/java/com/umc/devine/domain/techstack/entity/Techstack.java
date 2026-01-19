@@ -16,15 +16,15 @@ public class Techstack extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
-    @Column(name = "teckstack_id")
+    @Column(name = "techstack_id")
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "teck_genre", nullable = true)
+    @Column(name = "tech_genre", nullable = true)
     private TechGenre genre;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "teckstack_name", nullable = false)
+    @Column(name = "techstack_name", nullable = false)
     private TechName name;
 
     @ManyToOne(fetch = FetchType.LAZY)
