@@ -188,9 +188,20 @@ public class ProjectReqDTO {
                 }
         }
 
-        // 추천 프로젝트 검색 요청 DTO (추천 프로젝트/개발자 탭)
+        // 통합 추천 프로젝트 요청 DTO
         @Builder
-        public record SearchRecommendedProjectReq(
+        public record RecommendProjectsReq(
+                @Schema(description = "응답 모드 (PREVIEW: limit개만 / PAGE: 페이징)",
+                        requiredMode = Schema.RequiredMode.REQUIRED,
+                        example = "PREVIEW")
+                @NotNull(message = "mode는 필수입니다.")
+                RecommendMode mode,
+
+                @Schema(description = "PREVIEW일 때 반환 개수 (4 또는 6). null이면 기본값 6",
+                        requiredMode = Schema.RequiredMode.NOT_REQUIRED,
+                        example = "6")
+                Integer limit,
+
                 @Schema(description = "프로젝트 유형 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED)
                 List<ProjectField> projectFields,
 
@@ -203,23 +214,31 @@ public class ProjectReqDTO {
                 @Schema(description = "기술 스택 필터", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[1]")
                 List<Long> techStackIds,
 
-                @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)",
+                @Schema(
+                        description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)",
                         requiredMode = Schema.RequiredMode.NOT_REQUIRED,
-                        example = "ONE_TO_THREE")
+                        example = "ONE_TO_THREE"
+                )
                 DurationRange durationRange,
 
-                @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1")
+                @Schema(description = "PAGE일 때 페이지 번호 (1부터 시작). null이면 1",
+                        requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1")
                 @ValidPage
                 Integer page,
 
-                @Schema(description = "페이지 크기", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "4", example = "4")
+                @Schema(description = "PAGE일 때 페이지 크기. null이면 4",
+                        requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "4")
                 @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
                 @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
                 Integer size
         ) {
-                public SearchRecommendedProjectReq {
+                public RecommendProjectsReq {
                         if (page == null) page = 1;
                         if (size == null) size = 4;
                 }
+        }
+
+        public enum RecommendMode {
+                PREVIEW, PAGE
         }
 }

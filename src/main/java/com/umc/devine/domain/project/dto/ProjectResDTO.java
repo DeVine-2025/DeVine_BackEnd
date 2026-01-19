@@ -284,26 +284,14 @@ public class ProjectResDTO {
     ) {}
 
     @Builder
-    public record ForMeProjectsRes(
-            @Schema(description = "나에게 맞는 추천 프로젝트 목록 (6개)")
-            List<RecommendedProjectSummary> projects
-    ) {}
-
-    @Builder
-    public record TopRecommendedProjectsRes(
-            @Schema(description = "상단 추천 프로젝트 목록 (4개)")
-            List<RecommendedProjectSummary> projects
-    ) {}
-
-    @Builder
     public record SearchProjectsRes(
             @Schema(description = "프로젝트 검색 결과 (페이징)")
             PagedResponse<ProjectSummary> projects
     ) {}
 
     @Builder
-    public record SearchRecommendedProjectsRes(
-            @Schema(description = "추천 프로젝트 검색 결과 (페이징)")
+    public record RecommendedProjectsRes(
+            @Schema(description = "추천 프로젝트 결과")
             PagedResponse<RecommendedProjectSummary> projects
     ) {}
 }

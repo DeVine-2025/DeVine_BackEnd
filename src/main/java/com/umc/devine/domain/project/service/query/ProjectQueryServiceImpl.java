@@ -7,15 +7,14 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.Page;
-import org.springframework.data.domain.PageRequest;
-import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -111,36 +110,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.ForMeProjectsRes getForMeProjects(Long memberId) {
-        // TODO: 실제 추천 알고리즘 구현
-        // 현재는 최신 생성된 프로젝트 6개 반환
-        List<Project> projects = projectRepository.findAllActiveProjects(6);
-
-        List<ProjectResDTO.RecommendedProjectSummary> forMeProjects = projects.stream()
-                .map(project -> ProjectConverter.toRecommendedProjectSummary(project, projectRequirementTechstackRepository))
-                .toList();
-
-        return ProjectResDTO.ForMeProjectsRes.builder()
-                .projects(forMeProjects)
-                .build();
-    }
-
-    @Override
-    public ProjectResDTO.TopRecommendedProjectsRes getTopRecommendedProjects(Long memberId) {
-        // TODO: 실제 추천 알고리즘 구현
-        // 현재는 최신 생성된 프로젝트 4개 반환
-        List<Project> projects = projectRepository.findAllActiveProjects(4);
-
-        List<ProjectResDTO.RecommendedProjectSummary> topProjects = projects.stream()
-                .map(project -> ProjectConverter.toRecommendedProjectSummary(project, projectRequirementTechstackRepository))
-                .toList();
-
-        return ProjectResDTO.TopRecommendedProjectsRes.builder()
-                .projects(topProjects)
-                .build();
-    }
-
-    @Override
     public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
         int pageIndex = request.page() - 1;
         Pageable pageable = PageRequest.of(pageIndex, request.size());
@@ -160,15 +129,53 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.SearchRecommendedProjectsRes searchRecommendedProjects(
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjects(
             Long memberId,
-            ProjectReqDTO.SearchRecommendedProjectReq request
+            ProjectReqDTO.RecommendProjectsReq request
     ) {
+        // TODO: 추천 알고리즘 기반 정렬 추가
+        if (request == null || request.mode() == null) {
+            throw new ProjectException(ProjectErrorCode.INVALID_RECOMMEND_REQUEST);
+        }
+
+        if (request.mode() == ProjectReqDTO.RecommendMode.PREVIEW) {
+            int resolvedLimit = resolvePreviewLimit(request);
+            boolean hasFilter = hasAnyRecommendFilter(request);
+
+            List<Project> projects;
+            if (!hasFilter) {
+                projects = projectRepository.findAllActiveProjects(resolvedLimit);
+            } else {
+                Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
+                Pageable pageable = PageRequest.of(0, resolvedLimit);
+                Page<Project> page = projectRepository.searchRecommendedProjects(predicate, pageable);
+                projects = page.getContent();
+            }
+
+            List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
+                    .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
+                    .toList();
+
+            PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
+                    previewToPagedResponse(summaries, resolvedLimit);
+
+            return ProjectResDTO.RecommendedProjectsRes.builder()
+                    .projects(paged)
+                    .build();
+        }
+
+        // PAGE
+        if (request.page() == null || request.page() < 1) {
+            throw new ProjectException(ProjectErrorCode.INVALID_PAGE);
+        }
+        if (request.size() == null || request.size() < 1 || request.size() > 100) {
+            throw new ProjectException(ProjectErrorCode.INVALID_SIZE);
+        }
+
         int pageIndex = request.page() - 1;
         Pageable pageable = PageRequest.of(pageIndex, request.size());
-        Predicate predicate = ProjectPredicateBuilder.buildRecommendedPredicate(request);
 
-        // TODO: 추천 알고리즘 기반 정렬 추가
+        Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
         Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);
 
         List<ProjectResDTO.RecommendedProjectSummary> summaries = projectPage.getContent().stream()
@@ -177,8 +184,46 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
         PagedResponse<ProjectResDTO.RecommendedProjectSummary> pagedData = PagedResponse.of(projectPage, summaries);
 
-        return ProjectResDTO.SearchRecommendedProjectsRes.builder()
+        return ProjectResDTO.RecommendedProjectsRes.builder()
                 .projects(pagedData)
+                .build();
+    }
+
+    private int resolvePreviewLimit(ProjectReqDTO.RecommendProjectsReq request) {
+        // 기본값: 메인 하단 기준 6개
+        int defaultLimit = 6;
+
+        if (request.limit() == null) return defaultLimit;
+
+        int limit = request.limit();
+        // 4/6만 허용
+        if (limit != 4 && limit != 6) {
+            return defaultLimit;
+        }
+        return limit;
+    }
+
+    private boolean hasAnyRecommendFilter(ProjectReqDTO.RecommendProjectsReq request) {
+        return (request.projectFields() != null && !request.projectFields().isEmpty())
+                || (request.categoryIds() != null && !request.categoryIds().isEmpty())
+                || (request.positions() != null && !request.positions().isEmpty())
+                || (request.techStackIds() != null && !request.techStackIds().isEmpty())
+                || (request.durationRange() != null);
+    }
+
+    private PagedResponse<ProjectResDTO.RecommendedProjectSummary> previewToPagedResponse(
+            List<ProjectResDTO.RecommendedProjectSummary> content,
+            int size
+    ) {
+        // Page 객체를 만들기 어려워서 meta 직접 구성
+        return PagedResponse.<ProjectResDTO.RecommendedProjectSummary>builder()
+                .content(content)
+                .page(1)
+                .size(size)
+                .totalElements(content.size())
+                .totalPages(1)
+                .isFirst(true)
+                .isLast(true)
                 .build();
     }
 }

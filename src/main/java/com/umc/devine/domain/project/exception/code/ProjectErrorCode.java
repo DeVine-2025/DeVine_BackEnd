@@ -43,7 +43,19 @@ public enum ProjectErrorCode implements BaseErrorCode {
 
     INVALID_LOCATION(HttpStatus.BAD_REQUEST,
             "PROJECT400_6",
-            "진행 장소를 입력해주세요.");
+            "진행 장소를 입력해주세요."),
+
+    INVALID_RECOMMEND_REQUEST(HttpStatus.BAD_REQUEST,
+            "PROJECT400_7",
+            "추천 프로젝트 요청이 올바르지 않습니다."),
+
+    INVALID_PAGE(HttpStatus.BAD_REQUEST,
+            "PROJECT400_8",
+            "페이지 번호는 1 이상이어야 합니다."),
+
+    INVALID_SIZE(HttpStatus.BAD_REQUEST,
+            "PROJECT400_9",
+            "페이지 크기는 1 이상이어야 합니다.");
 
     private final HttpStatus status;
     private final String code;
