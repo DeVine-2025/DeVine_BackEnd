@@ -34,6 +34,16 @@ jwt:
   accessTokenExpiration: ${JWT_ACCESS_EXPIRATION}
   refreshTokenExpiration: ${JWT_REFRESH_EXPIRATION}
 
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
 # Logging Configuration
 logging:
   level:
