@@ -27,11 +27,13 @@ public abstract class IntegrationTestSupport {
                 .withDatabaseName("testdb")
                 .withUsername("test")
                 .withPassword("test")
+                .withReuse(true)
                 .waitingFor(Wait.forListeningPort());
         POSTGRES_CONTAINER.start();
 
         VALKEY_CONTAINER = new GenericContainer<>("valkey/valkey:9-alpine")
                 .withExposedPorts(6379)
+                .withReuse(true)
                 .waitingFor(Wait.forListeningPort());
         VALKEY_CONTAINER.start();
     }
