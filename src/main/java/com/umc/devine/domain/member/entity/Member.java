@@ -55,4 +55,19 @@ public class Member extends BaseEntity {
     @Builder.Default
     private List<Login> loginList = new ArrayList<>();
 
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateImage(String image) {
+        this.image = image;
+    }
+
+    public void updateAddress(String address) {
+        this.address = address;
+    }
+
+    public void updateBody(String body) {
+        this.body = body;
+    }
 }
