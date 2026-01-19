@@ -8,6 +8,7 @@ import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
 import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
@@ -49,8 +50,8 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
             throw new MatchingException(MatchingErrorCode.CANNOT_APPLY_OWN_PROJECT);
         }
 
-        // 중복 지원 체크
-        if (matchingRepository.existsByProjectAndMemberAndMatchingType(project, member, MatchingType.APPLY)) {
+        // 중복 지원 체크 (취소된 매칭 제외)
+        if (matchingRepository.existsByProjectAndMemberAndMatchingTypeAndStatusNot(project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)) {
             throw new MatchingException(MatchingErrorCode.ALREADY_APPLIED);
         }
 
@@ -71,9 +72,9 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         Matching matching = matchingRepository.findByProjectAndMemberAndMatchingType(project, member, MatchingType.APPLY)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
 
-        // 본인 지원만 취소 가능
-        if (!matching.getMember().getId().equals(memberId)) {
-            throw new MatchingException(MatchingErrorCode.UNAUTHORIZED_ACCESS);
+        // 이미 취소된 매칭인지 확인
+        if (matching.getStatus() == MatchingStatus.CANCELLED) {
+            throw new MatchingException(MatchingErrorCode.ALREADY_CANCELLED);
         }
 
         matching.cancel();
@@ -97,6 +98,11 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
             throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
         }
 
+        // 본인 프로젝트만 제안 가능
+        if (!project.getMember().getId().equals(pmMemberId)) {
+            throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
+        }
+
         // 대상이 개발자여야 함
         if (targetMember.getMainType() != MemberMainType.DEVELOPER) {
             throw new MatchingException(MatchingErrorCode.TARGET_NOT_DEVELOPER);
@@ -107,8 +113,8 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
             throw new MatchingException(MatchingErrorCode.PROJECT_NOT_RECRUITING);
         }
 
-        // 중복 제안 체크
-        if (matchingRepository.existsByProjectAndMemberAndMatchingType(project, targetMember, MatchingType.PROPOSE)) {
+        // 중복 제안 체크 (취소된 매칭 제외)
+        if (matchingRepository.existsByProjectAndMemberAndMatchingTypeAndStatusNot(project, targetMember, MatchingType.PROPOSE, MatchingStatus.CANCELLED)) {
             throw new MatchingException(MatchingErrorCode.ALREADY_PROPOSED);
         }
 

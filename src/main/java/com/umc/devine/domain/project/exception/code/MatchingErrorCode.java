@@ -42,6 +42,12 @@ public enum MatchingErrorCode implements BaseErrorCode {
     UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN,
             "MATCHING403_3",
             "해당 매칭에 대한 권한이 없습니다."),
+    NOT_PROJECT_OWNER(HttpStatus.FORBIDDEN,
+            "MATCHING403_4",
+            "본인의 프로젝트에 대해서만 제안할 수 있습니다."),
+    ALREADY_CANCELLED(HttpStatus.BAD_REQUEST,
+            "MATCHING400_4",
+            "이미 취소된 매칭입니다."),
     ;
 
     private final HttpStatus status;
