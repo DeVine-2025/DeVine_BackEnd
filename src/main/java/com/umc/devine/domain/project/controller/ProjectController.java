@@ -8,6 +8,7 @@ import com.umc.devine.domain.project.service.query.ProjectQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -84,7 +85,7 @@ public class ProjectController implements ProjectControllerDocs {
     @Override
     @GetMapping
     public ApiResponse<ProjectResDTO.SearchProjectsRes> searchProjects(
-            @ModelAttribute @Valid ProjectReqDTO.SearchProjectReq request
+            @ParameterObject @ModelAttribute @Valid ProjectReqDTO.SearchProjectReq request
     ) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
         return ApiResponse.onSuccess(code, projectQueryService.searchProjects(request));

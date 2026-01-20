@@ -1,5 +1,6 @@
 package com.umc.devine.domain.project.enums;
 
+import com.fasterxml.jackson.annotation.JsonCreator;
 import lombok.Getter;
 
 @Getter
@@ -13,5 +14,18 @@ public enum ProjectMode {
 
     ProjectMode(String displayName) {
         this.displayName = displayName;
+    }
+
+    @JsonCreator
+    public static ProjectMode from(String value) {
+        if (value == null || value.isBlank()) {
+            return null;
+        }
+        for (ProjectMode mode : ProjectMode.values()) {
+            if (mode.name().equalsIgnoreCase(value) || mode.displayName.equals(value)) {
+                return mode;
+            }
+        }
+        throw new IllegalArgumentException("Invalid ProjectMode: " + value);
     }
 }
