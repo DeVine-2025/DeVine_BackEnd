@@ -1,8 +1,11 @@
 package com.umc.devine.domain.member.service.query;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
+import com.umc.devine.domain.techstack.enums.TechGenre;
+import com.umc.devine.domain.techstack.enums.TechName;
 
 public interface MemberQueryService {
     MemberResDTO.MemberDetailDTO findMemberById(Long memberId);
@@ -14,4 +17,5 @@ public interface MemberQueryService {
     MemberResDTO.ContributionListDTO findContributionsById(Long memberId);
     MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname);
     MemberResDTO.DeveloperListDTO findAllDevelopers(Long memberId);
+    MemberResDTO.UserProfileListDTO searchDevelopers(CategoryGenre category, TechGenre techGenre, TechName techstackName);
 }

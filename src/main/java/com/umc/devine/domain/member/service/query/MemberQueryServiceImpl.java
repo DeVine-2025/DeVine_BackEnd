@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.service.query;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
@@ -20,6 +21,8 @@ import com.umc.devine.domain.techstack.dto.ReportTechStackResDTO;
 import com.umc.devine.domain.techstack.entity.DevReport;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.entity.mapping.ReportTechstack;
+import com.umc.devine.domain.techstack.enums.TechGenre;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.repository.DevReportRepository;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.ReportTechstackRepository;
@@ -210,6 +213,25 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         }).collect(Collectors.toList());
 
         return MemberResDTO.DeveloperListDTO.builder()
+                .developers(developerDTOs)
+                .build();
+    }
+
+    @Override
+    public MemberResDTO.UserProfileListDTO searchDevelopers(CategoryGenre category, TechGenre techGenre, TechName techstackName) {
+        List<Member> developers = memberRepository.findDevelopersByFilters(
+                MemberMainType.DEVELOPER,
+                category,
+                techGenre,
+                techstackName
+        );
+
+        List<MemberResDTO.UserProfileDTO> developerDTOs = developers.stream().map(member -> {
+            List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
+            return MemberConverter.toUserProfileDTO(member, devTechstacks);
+        }).collect(Collectors.toList());
+
+        return MemberResDTO.UserProfileListDTO.builder()
                 .developers(developerDTOs)
                 .build();
     }

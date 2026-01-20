@@ -59,4 +59,9 @@ public class MemberResDTO {
     public record DeveloperListDTO(
             List<DeveloperDTO> developers
     ){}
+
+    @Builder
+    public record UserProfileListDTO(
+            List<UserProfileDTO> developers
+    ){}
 }

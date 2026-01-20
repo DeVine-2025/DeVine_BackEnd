@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.controller;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
@@ -7,6 +8,8 @@ import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
+import com.umc.devine.domain.techstack.enums.TechGenre;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
@@ -122,5 +125,16 @@ public class MemberController implements MemberControllerDocs {
         Long memberId = 1L;
 
         return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(memberId));
+    }
+
+    @Override
+    @GetMapping("/search")
+    public ApiResponse<MemberResDTO.UserProfileListDTO> searchDevelopers(
+            @RequestParam(value = "category", required = false) CategoryGenre category,
+            @RequestParam(value = "tech_genre", required = false) TechGenre techGenre,
+            @RequestParam(value = "techstack_name", required = false) TechName techstackName
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        return ApiResponse.onSuccess(code, memberQueryService.searchDevelopers(category, techGenre, techstackName));
     }
 }
