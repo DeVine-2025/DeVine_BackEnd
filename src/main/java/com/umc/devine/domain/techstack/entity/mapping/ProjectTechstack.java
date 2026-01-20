@@ -2,10 +2,9 @@ package com.umc.devine.domain.techstack.entity.mapping;
 
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
-
-import java.io.Serializable;
 
 @Entity
 @Getter
@@ -13,28 +12,18 @@ import java.io.Serializable;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "project_techstack")
-public class ProjectTechstack {
+public class ProjectTechstack extends BaseEntity {
 
-    @EmbeddedId
-    private ProjectTechstackId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "project_techstack_id")
+    private Long id;
 
-    @MapsId("projectId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "project_id")
+    @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
-    @MapsId("techstackId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "techstack_id")
+    @JoinColumn(name = "techstack_id", nullable = false)
     private Techstack techstack;
-
-    @Embeddable
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode
-    public static class ProjectTechstackId implements Serializable {
-        private Long projectId;
-        private Long techstackId;
-    }
 }

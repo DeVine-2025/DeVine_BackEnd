@@ -6,36 +6,29 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
-
 @Entity
 @Getter
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
-@Table(name = "MDomain")
+@Table(name = "member_category",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_member_category",
+                columnNames = {"member_id", "category_id"}
+        )
+)
 public class MemberCategory extends BaseEntity {
 
-    @EmbeddedId
-    private MemberCategoryId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_category_id")
+    private Long id;
 
-    @MapsId("memberId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id")
+    @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
-    @MapsId("categoryId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "domain_id")
+    @JoinColumn(name = "category_id", nullable = false)
     private Category category;
-
-    @Embeddable
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode
-    public static class MemberCategoryId implements Serializable {
-        private Long memberId;
-        private Long categoryId;
-    }
 }

@@ -1,4 +1,4 @@
-package com.umc.devine.domain.techstack.exception.code;
+package com.umc.devine.domain.category.exception.code;
 
 import com.umc.devine.global.apiPayload.code.BaseErrorCode;
 import lombok.AllArgsConstructor;
@@ -7,11 +7,11 @@ import org.springframework.http.HttpStatus;
 
 @Getter
 @AllArgsConstructor
-public enum TechstackErrorCode implements BaseErrorCode {
+public enum CategoryErrorCode implements BaseErrorCode {
 
-    NOT_FOUND(HttpStatus.NOT_FOUND,
-            "TECHSTACK404_1",
-            "존재하지 않는 기술 스택입니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "CATEGORY404_1",
+            "존재하지 않는 카테고리입니다."),
     ;
 
     private final HttpStatus status;
