@@ -20,7 +20,7 @@ public class Techstack extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "tech_genre", nullable = false)
+    @Column(name = "tech_genre", nullable = true)
     private TechGenre genre;
 
     @Enumerated(EnumType.STRING)
