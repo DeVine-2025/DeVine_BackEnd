@@ -1,5 +1,7 @@
 package com.umc.devine.domain.project.repository;
 
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.querydsl.ProjectQueryDsl;
@@ -12,6 +14,8 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
+    List<Project> findByMember(Member member);
+
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 
     // 이번 주(월~일) 생성된 프로젝트 중 주간 조회수가 높은 순으로 조회

@@ -7,6 +7,7 @@ import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
+import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -294,4 +295,22 @@ public class ProjectResDTO {
             @Schema(description = "추천 프로젝트 결과")
             PagedResponse<RecommendedProjectSummary> projects
     ) {}
+
+    // TODO: 내 프로젝트 조회용 DTO 추후 통합 할 것
+    @Builder
+    @Getter
+    public static class ProjectDetailDTO {
+        private Long id;
+        private String name;
+        private String content;
+        private ProjectStatus status;
+        private List<String> imageUrls;
+    }
+
+    // TODO: 내 프로젝트 조회용 DTO 추후 통합 할 것
+    @Builder
+    @Getter
+    public static class ProjectListDTO {
+        private List<ProjectDetailDTO> projects;
+    }
 }

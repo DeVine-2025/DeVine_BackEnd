@@ -1,102 +1,51 @@
-//package com.umc.devine.global.config;
-//
-//import com.umc.devine.global.jwt.JwtAuthenticationFilter;
-//import lombok.RequiredArgsConstructor;
-//import org.springframework.beans.factory.annotation.Value;
-//import org.springframework.context.annotation.Bean;
-//import org.springframework.http.HttpMethod;
-//import org.springframework.security.config.annotation.web.builders.HttpSecurity;
-//import org.springframework.security.config.http.SessionCreationPolicy;
-//import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
-//import org.springframework.security.crypto.password.PasswordEncoder;
-//import org.springframework.security.web.SecurityFilterChain;
-//import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
-//import org.springframework.web.cors.CorsConfiguration;
-//import org.springframework.web.cors.CorsConfigurationSource;
-//import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
-//
-//import java.util.Arrays;
-//
-//@RequiredArgsConstructor
-//public class SecurityConfig {
-//    private final JwtAuthenticationFilter jwtAuthenticationFilter;
-//
-//    @Value("${app.frontend.urls}")
-//    private String frontendUrls;
-//
-//    @Bean
-//    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
-//        return http
-//                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
-//                .csrf(csrf -> csrf.disable())
-//                .sessionManagement(session ->
-//                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
-//                )
-//                // AuthenticationEntryPoint 설정
-//                .exceptionHandling(exception -> exception
-//                        .authenticationEntryPoint((request, response, authException) -> {
-//                            response.setStatus(401);
-//                            response.setContentType("application/json;charset=UTF-8");
-//                            // 응답 본문 작성
-//                            response.getWriter().write(
-//                                    "{" +
-//                                            "\"isSuccess\":false," +
-//                                            "\"code\":\"UNAUTHORIZED\"," +
-//                                            "\"message\":\"인증이 필요합니다\"," +
-//                                            "\"result\":null" +
-//                                            "}"
-//                            );
-//                        })
-//                )
-//                .authorizeHttpRequests(auth -> auth
-//                        //Swagger 및 정적 리소스
-//                        .requestMatchers(
-//                                "/v3/api-docs/**",
-//                                "/swagger-ui/**",
-//                                "/swagger-ui.html",
-//                                "/swagger-config",
-//                                "/swagger-resources/**",
-//                                "/api-docs/**",
-//                                "/webjars/**"
-//                        ).permitAll()
-//                        .anyRequest().authenticated()
-//                )
-//                .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class)
-//                .formLogin(form -> form.disable())
-//                .httpBasic(httpBasic -> httpBasic.disable())
-//                .build();
-//    }
-//
-//    @Bean
-//    public PasswordEncoder passwordEncoder() {
-//        return new BCryptPasswordEncoder();
-//    }
-//
-//    @Bean
-//    public CorsConfigurationSource corsConfigurationSource() {
-//        CorsConfiguration configuration = new CorsConfiguration();
-//
-//        // 프론트엔드 URL 허용 (쉼표로 구분된 여러 URL 지원)
-//        configuration.setAllowedOrigins(Arrays.asList(frontendUrls.split(",")));
-//
-//        // 모든 HTTP 메소드 허용
-//        configuration.setAllowedMethods(Arrays.asList("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
-//
-//        // 모든 헤더 허용
-//        configuration.setAllowedHeaders(Arrays.asList("*"));
-//
-//        // 인증 정보 허용 (쿠키, Authorization 헤더 등)
-//        configuration.setAllowCredentials(true);
-//
-//        // Preflight 요청 캐시 시간 (1시간)
-//        configuration.setMaxAge(3600L);
-//
-//        // 노출할 헤더 설정
-//        configuration.setExposedHeaders(Arrays.asList("Authorization"));
-//
-//        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
-//        source.registerCorsConfiguration("/**", configuration);
-//
-//        return source;
-//    }
-//}
+package com.umc.devine.global.config;
+
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.security.config.annotation.web.builders.HttpSecurity;
+import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
+import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
+import org.springframework.security.config.http.SessionCreationPolicy;
+import org.springframework.security.web.SecurityFilterChain;
+
+@Configuration
+@EnableWebSecurity
+public class SecurityConfig {
+
+    /*
+     * TODO: 프로덕션 배포 전 반드시 인증 로직 복원 필요!
+     * - JwtAuthenticationFilter 주석 해제 및 적용
+     * - CORS 설정 복원
+     * - .anyRequest().authenticated() 로 변경
+     *
+     * 현재 설정은 배포 테스트를 위한 임시 설정
+     * 이 상태로 프로덕션 배포 시 모든 API가 인증 없이 노출
+     */
+
+    @Bean
+    public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        // Actuator 헬스체크만 허용 (다른 actuator 엔드포인트는 차단)
+                        .requestMatchers("/actuator/health").permitAll()
+                        // Swagger 허용
+                        .requestMatchers(
+                                "/v3/api-docs/**",
+                                "/swagger-ui/**",
+                                "/swagger-ui.html",
+                                "/swagger-resources/**",
+                                "/api-docs/**",
+                                "/webjars/**"
+                        ).permitAll()
+                        // TODO: 인증 로직 구현 후 .authenticated()로 변경
+                        .anyRequest().permitAll()
+                )
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .build();
+    }
+}

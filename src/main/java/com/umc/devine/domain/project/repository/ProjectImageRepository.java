@@ -8,5 +8,5 @@ import java.util.List;
 
 public interface ProjectImageRepository extends JpaRepository<ProjectImage, Long> {
     void deleteAllByProject(Project project);
-    List<ProjectImage> findAllByProject(Project project);
+    List<ProjectImage> findByProject(Project project);
 }

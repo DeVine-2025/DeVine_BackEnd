@@ -258,4 +258,23 @@ public class ProjectConverter {
         double techStackWeight = (techStackCountScore / 5.0) * 100 / 3.0;
         return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
+
+    public static ProjectResDTO.ProjectDetailDTO toProjectDetail(Project project, List<ProjectImage> images) {
+        List<String> imageUrls = (images != null) ? images.stream()
+                .map(ProjectImage::getImage)
+                .collect(Collectors.toList()) : List.of();
+        return ProjectResDTO.ProjectDetailDTO.builder()
+                .id(project.getId())
+                .name(project.getName())
+                .content(project.getContent())
+                .status(project.getStatus())
+                .imageUrls(imageUrls)
+                .build();
+    }
+
+    public static ProjectResDTO.ProjectListDTO toProjectList(List<ProjectResDTO.ProjectDetailDTO> projectInfoList) {
+        return ProjectResDTO.ProjectListDTO.builder()
+                .projects(projectInfoList)
+                .build();
+    }
 }

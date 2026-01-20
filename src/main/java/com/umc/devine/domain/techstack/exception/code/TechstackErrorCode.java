@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum TechstackErrorCode implements BaseErrorCode {
 
-    TECHSTACK_NOT_FOUND(HttpStatus.NOT_FOUND,
+    NOT_FOUND(HttpStatus.NOT_FOUND,
             "TECHSTACK404_1",
             "존재하지 않는 기술 스택입니다."),
     ;

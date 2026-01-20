@@ -40,7 +40,8 @@ public class Project extends BaseEntity {
     private LocalDate startDate;
 
     @Column(name = "project_eta")
-    private LocalDate eta;
+    @Builder.Default
+    private LocalDate eta = null;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "project_field", nullable = false, length = 20)

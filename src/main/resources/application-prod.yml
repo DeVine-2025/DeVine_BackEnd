@@ -1,15 +1,15 @@
 # Server Configuration
 server:
-  port: ${PORT}
+  port: ${SPRING_PORT}
 
 # Spring Configuration
 spring:
   # PostgreSQL Configuration
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
-    driver-class-name: ${DB_DRIVER}
+    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+    username: ${POSTGRES_USER}
+    password: ${POSTGRES_PASSWORD}
+    driver-class-name: org.postgresql.Driver
 
   # Redis Configuration
   data:
@@ -33,6 +33,16 @@ jwt:
   secret: ${JWT_SECRET}
   accessTokenExpiration: ${JWT_ACCESS_EXPIRATION}
   refreshTokenExpiration: ${JWT_REFRESH_EXPIRATION}
+
+# Actuator Configuration
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
 
 # Logging Configuration
 logging:
