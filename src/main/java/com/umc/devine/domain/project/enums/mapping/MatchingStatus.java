@@ -5,4 +5,5 @@ public enum MatchingStatus {
     PENDING, //시작 전
     PROCESSING, //진행 중
     COMPLETED, //진행 완료
+    CANCELLED, //취소
 }
