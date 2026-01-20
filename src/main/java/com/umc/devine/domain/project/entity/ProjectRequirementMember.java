@@ -5,8 +5,6 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.io.Serializable;
-
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -15,32 +13,23 @@ import java.io.Serializable;
 @Table(name = "project_requirement_member")
 public class ProjectRequirementMember extends BaseEntity {
 
-    @EmbeddedId
-    private ProjectRequirementMemberId id;
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "project_requirement_member_id")
+    private Long id;
 
-    @MapsId("projectId")
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
     private Project project;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "req_mem_part", nullable = false)
+    private ProjectPart part;
+
     @Column(name = "req_mem_num", nullable = false)
     private Integer requirementNum;
 
-    @Column(name = "current_count", nullable = true)
+    @Column(name = "current_count")
     @Builder.Default
     private Integer currentCount = 0;
-
-    @Embeddable
-    @Getter
-    @NoArgsConstructor
-    @AllArgsConstructor
-    @EqualsAndHashCode
-    public static class ProjectRequirementMemberId implements Serializable {
-        private Long projectId;
-
-        @Enumerated(EnumType.STRING)
-        @Column(name = "req_mem_part", nullable = false)
-        private ProjectPart part;
-    }
-
 }

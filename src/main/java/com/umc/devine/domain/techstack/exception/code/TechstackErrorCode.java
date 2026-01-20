@@ -11,7 +11,7 @@ public enum TechstackErrorCode implements BaseErrorCode {
 
     NOT_FOUND(HttpStatus.NOT_FOUND,
             "TECHSTACK404_1",
-            "해당 기술스택을 찾을 수 없습니다."),
+            "존재하지 않는 기술 스택입니다."),
     ;
 
     private final HttpStatus status;
