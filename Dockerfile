@@ -15,6 +15,7 @@ FROM eclipse-temurin:21-jre-alpine
 
 WORKDIR /app
 
+RUN apk add --no-cache curl wget
 COPY --from=build /app/build/libs/*.jar app.jar
 
 RUN addgroup -S spring && adduser -S spring -G spring

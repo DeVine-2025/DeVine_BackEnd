@@ -36,6 +36,7 @@ public class Project extends BaseEntity {
     private LocalDate startDate;
 
     @Column(name = "project_eta", nullable = true)
+    @Builder.Default
     private LocalDate eta = null;
 
     @ManyToOne(fetch = FetchType.LAZY)

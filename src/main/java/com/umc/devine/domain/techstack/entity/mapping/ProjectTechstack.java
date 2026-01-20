@@ -25,7 +25,7 @@ public class ProjectTechstack {
 
     @MapsId("techstackId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teckstack_id")
+    @JoinColumn(name = "techstack_id")
     private Techstack techstack;
 
     @Embeddable

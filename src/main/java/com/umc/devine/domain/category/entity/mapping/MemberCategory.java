@@ -2,6 +2,7 @@ package com.umc.devine.domain.category.entity.mapping;
 
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -13,7 +14,7 @@ import java.io.Serializable;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Table(name = "MDomain")
-public class MemberCategory {
+public class MemberCategory extends BaseEntity {
 
     @EmbeddedId
     private MemberCategoryId id;
