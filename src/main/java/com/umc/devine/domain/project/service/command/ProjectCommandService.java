@@ -6,6 +6,7 @@ import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
@@ -22,6 +23,7 @@ import com.umc.devine.domain.project.validator.ProjectValidator;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.exception.TechstackException;
+import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import lombok.RequiredArgsConstructor;
@@ -34,10 +36,8 @@ import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.umc.devine.domain.category.exception.code.CategoryErrorCode.CATEGORY_NOT_FOUND;
-import static com.umc.devine.domain.member.exception.code.MemberErrorCode.MEMBER_NOT_FOUND;
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.INVALID_PERMISSION;
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
-import static com.umc.devine.domain.techstack.exception.code.TechstackErrorCode.TECHSTACK_NOT_FOUND;
 
 @Slf4j
 @Service
@@ -56,7 +56,7 @@ public class ProjectCommandService {
 
     public ProjectResDTO.CreateProjectRes createProject(Long memberId, ProjectReqDTO.CreateProjectReq request) {
         Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
         if (member.getMainType() != MemberMainType.PM) {
             throw new ProjectException(INVALID_PERMISSION);
@@ -177,7 +177,7 @@ public class ProjectCommandService {
 
             for (Long techstackId : dto.techStackIds()) {
                 Techstack techstack = techstackRepository.findById(techstackId)
-                        .orElseThrow(() -> new TechstackException(TECHSTACK_NOT_FOUND));
+                        .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()
                         .requirement(requirement)
