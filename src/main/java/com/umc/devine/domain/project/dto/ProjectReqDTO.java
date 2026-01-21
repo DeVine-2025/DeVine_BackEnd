@@ -30,8 +30,6 @@ public class ProjectReqDTO {
 
                         @Schema(description = "모집 마감일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-01-25") @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
 
-                        @Schema(description = "프로젝트 시작 예정일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-02-01") @NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate startDate,
-
                         @Schema(description = "모집 분야 목록 (포지션, 모집인원, 기술스택)", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다.") @Size(max = 6, message = "모집 분야는 최대 6개까지 가능합니다.") @Valid List<RecruitmentDTO> recruitments,
 
                         @Schema(description = "프로젝트 제목", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 제목은 필수입니다.") @Size(max = 100, message = "프로젝트 제목은 100자를 초과할 수 없습니다.") String title,
@@ -54,8 +52,6 @@ public class ProjectReqDTO {
                         @Schema(description = "진행 장소", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "진행 장소는 필수입니다.") @Size(max = 100, message = "진행 장소는 100자를 초과할 수 없습니다.") String location,
 
                         @Schema(description = "모집 마감일", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
-
-                        @Schema(description = "프로젝트 시작 예정일", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate startDate,
 
                         @Schema(description = "모집 분야 목록", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다.") @Size(max = 6, message = "모집 분야는 최대 6개까지 가능합니다.") @Valid List<RecruitmentDTO> recruitments,
 

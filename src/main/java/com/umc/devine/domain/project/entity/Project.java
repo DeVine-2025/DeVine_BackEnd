@@ -36,13 +36,6 @@ public class Project extends BaseEntity {
     @Column(name = "project_status", nullable = false)
     private ProjectStatus status;
 
-    @Column(name = "project_start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "project_eta")
-    @Builder.Default
-    private LocalDate eta = null;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "project_field", nullable = false, length = 20)
     private ProjectField projectField;
@@ -99,16 +92,13 @@ public class Project extends BaseEntity {
                                   ProjectMode mode,
                                   Integer durationMonths,
                                   String location,
-                                  LocalDate recruitmentDeadline,
-                                  LocalDate startDate) {
+                                  LocalDate recruitmentDeadline) {
         this.projectField = projectField;
         this.category = category;
         this.mode = mode;
         this.durationMonths = durationMonths;
         this.location = location;
         this.recruitmentDeadline = recruitmentDeadline;
-        this.startDate = startDate;
-        this.eta = startDate.plusMonths(durationMonths);
     }
 
     public void updateContent(String title, String content) {
@@ -146,7 +136,6 @@ public class Project extends BaseEntity {
     }
 
     // 주간 조회수 리셋 (매주 월요일 자정에 실행)
-
     public void resetWeeklyViewCount(LocalDate resetDate) {
         this.weeklyViewCount = 0L;
         this.lastViewResetDate = resetDate;
