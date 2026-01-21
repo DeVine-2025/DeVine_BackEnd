@@ -86,7 +86,7 @@ public class ProjectReqDTO {
 
                         @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
 
                         @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page,
 
@@ -114,7 +114,7 @@ public class ProjectReqDTO {
 
                         @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
 
                         @Schema(description = "PAGE일 때 페이지 번호 (1부터 시작). null이면 1", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1") @ValidPage Integer page,
 
