@@ -7,7 +7,6 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
-import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -112,7 +111,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
         int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, request.size());
+        // 페이지 크기 고정 4
+        int fixedSize = 4;
+        Pageable pageable = PageRequest.of(pageIndex, fixedSize);
 
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(request);
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
@@ -129,53 +130,40 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjects(
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPreview(
             Long memberId,
-            ProjectReqDTO.RecommendProjectsReq request
+            ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
-        if (request == null || request.mode() == null) {
-            throw new ProjectException(ProjectErrorCode.INVALID_RECOMMEND_REQUEST);
-        }
+        int limit = request.limit();
 
-        if (request.mode() == ProjectReqDTO.RecommendMode.PREVIEW) {
-            int resolvedLimit = resolvePreviewLimit(request);
-            boolean hasFilter = hasAnyRecommendFilter(request);
+        // Preview는 필터링 없이 추천 점수 기준 상위 프로젝트만 반환
+        List<Project> projects = projectRepository.findAllActiveProjects(limit);
 
-            List<Project> projects;
-            if (!hasFilter) {
-                projects = projectRepository.findAllActiveProjects(resolvedLimit);
-            } else {
-                Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
-                Pageable pageable = PageRequest.of(0, resolvedLimit);
-                Page<Project> page = projectRepository.searchRecommendedProjects(predicate, pageable);
-                projects = page.getContent();
-            }
+        List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
+                .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
+                .toList();
 
-            List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
-                    .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
-                    .toList();
+        PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
+                previewToPagedResponse(summaries, limit);
 
-            PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
-                    previewToPagedResponse(summaries, resolvedLimit);
+        return ProjectResDTO.RecommendedProjectsRes.builder()
+                .projects(paged)
+                .build();
+    }
 
-            return ProjectResDTO.RecommendedProjectsRes.builder()
-                    .projects(paged)
-                    .build();
-        }
-
-        // PAGE
-        if (request.page() == null || request.page() < 1) {
-            throw new ProjectException(ProjectErrorCode.INVALID_PAGE);
-        }
-        if (request.size() == null || request.size() < 1 || request.size() > 100) {
-            throw new ProjectException(ProjectErrorCode.INVALID_SIZE);
-        }
-
+    @Override
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
+            Long memberId,
+            ProjectReqDTO.RecommendProjectsPageReq request
+    ) {
+        // TODO: 추천 알고리즘 기반 정렬 추가
         int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, request.size());
+        // 페이지 크기 고정 4
+        int fixedSize = 4;
+        Pageable pageable = PageRequest.of(pageIndex, fixedSize);
 
-        Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
+        Predicate predicate = ProjectPredicateBuilder.buildRecommendPagePredicate(request);
         Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);
 
         List<ProjectResDTO.RecommendedProjectSummary> summaries = projectPage.getContent().stream()
@@ -187,28 +175,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         return ProjectResDTO.RecommendedProjectsRes.builder()
                 .projects(pagedData)
                 .build();
-    }
-
-    private int resolvePreviewLimit(ProjectReqDTO.RecommendProjectsReq request) {
-        // 기본값: 메인 하단 기준 6개
-        int defaultLimit = 6;
-
-        if (request.limit() == null) return defaultLimit;
-
-        int limit = request.limit();
-        // 4/6만 허용
-        if (limit != 4 && limit != 6) {
-            return defaultLimit;
-        }
-        return limit;
-    }
-
-    private boolean hasAnyRecommendFilter(ProjectReqDTO.RecommendProjectsReq request) {
-        return (request.projectFields() != null && !request.projectFields().isEmpty())
-                || (request.categoryIds() != null && !request.categoryIds().isEmpty())
-                || (request.positions() != null && !request.positions().isEmpty())
-                || (request.techStackIds() != null && !request.techStackIds().isEmpty())
-                || (request.durationRange() != null);
     }
 
     private PagedResponse<ProjectResDTO.RecommendedProjectSummary> previewToPagedResponse(
