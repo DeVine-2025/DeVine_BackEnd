@@ -30,8 +30,6 @@ public class ProjectReqDTO {
 
                         @Schema(description = "모집 마감일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-01-25") @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
 
-                        @Schema(description = "프로젝트 시작 예정일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-02-01") @NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate startDate,
-
                         @Schema(description = "모집 분야 목록 (포지션, 모집인원, 기술스택)", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다.") @Size(max = 6, message = "모집 분야는 최대 6개까지 가능합니다.") @Valid List<RecruitmentDTO> recruitments,
 
                         @Schema(description = "프로젝트 제목", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 제목은 필수입니다.") @Size(max = 100, message = "프로젝트 제목은 100자를 초과할 수 없습니다.") String title,
@@ -54,8 +52,6 @@ public class ProjectReqDTO {
                         @Schema(description = "진행 장소", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "진행 장소는 필수입니다.") @Size(max = 100, message = "진행 장소는 100자를 초과할 수 없습니다.") String location,
 
                         @Schema(description = "모집 마감일", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
-
-                        @Schema(description = "프로젝트 시작 예정일", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 시작일은 필수입니다.") LocalDate startDate,
 
                         @Schema(description = "모집 분야 목록", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다.") @Size(max = 6, message = "모집 분야는 최대 6개까지 가능합니다.") @Valid List<RecruitmentDTO> recruitments,
 
@@ -86,7 +82,7 @@ public class ProjectReqDTO {
 
                         @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
 
                         @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page,
 
@@ -114,7 +110,7 @@ public class ProjectReqDTO {
 
                         @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_TO_TWELVE: 6~12개월, TWELVE_PLUS: 12개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
 
                         @Schema(description = "PAGE일 때 페이지 번호 (1부터 시작). null이면 1", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1") @ValidPage Integer page,
 

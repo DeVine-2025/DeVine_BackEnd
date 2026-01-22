@@ -13,6 +13,7 @@ import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstac
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
@@ -21,8 +22,6 @@ public class ProjectConverter {
 
     // CreateProjectReq → Project 엔티티 변환
     public static Project toProject(ProjectReqDTO.CreateProjectReq request, Member member, Category category) {
-        LocalDate eta = request.startDate().plusMonths(request.durationMonths());
-
         return Project.builder()
                 .member(member)
                 .category(category)
@@ -31,8 +30,6 @@ public class ProjectConverter {
                 .durationMonths(request.durationMonths())
                 .location(request.location())
                 .recruitmentDeadline(request.recruitmentDeadline())
-                .startDate(request.startDate())
-                .eta(eta)
                 .name(request.title())
                 .content(request.content())
                 .status(ProjectStatus.RECRUITING)
@@ -78,8 +75,7 @@ public class ProjectConverter {
                 .durationMonths(project.getDurationMonths())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
-                .startDate(project.getStartDate())
-                .eta(project.getEta())
+                .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .title(project.getTitle())
                 .content(project.getContent())
                 .status(project.getStatus())
@@ -106,8 +102,7 @@ public class ProjectConverter {
                 .durationMonths(project.getDurationMonths())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
-                .startDate(project.getStartDate())
-                .eta(project.getEta())
+                .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .title(project.getTitle())
                 .content(project.getContent())
                 .status(project.getStatus())
@@ -153,6 +148,7 @@ public class ProjectConverter {
                 .durationMonths(project.getDurationMonths())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
+                .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .status(project.getStatus())
                 .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
                 .positions(positions)
@@ -202,6 +198,7 @@ public class ProjectConverter {
                 .durationMonths(project.getDurationMonths())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
+                .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .status(project.getStatus())
                 .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
                 .positions(positions)
@@ -249,6 +246,12 @@ public class ProjectConverter {
         return images.stream()
                 .map(ProjectImage::getImage)
                 .collect(Collectors.toList());
+    }
+
+    // 모집 마감까지 남은 일수 계산
+    private static Long calculateDaysUntilDeadline(LocalDate recruitmentDeadline) {
+        LocalDate today = LocalDate.now();
+        return ChronoUnit.DAYS.between(today, recruitmentDeadline);
     }
 
     // 총점 계산 (5점 만점 점수들을 100점 만점으로 환산)

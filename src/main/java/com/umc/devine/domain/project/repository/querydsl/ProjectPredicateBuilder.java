@@ -29,10 +29,24 @@ public class ProjectPredicateBuilder {
             builder.and(project.category.id.in(req.categoryIds()));
         }
 
-        // 진행 기간 필터 (범위로 선택)
+        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
         if (req.durationRange() != null) {
-            builder.and(project.durationMonths.goe(req.durationRange().getMinMonths()));
-            builder.and(project.durationMonths.loe(req.durationRange().getMaxMonths()));
+            int minMonths = req.durationRange().getMinMonths();
+            int maxMonths = req.durationRange().getMaxMonths();
+
+            // 6개월 이상인 경우
+            if (maxMonths == Integer.MAX_VALUE) {
+                builder.and(project.durationMonths.goe(minMonths));
+            }
+            // 1개월 이하인 경우
+            else if (minMonths == 0) {
+                builder.and(project.durationMonths.loe(maxMonths));
+            }
+            // 1~3개월, 3~6개월인 경우
+            else {
+                builder.and(project.durationMonths.goe(minMonths));
+                builder.and(project.durationMonths.loe(maxMonths));
+            }
         }
 
         // 포지션 필터
@@ -73,10 +87,24 @@ public class ProjectPredicateBuilder {
             builder.and(project.category.id.in(req.categoryIds()));
         }
 
-        // 진행 기간 필터 (범위로 선택)
+        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
         if (req.durationRange() != null) {
-            builder.and(project.durationMonths.goe(req.durationRange().getMinMonths()));
-            builder.and(project.durationMonths.loe(req.durationRange().getMaxMonths()));
+            int minMonths = req.durationRange().getMinMonths();
+            int maxMonths = req.durationRange().getMaxMonths();
+
+            // 6개월 이상인 경우
+            if (maxMonths == Integer.MAX_VALUE) {
+                builder.and(project.durationMonths.goe(minMonths));
+            }
+            // 1개월 이하인 경우
+            else if (minMonths == 0) {
+                builder.and(project.durationMonths.loe(maxMonths));
+            }
+            // 1~3개월, 3~6개월인 경우
+            else {
+                builder.and(project.durationMonths.goe(minMonths));
+                builder.and(project.durationMonths.loe(maxMonths));
+            }
         }
 
         // 포지션 필터

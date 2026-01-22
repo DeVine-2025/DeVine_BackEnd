@@ -106,8 +106,7 @@ public class ProjectCommandService {
                 request.mode(),
                 request.durationMonths(),
                 request.location(),
-                request.recruitmentDeadline(),
-                request.startDate()
+                request.recruitmentDeadline()
         );
 
         project.updateContent(
