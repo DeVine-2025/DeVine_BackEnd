@@ -4,6 +4,13 @@ server:
 
 # Spring Configuration
 spring:
+  # OAuth2 Resource Server (Clerk JWT)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${CLERK_ISSUER_URI}
+
   # PostgreSQL Configuration
   datasource:
     url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
@@ -42,3 +49,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
     org.springframework.web: DEBUG
+
+# Clerk Configuration
+clerk:
+  secret-key: ${CLERK_SECRET_KEY}
