@@ -28,12 +28,6 @@ spring:
       hibernate:
         format_sql: true
 
-# JWT Configuration
-jwt:
-  secret: test-secret-key-at-least-256-bits-for-testing-purposes-only
-  accessTokenExpiration: 3600000
-  refreshTokenExpiration: 604800000
-
 # Logging Configuration
 logging:
   level:
