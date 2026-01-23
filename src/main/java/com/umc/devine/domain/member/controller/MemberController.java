@@ -1,6 +1,5 @@
 package com.umc.devine.domain.member.controller;
 
-import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
@@ -8,11 +7,11 @@ import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
-import com.umc.devine.domain.techstack.enums.TechGenre;
-import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -129,12 +128,10 @@ public class MemberController implements MemberControllerDocs {
 
     @Override
     @GetMapping("/search")
-    public ApiResponse<MemberResDTO.UserProfileListDTO> searchDevelopers(
-            @RequestParam(value = "category", required = false) CategoryGenre category,
-            @RequestParam(value = "tech_genre", required = false) TechGenre techGenre,
-            @RequestParam(value = "techstack_name", required = false) TechName techstackName
+    public ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
+            @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.searchDevelopers(category, techGenre, techstackName));
+        return ApiResponse.onSuccess(code, memberQueryService.searchDevelopers(dto));
     }
 }

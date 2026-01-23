@@ -1,7 +1,12 @@
 package com.umc.devine.domain.member.dto;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.techstack.enums.TechGenre;
+import com.umc.devine.domain.techstack.enums.TechName;
+import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
+import org.springframework.data.domain.Pageable;
 
 public class MemberReqDTO {
     @Builder
@@ -11,4 +16,31 @@ public class MemberReqDTO {
             @Schema(description = "주소", nullable = true, example = "서울 구로구") String address,
             @Schema(description = "자기소개", nullable = true, example = "자기 소개 내용입니다.") String body
     ) {}
+
+    @Schema(description = "개발자 검색 요청")
+    public record SearchDeveloperDTO(
+            @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
+            CategoryGenre category,
+
+            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
+            TechGenre techGenre,
+
+            @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
+            TechName techstackName,
+
+            @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            Integer page,
+
+            @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            Integer size
+    ) {
+        public SearchDeveloperDTO {
+            if (page == null) page = 1;
+            if (size == null) size = 10;
+        }
+
+        public Pageable toPageable() {
+            return PageRequest.of(page, size).toPageable();
+        }
+    }
 }

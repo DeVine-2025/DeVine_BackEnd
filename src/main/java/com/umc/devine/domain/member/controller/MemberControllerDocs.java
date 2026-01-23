@@ -1,18 +1,17 @@
 package com.umc.devine.domain.member.controller;
 
-import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
-import com.umc.devine.domain.techstack.enums.TechGenre;
-import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Member", description = "회원 관련 API")
@@ -113,14 +112,12 @@ public interface MemberControllerDocs {
     })
     ApiResponse<MemberResDTO.DeveloperListDTO> getRecommendDevelopers();
 
-    @Operation(summary = "개발자 검색 API", description = "조건에 따라 개발자를 검색하는 API입니다. category, tech_genre, techstack_name 파라미터로 필터링할 수 있습니다. 모든 파라미터는 선택적이며, 지정하지 않으면 해당 조건은 무시됩니다.")
+    @Operation(summary = "개발자 검색 API (페이지네이션 포함)", description = "조건에 따라 개발자를 검색하는 API입니다. category, techGenre, techstackName 파라미터로 필터링할 수 있습니다. 모든 파라미터는 선택적이며, 지정하지 않으면 해당 조건은 무시됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")
     })
-    ApiResponse<MemberResDTO.UserProfileListDTO> searchDevelopers(
-            @Parameter(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)") CategoryGenre category,
-            @Parameter(description = "기술 장르 (BACKEND, FRONTEND, MOBILE, DB, DEVOPS, DESIGN, ETC)") TechGenre techGenre,
-            @Parameter(description = "기술 스택 이름 (JAVA, JAVASCRIPT, CSS, SPRING)") TechName techstackName
+    ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
+            @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
     );
 }

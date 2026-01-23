@@ -5,6 +5,8 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -25,11 +27,13 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
            "AND (:category IS NULL OR mc.category.genre = :category) " +
            "AND (:techGenre IS NULL OR dt.techstack.genre = :techGenre) " +
            "AND (:techstackName IS NULL OR dt.techstack.name = :techstackName)")
-    List<Member> findDevelopersByFilters(
+    Page<Member> findDevelopersByFilters(
             @Param("mainType") MemberMainType mainType,
             @Param("category") CategoryGenre category,
             @Param("techGenre") TechGenre techGenre,
-            @Param("techstackName") TechName techstackName);
+            @Param("techstackName") TechName techstackName,
+            Pageable pageable);
+
     Optional<Member> findByClerkId(String clerkId);
     boolean existsByClerkId(String clerkId);
 }
