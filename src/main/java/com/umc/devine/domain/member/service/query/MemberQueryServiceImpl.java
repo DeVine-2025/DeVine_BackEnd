@@ -70,6 +70,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     public MemberResDTO.UserProfileDTO findMemberByNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
         List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
 
         return MemberConverter.toUserProfileDTO(member, devTechstacks);

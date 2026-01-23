@@ -64,7 +64,7 @@ public class MemberController implements MemberControllerDocs {
         return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopersPreview(member, limit));
     }
 
-    // 프로필 수정
+    // 특정 회원 프로필 조회
     @Override
     @GetMapping("/{nickname}")
     public ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(@PathVariable("nickname") String nickname) {
