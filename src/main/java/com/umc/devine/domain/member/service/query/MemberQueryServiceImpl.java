@@ -155,9 +155,12 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     @Override
     public MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname) {
-        // 닉네임으로 회원 존재 여부 확인
-        memberRepository.findByNickname(nickname)
+        Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
 
         // TODO: GITHUB api 연동하기 및 방식 정하기
         // Mock data : https://github.com/strfunctionk/GithubAPITest 참고
