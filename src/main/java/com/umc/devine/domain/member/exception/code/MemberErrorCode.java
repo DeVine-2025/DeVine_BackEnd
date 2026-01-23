@@ -30,6 +30,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_1",
             "해당 사용자를 찾지 못했습니다."),
+    TECHSTACK_ALREADY_EXISTS(HttpStatus.CONFLICT,
+            "MEMBER409_1",
+            "이미 보유한 기술 스택입니다."),
     ;
 
     private final HttpStatus status;

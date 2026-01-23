@@ -8,12 +8,16 @@ import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
+import com.umc.devine.domain.techstack.exception.TechstackException;
+import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import lombok.RequiredArgsConstructor;
@@ -64,6 +68,15 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Override
     public TechstackResDTO.DevTechstackListDTO addMemberTechstacks(Member member, MemberReqDTO.AddTechstackDTO dto) {
         List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
+
+        if (techstacks.size() != dto.techstackIds().length) {
+            throw new TechstackException(TechstackErrorCode.NOT_FOUND);
+        }
+
+        List<DevTechstack> existingTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
+        if (!existingTechstacks.isEmpty()) {
+            throw new MemberException(MemberErrorCode.TECHSTACK_ALREADY_EXISTS);
+        }
 
         devTechstackRepository.saveAll(
                 TechstackConverter.toDevTechstacks(member, techstacks, TechstackSource.MANUAL)

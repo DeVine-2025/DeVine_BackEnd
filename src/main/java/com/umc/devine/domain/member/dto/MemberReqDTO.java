@@ -8,6 +8,7 @@ import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotEmpty;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
@@ -27,6 +28,7 @@ public class MemberReqDTO {
     @Builder
     public record AddTechstackDTO(
             @Schema(description = "추가할 기술 스택 ID 목록", required = true)
+            @NotEmpty(message = "기술 스택 ID 목록은 필수입니다.")
             Long[] techstackIds
     ) {}
 
