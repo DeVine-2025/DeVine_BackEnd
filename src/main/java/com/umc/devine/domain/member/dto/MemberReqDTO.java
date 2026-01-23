@@ -38,7 +38,37 @@ public class MemberReqDTO {
             TechstackSource source
     ) {}
 
-    @Schema(description = "개발자 검색 요청")
+    @Builder
+    public record RecommendDeveloperDTO(
+            @Schema(description = "프로젝트 ID 목록", nullable = true)
+            Long[] projectIds,
+
+            @Schema(description = "도메인 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
+            CategoryGenre category,
+
+            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
+            TechGenre techGenre,
+
+            @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
+            TechName techstackName,
+
+            @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            Integer page,
+
+            @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            Integer size
+    ) {
+        public RecommendDeveloperDTO {
+            if (page == null) page = 1;
+            if (size == null) size = 10;
+        }
+
+        public Pageable toPageable() {
+            return PageRequest.of(page, size).toPageable();
+        }
+    }
+
+    @Builder
     public record SearchDeveloperDTO(
             @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
             CategoryGenre category,

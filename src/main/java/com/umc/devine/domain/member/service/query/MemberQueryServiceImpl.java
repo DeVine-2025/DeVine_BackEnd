@@ -172,28 +172,24 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public MemberResDTO.DeveloperListDTO findAllDevelopers(Long memberId) {
-        // TODO: memberId를 활용한 추천 로직 구현
-        List<Member> developers = memberRepository.findAllByMainType(MemberMainType.DEVELOPER);
+    public PagedResponse<MemberResDTO.DeveloperDTO> findAllDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto) {
+        // TODO: projectIds를 활용한 추천 로직 구현 (dto.projectIds())
+        Page<Member> developerPage = memberRepository.findDevelopersByFilters(
+                MemberMainType.DEVELOPER,
+                dto.category(),
+                dto.techGenre(),
+                dto.techstackName(),
+                dto.toPageable()
+        );
 
-        // TODO: mainType에서 방식 변경할 것
-        List<MemberResDTO.DeveloperDTO> developerDTOs = developers.stream().map(member -> {
-            List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
-            List<String> techstackNames = devTechstacks.stream()
-                    .map(dt -> dt.getTechstack().getName().toString())
-                    .collect(Collectors.toList());
+        List<MemberResDTO.DeveloperDTO> developerDTOs = developerPage.getContent().stream()
+                .map(developer -> {
+                    List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(developer);
+                    return MemberConverter.toDeveloperDTO(developer, devTechstacks);
+                })
+                .collect(Collectors.toList());
 
-            return MemberResDTO.DeveloperDTO.builder()
-                    .nickname(member.getNickname())
-                    .image(member.getImage())
-                    .body(member.getBody())
-                    .techstacks(techstackNames)
-                    .build();
-        }).collect(Collectors.toList());
-
-        return MemberResDTO.DeveloperListDTO.builder()
-                .developers(developerDTOs)
-                .build();
+        return PagedResponse.of(developerPage, developerDTOs);
     }
 
     @Override

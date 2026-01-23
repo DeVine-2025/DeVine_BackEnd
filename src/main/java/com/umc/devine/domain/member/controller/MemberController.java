@@ -1,15 +1,19 @@
 package com.umc.devine.domain.member.controller;
 
+import com.umc.devine.domain.auth.service.AuthHelper;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -18,8 +22,8 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/members")
 public class MemberController implements MemberControllerDocs {
-    private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
+    private final AuthHelper authHelper;
 
     // 닉네임 중복 체크
     @Override
@@ -31,16 +35,17 @@ public class MemberController implements MemberControllerDocs {
         return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
     }
 
-    // 나에게 맞는 개발자 추천 (TODO: 페이지네이션)
+    // 나에게 맞는 개발자 추천
     @Override
     @GetMapping("/recommend")
-    public ApiResponse<MemberResDTO.DeveloperListDTO> getRecommendDevelopers() {
+    public ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
+    ) {
+        Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.FOUND;
 
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(memberId));
+        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(member, dto));
     }
 
     // TODO : 나에게 맞는 개발자 추천 (프리뷰)

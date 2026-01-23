@@ -97,4 +97,17 @@ public class MemberConverter {
                 .techGenres(techGenres)
                 .build();
     }
+
+    public static MemberResDTO.DeveloperDTO toDeveloperDTO(Member member, List<DevTechstack> devTechstacks) {
+        List<String> techstackNames = devTechstacks.stream()
+                .map(dt -> dt.getTechstack().getName().toString())
+                .collect(Collectors.toList());
+
+        return MemberResDTO.DeveloperDTO.builder()
+                .nickname(member.getNickname())
+                .image(member.getImage())
+                .body(member.getBody())
+                .techstacks(techstackNames)
+                .build();
+    }
 }

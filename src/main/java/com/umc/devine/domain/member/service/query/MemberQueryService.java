@@ -18,6 +18,6 @@ public interface MemberQueryService {
     DevReportResDTO.ReportListDTO findReportsByNickname(String nickname);
     MemberResDTO.ContributionListDTO findContributionsById(Long memberId);
     MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname);
-    MemberResDTO.DeveloperListDTO findAllDevelopers(Long memberId);
+    PagedResponse<MemberResDTO.DeveloperDTO> findAllDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto);
     PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO dto);
 }
