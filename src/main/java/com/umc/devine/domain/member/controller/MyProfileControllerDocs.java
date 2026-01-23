@@ -4,6 +4,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
+import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
@@ -39,8 +40,14 @@ public interface MyProfileControllerDocs {
             @Valid @RequestBody MemberReqDTO.UpdateMemberDTO dto
     );
 
-    // TODO : 내 보유 기술 조회
-    
+    @Operation(summary = "내 보유 기술 조회 API", description = "내가 보유한 기술 스택 목록을 조회하는 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
+    })
+    ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@AuthenticationPrincipal ClerkPrincipal principal);
+
     @Operation(summary = "내 깃허브 기록 조회 API", description = "내 깃허브 기록을 조회하는 API입니다. 현재는 하드코딩된 ID(1L)를 사용하고 있고, 외부 api 호출하지 않은 상태입니다. 반환 값은 Mock 데이터 입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),

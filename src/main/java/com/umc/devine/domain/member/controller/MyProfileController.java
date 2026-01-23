@@ -9,6 +9,7 @@ import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
+import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import jakarta.validation.Valid;
@@ -46,13 +47,23 @@ public class MyProfileController implements MyProfileControllerDocs {
     ){
 
         Member member = authHelper.getMember(principal);
-        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        MemberSuccessCode code = MemberSuccessCode.UPDATED;
 
         return ApiResponse.onSuccess(code, memberCommandService.updateMember(member, dto));
     }
 
-    // TODO : 내 보유 기술 조회
+    // 내 보유 기술 조회
+    @Override
+    @GetMapping("/techstacks")
+    public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@AuthenticationPrincipal ClerkPrincipal principal) {
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findMemberTechstacks(member));
+    }
     
+    // TODO : 내 보유 기술 수정
+
     // 내 프로젝트 조회
     @Override
     @GetMapping("/projects")

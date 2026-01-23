@@ -20,8 +20,10 @@ import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.ReportTechStackResDTO;
+import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.DevReport;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.entity.mapping.ReportTechstack;
@@ -56,6 +58,12 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<Contact> contacts = contactRepository.findAllByMember(member);
 
         return MemberConverter.toMemberProfileDTO(member, memberCategories, contacts);
+    }
+
+    @Override
+    public TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member) {
+        List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
+        return TechstackConverter.toDevTechstackListDTO(devTechstacks);
     }
 
     @Override
