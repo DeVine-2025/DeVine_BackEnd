@@ -66,10 +66,15 @@ public class Project extends BaseEntity {
     @Builder.Default
     private Long totalViewCount = 0L;
 
-    // 이번 주 조회수 (매주 월요일 자정에 리셋)
+    // 이번 주 조회수 (집계 중, 매주 월요일에 previousWeekViewCount로 이동 후 리셋)
     @Column(name = "weekly_view_count", nullable = false)
     @Builder.Default
     private Long weeklyViewCount = 0L;
+
+    // 지난 주 조회수 (표시용, 매주 월요일에 weeklyViewCount 값으로 업데이트)
+    @Column(name = "previous_week_view_count", nullable = false)
+    @Builder.Default
+    private Long previousWeekViewCount = 0L;
 
     // 마지막 조회수 리셋 날짜 (월요일 자정)
     @Column(name = "last_view_reset_date")
@@ -130,13 +135,25 @@ public class Project extends BaseEntity {
         this.requirements.clear();
     }
 
+    /**
+     * 조회수 증가 - 동시성 이슈로 인해 직접 호출하지 말고
+     * ProjectRepository.incrementViewCount()를 사용할 것
+     */
+    @Deprecated
     public void incrementViewCount() {
         this.totalViewCount++;
         this.weeklyViewCount++;
     }
 
-    // 주간 조회수 리셋 (매주 월요일 자정에 실행)
+    /**
+     * 주간 조회수 리셋 (매주 월요일 자정에 실행)
+     * weeklyViewCount → previousWeekViewCount 이동 후 리셋
+     * 동시성 이슈로 인해 직접 호출하지 말고
+     * ProjectRepository.rotateWeeklyViewCount()를 사용할 것
+     */
+    @Deprecated
     public void resetWeeklyViewCount(LocalDate resetDate) {
+        this.previousWeekViewCount = this.weeklyViewCount;
         this.weeklyViewCount = 0L;
         this.lastViewResetDate = resetDate;
     }
