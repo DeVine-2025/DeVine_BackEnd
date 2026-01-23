@@ -121,6 +121,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
         List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
         List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
 
