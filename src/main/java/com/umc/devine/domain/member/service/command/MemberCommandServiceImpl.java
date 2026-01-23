@@ -9,6 +9,12 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.ContactRepository;
+import com.umc.devine.domain.techstack.converter.TechstackConverter;
+import com.umc.devine.domain.techstack.dto.TechstackResDTO;
+import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
+import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
+import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -24,6 +30,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final MemberCategoryRepository memberCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final ContactRepository contactRepository;
+    private final TechstackRepository techstackRepository;
+    private final DevTechstackRepository devTechstackRepository;
 
     @Override
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
@@ -50,5 +58,16 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 memberCategoryRepository.findAllByMember(member),
                 contactRepository.findAllByMember(member)
         );
+    }
+
+    @Override
+    public TechstackResDTO.DevTechstackListDTO addMemberTechstacks(Member member, MemberReqDTO.AddTechstackDTO dto) {
+        List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
+
+        devTechstackRepository.saveAll(
+                TechstackConverter.toDevTechstacks(member, techstacks, TechstackSource.MANUAL)
+        );
+
+        return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMember(member));
     }
 }

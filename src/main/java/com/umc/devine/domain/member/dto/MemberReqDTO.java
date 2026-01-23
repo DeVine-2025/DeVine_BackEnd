@@ -23,6 +23,12 @@ public class MemberReqDTO {
             @Schema(description = "개발자 검색 노출 공개", nullable = true) Boolean disclosure
             ) {}
 
+    @Builder
+    public record AddTechstackDTO(
+            @Schema(description = "추가할 기술 스택 ID 목록", required = true)
+            Long[] techstackIds
+    ) {}
+
     @Schema(description = "개발자 검색 요청")
     public record SearchDeveloperDTO(
             @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)

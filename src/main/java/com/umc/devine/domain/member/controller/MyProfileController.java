@@ -62,7 +62,20 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, memberQueryService.findMemberTechstacks(member));
     }
     
-    // TODO : 내 보유 기술 수정
+    // 내 보유 기술 추가
+    @Override
+    @PostMapping("/techstacks")
+    public ApiResponse<TechstackResDTO.DevTechstackListDTO> addMyTechstacks(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestBody @Valid MemberReqDTO.AddTechstackDTO dto
+    ) {
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.CREATED_TECHSTACK;
+
+        return ApiResponse.onSuccess(code, memberCommandService.addMemberTechstacks(member, dto));
+    }
+
+    // TODO : 내 보유 기술 삭제
 
     // 내 프로젝트 조회
     @Override

@@ -53,12 +53,27 @@ public class TechstackConverter {
     }
 
     public static TechstackResDTO.DevTechstackListDTO toDevTechstackListDTO(List<DevTechstack> devTechstacks) {
-        List<TechstackResDTO.DevTechstackItemDTO> itemDTOs = devTechstacks.stream()
-                .map(TechstackConverter::toDevTechstackItemDTO)
-                .collect(Collectors.toList());
+            List<TechstackResDTO.DevTechstackItemDTO> itemDTOs = devTechstacks.stream()
+                            .map(TechstackConverter::toDevTechstackItemDTO)
+                            .collect(Collectors.toList());
 
-        return TechstackResDTO.DevTechstackListDTO.builder()
-                .techstacks(itemDTOs)
+            return TechstackResDTO.DevTechstackListDTO.builder()
+                            .techstacks(itemDTOs)
+                            .build();
+    }
+    
+    public static DevTechstack toDevTechstack(Member member, Techstack techstack, TechstackSource source) {
+        return DevTechstack.builder()
+                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
+                .member(member)
+                .techstack(techstack)
+                .source(source)
                 .build();
+    }
+
+    public static List<DevTechstack> toDevTechstacks(Member member, List<Techstack> techstacks, TechstackSource source) {
+        return techstacks.stream()
+                .map(techstack -> toDevTechstack(member, techstack, source))
+                .collect(Collectors.toList());
     }
 }
