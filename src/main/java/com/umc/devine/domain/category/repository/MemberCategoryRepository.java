@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface MemberCategoryRepository extends JpaRepository<MemberCategory, Long> {
     List<MemberCategory> findAllByMember(Member member);
+    void deleteAllByMember(Member member);
 }

@@ -40,15 +40,15 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 프로필 수정
     @Override
     @PatchMapping("/")
-    public ApiResponse<MemberResDTO.MemberDetailDTO> patchMember(
+    public ApiResponse<MemberResDTO.MemberProfileDTO> patchMember(
+            @AuthenticationPrincipal ClerkPrincipal principal,
             @RequestBody @Valid MemberReqDTO.UpdateMemberDTO dto
     ){
-        MemberSuccessCode code = MemberSuccessCode.UPDATED;
 
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
 
-        return ApiResponse.onSuccess(code, memberCommandService.updateMember(memberId, dto));
+        return ApiResponse.onSuccess(code, memberCommandService.updateMember(member, dto));
     }
 
     // TODO : 내 보유 기술 조회

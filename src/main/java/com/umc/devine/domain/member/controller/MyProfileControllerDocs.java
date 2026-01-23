@@ -34,7 +34,8 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.MemberDetailDTO> patchMember(
+    ApiResponse<MemberResDTO.MemberProfileDTO> patchMember(
+            @AuthenticationPrincipal ClerkPrincipal principal,
             @Valid @RequestBody MemberReqDTO.UpdateMemberDTO dto
     );
 

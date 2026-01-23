@@ -1,10 +1,12 @@
 package com.umc.devine.domain.member.dto;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
@@ -12,10 +14,14 @@ public class MemberReqDTO {
     @Builder
     public record UpdateMemberDTO(
             @Schema(description = "닉네임", nullable = true, example = "devine") String nickname,
-            @Schema(description = "프로필 이미지 url", nullable = true, example = "https://devine.com/image.jpg") String profileImageUrl,
+            @Schema(description = "이미지 url", nullable = true, example = "https://devine.com/image.jpg") String imageUrl,
             @Schema(description = "주소", nullable = true, example = "서울 구로구") String address,
-            @Schema(description = "자기소개", nullable = true, example = "자기 소개 내용입니다.") String body
-    ) {}
+            @Schema(description = "자기소개", nullable = true, example = "자기 소개 내용입니다.") String body,
+            @Schema(description = "도메인", nullable = true) CategoryGenre[] domains,
+            @Schema(description = "연락처", nullable = true) @Valid MemberResDTO.ContactDTO[] contacts,
+            @Schema(description = "메인권한", nullable = true) MemberMainType mainType,
+            @Schema(description = "개발자 검색 노출 공개", nullable = true) Boolean disclosure
+            ) {}
 
     @Schema(description = "개발자 검색 요청")
     public record SearchDeveloperDTO(
