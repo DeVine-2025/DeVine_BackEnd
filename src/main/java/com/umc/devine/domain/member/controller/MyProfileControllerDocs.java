@@ -84,7 +84,7 @@ public interface MyProfileControllerDocs {
     })
     ApiResponse<MemberResDTO.ContributionListDTO> getContribution();
 
-    @Operation(summary = "내 프로젝트 조회 API", description = "내 프로젝트 목록을 조회하는 API입니다. 현재는 하드코딩된 ID(1L)를 사용합니다.")
+    @Operation(summary = "내 프로젝트 조회 API", description = "내 프로젝트 목록을 조회하는 API입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
@@ -92,7 +92,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<ProjectResDTO.ProjectListDTO> getProjects();
+    ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@AuthenticationPrincipal ClerkPrincipal principal);
 
     @Operation(summary = "내 리포트 조회 API", description = "내가 가진 개발 리포트 목록을 조회하는 API입니다. 현재는 하드코딩된 ID(1L)를 사용합니다.")
     @ApiResponses({

@@ -88,18 +88,6 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, memberCommandService.removeMemberTechstacks(member, dto));
     }
 
-    // 내 프로젝트 조회
-    @Override
-    @GetMapping("/projects")
-    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects() {
-        MemberSuccessCode code = MemberSuccessCode.FOUND_PROJECT;
-
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 3L;
-
-        return ApiResponse.onSuccess(code, memberQueryService.findMyProjects(memberId));
-    }
-
     // 내 깃허브 기록
     @Override
     @GetMapping("/contributions")
@@ -111,7 +99,17 @@ public class MyProfileController implements MyProfileControllerDocs {
 
         return ApiResponse.onSuccess(code, memberQueryService.findContributionsById(memberId));
     }
-    
+
+    // 내 프로젝트 조회
+    @Override
+    @GetMapping("/projects")
+    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@AuthenticationPrincipal ClerkPrincipal principal){
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findMyProjects(member));
+    }
+
     // 내 리포트 조회
     @Override
     @GetMapping("/reports")

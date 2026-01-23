@@ -76,10 +76,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public ProjectResDTO.ProjectListDTO findMyProjects(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public ProjectResDTO.ProjectListDTO findMyProjects(Member member) {
         List<Project> projects = projectRepository.findByMember(member);
 
         List<ProjectResDTO.ProjectDetailDTO> projectList = projects.stream().map(project -> {

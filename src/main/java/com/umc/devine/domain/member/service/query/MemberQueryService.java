@@ -12,7 +12,7 @@ public interface MemberQueryService {
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
     MemberResDTO.UserProfileDTO findMemberByNickname(String nickname);
-    ProjectResDTO.ProjectListDTO findMyProjects(Long memberId);
+    ProjectResDTO.ProjectListDTO findMyProjects(Member member);
     MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname);
     DevReportResDTO.ReportListDTO findMyReports(Long memberId);
     DevReportResDTO.ReportListDTO findReportsByNickname(String nickname);
