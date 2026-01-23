@@ -1,15 +1,19 @@
 package com.umc.devine.domain.member.controller;
 
+import com.umc.devine.domain.auth.service.AuthHelper;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.ClerkPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -20,17 +24,17 @@ import org.springframework.web.bind.annotation.*;
 public class MyProfileController implements MyProfileControllerDocs {
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
+    private final AuthHelper authHelper;
 
     // 내 프로필 조회
     @Override
     @GetMapping("/")
-    public ApiResponse<MemberResDTO.MemberDetailDTO> getMember(){
+    public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@AuthenticationPrincipal ClerkPrincipal principal){
+
+        Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.FOUND;
 
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        return ApiResponse.onSuccess(code, memberQueryService.findMemberById(memberId));
+        return ApiResponse.onSuccess(code, memberQueryService.findMemberProfile(member));
     }
 
     // 내 프로필 수정

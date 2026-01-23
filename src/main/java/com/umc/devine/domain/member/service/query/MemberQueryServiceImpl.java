@@ -1,13 +1,17 @@
 package com.umc.devine.domain.member.service.query;
 
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
+import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.ProjectConverter;
@@ -43,12 +47,15 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final DevReportRepository devReportRepository;
     private final ReportTechstackRepository reportTechstackRepository;
+    private final MemberCategoryRepository memberCategoryRepository;
+    private final ContactRepository contactRepository;
 
     @Override
-    public MemberResDTO.MemberDetailDTO findMemberById(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-        return MemberConverter.toMemberDetailDTO(member);
+    public MemberResDTO.MemberProfileDTO findMemberProfile(Member member) {
+        List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMember(member);
+        List<Contact> contacts = contactRepository.findAllByMember(member);
+
+        return MemberConverter.toMemberProfileDTO(member, memberCategories, contacts);
     }
 
     @Override

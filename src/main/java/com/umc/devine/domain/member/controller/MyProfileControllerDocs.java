@@ -5,10 +5,12 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.ClerkPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Member", description = "회원 관련 API")
@@ -22,7 +24,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.MemberDetailDTO> getMember();
+    ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@AuthenticationPrincipal ClerkPrincipal principal);
 
     @Operation(summary = "내 프로필 수정 API", description = "내 프로필 정보를 수정하는 API입니다. 현재는 하드코딩된 ID(1L)를 사용하며, 닉네임, 프로필 이미지 URL, 주소, 자기소개를 수정할 수 있습니다.")
     @ApiResponses({

@@ -1,5 +1,7 @@
 package com.umc.devine.domain.member.dto;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import lombok.Builder;
@@ -8,6 +10,7 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 public class MemberResDTO {
+
     @Builder
     public record MemberDetailDTO(
             String name,
@@ -15,11 +18,26 @@ public class MemberResDTO {
             String address,
             Boolean disclosure,
             MemberMainType mainType,
-            String image,
+            String imageUrl,
             String body,
             MemberStatus used,
             LocalDateTime createdAt
     ){}
+
+    @Builder
+    public record ContactDTO(
+            ContactType type,
+            String value,
+            String link
+    ){}
+
+    @Builder
+    public record MemberProfileDTO(
+            MemberDetailDTO member,
+            List<CategoryGenre> domains,
+            List<ContactDTO> contacts
+    ){}
+
 
     @Builder
     public record UserProfileDTO(
