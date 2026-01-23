@@ -12,6 +12,9 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
+
+import java.util.List;
+
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
@@ -48,7 +51,18 @@ public class MemberController implements MemberControllerDocs {
         return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(member, dto));
     }
 
-    // TODO : 나에게 맞는 개발자 추천 (프리뷰)
+    // 나에게 맞는 개발자 추천 (프리뷰)
+    @Override
+    @GetMapping("/recommend/preview")
+    public ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestParam(defaultValue = "4") int limit
+    ) {
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+
+        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopersPreview(member, limit));
+    }
 
     // 프로필 수정
     @Override

@@ -7,6 +7,8 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
+
+import java.util.List;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
@@ -35,7 +37,16 @@ public interface MemberControllerDocs {
             @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
     );
 
-    // TODO : 나에게 맞는 개발자 추천 (프리뷰)
+    @Operation(summary = "개발자 추천 프리뷰 API", description = "나에게 맞는 개발자 추천 프리뷰입니다. limit 파라미터로 조회할 개수를 지정할 수 있습니다. (기본값: 4)")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다.")
+    })
+    ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            int limit
+    );
 
     @Operation(summary = "개발자 검색 API (페이지네이션 포함)", description = "조건에 따라 개발자를 검색하는 API입니다. category, techGenre, techstackName 파라미터로 필터링할 수 있습니다. 모든 파라미터는 선택적이며, 지정하지 않으면 해당 조건은 무시됩니다.")
     @ApiResponses({

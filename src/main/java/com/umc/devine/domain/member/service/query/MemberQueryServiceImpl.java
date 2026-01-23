@@ -192,6 +192,23 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         return PagedResponse.of(developerPage, developerDTOs);
     }
 
+
+    @Override
+    public List<MemberResDTO.DeveloperDTO> findAllDevelopersPreview(Member member, int limit) {
+        // TODO: member를 활용한 추천 로직 구현
+        List<Member> developers = memberRepository.findAllByMainType(
+                MemberMainType.DEVELOPER,
+                org.springframework.data.domain.PageRequest.of(0, limit)
+        );
+
+        return developers.stream()
+                .map(developer -> {
+                    List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(developer);
+                    return MemberConverter.toDeveloperDTO(developer, devTechstacks);
+                })
+                .collect(Collectors.toList());
+    }
+
     @Override
     public PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO request) {
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(

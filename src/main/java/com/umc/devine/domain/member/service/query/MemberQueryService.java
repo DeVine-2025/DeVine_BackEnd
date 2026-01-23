@@ -8,6 +8,8 @@ import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.dto.PagedResponse;
 
+import java.util.List;
+
 public interface MemberQueryService {
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
@@ -19,5 +21,6 @@ public interface MemberQueryService {
     MemberResDTO.ContributionListDTO findContributionsById(Long memberId);
     MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname);
     PagedResponse<MemberResDTO.DeveloperDTO> findAllDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto);
+    List<MemberResDTO.DeveloperDTO> findAllDevelopersPreview(Member member, int limit);
     PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO dto);
 }

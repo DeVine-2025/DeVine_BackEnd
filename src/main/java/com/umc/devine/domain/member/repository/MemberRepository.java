@@ -35,4 +35,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     Optional<Member> findByClerkId(String clerkId);
     boolean existsByClerkId(String clerkId);
+
+    List<Member> findAllByMainType(MemberMainType mainType, Pageable pageable);
 }
