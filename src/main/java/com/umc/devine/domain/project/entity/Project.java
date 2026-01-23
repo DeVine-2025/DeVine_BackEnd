@@ -134,37 +134,4 @@ public class Project extends BaseEntity {
     public void clearRequirements() {
         this.requirements.clear();
     }
-
-    /**
-     * 조회수 증가 - 동시성 이슈로 인해 직접 호출하지 말고
-     * ProjectRepository.incrementViewCount()를 사용할 것
-     */
-    @Deprecated
-    public void incrementViewCount() {
-        this.totalViewCount++;
-        this.weeklyViewCount++;
-    }
-
-    /**
-     * 주간 조회수 리셋 (매주 월요일 자정에 실행)
-     * weeklyViewCount → previousWeekViewCount 이동 후 리셋
-     * 동시성 이슈로 인해 직접 호출하지 말고
-     * ProjectRepository.rotateWeeklyViewCount()를 사용할 것
-     */
-    @Deprecated
-    public void resetWeeklyViewCount(LocalDate resetDate) {
-        this.previousWeekViewCount = this.weeklyViewCount;
-        this.weeklyViewCount = 0L;
-        this.lastViewResetDate = resetDate;
-    }
-
-    /**
-     * 주간 조회수 리셋이 필요한지 확인
-     * @param currentMonday 현재 주의 월요일 날짜
-     * @return 리셋 필요 여부
-     */
-    public boolean needsWeeklyReset(LocalDate currentMonday) {
-        // lastViewResetDate가 null이거나, 현재 주의 월요일보다 이전이면 리셋 필요
-        return lastViewResetDate == null || lastViewResetDate.isBefore(currentMonday);
-    }
 }
