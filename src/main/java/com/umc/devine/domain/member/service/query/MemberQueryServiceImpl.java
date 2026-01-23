@@ -20,9 +20,9 @@ import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.techstack.converter.DevReportConverter;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
-import com.umc.devine.domain.techstack.dto.ReportTechStackResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.DevReport;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
@@ -97,36 +97,18 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public DevReportResDTO.ReportListDTO findMyReports(Long memberId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public DevReportResDTO.ReportListDTO findMyReports(Member member) {
         List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
         List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
 
-        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream().map(report -> {
-            List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
+                .map(report -> {
+                    List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+                    return DevReportConverter.toReportDTO(report, reportTechstacks);
+                })
+                .collect(Collectors.toList());
 
-            List<ReportTechStackResDTO.ReportTechstackDTO> techstackDTOs = reportTechstacks.stream()
-                    .map(rt -> ReportTechStackResDTO.ReportTechstackDTO.builder()
-                            .techstackName(rt.getTechstack().getName().toString())
-                            .techGenre(rt.getTechstack().getGenre().toString())
-                            .rate(rt.getRate())
-                            .build())
-                    .collect(Collectors.toList());
-
-            return DevReportResDTO.ReportDTO.builder()
-                    .reportId(report.getId())
-                    .gitUrl(report.getGitRepoUrl().getGitUrl())
-                    .content(report.getContent())
-                    .techstacks(techstackDTOs)
-                    .createdAt(report.getCreatedAt())
-                    .build();
-        }).collect(Collectors.toList());
-
-        return DevReportResDTO.ReportListDTO.builder()
-                .reports(reportDTOs)
-                .build();
+        return DevReportConverter.toReportListDTO(reportDTOs);
     }
 
     @Override
@@ -137,29 +119,14 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
         List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
 
-        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream().map(report -> {
-            List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
+                .map(report -> {
+                    List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+                    return DevReportConverter.toReportDTO(report, reportTechstacks);
+                })
+                .collect(Collectors.toList());
 
-            List<ReportTechStackResDTO.ReportTechstackDTO> techstackDTOs = reportTechstacks.stream()
-                    .map(rt -> ReportTechStackResDTO.ReportTechstackDTO.builder()
-                            .techstackName(rt.getTechstack().getName().toString())
-                            .techGenre(rt.getTechstack().getGenre().toString())
-                            .rate(rt.getRate())
-                            .build())
-                    .collect(Collectors.toList());
-
-            return DevReportResDTO.ReportDTO.builder()
-                    .reportId(report.getId())
-                    .gitUrl(report.getGitRepoUrl().getGitUrl())
-                    .content(report.getContent())
-                    .techstacks(techstackDTOs)
-                    .createdAt(report.getCreatedAt())
-                    .build();
-        }).collect(Collectors.toList());
-
-        return DevReportResDTO.ReportListDTO.builder()
-                .reports(reportDTOs)
-                .build();
+        return DevReportConverter.toReportListDTO(reportDTOs);
     }
 
     @Override

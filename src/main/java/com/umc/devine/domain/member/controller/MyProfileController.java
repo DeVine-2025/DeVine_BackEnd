@@ -113,12 +113,10 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 리포트 조회
     @Override
     @GetMapping("/reports")
-    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports() {
-        MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
+    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@AuthenticationPrincipal ClerkPrincipal principal) {
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
 
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        return ApiResponse.onSuccess(code, memberQueryService.findMyReports(memberId));
+        return ApiResponse.onSuccess(code, memberQueryService.findMyReports(member));
     }
 }
