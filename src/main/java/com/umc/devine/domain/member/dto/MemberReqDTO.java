@@ -4,6 +4,7 @@ import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -27,6 +28,14 @@ public class MemberReqDTO {
     public record AddTechstackDTO(
             @Schema(description = "추가할 기술 스택 ID 목록", required = true)
             Long[] techstackIds
+    ) {}
+
+    @Builder
+    public record RemoveTechstackDTO(
+            @Schema(description = "삭제할 기술 스택 ID 목록", required = true)
+            Long[] techstackIds,
+            @Schema(description = "삭제할 기술 종류", required = false)
+            TechstackSource source
     ) {}
 
     @Schema(description = "개발자 검색 요청")

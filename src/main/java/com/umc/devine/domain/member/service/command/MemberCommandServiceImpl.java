@@ -12,6 +12,7 @@ import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
@@ -69,5 +70,20 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         );
 
         return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMember(member));
+    }
+
+    @Override
+    public TechstackResDTO.DevTechstackListDTO removeMemberTechstacks(Member member, MemberReqDTO.RemoveTechstackDTO dto) {
+        List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
+
+        List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
+
+        List<DevTechstack> deletedTechstacks = targetTechstacks.stream()
+                .filter(dt -> dto.source() == null || dt.getSource() == dto.source())
+                .toList();
+
+        devTechstackRepository.deleteAll(deletedTechstacks);
+
+        return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
     }
 }

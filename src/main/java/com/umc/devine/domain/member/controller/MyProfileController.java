@@ -75,7 +75,18 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, memberCommandService.addMemberTechstacks(member, dto));
     }
 
-    // TODO : 내 보유 기술 삭제
+    // 내 보유 기술 삭제
+    @Override
+    @DeleteMapping("/techstacks")
+    public ApiResponse<TechstackResDTO.DevTechstackListDTO> removeMyTechstacks(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestBody @Valid MemberReqDTO.RemoveTechstackDTO dto
+    ) {
+        Member member = authHelper.getMember(principal);
+        MemberSuccessCode code = MemberSuccessCode.DELETED_TECHSTACK;
+
+        return ApiResponse.onSuccess(code, memberCommandService.removeMemberTechstacks(member, dto));
+    }
 
     // 내 프로젝트 조회
     @Override

@@ -9,6 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MemberSuccessCode implements BaseSuccessCode {
 
+    //FOUND
     FOUND(HttpStatus.OK,
             "MEMBER200_1",
             "성공적으로 사용자를 조회했습니다."),
@@ -27,6 +28,10 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     FOUND_TECHSTACK(HttpStatus.OK,
             "MEMBER200_6",
             "성공적으로 보유 기술을 조회했습니다."),
+    DELETED_TECHSTACK(HttpStatus.OK,
+            "MEMBER200_7",
+            "성공적으로 보유 기술을 삭제했습니다."),
+    // CREATED
     CREATED(HttpStatus.CREATED,
             "MEMBER201_1",
             "성공적으로 사용자를 생성했습니다."),
