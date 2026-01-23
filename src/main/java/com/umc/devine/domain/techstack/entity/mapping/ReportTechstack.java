@@ -25,10 +25,10 @@ public class ReportTechstack {
 
     @MapsId("techstackId")
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "teckstack_id")
+    @JoinColumn(name = "techstack_id")
     private Techstack techstack;
 
-    @Column(name = "report_teckstack_rate", nullable = false)
+    @Column(name = "report_techstack_rate", nullable = false)
     private Integer rate;
 
     @Embeddable

@@ -13,6 +13,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long> {
+
     Optional<Member> findByNickname(String nickname);
     boolean existsByNickname(String nickname);
     List<Member> findAllByMainType(MemberMainType mainType);
@@ -29,4 +30,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
             @Param("category") CategoryGenre category,
             @Param("techGenre") TechGenre techGenre,
             @Param("techstackName") TechName techstackName);
+    Optional<Member> findByClerkId(String clerkId);
+    boolean existsByClerkId(String clerkId);
 }
