@@ -27,10 +27,19 @@ public class WeeklyViewCountResetScheduler {
     @Scheduled(cron = "1 0 0 * * MON", zone = "Asia/Seoul")
     @Transactional
     public void rotateWeeklyViewCount() {
-        LocalDate currentMonday = LocalDate.now()
-                .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+        log.info("[WeeklyViewCountResetScheduler] 주간 조회수 리셋 스케줄러 시작");
 
-        // 원자적 UPDATE: weeklyViewCount → previousWeekViewCount, weeklyViewCount = 0
-        int updatedCount = projectRepository.rotateWeeklyViewCount(currentMonday);
+        try {
+            LocalDate currentMonday = LocalDate.now()
+                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY));
+
+            // 원자적 UPDATE: weeklyViewCount → previousWeekViewCount, weeklyViewCount = 0
+            int updatedCount = projectRepository.rotateWeeklyViewCount(currentMonday);
+
+            log.info("[WeeklyViewCountResetScheduler] 주간 조회수 리셋 완료 - 기준일: {}, 업데이트된 프로젝트 수: {}",
+                    currentMonday, updatedCount);
+        } catch (Exception e) {
+            log.error("[WeeklyViewCountResetScheduler] 주간 조회수 리셋 실패", e);
+        }
     }
 }
