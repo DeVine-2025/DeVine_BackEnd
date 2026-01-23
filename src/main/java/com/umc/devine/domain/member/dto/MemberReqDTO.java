@@ -35,6 +35,7 @@ public class MemberReqDTO {
     @Builder
     public record RemoveTechstackDTO(
             @Schema(description = "삭제할 기술 스택 ID 목록", required = true)
+            @NotEmpty(message = "기술 스택 ID 목록은 필수입니다.")
             Long[] techstackIds,
             @Schema(description = "삭제할 기술 종류", required = false)
             TechstackSource source

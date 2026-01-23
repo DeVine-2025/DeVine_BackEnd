@@ -89,6 +89,10 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public TechstackResDTO.DevTechstackListDTO removeMemberTechstacks(Member member, MemberReqDTO.RemoveTechstackDTO dto) {
         List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
 
+        if (techstacks.size() != dto.techstackIds().length) {
+            throw new TechstackException(TechstackErrorCode.NOT_FOUND);
+        }
+
         List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
 
         List<DevTechstack> deletedTechstacks = targetTechstacks.stream()
