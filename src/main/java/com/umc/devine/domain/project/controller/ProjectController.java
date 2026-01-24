@@ -91,16 +91,31 @@ public class ProjectController implements ProjectControllerDocs {
         return ApiResponse.onSuccess(code, projectQueryService.searchProjects(request));
     }
 
-    // 통합 추천 프로젝트 조회 (메인 하단 6개, 탭 상단 4개, 추천탭 페이징+필터링)
-    @PostMapping("/recommend")
-    public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
-            @RequestBody @Valid ProjectReqDTO.RecommendProjectsReq request
+    // 추천 프로젝트 미리보기 (메인 하단 / 프로젝트·개발자 보기 탭 상단)
+    @Override
+    @GetMapping("/recommended/preview")
+    public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjectsPreview(
+            @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
         // TODO: 토큰 방식으로 변경
         Long memberId = 1L;
 
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjects(memberId, request);
+        ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjectsPreview(memberId, request);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 추천 프로젝트 페이지 (추천 프로젝트 탭용 - 필터링 + 페이징)
+    @Override
+    @GetMapping("/recommended")
+    public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
+            @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsPageReq request
+    ) {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ProjectSuccessCode code = ProjectSuccessCode.FOUND;
+        ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjectsPage(memberId, request);
         return ApiResponse.onSuccess(code, response);
     }
 }
