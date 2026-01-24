@@ -19,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
@@ -42,62 +40,20 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        project.incrementViewCount();
+        // 원자적 조회수 증가 (동시성 안전)
+        projectRepository.incrementViewCount(projectId);
 
         return ProjectConverter.toUpdateProjectRes(project, projectRequirementTechstackRepository);
     }
 
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
-        // 지난 주 월요일 00:00:00 (조회수 집계 기준 시작)
-        LocalDateTime lastMonday = LocalDateTime.now()
-                .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-
-        // 지난 주 일요일 23:59:59 (조회수 집계 기준 종료)
-        LocalDateTime lastSunday = lastMonday
-                .plusDays(6)
-                .withHour(23)
-                .withMinute(59)
-                .withSecond(59)
-                .withNano(999999999);
-
-        // 현재 요일 확인
-        DayOfWeek today = LocalDate.now().getDayOfWeek();
-
-        LocalDateTime startOfWeek;
-        LocalDateTime endOfWeek;
-
-        if (today == DayOfWeek.MONDAY) {
-            // 월요일: 이번 주 월요일~일요일 생성된 프로젝트
-            startOfWeek = LocalDateTime.now()
-                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                    .withHour(0)
-                    .withMinute(0)
-                    .withSecond(0)
-                    .withNano(0);
-
-            endOfWeek = startOfWeek
-                    .plusDays(6)
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999999999);
-        } else {
-            // 화~일요일: 지난 주 월요일~일요일 생성된 프로젝트
-            startOfWeek = lastMonday;
-            endOfWeek = lastSunday;
-        }
-
-        // 해당 기간에 생성된 프로젝트 중 주간 조회수 높은 순으로 조회
-        List<Project> projects = projectRepository.findWeeklyBestProjects(
-                ProjectStatus.DELETED,
-                startOfWeek,
-                endOfWeek
-        );
+        // 전체 프로젝트 중 주간 조회수 높은 순으로 조회
+        // - 월요일 00:00:01에 스케줄러가 weeklyViewCount → previousWeekViewCount 이동
+        // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
+        // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
+        boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
+        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
         // 최대 4개만 반환
         List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
