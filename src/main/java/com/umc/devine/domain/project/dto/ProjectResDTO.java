@@ -46,11 +46,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 마감일", example = "2026-01-25")
             LocalDate recruitmentDeadline,
 
-            @Schema(description = "프로젝트 시작 예정일", example = "2026-02-01")
-            LocalDate startDate,
-
-            @Schema(description = "프로젝트 종료 예정일", example = "2026-04-30")
-            LocalDate eta,
+            @Schema(description = "모집 마감까지 남은 일수 (음수면 마감, 0이면 오늘 마감)", example = "5")
+            Long daysUntilDeadline,
 
             @Schema(description = "프로젝트 제목", example = "AI 기반 협업 플랫폼")
             String title,
@@ -106,11 +103,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 마감일", example = "2026-01-25")
             LocalDate recruitmentDeadline,
 
-            @Schema(description = "프로젝트 시작 예정일", example = "2026-02-01")
-            LocalDate startDate,
-
-            @Schema(description = "프로젝트 종료 예정일", example = "2026-04-30")
-            LocalDate eta,
+            @Schema(description = "모집 마감까지 남은 일수 (음수면 마감, 0이면 오늘 마감)", example = "5")
+            Long daysUntilDeadline,
 
             @Schema(description = "프로젝트 제목", example = "수정된 AI 협업 플랫폼")
             String title,
@@ -190,6 +184,9 @@ public class ProjectResDTO {
             @Schema(description = "모집 마감일", example = "2026-01-25")
             LocalDate recruitmentDeadline,
 
+            @Schema(description = "모집 마감까지 남은 일수 (음수면 마감, 0이면 오늘 마감)", example = "5")
+            Long daysUntilDeadline,
+
             @Schema(description = "프로젝트 상태")
             ProjectStatus status,
 
@@ -234,6 +231,9 @@ public class ProjectResDTO {
 
             @Schema(description = "모집 마감일", example = "2026-01-25")
             LocalDate recruitmentDeadline,
+
+            @Schema(description = "모집 마감까지 남은 일수 (음수면 마감, 0이면 오늘 마감)", example = "5")
+            Long daysUntilDeadline,
 
             @Schema(description = "프로젝트 상태")
             ProjectStatus status,

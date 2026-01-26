@@ -36,13 +36,6 @@ public class Project extends BaseEntity {
     @Column(name = "project_status", nullable = false)
     private ProjectStatus status;
 
-    @Column(name = "project_start_date", nullable = false)
-    private LocalDate startDate;
-
-    @Column(name = "project_eta")
-    @Builder.Default
-    private LocalDate eta = null;
-
     @Enumerated(EnumType.STRING)
     @Column(name = "project_field", nullable = false, length = 20)
     private ProjectField projectField;
@@ -73,10 +66,15 @@ public class Project extends BaseEntity {
     @Builder.Default
     private Long totalViewCount = 0L;
 
-    // 이번 주 조회수 (매주 월요일 자정에 리셋)
+    // 이번 주 조회수 (집계 중, 매주 월요일에 previousWeekViewCount로 이동 후 리셋)
     @Column(name = "weekly_view_count", nullable = false)
     @Builder.Default
     private Long weeklyViewCount = 0L;
+
+    // 지난 주 조회수 (표시용, 매주 월요일에 weeklyViewCount 값으로 업데이트)
+    @Column(name = "previous_week_view_count", nullable = false)
+    @Builder.Default
+    private Long previousWeekViewCount = 0L;
 
     // 마지막 조회수 리셋 날짜 (월요일 자정)
     @Column(name = "last_view_reset_date")
@@ -99,16 +97,13 @@ public class Project extends BaseEntity {
                                   ProjectMode mode,
                                   Integer durationMonths,
                                   String location,
-                                  LocalDate recruitmentDeadline,
-                                  LocalDate startDate) {
+                                  LocalDate recruitmentDeadline) {
         this.projectField = projectField;
         this.category = category;
         this.mode = mode;
         this.durationMonths = durationMonths;
         this.location = location;
         this.recruitmentDeadline = recruitmentDeadline;
-        this.startDate = startDate;
-        this.eta = startDate.plusMonths(durationMonths);
     }
 
     public void updateContent(String title, String content) {
@@ -138,27 +133,5 @@ public class Project extends BaseEntity {
 
     public void clearRequirements() {
         this.requirements.clear();
-    }
-
-    public void incrementViewCount() {
-        this.totalViewCount++;
-        this.weeklyViewCount++;
-    }
-
-    // 주간 조회수 리셋 (매주 월요일 자정에 실행)
-
-    public void resetWeeklyViewCount(LocalDate resetDate) {
-        this.weeklyViewCount = 0L;
-        this.lastViewResetDate = resetDate;
-    }
-
-    /**
-     * 주간 조회수 리셋이 필요한지 확인
-     * @param currentMonday 현재 주의 월요일 날짜
-     * @return 리셋 필요 여부
-     */
-    public boolean needsWeeklyReset(LocalDate currentMonday) {
-        // lastViewResetDate가 null이거나, 현재 주의 월요일보다 이전이면 리셋 필요
-        return lastViewResetDate == null || lastViewResetDate.isBefore(currentMonday);
     }
 }

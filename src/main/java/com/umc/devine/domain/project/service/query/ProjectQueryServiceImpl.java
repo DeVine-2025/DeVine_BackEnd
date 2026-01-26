@@ -7,7 +7,6 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
-import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -20,8 +19,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.temporal.TemporalAdjusters;
 import java.util.List;
 
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
@@ -32,6 +29,8 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 @Transactional(readOnly = true)
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
+    private static final int DEFAULT_PAGE_SIZE = 4;
+
     private final ProjectRepository projectRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
@@ -41,62 +40,20 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        project.incrementViewCount();
+        // 원자적 조회수 증가 (동시성 안전)
+        projectRepository.incrementViewCount(projectId);
 
         return ProjectConverter.toUpdateProjectRes(project, projectRequirementTechstackRepository);
     }
 
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
-        // 지난 주 월요일 00:00:00 (조회수 집계 기준 시작)
-        LocalDateTime lastMonday = LocalDateTime.now()
-                .with(TemporalAdjusters.previous(DayOfWeek.MONDAY))
-                .withHour(0)
-                .withMinute(0)
-                .withSecond(0)
-                .withNano(0);
-
-        // 지난 주 일요일 23:59:59 (조회수 집계 기준 종료)
-        LocalDateTime lastSunday = lastMonday
-                .plusDays(6)
-                .withHour(23)
-                .withMinute(59)
-                .withSecond(59)
-                .withNano(999999999);
-
-        // 현재 요일 확인
-        DayOfWeek today = LocalDate.now().getDayOfWeek();
-
-        LocalDateTime startOfWeek;
-        LocalDateTime endOfWeek;
-
-        if (today == DayOfWeek.MONDAY) {
-            // 월요일: 이번 주 월요일~일요일 생성된 프로젝트
-            startOfWeek = LocalDateTime.now()
-                    .with(TemporalAdjusters.previousOrSame(DayOfWeek.MONDAY))
-                    .withHour(0)
-                    .withMinute(0)
-                    .withSecond(0)
-                    .withNano(0);
-
-            endOfWeek = startOfWeek
-                    .plusDays(6)
-                    .withHour(23)
-                    .withMinute(59)
-                    .withSecond(59)
-                    .withNano(999999999);
-        } else {
-            // 화~일요일: 지난 주 월요일~일요일 생성된 프로젝트
-            startOfWeek = lastMonday;
-            endOfWeek = lastSunday;
-        }
-
-        // 해당 기간에 생성된 프로젝트 중 주간 조회수 높은 순으로 조회
-        List<Project> projects = projectRepository.findWeeklyBestProjects(
-                ProjectStatus.DELETED,
-                startOfWeek,
-                endOfWeek
-        );
+        // 전체 프로젝트 중 주간 조회수 높은 순으로 조회
+        // - 월요일 00:00:01에 스케줄러가 weeklyViewCount → previousWeekViewCount 이동
+        // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
+        // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
+        boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
+        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
         // 최대 4개만 반환
         List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
@@ -112,7 +69,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
         int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, request.size());
+        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
 
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(request);
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
@@ -129,53 +86,38 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjects(
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPreview(
             Long memberId,
-            ProjectReqDTO.RecommendProjectsReq request
+            ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
-        if (request == null || request.mode() == null) {
-            throw new ProjectException(ProjectErrorCode.INVALID_RECOMMEND_REQUEST);
-        }
+        int limit = request.limit();
 
-        if (request.mode() == ProjectReqDTO.RecommendMode.PREVIEW) {
-            int resolvedLimit = resolvePreviewLimit(request);
-            boolean hasFilter = hasAnyRecommendFilter(request);
+        // Preview는 필터링 없이 추천 점수 기준 상위 프로젝트만 반환
+        List<Project> projects = projectRepository.findAllActiveProjects(limit);
 
-            List<Project> projects;
-            if (!hasFilter) {
-                projects = projectRepository.findAllActiveProjects(resolvedLimit);
-            } else {
-                Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
-                Pageable pageable = PageRequest.of(0, resolvedLimit);
-                Page<Project> page = projectRepository.searchRecommendedProjects(predicate, pageable);
-                projects = page.getContent();
-            }
+        List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
+                .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
+                .toList();
 
-            List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
-                    .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
-                    .toList();
+        PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
+                previewToPagedResponse(summaries, limit);
 
-            PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
-                    previewToPagedResponse(summaries, resolvedLimit);
+        return ProjectResDTO.RecommendedProjectsRes.builder()
+                .projects(paged)
+                .build();
+    }
 
-            return ProjectResDTO.RecommendedProjectsRes.builder()
-                    .projects(paged)
-                    .build();
-        }
-
-        // PAGE
-        if (request.page() == null || request.page() < 1) {
-            throw new ProjectException(ProjectErrorCode.INVALID_PAGE);
-        }
-        if (request.size() == null || request.size() < 1 || request.size() > 100) {
-            throw new ProjectException(ProjectErrorCode.INVALID_SIZE);
-        }
-
+    @Override
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
+            Long memberId,
+            ProjectReqDTO.RecommendProjectsPageReq request
+    ) {
+        // TODO: 추천 알고리즘 기반 정렬 추가
         int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, request.size());
+        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
 
-        Predicate predicate = ProjectPredicateBuilder.buildRecommendPredicate(request);
+        Predicate predicate = ProjectPredicateBuilder.buildRecommendPagePredicate(request);
         Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);
 
         List<ProjectResDTO.RecommendedProjectSummary> summaries = projectPage.getContent().stream()
@@ -187,28 +129,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         return ProjectResDTO.RecommendedProjectsRes.builder()
                 .projects(pagedData)
                 .build();
-    }
-
-    private int resolvePreviewLimit(ProjectReqDTO.RecommendProjectsReq request) {
-        // 기본값: 메인 하단 기준 6개
-        int defaultLimit = 6;
-
-        if (request.limit() == null) return defaultLimit;
-
-        int limit = request.limit();
-        // 4/6만 허용
-        if (limit != 4 && limit != 6) {
-            return defaultLimit;
-        }
-        return limit;
-    }
-
-    private boolean hasAnyRecommendFilter(ProjectReqDTO.RecommendProjectsReq request) {
-        return (request.projectFields() != null && !request.projectFields().isEmpty())
-                || (request.categoryIds() != null && !request.categoryIds().isEmpty())
-                || (request.positions() != null && !request.positions().isEmpty())
-                || (request.techStackIds() != null && !request.techStackIds().isEmpty())
-                || (request.durationRange() != null);
     }
 
     private PagedResponse<ProjectResDTO.RecommendedProjectSummary> previewToPagedResponse(
