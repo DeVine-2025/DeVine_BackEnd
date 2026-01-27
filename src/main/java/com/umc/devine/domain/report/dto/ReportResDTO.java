@@ -38,4 +38,13 @@ public class ReportResDTO {
             @Schema(description = "생성 시간")
             LocalDateTime createdAt
     ) {}
+
+    @Builder
+    public record UpdateVisibilityRes(
+            @Schema(description = "리포트 ID", example = "1")
+            Long reportId,
+
+            @Schema(description = "변경된 공개 범위", example = "PRIVATE")
+            ReportVisibility visibility
+    ) {}
 }

@@ -1,14 +1,14 @@
 package com.umc.devine.domain.report.controller;
 
+import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
+import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PathVariable;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -16,6 +16,7 @@ import org.springframework.web.bind.annotation.RestController;
 public class ReportController implements ReportControllerDocs {
 
     private final ReportQueryService reportQueryService;
+    private final ReportCommandService reportCommandService;
 
     @Override
     @GetMapping("/{gitRepoId}/main")
@@ -29,5 +30,18 @@ public class ReportController implements ReportControllerDocs {
     public ApiResponse<ReportResDTO.ReportRes> getDetailReport(@PathVariable Long gitRepoId) {
         ReportResDTO.ReportRes response = reportQueryService.getDetailReport(gitRepoId);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
+    }
+
+    @Override
+    @PatchMapping("/{reportId}/visibility")
+    public ApiResponse<ReportResDTO.UpdateVisibilityRes> updateVisibility(
+            @PathVariable Long reportId,
+            @RequestBody @Valid ReportReqDTO.UpdateVisibilityReq request
+    ) {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ReportResDTO.UpdateVisibilityRes response = reportCommandService.updateVisibility(memberId, reportId, request);
+        return ApiResponse.onSuccess(ReportSuccessCode.VISIBILITY_UPDATED, response);
     }
 }

@@ -40,4 +40,8 @@ public class DevReport extends BaseEntity {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    public void updateVisibility(ReportVisibility visibility) {
+        this.visibility = visibility;
+    }
 }

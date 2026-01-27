@@ -23,4 +23,10 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
             @Param("gitRepoId") Long gitRepoId,
             @Param("reportType") ReportType reportType
     );
+
+    @Query("SELECT r FROM DevReport r " +
+            "JOIN FETCH r.gitRepoUrl g " +
+            "JOIN FETCH g.member " +
+            "WHERE r.id = :reportId")
+    Optional<DevReport> findByIdWithMember(@Param("reportId") Long reportId);
 }

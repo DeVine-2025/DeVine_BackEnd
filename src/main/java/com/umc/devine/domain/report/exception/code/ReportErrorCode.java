@@ -10,7 +10,8 @@ import org.springframework.http.HttpStatus;
 public enum ReportErrorCode implements BaseErrorCode {
 
     REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_1", "해당 리포트를 찾을 수 없습니다."),
-    GIT_REPO_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_2", "해당 Git 저장소를 찾을 수 없습니다.");
+    GIT_REPO_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_2", "해당 Git 저장소를 찾을 수 없습니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "REPORT403_1", "해당 리포트에 대한 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

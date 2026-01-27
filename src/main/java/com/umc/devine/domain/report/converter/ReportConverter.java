@@ -17,4 +17,11 @@ public class ReportConverter {
                 .createdAt(report.getCreatedAt())
                 .build();
     }
+
+    public static ReportResDTO.UpdateVisibilityRes toUpdateVisibilityRes(DevReport report) {
+        return ReportResDTO.UpdateVisibilityRes.builder()
+                .reportId(report.getId())
+                .visibility(report.getVisibility())
+                .build();
+    }
 }
