@@ -6,10 +6,16 @@ server:
   port: 8081
 
 spring:
-
+  # PostgreSQL Configuration - Testcontainers가 자동으로 설정
+  # @ServiceConnection이 PostgreSQL 컨테이너의 동적 포트를 자동으로 연결합니다
   jpa:
     hibernate:
       ddl-auto: create-drop
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://test-issuer.local" # 실제 네트워크 호출을 방지하는 로컬 또는 테스트용 URL
 
 # Logging - 테스트 환경
 logging:
@@ -17,3 +23,7 @@ logging:
     root: INFO
     com.umc.devine: DEBUG
     org.hibernate.SQL: DEBUG
+
+clerk:
+  secret-key: "test-secret-key-for-integration-tests" # Clerk Test
+

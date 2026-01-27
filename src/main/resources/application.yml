@@ -11,11 +11,11 @@ spring:
     oauth2:
       resourceserver:
         jwt:
-          issuer-uri: ${CLERK_ISSUER_URI}
+          issuer-uri: ${CLERK_ISSUER_URI:}
 
   # PostgreSQL
   datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
+    url: jdbc:postgresql://${POSTGRES_HOST:}:${POSTGRES_PORT:}/${POSTGRES_DATABASE:}
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:}
     driver-class-name: org.postgresql.Driver
@@ -37,4 +37,4 @@ spring:
 
 # Clerk
 clerk:
-  secret-key: ${CLERK_SECRET_KEY}
+  secret-key: ${CLERK_SECRET_KEY:}
