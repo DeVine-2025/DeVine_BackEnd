@@ -22,7 +22,7 @@ public class DevReport extends BaseEntity {
     @Column(name = "dev_report_id")
     private Long id;
 
-    @OneToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "git_repo_id", nullable = false)
     private GitRepoUrl gitRepoUrl;
 
@@ -40,6 +40,9 @@ public class DevReport extends BaseEntity {
 
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
+
+    @Column(name = "error_message")
+    private String errorMessage;
 
     public void updateVisibility(ReportVisibility visibility) {
         this.visibility = visibility;
