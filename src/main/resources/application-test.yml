@@ -6,6 +6,8 @@ server:
   port: 8081
 
 spring:
+  # PostgreSQL Configuration - Testcontainers가 자동으로 설정
+  # @ServiceConnection이 PostgreSQL 컨테이너의 동적 포트를 자동으로 연결합니다
   jpa:
     hibernate:
       ddl-auto: create-drop
