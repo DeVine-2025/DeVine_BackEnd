@@ -1,9 +1,13 @@
-package com.umc.devine.domain.techstack.entity;
+package com.umc.devine.domain.report.entity;
 
 import com.umc.devine.domain.member.entity.GitRepoUrl;
+import com.umc.devine.domain.report.enums.ReportType;
+import com.umc.devine.domain.report.enums.ReportVisibility;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.time.LocalDateTime;
 
 @Entity
 @Builder
@@ -22,7 +26,18 @@ public class DevReport extends BaseEntity {
     @JoinColumn(name = "git_repo_id", nullable = false)
     private GitRepoUrl gitRepoUrl;
 
-    @Column(name = "report_content", nullable = false, length = 255)
+    @Column(name = "report_content", columnDefinition = "TEXT")
     private String content;
 
+    @Enumerated(EnumType.STRING)
+    @Column(name = "visibility", nullable = false)
+    @Builder.Default
+    private ReportVisibility visibility = ReportVisibility.PUBLIC;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "report_type", nullable = false)
+    private ReportType reportType;
+
+    @Column(name = "completed_at")
+    private LocalDateTime completedAt;
 }
