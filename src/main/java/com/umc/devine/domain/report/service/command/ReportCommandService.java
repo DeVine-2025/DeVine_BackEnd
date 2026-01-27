@@ -5,4 +5,5 @@ import com.umc.devine.domain.report.dto.ReportResDTO;
 
 public interface ReportCommandService {
     ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request);
+    ReportResDTO.CreateReportRes createReport(Long memberId, ReportReqDTO.CreateReportReq request);
 }

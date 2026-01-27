@@ -47,4 +47,19 @@ public class ReportResDTO {
             @Schema(description = "변경된 공개 범위", example = "PRIVATE")
             ReportVisibility visibility
     ) {}
+
+    @Builder
+    public record CreateReportRes(
+            @Schema(description = "메인 리포트 ID", example = "1")
+            Long mainReportId,
+
+            @Schema(description = "상세 리포트 ID", example = "2")
+            Long detailReportId,
+
+            @Schema(description = "Git 저장소 ID", example = "1")
+            Long gitRepoId,
+
+            @Schema(description = "메시지", example = "리포트 생성 요청이 접수되었습니다.")
+            String message
+    ) {}
 }

@@ -42,4 +42,14 @@ public interface ReportControllerDocs {
             @Parameter(description = "리포트 ID", required = true) @PathVariable Long reportId,
             @RequestBody @Valid ReportReqDTO.UpdateVisibilityReq request
     );
+
+    @Operation(summary = "리포트 생성 요청", description = "Git 저장소에 대한 메인/상세 리포트 생성을 요청합니다. 비동기로 처리되며 즉시 202 Accepted를 반환합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "202", description = "리포트 생성 요청 접수"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Git 저장소를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 리포트 생성이 진행 중")
+    })
+    ApiResponse<ReportResDTO.CreateReportRes> createReport(
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    );
 }

@@ -12,4 +12,11 @@ public class ReportReqDTO {
             @NotNull(message = "공개 범위는 필수입니다.")
             ReportVisibility visibility
     ) {}
+
+    @Builder
+    public record CreateReportReq(
+            @Schema(description = "Git 저장소 ID", example = "1")
+            @NotNull(message = "Git 저장소 ID는 필수입니다.")
+            Long gitRepoId
+    ) {}
 }

@@ -44,4 +44,16 @@ public class ReportController implements ReportControllerDocs {
         ReportResDTO.UpdateVisibilityRes response = reportCommandService.updateVisibility(memberId, reportId, request);
         return ApiResponse.onSuccess(ReportSuccessCode.VISIBILITY_UPDATED, response);
     }
+
+    @Override
+    @PostMapping
+    public ApiResponse<ReportResDTO.CreateReportRes> createReport(
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    ) {
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ReportResDTO.CreateReportRes response = reportCommandService.createReport(memberId, request);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_GENERATION_REQUESTED, response);
+    }
 }
