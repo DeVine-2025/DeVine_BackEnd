@@ -1,41 +1,16 @@
-# Server Configuration
+# ===========================================
+# Development Profile
+# ===========================================
+
 server:
   port: ${PORT:8080}
 
-# Spring Configuration
 spring:
-  # OAuth2 Resource Server (Clerk JWT)
-  security:
-    oauth2:
-      resourceserver:
-        jwt:
-          issuer-uri: ${CLERK_ISSUER_URI}
-
-  # PostgreSQL Configuration
-  datasource:
-    url: jdbc:postgresql://${POSTGRES_HOST}:${POSTGRES_PORT}/${POSTGRES_DATABASE}
-    username: ${POSTGRES_USER:postgres}
-    password: ${POSTGRES_PASSWORD:}
-    driver-class-name: org.postgresql.Driver
-
-  # Redis Configuration
-  data:
-    redis:
-      host: ${REDIS_HOST:localhost}
-      port: ${REDIS_PORT:6379}
-      password: ${REDIS_PASSWORD:}
-      timeout: ${REDIS_TIMEOUT:2000ms}
-
-  # JPA Configuration
   jpa:
     hibernate:
       ddl-auto: update
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
 
-# Logging Configuration
+# Logging - 개발 환경 상세 로깅
 logging:
   level:
     root: INFO
@@ -43,7 +18,3 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
     org.springframework.web: DEBUG
-
-# Clerk Configuration
-clerk:
-  secret-key: ${CLERK_SECRET_KEY}
