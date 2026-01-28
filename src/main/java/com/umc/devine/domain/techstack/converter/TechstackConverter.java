@@ -1,7 +1,10 @@
 package com.umc.devine.domain.techstack.converter;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
 
 import java.util.List;
 import java.util.stream.Collectors;
@@ -37,5 +40,40 @@ public class TechstackConverter {
         return TechstackResDTO.TechstackListDTO.builder()
                 .techstacks(categories)
                 .build();
+    }
+
+    public static TechstackResDTO.DevTechstackItemDTO toDevTechstackItemDTO(DevTechstack devTechstack) {
+        Techstack techstack = devTechstack.getTechstack();
+        return TechstackResDTO.DevTechstackItemDTO.builder()
+                .techstackId(techstack.getId())
+                .name(techstack.getName().name())
+                .genre(techstack.getGenre() != null ? techstack.getGenre().name() : null)
+                .source(devTechstack.getSource())
+                .build();
+    }
+
+    public static TechstackResDTO.DevTechstackListDTO toDevTechstackListDTO(List<DevTechstack> devTechstacks) {
+            List<TechstackResDTO.DevTechstackItemDTO> itemDTOs = devTechstacks.stream()
+                            .map(TechstackConverter::toDevTechstackItemDTO)
+                            .collect(Collectors.toList());
+
+            return TechstackResDTO.DevTechstackListDTO.builder()
+                            .techstacks(itemDTOs)
+                            .build();
+    }
+    
+    public static DevTechstack toDevTechstack(Member member, Techstack techstack, TechstackSource source) {
+        return DevTechstack.builder()
+                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
+                .member(member)
+                .techstack(techstack)
+                .source(source)
+                .build();
+    }
+
+    public static List<DevTechstack> toDevTechstacks(Member member, List<Techstack> techstacks, TechstackSource source) {
+        return techstacks.stream()
+                .map(techstack -> toDevTechstack(member, techstack, source))
+                .collect(Collectors.toList());
     }
 }

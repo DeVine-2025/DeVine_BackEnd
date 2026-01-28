@@ -24,9 +24,15 @@ public enum MemberErrorCode implements BaseErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN,
             "MEMBER403_1",
             "접근 권한이 없습니다."),
+    PROFILE_NOT_PUBLIC(HttpStatus.FORBIDDEN,
+            "MEMBER403_2",
+            "비공개 프로필입니다."),
     NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_1",
             "해당 사용자를 찾지 못했습니다."),
+    TECHSTACK_ALREADY_EXISTS(HttpStatus.CONFLICT,
+            "MEMBER409_1",
+            "이미 보유한 기술 스택입니다."),
     ;
 
     private final HttpStatus status;
