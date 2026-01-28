@@ -1,37 +1,29 @@
-# Server Configuration
+# ===========================================
+# Test Profile
+# ===========================================
+
 server:
   port: 8081
 
-# Spring Configuration
 spring:
   # PostgreSQL Configuration - Testcontainers가 자동으로 설정
   # @ServiceConnection이 PostgreSQL 컨테이너의 동적 포트를 자동으로 연결합니다
-  # datasource:
-  #   url: jdbc:postgresql://localhost:5432/testdb
-  #   username: test
-  #   password: test
-  #   driver-class-name: org.postgresql.Driver
-
-  # Redis Configuration - Testcontainers가 자동으로 설정
-  # @DynamicPropertySource가 Valkey 컨테이너의 동적 포트를 주입합니다
-  # data:
-  #   redis:
-  #     host: localhost
-  #     port: 6379
-
-  # JPA Configuration
   jpa:
     hibernate:
       ddl-auto: create-drop
-    show-sql: true
-    properties:
-      hibernate:
-        format_sql: true
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://test-issuer.local" # 실제 네트워크 호출을 방지하는 로컬 또는 테스트용 URL
 
-# Logging Configuration
+# Logging - 테스트 환경
 logging:
   level:
     root: INFO
     com.umc.devine: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.orm.jdbc.bind: trace
+
+clerk:
+  secret-key: "test-secret-key-for-integration-tests" # Clerk Test

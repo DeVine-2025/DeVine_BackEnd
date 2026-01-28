@@ -67,8 +67,8 @@ public class ProjectPredicateBuilder {
         return builder;
     }
 
-    // 통합 추천 프로젝트 조회 조건 생성
-    public static Predicate buildRecommendPredicate(ProjectReqDTO.RecommendProjectsReq req) {
+    // 추천 프로젝트 페이지 조회 조건 생성
+    public static Predicate buildRecommendPagePredicate(ProjectReqDTO.RecommendProjectsPageReq req) {
         QProject project = QProject.project;
         QProjectRequirementTechstack techstack = QProjectRequirementTechstack.projectRequirementTechstack;
 

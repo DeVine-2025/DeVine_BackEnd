@@ -82,48 +82,44 @@ public class ProjectReqDTO {
 
                         @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) DurationRange durationRange,
 
-                        @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page,
-
-                        @Schema(description = "페이지 크기", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "4", example = "4") @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.") @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.") Integer size) {
+                        @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page) {
                 public SearchProjectReq {
                         if (page == null)
                                 page = 1;
-                        if (size == null)
-                                size = 4;
                 }
         }
 
-        // 통합 추천 프로젝트 요청 DTO
+        // 추천 프로젝트 미리보기 요청 DTO (메인 하단 / 프로젝트·개발자 보기 탭 상단)
         @Builder
-        public record RecommendProjectsReq(
-                        @Schema(description = "응답 모드 (PREVIEW: limit개만 / PAGE: 페이징)", requiredMode = Schema.RequiredMode.REQUIRED, example = "PREVIEW") @NotNull(message = "mode는 필수입니다.") RecommendMode mode,
+        public record RecommendProjectsPreviewReq(
+                        @Schema(description = "반환할 프로젝트 개수 (4 또는 6만 허용, 미입력 시 기본값 6)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "6", allowableValues = {"4", "6"}) @Min(value = 4) @Max(value = 6) Integer limit) {
+                public RecommendProjectsPreviewReq {
+                        if (limit == null) {
+                                limit = 6;
+                        }
+                }
+        }
 
-                        @Schema(description = "PREVIEW일 때 반환 개수 (4 또는 6). null이면 기본값 6", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "6") Integer limit,
+        // 추천 프로젝트 페이지 요청 DTO (추천 프로젝트 탭용)
+        @Builder
+        public record RecommendProjectsPageReq(
+                        @ArraySchema(schema = @Schema(description = "프로젝트 유형 필터", implementation = ProjectField.class)) List<ProjectField> projectFields,
 
-                        @ArraySchema(schema = @Schema(description = "프로젝트 유형 필터")) List<ProjectField> projectFields,
-
-                        @ArraySchema(schema = @Schema(description = "카테고리(도메인) 필터", type = "integer", format = "int64", example = "1")) List<Long> categoryIds,
+                        @ArraySchema(schema = @Schema(description = "카테고리(도메인) 필터", type = "integer", format = "int64")) List<Long> categoryIds,
 
                         @ArraySchema(schema = @Schema(description = "포지션 필터", implementation = ProjectPart.class)) List<ProjectPart> positions,
 
-                        @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
+                        @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64")) List<Long> techStackIds,
 
-                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "ONE_TO_THREE") DurationRange durationRange,
+                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) DurationRange durationRange,
 
-                        @Schema(description = "PAGE일 때 페이지 번호 (1부터 시작). null이면 1", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "1") @ValidPage Integer page,
-
-                        @Schema(description = "PAGE일 때 페이지 크기. null이면 4", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "4") @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.") @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.") Integer size) {
-                public RecommendProjectsReq {
-                        if (page == null)
+                        @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page) {
+                public RecommendProjectsPageReq {
+                        if (page == null) {
                                 page = 1;
-                        if (size == null)
-                                size = 4;
+                        }
                 }
-        }
-
-        public enum RecommendMode {
-                PREVIEW, PAGE
         }
 }
