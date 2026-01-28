@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.fast.config;
+package com.umc.devine.infrastructure.fastapi.config;
 
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

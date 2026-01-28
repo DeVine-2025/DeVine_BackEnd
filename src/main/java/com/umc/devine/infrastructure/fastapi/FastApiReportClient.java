@@ -1,10 +1,9 @@
-package com.umc.devine.infrastructure.fast;
+package com.umc.devine.infrastructure.fastapi;
 
-import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.repository.DevReportRepository;
-import com.umc.devine.infrastructure.fast.dto.FastApiReqDto;
-import com.umc.devine.infrastructure.fast.dto.FastApiResDto;
+import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
+import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

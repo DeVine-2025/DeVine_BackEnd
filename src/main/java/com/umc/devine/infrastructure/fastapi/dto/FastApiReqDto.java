@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.fast.dto;
+package com.umc.devine.infrastructure.fastapi.dto;
 
 import com.umc.devine.domain.report.enums.ReportType;
 import lombok.Builder;

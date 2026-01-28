@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.fast.dto;
+package com.umc.devine.infrastructure.fastapi.dto;
 
 import lombok.Builder;
 
