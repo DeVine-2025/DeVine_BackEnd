@@ -16,7 +16,7 @@ import lombok.RequiredArgsConstructor;
 import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.security.web.bind.annotation.AuthenticationPrincipal;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
