@@ -45,7 +45,7 @@ public class DevReport extends BaseEntity {
     @Column(name = "completed_at")
     private LocalDateTime completedAt;
 
-    @Column(name = "error_message")
+    @Column(name = "error_message", length = 1000)
     private String errorMessage;
 
     public void updateVisibility(ReportVisibility visibility) {
