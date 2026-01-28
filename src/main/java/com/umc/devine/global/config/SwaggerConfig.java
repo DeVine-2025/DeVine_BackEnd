@@ -20,9 +20,6 @@ public class SwaggerConfig {
 
     private static final String SECURITY_SCHEME_NAME = "JWT";
 
-    @Value("${spring.profiles.active:local}")
-    private String activeProfile;
-
     @Bean
     public OpenAPI openAPI() {
         return new OpenAPI()
@@ -57,9 +54,7 @@ public class SwaggerConfig {
                 .url("https://api.devine.kr")
                 .description("Production Server");
 
-        return "prod".equals(activeProfile)
-                ? List.of(prodServer)
-                : List.of(localServer, prodServer);
+        return List.of(localServer, prodServer);
     }
 
     private Components securityComponents() {
