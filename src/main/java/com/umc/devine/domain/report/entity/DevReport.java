@@ -14,7 +14,11 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Table(name = "dev_report")
+@Table(name = "dev_report",
+        uniqueConstraints = @UniqueConstraint(
+                name = "uk_dev_report_git_repo_type",
+                columnNames = {"git_repo_id", "report_type"}
+        ))
 public class DevReport extends BaseEntity {
 
     @Id
@@ -46,5 +50,20 @@ public class DevReport extends BaseEntity {
 
     public void updateVisibility(ReportVisibility visibility) {
         this.visibility = visibility;
+    }
+
+    public void updateErrorMessage(String errorMessage) {
+        this.errorMessage = errorMessage;
+    }
+
+    public void completeReport(String content) {
+        this.content = content;
+        this.completedAt = LocalDateTime.now();
+        this.errorMessage = null;
+    }
+
+    public void failReport(String errorMessage) {
+        this.errorMessage = errorMessage;
+        this.completedAt = null;
     }
 }

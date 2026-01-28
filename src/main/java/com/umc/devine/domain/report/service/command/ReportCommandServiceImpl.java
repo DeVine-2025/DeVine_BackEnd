@@ -55,8 +55,17 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         DevReport savedMainReport = devReportRepository.save(mainReport);
         DevReport savedDetailReport = devReportRepository.save(detailReport);
 
-        eventPublisher.publishEvent(new ReportCreatedEvent(savedMainReport));
-        eventPublisher.publishEvent(new ReportCreatedEvent(savedDetailReport));
+        String gitUrl = gitRepoUrl.getGitUrl();
+        eventPublisher.publishEvent(ReportCreatedEvent.builder()
+                .reportId(savedMainReport.getId())
+                .gitUrl(gitUrl)
+                .reportType(savedMainReport.getReportType())
+                .build());
+        eventPublisher.publishEvent(ReportCreatedEvent.builder()
+                .reportId(savedDetailReport.getId())
+                .gitUrl(gitUrl)
+                .reportType(savedDetailReport.getReportType())
+                .build());
 
         log.info("Report 생성 요청 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
                 memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());

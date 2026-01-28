@@ -1,12 +1,14 @@
 package com.umc.devine.domain.report.event;
 
-import com.umc.devine.domain.report.entity.DevReport;
+import com.umc.devine.domain.report.enums.ReportType;
+import lombok.Builder;
 import lombok.Getter;
-import lombok.RequiredArgsConstructor;
 
 @Getter
-@RequiredArgsConstructor
+@Builder
 public class ReportCreatedEvent {
 
-    private final DevReport report;
+    private final Long reportId;
+    private final String gitUrl;
+    private final ReportType reportType;
 }
