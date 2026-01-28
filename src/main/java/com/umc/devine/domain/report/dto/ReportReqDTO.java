@@ -19,4 +19,25 @@ public class ReportReqDTO {
             @NotNull(message = "Git 저장소 ID는 필수입니다.")
             Long gitRepoId
     ) {}
+
+    @Builder
+    public record CallbackReq(
+            @Schema(description = "리포트 ID", example = "1")
+            @NotNull(message = "리포트 ID는 필수입니다.")
+            Long reportId,
+
+            @Schema(description = "처리 상태", example = "SUCCESS")
+            @NotNull(message = "상태는 필수입니다.")
+            CallbackStatus status,
+
+            @Schema(description = "리포트 내용 (SUCCESS 시)")
+            String content,
+
+            @Schema(description = "에러 메시지 (FAILED 시)")
+            String errorMessage
+    ) {}
+
+    public enum CallbackStatus {
+        SUCCESS, FAILED
+    }
 }

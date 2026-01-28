@@ -15,9 +15,10 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     List<DevReport> findAllByGitRepoUrlIn(List<GitRepoUrl> gitRepoUrls);
 
     @Query("SELECT r FROM DevReport r " +
-            "JOIN FETCH r.gitRepoUrl " +
-            "WHERE r.gitRepoUrl.id = :gitRepoId AND r.reportType = :reportType")
-    Optional<DevReport> findByGitRepoIdAndReportType(
+            "JOIN FETCH r.gitRepoUrl g " +
+            "JOIN FETCH g.member " +
+            "WHERE g.id = :gitRepoId AND r.reportType = :reportType")
+    Optional<DevReport> findByGitRepoIdAndReportTypeWithMember(
             @Param("gitRepoId") Long gitRepoId,
             @Param("reportType") ReportType reportType
     );

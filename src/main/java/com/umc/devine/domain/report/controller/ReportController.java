@@ -21,14 +21,20 @@ public class ReportController implements ReportControllerDocs {
     @Override
     @GetMapping("/{gitRepoId}/main")
     public ApiResponse<ReportResDTO.ReportRes> getMainReport(@PathVariable Long gitRepoId) {
-        ReportResDTO.ReportRes response = reportQueryService.getMainReport(gitRepoId);
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ReportResDTO.ReportRes response = reportQueryService.getMainReport(memberId, gitRepoId);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 
     @Override
     @GetMapping("/{gitRepoId}/detail")
     public ApiResponse<ReportResDTO.ReportRes> getDetailReport(@PathVariable Long gitRepoId) {
-        ReportResDTO.ReportRes response = reportQueryService.getDetailReport(gitRepoId);
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        ReportResDTO.ReportRes response = reportQueryService.getDetailReport(memberId, gitRepoId);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 
@@ -55,5 +61,14 @@ public class ReportController implements ReportControllerDocs {
 
         ReportResDTO.CreateReportRes response = reportCommandService.createReport(memberId, request);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_GENERATION_REQUESTED, response);
+    }
+
+    @Override
+    @PostMapping("/callback")
+    public ApiResponse<Void> handleCallback(
+            @RequestBody @Valid ReportReqDTO.CallbackReq request
+    ) {
+        reportQueryService.processCallback(request);
+        return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
     }
 }

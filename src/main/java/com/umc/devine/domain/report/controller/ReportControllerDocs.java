@@ -14,18 +14,20 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Report", description = "리포트 관련 API")
 public interface ReportControllerDocs {
 
-    @Operation(summary = "메인 리포트 조회", description = "Git 저장소의 메인 리포트를 조회합니다.")
+    @Operation(summary = "메인 리포트 조회", description = "Git 저장소의 메인 리포트를 조회합니다. PRIVATE 리포트는 소유자만 조회 가능합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리포트 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "리포트에 대한 권한 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.ReportRes> getMainReport(
             @Parameter(description = "Git 저장소 ID", required = true) @PathVariable Long gitRepoId
     );
 
-    @Operation(summary = "상세 리포트 조회", description = "Git 저장소의 상세 리포트를 조회합니다.")
+    @Operation(summary = "상세 리포트 조회", description = "Git 저장소의 상세 리포트를 조회합니다. PRIVATE 리포트는 소유자만 조회 가능합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리포트 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "리포트에 대한 권한 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.ReportRes> getDetailReport(
@@ -51,5 +53,14 @@ public interface ReportControllerDocs {
     })
     ApiResponse<ReportResDTO.CreateReportRes> createReport(
             @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    );
+
+    @Operation(summary = "리포트 생성 콜백", description = "FastAPI에서 리포트 생성 완료 후 호출하는 콜백 엔드포인트입니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "콜백 처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
+    })
+    ApiResponse<Void> handleCallback(
+            @RequestBody @Valid ReportReqDTO.CallbackReq request
     );
 }
