@@ -43,6 +43,7 @@ logging:
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
     org.springframework.web: DEBUG
+    org.hibernate.orm.jdbc.bind: trace
 
 # Clerk Configuration
 clerk:

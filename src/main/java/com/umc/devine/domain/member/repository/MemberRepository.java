@@ -23,6 +23,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
            "LEFT JOIN DevTechstack dt ON dt.member = m " +
            "LEFT JOIN MemberCategory mc ON mc.member = m " +
            "WHERE m.mainType = :mainType " +
+           "AND m.disclosure = true " +
            "AND (:category IS NULL OR mc.category.genre = :category) " +
            "AND (:techGenre IS NULL OR dt.techstack.genre = :techGenre) " +
            "AND (:techstackName IS NULL OR dt.techstack.name = :techstackName)")
