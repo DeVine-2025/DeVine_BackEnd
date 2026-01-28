@@ -68,7 +68,7 @@ public class ReportController implements ReportControllerDocs {
     public ApiResponse<Void> handleCallback(
             @RequestBody @Valid ReportReqDTO.CallbackReq request
     ) {
-        reportQueryService.processCallback(request);
+        reportCommandService.processCallback(request);
         return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
     }
 }

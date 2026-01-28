@@ -50,21 +50,4 @@ public class ReportQueryServiceImpl implements ReportQueryService {
             }
         }
     }
-
-    @Override
-    public void processCallback(ReportReqDTO.CallbackReq request) {
-        DevReport report = reportRepository.findById(request.reportId())
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
-
-        switch (request.status()) {
-            case SUCCESS -> {
-                report.completeReport(request.content());
-                log.info("리포트 생성 완료 - reportId: {}", request.reportId());
-            }
-            case FAILED -> {
-                report.failReport(request.errorMessage());
-                log.warn("리포트 생성 실패 - reportId: {}, error: {}", request.reportId(), request.errorMessage());
-            }
-        }
-    }
 }
