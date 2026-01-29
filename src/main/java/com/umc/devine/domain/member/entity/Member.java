@@ -52,6 +52,10 @@ public class Member extends BaseEntity {
     @Builder.Default
     private String body = null;
 
+    @Column(name = "github_username", nullable = true, length = 39)
+    @Builder.Default
+    private String githubUsername = null;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MemberStatus used;
@@ -91,5 +95,9 @@ public class Member extends BaseEntity {
         Optional.ofNullable(dto.body()).ifPresent(this::updateBody);
         Optional.ofNullable(dto.mainType()).ifPresent(this::updateMainType);
         Optional.ofNullable(dto.disclosure()).ifPresent(this::disclosure);
+    }
+
+    public void updateGithubUsername(String githubUsername) {
+        this.githubUsername = githubUsername;
     }
 }
