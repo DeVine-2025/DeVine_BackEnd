@@ -13,6 +13,7 @@ import org.springframework.web.client.RestClient;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -95,6 +96,10 @@ public class GitHubApiClient {
      * @throws AuthException GitHub API 호출 실패 시
      */
     public List<GitHubContributionDTO> getContributions(String accessToken, String username) {
+        if (username == null || username.isBlank()) {
+            throw new AuthException(AuthErrorCode.GITHUB_USER_NOT_FOUND);
+        }
+
         String url = GITHUB_API_BASE_URL + "/graphql";
 
         String query = """
@@ -145,32 +150,54 @@ public class GitHubApiClient {
      *
      * @param response GraphQL API 응답
      * @return 날짜별 기여 목록
+     * @throws AuthException 존재하지 않는 사용자(GITHUB_USER_NOT_FOUND) 또는 응답 파싱 실패(GITHUB_API_ERROR)
      */
     @SuppressWarnings("unchecked")
     private List<GitHubContributionDTO> parseContributionsFromGraphQL(Map<String, Object> response) {
+        Map<String, Object> user = Optional.ofNullable(response)
+                .map(r -> (Map<String, Object>) r.get("data"))
+                .map(data -> (Map<String, Object>) data.get("user"))
+                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_USER_NOT_FOUND));
+
+        List<Map<String, Object>> weeks = Optional.of(user)
+                .map(u -> (Map<String, Object>) u.get("contributionsCollection"))
+                .map(collection -> (Map<String, Object>) collection.get("contributionCalendar"))
+                .map(calendar -> (List<Map<String, Object>>) calendar.get("weeks"))
+                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_API_ERROR));
+
+        return parseWeeks(weeks);
+    }
+
+    /**
+     * weeks 데이터에서 ContributionDTO 리스트 추출
+     */
+    @SuppressWarnings("unchecked")
+    private List<GitHubContributionDTO> parseWeeks(List<Map<String, Object>> weeks) {
         List<GitHubContributionDTO> contributions = new ArrayList<>();
 
-        try {
-            Map<String, Object> data = (Map<String, Object>) response.get("data");
-            Map<String, Object> user = (Map<String, Object>) data.get("user");
-            Map<String, Object> contributionsCollection = (Map<String, Object>) user.get("contributionsCollection");
-            Map<String, Object> contributionCalendar = (Map<String, Object>) contributionsCollection.get("contributionCalendar");
-            List<Map<String, Object>> weeks = (List<Map<String, Object>>) contributionCalendar.get("weeks");
-
-            for (Map<String, Object> week : weeks) {
-                List<Map<String, Object>> contributionDays = (List<Map<String, Object>>) week.get("contributionDays");
-                for (Map<String, Object> day : contributionDays) {
-                    String date = (String) day.get("date");
-                    Integer count = (Integer) day.get("contributionCount");
-
-                    contributions.add(GitHubContributionDTO.builder()
-                            .date(date)
-                            .contributionCount(count)
-                            .build());
-                }
+        for (Map<String, Object> week : weeks) {
+            if (week == null) {
+                continue;
             }
-        } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+
+            List<Map<String, Object>> contributionDays = (List<Map<String, Object>>) week.get("contributionDays");
+            if (contributionDays == null) {
+                continue;
+            }
+
+            for (Map<String, Object> day : contributionDays) {
+                if (day == null) {
+                    continue;
+                }
+
+                String date = (String) day.get("date");
+                Integer count = (Integer) day.get("contributionCount");
+
+                contributions.add(GitHubContributionDTO.builder()
+                        .date(date)
+                        .contributionCount(count)
+                        .build());
+            }
         }
 
         return contributions;
