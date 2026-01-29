@@ -34,9 +34,9 @@ public class ProjectReqDTO {
 
                         @Schema(description = "프로젝트 제목", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 제목은 필수입니다.") @Size(max = 100, message = "프로젝트 제목은 100자를 초과할 수 없습니다.") String title,
 
-                        @Schema(description = "프로젝트 내용", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 내용은 필수입니다.") @Size(max = 2000, message = "프로젝트 내용은 2000자를 초과할 수 없습니다.") String content,
+                        @Schema(description = "프로젝트 내용", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 내용은 필수입니다.") String content,
 
-                        @Schema(description = "프로젝트 이미지 URL 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 10, message = "이미지는 최대 10개까지 등록 가능합니다.") List<@NotBlank(message = "이미지 URL은 빈 값일 수 없습니다.") @Pattern(regexp = "^https?://.*", message = "올바른 URL 형식이 아닙니다.") String> imageUrls) {
+                        @Schema(description = "프로젝트 대표사진 이미지 ID 목록 (최대 3개)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 3, message = "대표사진은 최대 3개까지 등록 가능합니다.") List<@Min(value = 1, message = "이미지 ID는 1 이상이어야 합니다.") Long> imageIds) {
         }
 
         @Builder
@@ -57,9 +57,9 @@ public class ProjectReqDTO {
 
                         @Schema(description = "프로젝트 제목", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 제목은 필수입니다.") @Size(max = 100, message = "프로젝트 제목은 100자를 초과할 수 없습니다.") String title,
 
-                        @Schema(description = "프로젝트 내용", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 내용은 필수입니다.") @Size(max = 2000, message = "프로젝트 내용은 2000자를 초과할 수 없습니다.") String content,
+                        @Schema(description = "프로젝트 내용", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "프로젝트 내용은 필수입니다.") String content,
 
-                        @Schema(description = "프로젝트 이미지 URL 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 10, message = "이미지는 최대 10개까지 등록 가능합니다.") List<@NotBlank(message = "이미지 URL은 빈 값일 수 없습니다.") @Pattern(regexp = "^https?://.*", message = "올바른 URL 형식이 아닙니다.") String> imageUrls) {
+                        @Schema(description = "프로젝트 대표사진 이미지 ID 목록 (최대 3개)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 3, message = "대표사진은 최대 3개까지 등록 가능합니다.") List<@Min(value = 1, message = "이미지 ID는 1 이상이어야 합니다.") Long> imageIds) {
         }
 
         @Builder
