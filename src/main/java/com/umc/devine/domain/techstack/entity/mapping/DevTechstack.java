@@ -2,6 +2,7 @@ package com.umc.devine.domain.techstack.entity.mapping;
 
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -27,6 +28,10 @@ public class DevTechstack {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "techstack_id")
     private Techstack techstack;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    private TechstackSource source;
 
     @Embeddable
     @Getter

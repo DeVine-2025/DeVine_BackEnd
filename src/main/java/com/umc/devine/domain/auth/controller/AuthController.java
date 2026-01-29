@@ -17,10 +17,11 @@ import java.util.Optional;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/auth")
-public class AuthController {
+public class AuthController implements AuthControllerDocs {
 
     private final MemberRepository memberRepository;
 
+    @Override
     @GetMapping("/health")
     public ApiResponse<AuthResDTO.HealthDTO> healthCheck() {
         AuthResDTO.HealthDTO response = AuthResDTO.HealthDTO.builder()
@@ -31,6 +32,7 @@ public class AuthController {
         return ApiResponse.onSuccess(AuthSuccessCode.HEALTH_OK, response);
     }
 
+    @Override
     @GetMapping("/me")
     public ApiResponse<AuthResDTO.MeDTO> me(@AuthenticationPrincipal ClerkPrincipal principal) {
         String clerkId = principal.getClerkId();

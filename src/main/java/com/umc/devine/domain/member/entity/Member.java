@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.entity;
 
+import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.global.entity.BaseEntity;
@@ -8,6 +9,7 @@ import lombok.*;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 @Entity
 @Builder
@@ -50,6 +52,10 @@ public class Member extends BaseEntity {
     @Builder.Default
     private String body = null;
 
+    @Column(name = "github_username", nullable = true, length = 39)
+    @Builder.Default
+    private String githubUsername = null;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false)
     private MemberStatus used;
@@ -72,5 +78,26 @@ public class Member extends BaseEntity {
 
     public void updateBody(String body) {
         this.body = body;
+    }
+
+    public void updateMainType(MemberMainType mainType) {
+        this.mainType = mainType;
+    }
+
+    public void disclosure(Boolean disclosure) {
+        this.disclosure = disclosure;
+    }
+
+    public void updateProfile(MemberReqDTO.UpdateMemberDTO dto) {
+        Optional.ofNullable(dto.nickname()).ifPresent(this::updateNickname);
+        Optional.ofNullable(dto.imageUrl()).ifPresent(this::updateImage);
+        Optional.ofNullable(dto.address()).ifPresent(this::updateAddress);
+        Optional.ofNullable(dto.body()).ifPresent(this::updateBody);
+        Optional.ofNullable(dto.mainType()).ifPresent(this::updateMainType);
+        Optional.ofNullable(dto.disclosure()).ifPresent(this::disclosure);
+    }
+
+    public void updateGithubUsername(String githubUsername) {
+        this.githubUsername = githubUsername;
     }
 }

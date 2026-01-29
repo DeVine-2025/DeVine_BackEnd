@@ -38,3 +38,7 @@ spring:
 # Clerk
 clerk:
   secret-key: ${CLERK_SECRET_KEY:}
+
+# GitHub
+github:
+  service-token: ${GITHUB_SERVICE_TOKEN:}
