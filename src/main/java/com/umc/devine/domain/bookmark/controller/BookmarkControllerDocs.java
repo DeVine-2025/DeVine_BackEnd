@@ -2,11 +2,15 @@ package com.umc.devine.domain.bookmark.controller;
 
 import com.umc.devine.domain.bookmark.dto.BookmarkReqDTO;
 import com.umc.devine.domain.bookmark.dto.BookmarkResDTO;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Bookmark", description = "북마크 관련 API")
@@ -18,7 +22,9 @@ public interface BookmarkControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<BookmarkResDTO.BookmarkListDTO> getBookmarks();
+    ApiResponse<BookmarkResDTO.BookmarkListDTO> getBookmarks(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 
     @Operation(summary = "북마크 저장 API", description = "프로젝트 또는 개발자를 북마크에 저장하는 API입니다. targetType은 PROJECT 또는 DEVELOPER입니다.")
     @ApiResponses({
@@ -28,6 +34,7 @@ public interface BookmarkControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<BookmarkResDTO.BookmarkIdDTO> createBookmark(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Valid @RequestBody BookmarkReqDTO.CreateBookmarkDTO dto
     );
 
@@ -38,5 +45,8 @@ public interface BookmarkControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "북마크에 대한 접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 북마크를 찾을 수 없습니다.")
     })
-    ApiResponse<BookmarkResDTO.BookmarkIdDTO> deleteBookmark(Long bookmarkId);
+    ApiResponse<BookmarkResDTO.BookmarkIdDTO> deleteBookmark(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "북마크 ID", required = true) @PathVariable Long bookmarkId
+    );
 }

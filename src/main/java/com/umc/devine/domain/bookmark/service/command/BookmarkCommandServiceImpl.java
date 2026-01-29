@@ -21,14 +21,9 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookmarkCommandServiceImpl implements BookmarkCommandService {
 
     private final BookmarkRepository bookmarkRepository;
-    private final MemberRepository memberRepository;
 
     @Override
-    public BookmarkResDTO.BookmarkIdDTO createBookmark(Long memberId, BookmarkReqDTO.CreateBookmarkDTO dto) {
-        // TODO 토큰 방식 적용 후 시큐리티 컨텍스트에서 꺼내 쓰도록 수정
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public BookmarkResDTO.BookmarkIdDTO createBookmark(Member member, BookmarkReqDTO.CreateBookmarkDTO dto) {
         if (bookmarkRepository.existsByMemberAndTargetTypeAndTargetId(member, dto.targetType(), dto.targetId())) {
             throw new BookmarkException(BookmarkErrorCode.ALREADY_EXISTS);
         }
@@ -40,11 +35,7 @@ public class BookmarkCommandServiceImpl implements BookmarkCommandService {
     }
 
     @Override
-    public BookmarkResDTO.BookmarkIdDTO deleteBookmark(Long memberId, Long bookmarkId) {
-        // TODO 토큰 방식 적용 후 시큐리티 컨텍스트에서 꺼내 쓰도록 수정
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public BookmarkResDTO.BookmarkIdDTO deleteBookmark(Member member, Long bookmarkId) {
         Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
                 .orElseThrow(() -> new BookmarkException(BookmarkErrorCode.NOT_FOUND));
 
