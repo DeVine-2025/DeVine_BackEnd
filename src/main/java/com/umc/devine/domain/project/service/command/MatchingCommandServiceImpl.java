@@ -63,13 +63,9 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
 
-        Matching matching = matchingRepository.findByProjectAndMemberAndMatchingType(project, member, MatchingType.APPLY)
+        Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
+                        project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
-
-        // 이미 취소된 매칭인지 확인
-        if (matching.getStatus() == MatchingStatus.CANCELLED) {
-            throw new MatchingException(MatchingErrorCode.ALREADY_CANCELLED);
-        }
 
         matching.cancel();
 

@@ -14,11 +14,12 @@ import java.util.Optional;
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
 
     @Query("SELECT m FROM Matching m JOIN FETCH m.project JOIN FETCH m.member " +
-            "WHERE m.project = :project AND m.member = :member AND m.matchingType = :matchingType")
-    Optional<Matching> findByProjectAndMemberAndMatchingType(
+            "WHERE m.project = :project AND m.member = :member AND m.matchingType = :matchingType AND m.status <> :excludeStatus")
+    Optional<Matching> findByProjectAndMemberAndMatchingTypeAndStatusNot(
             @Param("project") Project project,
             @Param("member") Member member,
-            @Param("matchingType") MatchingType matchingType);
+            @Param("matchingType") MatchingType matchingType,
+            @Param("excludeStatus") MatchingStatus excludeStatus);
 
     @Query("SELECT COUNT(m) > 0 FROM Matching m " +
             "WHERE m.project = :project AND m.member = :member AND m.matchingType = :matchingType AND m.status <> :excludeStatus")
