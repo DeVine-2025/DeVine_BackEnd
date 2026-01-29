@@ -29,7 +29,15 @@ public class Image extends BaseEntity {
     @Column(name = "s3_key", nullable = false, length = 512)
     private String s3Key;
 
+    @Builder.Default
+    @Column(name = "uploaded", nullable = false)
+    private boolean uploaded = false;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member uploader;
+
+    public void confirmUpload() {
+        this.uploaded = true;
+    }
 }

@@ -200,6 +200,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             throw new ImageException(ImageErrorCode.IMAGE_NOT_FOUND);
         }
 
+        boolean hasUnuploaded = images.stream().anyMatch(image -> !image.isUploaded());
+        if (hasUnuploaded) {
+            throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
+        }
+
         List<ProjectImage> projectImages = images.stream()
                 .map(image -> ProjectConverter.toProjectImageFromImage(image, project))
                 .collect(Collectors.toList());

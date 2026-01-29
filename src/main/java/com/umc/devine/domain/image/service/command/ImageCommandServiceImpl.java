@@ -4,6 +4,8 @@ import com.umc.devine.domain.image.converter.ImageConverter;
 import com.umc.devine.domain.image.dto.ImageReqDTO;
 import com.umc.devine.domain.image.dto.ImageResDTO;
 import com.umc.devine.domain.image.entity.Image;
+import com.umc.devine.domain.image.exception.ImageException;
+import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
@@ -31,6 +33,8 @@ public class ImageCommandServiceImpl implements ImageCommandService {
         log.info("[ImageService] Presigned URL 생성 요청 - memberId: {}, imageType: {}, fileName: {}",
                 memberId, request.imageType(), request.fileName());
 
+        s3Service.validateExtension(request.fileName());
+
         Member member = memberRepository.findById(memberId)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
@@ -47,6 +51,31 @@ public class ImageCommandServiceImpl implements ImageCommandService {
                 savedImage.getId(), request.imageType());
 
         return ImageConverter.toPresignedUrlRes(savedImage, presigned.url().toString());
+    }
+
+    @Override
+    public void confirmUpload(Long imageId) {
+        log.info("[ImageService] 업로드 확인 요청 - imageId: {}", imageId);
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+
+        image.confirmUpload();
+
+        log.info("[ImageService] 업로드 확인 완료 - imageId: {}", imageId);
+    }
+
+    @Override
+    public void deleteImage(Long imageId) {
+        log.info("[ImageService] 이미지 삭제 요청 - imageId: {}", imageId);
+
+        Image image = imageRepository.findById(imageId)
+                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+
+        s3Service.deleteObject(image.getS3Key());
+        imageRepository.delete(image);
+
+        log.info("[ImageService] 이미지 삭제 완료 - imageId: {}", imageId);
     }
 
     private String buildS3Key(ImageReqDTO.PresignedUrlReq request, Long memberId) {

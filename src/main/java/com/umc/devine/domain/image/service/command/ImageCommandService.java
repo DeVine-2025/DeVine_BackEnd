@@ -6,4 +6,8 @@ import com.umc.devine.domain.image.dto.ImageResDTO;
 public interface ImageCommandService {
 
     ImageResDTO.PresignedUrlRes createPresignedUrl(Long memberId, ImageReqDTO.PresignedUrlReq request);
+
+    void confirmUpload(Long imageId);
+
+    void deleteImage(Long imageId);
 }

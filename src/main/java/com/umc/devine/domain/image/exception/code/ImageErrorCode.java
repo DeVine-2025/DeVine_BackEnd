@@ -19,7 +19,23 @@ public enum ImageErrorCode implements BaseErrorCode {
 
     IMAGE_LIMIT_EXCEEDED(HttpStatus.BAD_REQUEST,
             "IMAGE400_2",
-            "프로젝트 대표사진은 최대 3개까지 등록 가능합니다.");
+            "프로젝트 대표사진은 최대 3개까지 등록 가능합니다."),
+
+    UNSUPPORTED_FILE_EXTENSION(HttpStatus.BAD_REQUEST,
+            "IMAGE400_3",
+            "지원하지 않는 파일 확장자입니다. (jpg, jpeg, png, gif, webp)"),
+
+    S3_PRESIGN_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
+            "IMAGE500_1",
+            "Presigned URL 생성 중 오류가 발생했습니다."),
+
+    S3_DELETE_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
+            "IMAGE500_2",
+            "이미지 삭제 처리 중 오류가 발생했습니다."),
+
+    IMAGE_NOT_UPLOADED(HttpStatus.BAD_REQUEST,
+            "IMAGE400_4",
+            "아직 업로드가 완료되지 않은 이미지입니다.");
 
     private final HttpStatus status;
     private final String code;

@@ -7,10 +7,7 @@ import com.umc.devine.domain.image.service.command.ImageCommandService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
@@ -30,5 +27,19 @@ public class ImageController implements ImageControllerDocs {
         ImageSuccessCode code = ImageSuccessCode.PRESIGNED_URL_CREATED;
         ImageResDTO.PresignedUrlRes response = imageCommandService.createPresignedUrl(memberId, request);
         return ApiResponse.onSuccess(code, response);
+    }
+
+    @Override
+    @PatchMapping("/confirm/{imageId}")
+    public ApiResponse<Void> confirmUpload(@PathVariable Long imageId) {
+        imageCommandService.confirmUpload(imageId);
+        return ApiResponse.onSuccess(ImageSuccessCode.UPLOAD_CONFIRMED, null);
+    }
+
+    @Override
+    @DeleteMapping("/{imageId}")
+    public ApiResponse<Void> deleteImage(@PathVariable Long imageId) {
+        imageCommandService.deleteImage(imageId);
+        return ApiResponse.onSuccess(ImageSuccessCode.IMAGE_DELETED, null);
     }
 }
