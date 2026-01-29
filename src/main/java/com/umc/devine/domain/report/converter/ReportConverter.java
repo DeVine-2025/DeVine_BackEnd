@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.converter;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
@@ -18,14 +19,14 @@ public class ReportConverter {
                 .build();
     }
 
-    public static ReportResDTO.ReportRes toReportRes(DevReport report) {
+    public static ReportResDTO.ReportRes toReportRes(DevReport report, JsonNode contentJson) {
         return ReportResDTO.ReportRes.builder()
                 .reportId(report.getId())
                 .gitRepoId(report.getGitRepoUrl().getId())
                 .gitRepoUrl(report.getGitRepoUrl().getGitUrl())
                 .reportType(report.getReportType())
                 .visibility(report.getVisibility())
-                .content(report.getContent())
+                .content(contentJson)
                 .errorMessage(report.getErrorMessage())
                 .completedAt(report.getCompletedAt())
                 .createdAt(report.getCreatedAt())

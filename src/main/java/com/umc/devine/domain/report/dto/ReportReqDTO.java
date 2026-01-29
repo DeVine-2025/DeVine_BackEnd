@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.dto;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.report.enums.ReportVisibility;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
@@ -30,8 +31,8 @@ public class ReportReqDTO {
             @NotNull(message = "상태는 필수입니다.")
             CallbackStatus status,
 
-            @Schema(description = "리포트 내용 (SUCCESS 시)")
-            String content,
+            @Schema(description = "리포트 내용 (SUCCESS 시, JSON 형식)")
+            JsonNode content,
 
             @Schema(description = "에러 메시지 (FAILED 시)")
             String errorMessage

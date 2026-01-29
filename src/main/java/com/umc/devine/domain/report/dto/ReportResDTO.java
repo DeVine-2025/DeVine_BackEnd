@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.dto;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.enums.ReportVisibility;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -26,8 +27,8 @@ public class ReportResDTO {
             @Schema(description = "공개 범위", example = "PUBLIC")
             ReportVisibility visibility,
 
-            @Schema(description = "리포트 내용")
-            String content,
+            @Schema(description = "리포트 내용 (JSON)")
+            JsonNode content,
 
             @Schema(description = "에러 메시지")
             String errorMessage,

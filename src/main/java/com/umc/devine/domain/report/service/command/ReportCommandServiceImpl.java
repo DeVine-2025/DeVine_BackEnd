@@ -81,7 +81,11 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
         switch (request.status()) {
             case SUCCESS -> {
-                report.completeReport(request.content());
+                if (request.content() == null || request.content().isNull()) {
+                    log.warn("리포트 content가 비어있음 - reportId: {}", request.reportId());
+                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                }
+                report.completeReport(request.content().toString());
                 log.info("리포트 생성 완료 - reportId: {}", request.reportId());
             }
             case FAILED -> {

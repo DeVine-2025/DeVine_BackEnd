@@ -1,7 +1,9 @@
 package com.umc.devine.domain.report.service.query;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.domain.report.converter.ReportConverter;
-import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
@@ -21,6 +23,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportQueryServiceImpl implements ReportQueryService {
 
     private final DevReportRepository reportRepository;
+    private final ObjectMapper objectMapper;
 
     @Override
     public ReportResDTO.ReportRes getMainReport(Long memberId, Long gitRepoId) {
@@ -29,7 +32,8 @@ public class ReportQueryServiceImpl implements ReportQueryService {
 
         validateVisibility(report, memberId);
 
-        return ReportConverter.toReportRes(report);
+        JsonNode contentJson = parseJsonContent(report.getContent(), report.getId());
+        return ReportConverter.toReportRes(report, contentJson);
     }
 
     @Override
@@ -39,7 +43,8 @@ public class ReportQueryServiceImpl implements ReportQueryService {
 
         validateVisibility(report, memberId);
 
-        return ReportConverter.toReportRes(report);
+        JsonNode contentJson = parseJsonContent(report.getContent(), report.getId());
+        return ReportConverter.toReportRes(report, contentJson);
     }
 
     private void validateVisibility(DevReport report, Long memberId) {
@@ -48,6 +53,19 @@ public class ReportQueryServiceImpl implements ReportQueryService {
             if (!ownerId.equals(memberId)) {
                 throw new ReportException(ReportErrorCode.UNAUTHORIZED_ACCESS);
             }
+        }
+    }
+
+    private JsonNode parseJsonContent(String content, Long reportId) {
+        if (content == null || content.isBlank()) {
+            return null;
+        }
+        try {
+            return objectMapper.readTree(content);
+        } catch (JsonProcessingException e) {
+            log.error("리포트 JSON 파싱 실패 - reportId: {}, content: {}",
+                    reportId, content.substring(0, Math.min(100, content.length())), e);
+            return null;
         }
     }
 }

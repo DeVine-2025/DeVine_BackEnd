@@ -6,6 +6,8 @@ import com.umc.devine.domain.report.enums.ReportVisibility;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.JdbcTypeCode;
+import org.hibernate.type.SqlTypes;
 
 import java.time.LocalDateTime;
 
@@ -30,7 +32,8 @@ public class DevReport extends BaseEntity {
     @JoinColumn(name = "git_repo_id", nullable = false)
     private GitRepoUrl gitRepoUrl;
 
-    @Column(name = "report_content", columnDefinition = "TEXT")
+    @JdbcTypeCode(SqlTypes.JSON)
+    @Column(name = "report_content")
     private String content;
 
     @Enumerated(EnumType.STRING)
