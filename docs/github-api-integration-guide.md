@@ -258,6 +258,7 @@ public ContributionListDTO findContributionsById(Long memberId) {
 | 코드 | HTTP Status | 설명 | 원인 |
 |------|-------------|------|------|
 | `AUTH404_1` | 404 | GitHub 연동 정보를 찾을 수 없습니다 | Google 로그인 사용자 등 |
+| `AUTH404_2` | 404 | 존재하지 않는 GitHub 사용자입니다 | 잘못된 username 조회 |
 | `AUTH500_1` | 500 | GitHub 토큰 조회에 실패했습니다 | Clerk API 통신 오류 |
 | `AUTH502_1` | 502 | Clerk API 호출에 실패했습니다 | Clerk 서버 오류 |
 | `AUTH502_2` | 502 | GitHub API 호출에 실패했습니다 | GitHub 서버 오류 |
@@ -272,6 +273,10 @@ try {
     switch (e.getErrorCode()) {
         case GITHUB_TOKEN_NOT_FOUND:
             // GitHub 연동 없음 → 빈 목록 또는 연동 유도 메시지
+            return emptyResult();
+
+        case GITHUB_USER_NOT_FOUND:
+            // 존재하지 않는 GitHub 사용자 → 빈 목록 또는 에러 응답
             return emptyResult();
 
         case GITHUB_TOKEN_FETCH_FAILED:
