@@ -35,7 +35,11 @@ public enum ImageErrorCode implements BaseErrorCode {
 
     IMAGE_NOT_UPLOADED(HttpStatus.BAD_REQUEST,
             "IMAGE400_4",
-            "아직 업로드가 완료되지 않은 이미지입니다.");
+            "아직 업로드가 완료되지 않은 이미지입니다."),
+
+    IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN,
+            "IMAGE403_1",
+            "해당 이미지에 대한 권한이 없습니다.");
 
     private final HttpStatus status;
     private final String code;

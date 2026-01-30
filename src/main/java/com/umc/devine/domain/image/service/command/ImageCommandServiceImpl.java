@@ -30,7 +30,7 @@ public class ImageCommandServiceImpl implements ImageCommandService {
 
     @Override
     public ImageResDTO.PresignedUrlRes createPresignedUrl(Long memberId, ImageReqDTO.PresignedUrlReq request) {
-        log.info("[ImageService] Presigned URL 생성 요청 - memberId: {}, imageType: {}, fileName: {}",
+        log.debug("[ImageService] Presigned URL 생성 요청 - memberId: {}, imageType: {}, fileName: {}",
                 memberId, request.imageType(), request.fileName());
 
         s3Service.validateExtension(request.fileName());
@@ -47,35 +47,45 @@ public class ImageCommandServiceImpl implements ImageCommandService {
 
         PresignedPutObjectRequest presigned = s3Service.generatePresignedPutUrl(s3Key, contentType);
 
-        log.info("[ImageService] Presigned URL 생성 완료 - imageId: {}, imageType: {}",
+        log.debug("[ImageService] Presigned URL 생성 완료 - imageId: {}, imageType: {}",
                 savedImage.getId(), request.imageType());
 
         return ImageConverter.toPresignedUrlRes(savedImage, presigned.url().toString());
     }
 
     @Override
-    public void confirmUpload(Long imageId) {
-        log.info("[ImageService] 업로드 확인 요청 - imageId: {}", imageId);
+    public void confirmUpload(Long memberId, Long imageId) {
+        log.debug("[ImageService] 업로드 확인 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+
+        validateImageOwner(image, memberId);
 
         image.confirmUpload();
 
-        log.info("[ImageService] 업로드 확인 완료 - imageId: {}", imageId);
+        log.debug("[ImageService] 업로드 확인 완료 - imageId: {}", imageId);
     }
 
     @Override
-    public void deleteImage(Long imageId) {
-        log.info("[ImageService] 이미지 삭제 요청 - imageId: {}", imageId);
+    public void deleteImage(Long memberId, Long imageId) {
+        log.debug("[ImageService] 이미지 삭제 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+
+        validateImageOwner(image, memberId);
 
         s3Service.deleteObject(image.getS3Key());
         imageRepository.delete(image);
 
-        log.info("[ImageService] 이미지 삭제 완료 - imageId: {}", imageId);
+        log.debug("[ImageService] 이미지 삭제 완료 - imageId: {}", imageId);
+    }
+
+    private void validateImageOwner(Image image, Long memberId) {
+        if (!image.getUploader().getId().equals(memberId)) {
+            throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
+        }
     }
 
     private String buildS3Key(ImageReqDTO.PresignedUrlReq request, Long memberId) {

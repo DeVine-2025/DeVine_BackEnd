@@ -7,7 +7,7 @@ public interface ImageCommandService {
 
     ImageResDTO.PresignedUrlRes createPresignedUrl(Long memberId, ImageReqDTO.PresignedUrlReq request);
 
-    void confirmUpload(Long imageId);
+    void confirmUpload(Long memberId, Long imageId);
 
-    void deleteImage(Long imageId);
+    void deleteImage(Long memberId, Long imageId);
 }

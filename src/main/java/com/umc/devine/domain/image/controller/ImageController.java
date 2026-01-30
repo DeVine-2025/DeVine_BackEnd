@@ -32,14 +32,20 @@ public class ImageController implements ImageControllerDocs {
     @Override
     @PatchMapping("/confirm/{imageId}")
     public ApiResponse<Void> confirmUpload(@PathVariable Long imageId) {
-        imageCommandService.confirmUpload(imageId);
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        imageCommandService.confirmUpload(memberId, imageId);
         return ApiResponse.onSuccess(ImageSuccessCode.UPLOAD_CONFIRMED, null);
     }
 
     @Override
     @DeleteMapping("/{imageId}")
     public ApiResponse<Void> deleteImage(@PathVariable Long imageId) {
-        imageCommandService.deleteImage(imageId);
+        // TODO: 토큰 방식으로 변경
+        Long memberId = 1L;
+
+        imageCommandService.deleteImage(memberId, imageId);
         return ApiResponse.onSuccess(ImageSuccessCode.IMAGE_DELETED, null);
     }
 }
