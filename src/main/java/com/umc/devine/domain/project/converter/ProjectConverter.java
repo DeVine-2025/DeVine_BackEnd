@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.converter;
 
 import com.umc.devine.domain.category.entity.Category;
+import com.umc.devine.domain.image.entity.Image;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -43,6 +44,14 @@ public class ProjectConverter {
         return ProjectImage.builder()
                 .project(project)
                 .image(imageUrl)
+                .build();
+    }
+
+    // Image 엔티티 → ProjectImage 엔티티 변환
+    public static ProjectImage toProjectImageFromImage(Image image, Project project) {
+        return ProjectImage.builder()
+                .project(project)
+                .image(image.getImageUrl())
                 .build();
     }
 
