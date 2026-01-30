@@ -46,7 +46,7 @@ public class S3Service {
     }
 
     public PresignedPutObjectRequest generatePresignedPutUrl(String key, String contentType) {
-        log.info("[S3Service] Presigned URL 생성 요청 - key: {}, contentType: {}", key, contentType);
+        log.debug("[S3Service] Presigned URL 생성 요청 - key: {}, contentType: {}", key, contentType);
 
         try {
             PutObjectRequest putObjectRequest = PutObjectRequest.builder()
@@ -61,7 +61,7 @@ public class S3Service {
                     .build();
 
             PresignedPutObjectRequest presigned = s3Presigner.presignPutObject(presignRequest);
-            log.info("[S3Service] Presigned URL 생성 완료 - key: {}", key);
+            log.debug("[S3Service] Presigned URL 생성 완료 - key: {}", key);
 
             return presigned;
         } catch (Exception e) {
@@ -71,7 +71,7 @@ public class S3Service {
     }
 
     public void deleteObject(String s3Key) {
-        log.info("[S3Service] S3 오브젝트 삭제 요청 - key: {}", s3Key);
+        log.debug("[S3Service] S3 오브젝트 삭제 요청 - key: {}", s3Key);
 
         try {
             DeleteObjectRequest deleteRequest = DeleteObjectRequest.builder()
@@ -80,7 +80,7 @@ public class S3Service {
                     .build();
 
             s3Client.deleteObject(deleteRequest);
-            log.info("[S3Service] S3 오브젝트 삭제 완료 - key: {}", s3Key);
+            log.debug("[S3Service] S3 오브젝트 삭제 완료 - key: {}", s3Key);
         } catch (Exception e) {
             log.error("[S3Service] S3 오브젝트 삭제 실패 - key: {}", s3Key, e);
             throw new ImageException(ImageErrorCode.S3_DELETE_FAILED);
