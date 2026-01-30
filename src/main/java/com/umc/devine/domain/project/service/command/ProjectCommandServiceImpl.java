@@ -4,6 +4,7 @@ import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.exception.CategoryException;
 import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.image.entity.Image;
+import com.umc.devine.domain.image.enums.ImageType;
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
@@ -198,6 +199,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         List<Image> images = imageRepository.findAllById(imageIds);
         if (images.size() != imageIds.size()) {
             throw new ImageException(ImageErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        boolean hasNonProjectType = images.stream()
+                .anyMatch(image -> image.getImageType() != ImageType.PROJECT);
+        if (hasNonProjectType) {
+            throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
         }
 
         boolean hasUnuploaded = images.stream().anyMatch(image -> !image.isUploaded());

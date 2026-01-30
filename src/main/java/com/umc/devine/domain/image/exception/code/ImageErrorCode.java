@@ -39,7 +39,11 @@ public enum ImageErrorCode implements BaseErrorCode {
 
     IMAGE_ACCESS_DENIED(HttpStatus.FORBIDDEN,
             "IMAGE403_1",
-            "해당 이미지에 대한 권한이 없습니다.");
+            "해당 이미지에 대한 권한이 없습니다."),
+
+    IMAGE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST,
+            "IMAGE400_5",
+            "프로젝트 대표사진에는 PROJECT 타입 이미지만 사용할 수 있습니다.");
 
     private final HttpStatus status;
     private final String code;
