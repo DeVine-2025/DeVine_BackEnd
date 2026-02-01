@@ -1,5 +1,6 @@
 package com.umc.devine.global.config;
 
+import com.umc.devine.infrastructure.sse.event.SseEventSubscriber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -9,6 +10,8 @@ import org.springframework.data.redis.connection.RedisConnectionFactory;
 import org.springframework.data.redis.connection.RedisStandaloneConfiguration;
 import org.springframework.data.redis.connection.lettuce.LettuceConnectionFactory;
 import org.springframework.data.redis.core.RedisTemplate;
+import org.springframework.data.redis.listener.PatternTopic;
+import org.springframework.data.redis.listener.RedisMessageListenerContainer;
 import org.springframework.data.redis.serializer.GenericJackson2JsonRedisSerializer;
 import org.springframework.data.redis.serializer.StringRedisSerializer;
 
@@ -25,6 +28,9 @@ public class RedisConfig {
 
     @Value("${spring.data.redis.password}")
     private String redisPassword;
+
+    @Value("${redis.channel.notification-pattern}")
+    private String notificationChannelPattern;
 
     @Bean
     public RedisConnectionFactory redisConnectionFactory() {
@@ -58,5 +64,24 @@ public class RedisConfig {
         template.setValueSerializer(new GenericJackson2JsonRedisSerializer());
         template.afterPropertiesSet();
         return template;
+    }
+
+    /**
+     * Redis Pub/Sub 메시지 리스너 컨테이너
+     *
+     * @see <a href="https://docs.spring.io/spring-data/redis/docs/current/reference/html/#pubsub">Spring Data Redis Pub/Sub</a>
+     */
+    @Bean
+    public RedisMessageListenerContainer redisMessageListenerContainer(
+            RedisConnectionFactory connectionFactory,
+            SseEventSubscriber sseEventSubscriber
+    ) {
+        RedisMessageListenerContainer container = new RedisMessageListenerContainer();
+        container.setConnectionFactory(connectionFactory);
+
+        container.addMessageListener(sseEventSubscriber, new PatternTopic(notificationChannelPattern));
+
+        log.info("Redis Pub/Sub 리스너 등록 - pattern: {}", notificationChannelPattern);
+        return container;
     }
 }
