@@ -3,6 +3,8 @@ package com.umc.devine.domain.project.service.command;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.notification.enums.NotificationType;
+import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.project.converter.MatchingConverter;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
@@ -26,6 +28,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private final MatchingRepository matchingRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
+    private final NotificationCommandService notificationCommandService;
 
     @Override
     public MatchingResDTO.ProposeResDTO applyToProject(Long memberId, Long projectId) {
@@ -58,7 +61,23 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         Matching matching = MatchingConverter.toMatching(project, member, MatchingType.APPLY);
         Matching savedMatching = matchingRepository.save(matching);
 
+        // PM에게 지원 알림 전송
+        sendApplyNotification(member, project, savedMatching);
+
         return MatchingConverter.toMatchingResDTO(savedMatching);
+    }
+
+    private void sendApplyNotification(Member applicant, Project project, Matching matching) {
+        String content = String.format("%s님이 '%s' 프로젝트에 지원했습니다.",
+                applicant.getNickname(), project.getName());
+
+        notificationCommandService.create(
+                NotificationType.MATCHING_APPLIED,
+                project.getMember().getId(),  // receiver: PM
+                applicant.getId(),            // sender: 지원자
+                content,
+                matching.getId()              // referenceId: matchingId
+        );
     }
 
     @Override
@@ -121,6 +140,22 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         Matching matching = MatchingConverter.toMatching(project, targetMember, MatchingType.PROPOSE);
         Matching savedMatching = matchingRepository.save(matching);
 
+        // 개발자에게 제안 알림 전송
+        sendProposeNotification(pmMember, targetMember, project, savedMatching);
+
         return MatchingConverter.toMatchingResDTO(savedMatching);
+    }
+
+    private void sendProposeNotification(Member pm, Member developer, Project project, Matching matching) {
+        String content = String.format("%s님이 '%s' 프로젝트 참여를 제안했습니다.",
+                pm.getNickname(), project.getName());
+
+        notificationCommandService.create(
+                NotificationType.MATCHING_PROPOSED,
+                developer.getId(),  // receiver: 개발자
+                pm.getId(),         // sender: PM
+                content,
+                matching.getId()    // referenceId: matchingId
+        );
     }
 }

@@ -3,13 +3,16 @@ package com.umc.devine.domain.notification.service.command;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.notification.converter.NotificationConverter;
+import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.domain.notification.entity.Notification;
 import com.umc.devine.domain.notification.enums.NotificationType;
+import com.umc.devine.domain.notification.event.NotificationCreatedEvent;
 import com.umc.devine.domain.notification.exception.NotificationException;
 import com.umc.devine.domain.notification.exception.code.NotificationErrorCode;
 import com.umc.devine.domain.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -23,6 +26,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
 
     private final NotificationRepository notificationRepository;
     private final MemberRepository memberRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public Notification create(
@@ -47,7 +51,22 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
         log.info("알림 생성 - type: {}, receiverId: {}, referenceId: {}",
                 type, receiverId, referenceId);
 
+        // Redis Pub/Sub으로 실시간 전송 신호 발행
+        publishNotificationEvent(saved);
+
         return saved;
+    }
+
+    private void publishNotificationEvent(Notification notification) {
+        NotificationResDTO.NotificationDetail detail =
+                NotificationConverter.toDetail(notification);
+
+        eventPublisher.publishEvent(new NotificationCreatedEvent(
+                this,
+                notification.getReceiver().getId(),
+                String.valueOf(notification.getId()),
+                detail
+        ));
     }
 
     @Override
