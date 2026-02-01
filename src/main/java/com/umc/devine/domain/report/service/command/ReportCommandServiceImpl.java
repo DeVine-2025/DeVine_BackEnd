@@ -56,15 +56,19 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         DevReport savedDetailReport = devReportRepository.save(detailReport);
 
         String gitUrl = gitRepoUrl.getGitUrl();
+        String clerkUserId = gitRepoUrl.getMember().getClerkId();
+
         eventPublisher.publishEvent(ReportCreatedEvent.builder()
                 .reportId(savedMainReport.getId())
                 .gitUrl(gitUrl)
                 .reportType(savedMainReport.getReportType())
+                .clerkId(clerkUserId)
                 .build());
         eventPublisher.publishEvent(ReportCreatedEvent.builder()
                 .reportId(savedDetailReport.getId())
                 .gitUrl(gitUrl)
                 .reportType(savedDetailReport.getReportType())
+                .clerkId(clerkUserId)
                 .build());
 
         log.info("Report 생성 요청 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
@@ -93,6 +97,12 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 log.warn("리포트 생성 실패 - reportId: {}, error: {}", request.reportId(), request.errorMessage());
             }
         }
+    }
+
+    @Override
+    public void deleteReport(Long reportId) {
+        devReportRepository.deleteById(reportId);
+        log.info("리포트 삭제 완료 - reportId: {}", reportId);
     }
 
     private void validateOwnership(DevReport report, Long memberId) {

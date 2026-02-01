@@ -10,6 +10,7 @@ public class FastApiReqDto {
             Long reportId,
             String gitUrl,
             ReportType reportType,
-            String callbackUrl
+            String callbackUrl,
+            String githubToken
     ) {}
 }
