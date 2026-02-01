@@ -23,3 +23,12 @@ logging:
 # Clerk Configuration
 clerk:
   secret-key: ${CLERK_SECRET_KEY}
+
+# SSE Configuration
+sse:
+  timeout: 3600000 # 60분
+  heartbeat-rate: 30000 # 30초
+  executor:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 25

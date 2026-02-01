@@ -28,3 +28,20 @@ logging:
     com.umc.devine: INFO
     org.hibernate.SQL: ERROR
     org.springframework.web: WARN
+
+# Clerk Configuration
+clerk:
+  secret-key: ${CLERK_SECRET_KEY}
+
+# SSE Configuration
+sse:
+  timeout: 3600000 # 60분
+  heartbeat-rate: 30000 # 30초
+  executor:
+    core-pool-size: 10
+    max-pool-size: 20
+    queue-capacity: 50
+
+# CORS Configuration - 프로덕션 도메인만 허용
+cors:
+  allowed-origins: https://devine.kr

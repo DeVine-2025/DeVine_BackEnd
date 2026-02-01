@@ -42,3 +42,10 @@ clerk:
 # GitHub
 github:
   service-token: ${GITHUB_SERVICE_TOKEN:}
+
+
+# Redis Channel
+redis:
+  channel:
+    notification-prefix: "notification:user:"
+    notification-pattern: "notification:user:*"
