@@ -39,19 +39,11 @@ public class ProjectConverter {
                 .build();
     }
 
-    // 이미지 URL → ProjectImage 엔티티 변환
-    public static ProjectImage toProjectImage(String imageUrl, Project project) {
-        return ProjectImage.builder()
-                .project(project)
-                .image(imageUrl)
-                .build();
-    }
-
     // Image 엔티티 → ProjectImage 엔티티 변환
     public static ProjectImage toProjectImageFromImage(Image image, Project project) {
         return ProjectImage.builder()
                 .project(project)
-                .image(image.getImageUrl())
+                .image(image)
                 .build();
     }
 
@@ -159,7 +151,7 @@ public class ProjectConverter {
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .status(project.getStatus())
-                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
+                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImageUrl())
                 .positions(positions)
                 .creatorName(project.getMember().getName())
                 .build();
@@ -209,7 +201,7 @@ public class ProjectConverter {
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
                 .status(project.getStatus())
-                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImage())
+                .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImageUrl())
                 .positions(positions)
                 .creatorName(project.getMember().getName())
                 .techScore(techScore)
@@ -253,7 +245,7 @@ public class ProjectConverter {
             return new ArrayList<>();
         }
         return images.stream()
-                .map(ProjectImage::getImage)
+                .map(ProjectImage::getImageUrl)
                 .collect(Collectors.toList());
     }
 
@@ -273,7 +265,7 @@ public class ProjectConverter {
 
     public static ProjectResDTO.ProjectDetailDTO toProjectDetail(Project project, List<ProjectImage> images) {
         List<String> imageUrls = (images != null) ? images.stream()
-                .map(ProjectImage::getImage)
+                .map(ProjectImage::getImageUrl)
                 .collect(Collectors.toList()) : List.of();
         return ProjectResDTO.ProjectDetailDTO.builder()
                 .id(project.getId())
