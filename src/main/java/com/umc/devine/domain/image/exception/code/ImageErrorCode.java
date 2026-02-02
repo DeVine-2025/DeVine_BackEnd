@@ -43,7 +43,7 @@ public enum ImageErrorCode implements BaseErrorCode {
 
     IMAGE_TYPE_MISMATCH(HttpStatus.BAD_REQUEST,
             "IMAGE400_5",
-            "프로젝트 대표사진에는 PROJECT 타입 이미지만 사용할 수 있습니다.");
+            "이미지 타입이 일치하지 않습니다.");
 
     private final HttpStatus status;
     private final String code;

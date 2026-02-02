@@ -7,8 +7,11 @@ import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Optional;
 
 public interface ImageRepository extends JpaRepository<Image, Long> {
+
+    Optional<Image> findByImageUrl(String imageUrl);
 
     @Query("SELECT i FROM Image i " +
             "WHERE i.imageType = com.umc.devine.domain.image.enums.ImageType.PROJECT " +
