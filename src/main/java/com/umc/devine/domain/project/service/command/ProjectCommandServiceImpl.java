@@ -24,7 +24,6 @@ import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
-import com.umc.devine.domain.project.validator.ProjectValidator;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.exception.TechstackException;
@@ -40,9 +39,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.time.LocalDate;
+
 import static com.umc.devine.domain.category.exception.code.CategoryErrorCode.CATEGORY_NOT_FOUND;
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.INVALID_PERMISSION;
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
+import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.*;
 
 @Slf4j
 @Service
@@ -58,7 +58,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
-    private final ProjectValidator projectValidator;
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Long memberId, ProjectReqDTO.CreateProjectReq request) {
@@ -72,7 +71,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        projectValidator.validateRecruitmentDeadline(request.recruitmentDeadline());
+        validateRecruitmentDeadline(request.recruitmentDeadline());
 
         Project project = ProjectConverter.toProject(request, member, category);
         Project savedProject = projectRepository.save(project);
@@ -96,12 +95,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        projectValidator.validateOwner(project, memberId);
+        validateOwner(project, memberId);
 
         Category category = categoryRepository.findById(request.categoryId())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        projectValidator.validateRecruitmentDeadline(request.recruitmentDeadline());
+        validateRecruitmentDeadline(request.recruitmentDeadline());
 
         project.updateProjectInfo(
                 request.projectField(),
@@ -156,7 +155,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        projectValidator.validateOwner(project, memberId);
+        validateOwner(project, memberId);
 
         project.delete();
     }
@@ -217,5 +216,17 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .collect(Collectors.toList());
 
         projectImageRepository.saveAll(projectImages).forEach(project::addImage);
+    }
+
+    private void validateOwner(Project project, Long memberId) {
+        if (!project.getMember().getId().equals(memberId)) {
+            throw new ProjectException(FORBIDDEN_PROJECT_ACCESS);
+        }
+    }
+
+    private void validateRecruitmentDeadline(LocalDate recruitmentDeadline) {
+        if (recruitmentDeadline.isBefore(LocalDate.now())) {
+            throw new ProjectException(INVALID_RECRUITMENT_DEADLINE);
+        }
     }
 }
