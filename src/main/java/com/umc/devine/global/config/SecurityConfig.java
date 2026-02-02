@@ -5,6 +5,7 @@ import com.umc.devine.global.auth.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -40,6 +41,8 @@ public class SecurityConfig {
                         ).permitAll()
                         // Auth 헬스체크 (인증 불필요)
                         .requestMatchers("/api/v1/auth/health").permitAll()
+                        // techstack 필터링 조회
+                        .requestMatchers(HttpMethod.GET, "/api/v1/techstacks").permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )

@@ -20,14 +20,9 @@ import java.util.List;
 public class BookmarkQueryServiceImpl implements BookmarkQueryService {
 
     private final BookmarkRepository bookmarkRepository;
-    private final MemberRepository memberRepository;
 
     @Override
-    public BookmarkResDTO.BookmarkListDTO findAllBookmarks(Long memberId) {
-        // TODO 토큰 방식 적용 후 시큐리티 컨텍스트에서 꺼내 쓰도록 수정
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public BookmarkResDTO.BookmarkListDTO findAllBookmarks(Member member) {
         List<Bookmark> bookmarks = bookmarkRepository.findAllByMember(member);
 
         return BookmarkConverter.toBookmarkListDTO(bookmarks);
