@@ -4,6 +4,11 @@ import com.umc.devine.domain.category.converter.CategoryConverter;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.category.repository.MemberCategoryRepository;
+import com.umc.devine.domain.image.entity.Image;
+import com.umc.devine.domain.image.enums.ImageType;
+import com.umc.devine.domain.image.exception.ImageException;
+import com.umc.devine.domain.image.exception.code.ImageErrorCode;
+import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
@@ -37,10 +42,23 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final ContactRepository contactRepository;
     private final TechstackRepository techstackRepository;
     private final DevTechstackRepository devTechstackRepository;
+    private final ImageRepository imageRepository;
 
     @Override
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
-        
+
+        // 프로필 이미지 검증
+        if (dto.imageUrl() != null) {
+            Image image = imageRepository.findByImageUrl(dto.imageUrl())
+                    .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+            if (image.getImageType() != ImageType.PROFILE) {
+                throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
+            }
+            if (!image.isUploaded()) {
+                throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
+            }
+        }
+
         // 멤버 업데이트
         member.updateProfile(dto);
 

@@ -20,6 +20,13 @@ logging:
     org.springframework.web: DEBUG
     org.hibernate.orm.jdbc.bind: trace
 
+# AWS S3 Configuration (Local 환경 전용 credentials)
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
+
 # Clerk Configuration
 clerk:
   secret-key: ${CLERK_SECRET_KEY}

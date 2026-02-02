@@ -29,7 +29,7 @@ public class Project extends BaseEntity {
     @Column(name = "project_name", nullable = false, length = 255)
     private String name;
 
-    @Column(name = "project_content", nullable = false, length = 255)
+    @Column(name = "project_content", nullable = false, columnDefinition = "TEXT")
     private String content;
 
     @Enumerated(EnumType.STRING)
