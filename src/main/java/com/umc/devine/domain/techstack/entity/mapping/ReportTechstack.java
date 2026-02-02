@@ -1,6 +1,6 @@
 package com.umc.devine.domain.techstack.entity.mapping;
 
-import com.umc.devine.domain.techstack.entity.DevReport;
+import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import jakarta.persistence.*;
 import lombok.*;

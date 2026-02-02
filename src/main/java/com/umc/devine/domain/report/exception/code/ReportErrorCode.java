@@ -1,0 +1,21 @@
+package com.umc.devine.domain.report.exception.code;
+
+import com.umc.devine.global.apiPayload.code.BaseErrorCode;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+import org.springframework.http.HttpStatus;
+
+@Getter
+@AllArgsConstructor
+public enum ReportErrorCode implements BaseErrorCode {
+
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_1", "해당 리포트를 찾을 수 없습니다."),
+    GIT_REPO_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_2", "해당 Git 저장소를 찾을 수 없습니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "REPORT403_1", "해당 리포트에 대한 권한이 없습니다."),
+    REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409_1", "해당 Git 저장소에 이미 리포트가 존재합니다."),
+    INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "REPORT400_1", "유효하지 않은 JSON 형식입니다.");
+
+    private final HttpStatus status;
+    private final String code;
+    private final String message;
+}
