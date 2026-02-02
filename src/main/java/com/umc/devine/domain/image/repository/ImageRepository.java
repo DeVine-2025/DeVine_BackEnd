@@ -17,7 +17,8 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
             "WHERE i.imageType = com.umc.devine.domain.image.enums.ImageType.PROJECT " +
             "AND i.createdAt < :threshold " +
             "AND i.uploaded = true " +
-            "AND i.imageUrl NOT IN (SELECT pi.image FROM ProjectImage pi)")
+            "AND i.imageUrl NOT IN (SELECT pi.image FROM ProjectImage pi " +
+            "JOIN pi.project p WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED)")
     List<Image> findOrphanProjectImages(@Param("threshold") LocalDateTime threshold);
 
     @Query("SELECT i FROM Image i " +
@@ -31,7 +32,8 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
             "WHERE i.imageType = com.umc.devine.domain.image.enums.ImageType.EDITOR " +
             "AND i.createdAt < :threshold " +
             "AND i.uploaded = true " +
-            "AND NOT EXISTS (SELECT 1 FROM Project p WHERE p.content LIKE CONCAT('%', i.imageUrl, '%'))")
+            "AND NOT EXISTS (SELECT 1 FROM Project p WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
+            "AND p.content LIKE CONCAT('%', i.imageUrl, '%'))")
     List<Image> findOrphanEditorImages(@Param("threshold") LocalDateTime threshold);
 
     @Query("SELECT i FROM Image i " +
