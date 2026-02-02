@@ -29,13 +29,15 @@ public class ImageCleanupScheduler {
         List<Image> orphans = new ArrayList<>();
         orphans.addAll(imageRepository.findUnconfirmedImages(threshold));
         orphans.addAll(imageRepository.findOrphanProjectImages(threshold));
+        orphans.addAll(imageRepository.findOrphanProfileImages(threshold));
+        orphans.addAll(imageRepository.findOrphanEditorImages(threshold));
 
         if (orphans.isEmpty()) {
             log.info("[ImageCleanup] 정리할 고아 이미지 없음");
             return;
         }
 
-        log.info("[ImageCleanup] 고아 이미지 정리 시작 - {}건 (미확인 업로드 + 미사용 프로젝트 이미지)", orphans.size());
+        log.info("[ImageCleanup] 고아 이미지 정리 시작 - {}건", orphans.size());
 
         int deleted = 0;
         for (Image image : orphans) {
