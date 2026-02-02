@@ -1,8 +1,10 @@
 package com.umc.devine.domain.report.controller;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -21,6 +23,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.ReportRes> getMainReport(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "Git 저장소 ID", required = true) @PathVariable Long gitRepoId
     );
 
@@ -31,6 +34,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.ReportRes> getDetailReport(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "Git 저장소 ID", required = true) @PathVariable Long gitRepoId
     );
 
@@ -41,6 +45,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.UpdateVisibilityRes> updateVisibility(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "리포트 ID", required = true) @PathVariable Long reportId,
             @RequestBody @Valid ReportReqDTO.UpdateVisibilityReq request
     );
@@ -52,6 +57,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 리포트 생성이 진행 중")
     })
     ApiResponse<ReportResDTO.CreateReportRes> createReport(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @RequestBody @Valid ReportReqDTO.CreateReportReq request
     );
 
