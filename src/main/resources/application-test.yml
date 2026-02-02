@@ -23,7 +23,7 @@ logging:
     root: INFO
     com.umc.devine: DEBUG
     org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: trace
 
 clerk:
   secret-key: "test-secret-key-for-integration-tests" # Clerk Test
-
