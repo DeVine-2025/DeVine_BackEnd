@@ -33,7 +33,21 @@ logging:
 sse:
   timeout: 3600000 # 60분
   heartbeat-rate: 30000 # 30초
-  executor:
+
+# Thread Pool Configuration (ExecutorConfig에서 사용)
+executor:
+  # @Async 메서드 실행용
+  async:
+    core-pool-size: 10
+    max-pool-size: 20
+    queue-capacity: 200
+  # SSE 연결 유지용 (Spring MVC Async)
+  sse-connection:
     core-pool-size: 10
     max-pool-size: 20
     queue-capacity: 50
+  # SSE 메시지 전송용 (Redis -> Client)
+  sse-dispatch:
+    core-pool-size: 20
+    max-pool-size: 100
+    queue-capacity: 500
