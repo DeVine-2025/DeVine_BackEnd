@@ -25,6 +25,7 @@ public class SseEventPublisher {
 
     /**
      * 특정 유저에게 알림 이벤트 발행
+     * Redis 장애 시에도 알림은 DB에 저장되어 있으므로 사용자가 새로고침하면 조회 가능
      */
     public void publish(Long receiverId, SseEventPayload payload) {
         try {
@@ -36,6 +37,11 @@ public class SseEventPublisher {
 
         } catch (JsonProcessingException e) {
             log.error("Redis Pub 직렬화 실패 - receiverId: {}, error: {}", receiverId, e.getMessage());
+        } catch (Exception e) {
+            // Redis 연결 장애 등 예외 발생 시에도 알림은 DB에 저장됨
+            // 사용자가 새로고침하거나 재연결 시 놓친 알림을 조회할 수 있음
+            log.error("Redis Pub 발행 실패 (Redis 연결 문제) - receiverId: {}, eventType: {}, error: {}",
+                    receiverId, payload.eventType(), e.getMessage());
         }
     }
 
