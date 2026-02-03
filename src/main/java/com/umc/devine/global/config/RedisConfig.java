@@ -68,8 +68,6 @@ public class RedisConfig {
 
     /**
      * Redis Pub/Sub 메시지 리스너 컨테이너
-     *
-     * @see <a href="https://docs.spring.io/spring-data/redis/docs/current/reference/html/#pubsub">Spring Data Redis Pub/Sub</a>
      */
     @Bean
     public RedisMessageListenerContainer redisMessageListenerContainer(

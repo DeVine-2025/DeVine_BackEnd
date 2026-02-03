@@ -11,12 +11,15 @@ import java.util.concurrent.Executor;
 @EnableAsync
 public class AsyncConfig {
 
+    /**
+     * 범용 스레드풀
+     */
     @Bean(name = "taskExecutor")
     public Executor taskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(5);
-        executor.setMaxPoolSize(10);
-        executor.setQueueCapacity(100);
+        executor.setCorePoolSize(5); // 기본 스레드 수
+        executor.setMaxPoolSize(10); // 최대 스레드 수
+        executor.setQueueCapacity(100); // 큐 용량
         executor.setThreadNamePrefix("report-async-");
         executor.initialize();
         return executor;

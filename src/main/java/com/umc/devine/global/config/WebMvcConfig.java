@@ -20,12 +20,6 @@ public class WebMvcConfig implements WebMvcConfigurer {
 
     private final CurrentMemberArgumentResolver currentMemberArgumentResolver;
 
-    @Override
-    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
-        resolvers.add(currentMemberArgumentResolver);
-    }
-
-
     @Value("${sse.timeout}")
     private long sseTimeout;
 
@@ -41,30 +35,32 @@ public class WebMvcConfig implements WebMvcConfigurer {
     @Value("${cors.allowed-origins:http://localhost:3000,http://127.0.0.1:3000}")
     private List<String> allowedOrigins;
 
+    /**
+     * CurrentMember 어노테이션 리졸버 등록
+     */
+    @Override
+    public void addArgumentResolvers(List<HandlerMethodArgumentResolver> resolvers) {
+        resolvers.add(currentMemberArgumentResolver);
+    }
 
+    /**
+     * 비동기 요청 처리를 위한 설정을 구성(타임아웃, 비동기 SSE 스레드풀)
+     */
     @Override
     public void configureAsyncSupport(AsyncSupportConfigurer configurer) {
         configurer.setDefaultTimeout(sseTimeout);
         configurer.setTaskExecutor(sseTaskExecutor());
     }
 
-    @Override
-    public void addCorsMappings(CorsRegistry registry) {
-        registry.addMapping("/api/**")
-                .allowedOrigins(allowedOrigins.toArray(String[]::new))
-                .allowedMethods("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS")
-                .allowedHeaders("*")
-                .exposedHeaders("Last-Event-ID")
-                .allowCredentials(true)
-                .maxAge(3600);
-    }
-
+    /**
+     * 비동기 스레드풀
+     */
     @Bean
     public AsyncTaskExecutor sseTaskExecutor() {
         ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
-        executor.setCorePoolSize(corePoolSize);
-        executor.setMaxPoolSize(maxPoolSize);
-        executor.setQueueCapacity(queueCapacity);
+        executor.setCorePoolSize(corePoolSize); // 기본 스레드 수
+        executor.setMaxPoolSize(maxPoolSize); // 최대 스레드 수
+        executor.setQueueCapacity(queueCapacity); // 큐 용량
         executor.setThreadNamePrefix("sse-executor-");
         executor.setWaitForTasksToCompleteOnShutdown(true);
         executor.setAwaitTerminationSeconds(30);

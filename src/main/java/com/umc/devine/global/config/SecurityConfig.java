@@ -75,6 +75,7 @@ public class SecurityConfig {
 
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"));
         configuration.setAllowedHeaders(List.of("*"));
+        configuration.setExposedHeaders(List.of("Last-Event-ID")); // SSE를 위해 헤더 노출
         configuration.setAllowCredentials(true);
         configuration.setMaxAge(3600L);
 
