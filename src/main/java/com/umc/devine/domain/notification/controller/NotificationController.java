@@ -1,11 +1,13 @@
 package com.umc.devine.domain.notification.controller;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.notification.converter.NotificationConverter;
 import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.domain.notification.exception.code.NotificationSuccessCode;
 import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.notification.service.query.NotificationQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;
@@ -23,50 +25,44 @@ public class NotificationController implements NotificationControllerDocs {
     @Override
     @GetMapping
     public ApiResponse<NotificationResDTO.NotificationList> getNotifications(
+            @CurrentMember Member member,
             @RequestParam(defaultValue = "false") Boolean unreadOnly,
             Pageable pageable
     ) {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
         return ApiResponse.onSuccess(
                 NotificationSuccessCode.FETCH_SUCCESS,
-                notificationQueryService.getNotifications(memberId, unreadOnly, pageable)
+                notificationQueryService.getNotifications(member.getId(), unreadOnly, pageable)
         );
     }
 
     @Override
     @GetMapping("/unread-count")
-    public ApiResponse<NotificationResDTO.UnreadCount> getUnreadCount() {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
+    public ApiResponse<NotificationResDTO.UnreadCount> getUnreadCount(
+            @CurrentMember Member member
+    ) {
         return ApiResponse.onSuccess(
                 NotificationSuccessCode.FETCH_SUCCESS,
-                notificationQueryService.getUnreadCount(memberId)
+                notificationQueryService.getUnreadCount(member.getId())
         );
     }
 
     @Override
     @PatchMapping("/{notificationId}/read")
     public ApiResponse<Void> markAsRead(
+            @CurrentMember Member member,
             @PathVariable("notificationId") Long notificationId
     ) {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        notificationCommandService.markAsRead(notificationId, memberId);
+        notificationCommandService.markAsRead(notificationId, member.getId());
 
         return ApiResponse.onSuccess(NotificationSuccessCode.MARK_READ_SUCCESS, null);
     }
 
     @Override
     @PatchMapping("/read-all")
-    public ApiResponse<NotificationResDTO.MarkAllReadResult> markAllAsRead() {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        int count = notificationCommandService.markAllAsRead(memberId);
+    public ApiResponse<NotificationResDTO.MarkAllReadResult> markAllAsRead(
+            @CurrentMember Member member
+    ) {
+        int count = notificationCommandService.markAllAsRead(member.getId());
 
         return ApiResponse.onSuccess(
                 NotificationSuccessCode.MARK_ALL_READ_SUCCESS,

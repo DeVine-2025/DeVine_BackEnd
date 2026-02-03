@@ -1,5 +1,7 @@
 package com.umc.devine.infrastructure.sse.controller;
 
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.infrastructure.sse.event.SseEmitterManager;
 import com.umc.devine.infrastructure.sse.event.SseConnectedEvent;
 import lombok.RequiredArgsConstructor;
@@ -27,10 +29,10 @@ public class SseController implements SseControllerDocs {
     @Override
     @GetMapping(value = "/subscribe", produces = MediaType.TEXT_EVENT_STREAM_VALUE)
     public SseEmitter subscribe(
+            @CurrentMember Member member,
             @RequestHeader(value = "Last-Event-ID", required = false) String lastEventId
     ) {
-        // TODO: SecurityContext에서 memberId 추출
-        Long memberId = 1L;
+        Long memberId = member.getId();
 
         SseEmitter emitter = sseEmitterManager.create(memberId);
 

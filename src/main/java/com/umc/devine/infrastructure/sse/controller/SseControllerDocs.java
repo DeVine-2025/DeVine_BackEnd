@@ -1,5 +1,7 @@
 package com.umc.devine.infrastructure.sse.controller;
 
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -34,6 +36,7 @@ public interface SseControllerDocs {
             )
     })
     SseEmitter subscribe(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "마지막 수신 이벤트 ID (재연결 시 자동 전송)")
             String lastEventId
     );

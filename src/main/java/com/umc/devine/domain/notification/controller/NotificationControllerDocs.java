@@ -1,7 +1,9 @@
 package com.umc.devine.domain.notification.controller;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -19,6 +21,7 @@ public interface NotificationControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
     })
     ApiResponse<NotificationResDTO.NotificationList> getNotifications(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "읽지 않은 알림만 조회") Boolean unreadOnly,
             @ParameterObject @PageableDefault(size = 20, page = 0) Pageable pageable
     );
@@ -28,7 +31,9 @@ public interface NotificationControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
     })
-    ApiResponse<NotificationResDTO.UnreadCount> getUnreadCount();
+    ApiResponse<NotificationResDTO.UnreadCount> getUnreadCount(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 
     @Operation(summary = "알림 읽음 처리 API", description = "특정 알림을 읽음 처리하는 API입니다.")
     @ApiResponses({
@@ -38,6 +43,7 @@ public interface NotificationControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "알림을 찾을 수 없습니다.")
     })
     ApiResponse<Void> markAsRead(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "알림 ID") Long notificationId
     );
 
@@ -46,5 +52,7 @@ public interface NotificationControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
     })
-    ApiResponse<NotificationResDTO.MarkAllReadResult> markAllAsRead();
+    ApiResponse<NotificationResDTO.MarkAllReadResult> markAllAsRead(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 }
