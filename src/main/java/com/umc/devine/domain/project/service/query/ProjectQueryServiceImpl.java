@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -34,7 +35,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     @Transactional
-    public ProjectResDTO.UpdateProjectRes getProjectDetail(Long memberId, Long projectId) {
+    public ProjectResDTO.UpdateProjectRes getProjectDetail(Member member, Long projectId) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
@@ -84,7 +85,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPreview(
-            Long memberId,
+            Member member,
             ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
@@ -107,7 +108,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
-            Long memberId,
+            Member member,
             ProjectReqDTO.RecommendProjectsPageReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가

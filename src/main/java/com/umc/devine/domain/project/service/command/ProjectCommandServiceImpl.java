@@ -10,9 +10,6 @@ import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
-import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
-import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -56,15 +53,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final ProjectRequirementMemberRepository projectRequirementMemberRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
     private final TechstackRepository techstackRepository;
-    private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
 
     @Override
-    public ProjectResDTO.CreateProjectRes createProject(Long memberId, ProjectReqDTO.CreateProjectReq request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
         if (member.getMainType() != MemberMainType.PM) {
             throw new ProjectException(INVALID_PERMISSION);
         }
@@ -77,7 +70,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         Project project = ProjectConverter.toProject(request, member, category);
         Project savedProject = projectRepository.save(project);
 
-        saveProjectImages(request.imageIds(), savedProject);
+        saveProjectImages(request.imageIds(), savedProject, member.getId());
 
         if (request.recruitments() != null && !request.recruitments().isEmpty()) {
             List<ProjectRequirementMember> requirements = request.recruitments().stream()
@@ -92,11 +85,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
-    public ProjectResDTO.UpdateProjectRes updateProject(Long memberId, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
+    public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        validateOwner(project, memberId);
+        validateOwner(project, member.getId());
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
@@ -120,7 +113,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         projectImageRepository.deleteAllByProject(project);
         project.clearImages();
 
-        saveProjectImages(request.imageIds(), project);
+        saveProjectImages(request.imageIds(), project, member.getId());
 
         List<ProjectRequirementMember> oldRequirements =
                 projectRequirementMemberRepository.findAllByProject(project);
@@ -152,11 +145,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
-    public void deleteProject(Long memberId, Long projectId) {
+    public void deleteProject(Member member, Long projectId) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        validateOwner(project, memberId);
+        validateOwner(project, member.getId());
 
         project.delete();
     }
@@ -191,7 +184,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
     }
 
-    private void saveProjectImages(List<Long> imageIds, Project project) {
+    private void saveProjectImages(List<Long> imageIds, Project project, Long memberId) {
         if (imageIds == null || imageIds.isEmpty()) {
             return;
         }
@@ -199,6 +192,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         List<Image> images = imageRepository.findAllById(imageIds);
         if (images.size() != imageIds.size()) {
             throw new ImageException(ImageErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        boolean hasUnauthorized = images.stream()
+                .anyMatch(image -> !image.getUploader().getId().equals(memberId));
+        if (hasUnauthorized) {
+            throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
         }
 
         boolean hasNonProjectType = images.stream()
