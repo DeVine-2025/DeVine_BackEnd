@@ -35,13 +35,16 @@ spring:
       hibernate:
         format_sql: true
 
-# AWS S3
-cloud:
-  aws:
-    s3:
-      bucket: ${AWS_S3_BUCKET:}
-    region:
-      static: ap-northeast-2
+  # AWS S3
+  cloud:
+    aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
+      s3:
+        bucket: ${AWS_S3_BUCKET:}
+      region:
+        static: ap-northeast-2
 
 # Clerk
 clerk:
