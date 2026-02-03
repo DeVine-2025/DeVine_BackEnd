@@ -6,7 +6,8 @@ public class FastApiResDto {
 
     @Builder
     public record ReportGenerationRes(
-            Long reportId,
+            Long mainReportId,
+            Long detailReportId,
             String status,
             String message
     ) {}
