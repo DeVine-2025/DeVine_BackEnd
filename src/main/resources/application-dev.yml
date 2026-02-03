@@ -3,7 +3,7 @@
 # ===========================================
 
 server:
-  port: ${PORT:8080}
+  port: ${SPRING_PORT:8080}
 
 spring:
   jpa:
@@ -19,6 +19,13 @@ logging:
     org.hibernate.type.descriptor.sql: TRACE
     org.springframework.web: DEBUG
     org.hibernate.orm.jdbc.bind: trace
+
+# AWS S3 Configuration (Local 환경 전용 credentials)
+cloud:
+  aws:
+    credentials:
+      access-key: ${AWS_ACCESS_KEY}
+      secret-key: ${AWS_SECRET_KEY}
 
 # Clerk Configuration
 clerk:

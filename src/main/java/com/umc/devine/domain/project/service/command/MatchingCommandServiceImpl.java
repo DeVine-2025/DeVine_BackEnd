@@ -31,10 +31,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private final NotificationCommandService notificationCommandService;
 
     @Override
-    public MatchingResDTO.ProposeResDTO applyToProject(Long memberId, Long projectId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
-
+    public MatchingResDTO.ProposeResDTO applyToProject(Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
 
@@ -49,7 +46,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         }
 
         // 본인 프로젝트에 지원 불가
-        if (project.getMember().getId().equals(memberId)) {
+        if (project.getMember().getId().equals(member.getId())) {
             throw new MatchingException(MatchingErrorCode.CANNOT_APPLY_OWN_PROJECT);
         }
 
@@ -81,20 +78,13 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     }
 
     @Override
-    public MatchingResDTO.ProposeResDTO cancelApplication(Long memberId, Long projectId) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
-
+    public MatchingResDTO.ProposeResDTO cancelApplication(Member member, Long projectId) {
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
 
-        Matching matching = matchingRepository.findByProjectAndMemberAndMatchingType(project, member, MatchingType.APPLY)
+        Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
+                        project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
-
-        // 이미 취소된 매칭인지 확인
-        if (matching.getStatus() == MatchingStatus.CANCELLED) {
-            throw new MatchingException(MatchingErrorCode.ALREADY_CANCELLED);
-        }
 
         matching.cancel();
 
@@ -102,10 +92,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     }
 
     @Override
-    public MatchingResDTO.ProposeResDTO proposeToMember(Long pmMemberId, String targetNickname, Long projectId) {
-        Member pmMember = memberRepository.findById(pmMemberId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
-
+    public MatchingResDTO.ProposeResDTO proposeToMember(Member pmMember, String targetNickname, Long projectId) {
         Member targetMember = memberRepository.findByNickname(targetNickname)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
 
@@ -118,7 +105,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         }
 
         // 본인 프로젝트만 제안 가능
-        if (!project.getMember().getId().equals(pmMemberId)) {
+        if (!project.getMember().getId().equals(pmMember.getId())) {
             throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
         }
 

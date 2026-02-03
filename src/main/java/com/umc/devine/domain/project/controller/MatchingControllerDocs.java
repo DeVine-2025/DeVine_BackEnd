@@ -1,8 +1,10 @@
 package com.umc.devine.domain.project.controller;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingReqDTO;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -22,6 +24,7 @@ public interface MatchingControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 지원한 프로젝트")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> applyToProject(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId
     );
 
@@ -32,6 +35,7 @@ public interface MatchingControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> cancelApplication(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId
     );
 
@@ -44,6 +48,7 @@ public interface MatchingControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 제안한 회원")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> proposeToMember(
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "개발자 닉네임", required = true) @PathVariable String nickname,
             @RequestBody MatchingReqDTO.ProposeReqDTO dto
     );
