@@ -58,16 +58,11 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         String gitUrl = gitRepoUrl.getGitUrl();
         String clerkUserId = gitRepoUrl.getMember().getClerkId();
 
+        // COMBINED 방식: 이벤트 1개만 발행
         eventPublisher.publishEvent(ReportCreatedEvent.builder()
-                .reportId(savedMainReport.getId())
+                .mainReportId(savedMainReport.getId())
+                .detailReportId(savedDetailReport.getId())
                 .gitUrl(gitUrl)
-                .reportType(savedMainReport.getReportType())
-                .clerkId(clerkUserId)
-                .build());
-        eventPublisher.publishEvent(ReportCreatedEvent.builder()
-                .reportId(savedDetailReport.getId())
-                .gitUrl(gitUrl)
-                .reportType(savedDetailReport.getReportType())
                 .clerkId(clerkUserId)
                 .build());
 
@@ -80,21 +75,40 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
     @Override
     public void processCallback(ReportReqDTO.CallbackReq request) {
-        DevReport report = devReportRepository.findById(request.reportId())
+        DevReport mainReport = devReportRepository.findById(request.mainReportId())
+                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+        DevReport detailReport = devReportRepository.findById(request.detailReportId())
                 .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
 
         switch (request.status()) {
             case SUCCESS -> {
                 if (request.content() == null || request.content().isNull()) {
-                    log.warn("리포트 content가 비어있음 - reportId: {}", request.reportId());
+                    log.warn("리포트 content가 비어있음 - mainReportId: {}, detailReportId: {}",
+                            request.mainReportId(), request.detailReportId());
                     throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
                 }
-                report.completeReport(request.content().toString());
-                log.info("리포트 생성 완료 - reportId: {}", request.reportId());
+
+                var mainContent = request.content().get("main");
+                var detailContent = request.content().get("detail");
+
+                if (mainContent == null || mainContent.isNull()) {
+                    log.warn("메인 리포트 content가 비어있음 - mainReportId: {}", request.mainReportId());
+                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                }
+                if (detailContent == null || detailContent.isNull()) {
+                    log.warn("상세 리포트 content가 비어있음 - detailReportId: {}", request.detailReportId());
+                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                }
+
+                mainReport.completeReport(mainContent.toString());
+                detailReport.completeReport(detailContent.toString());
+                log.info("리포트 생성 완료 - mainReportId: {}, detailReportId: {}", request.mainReportId(), request.detailReportId());
             }
             case FAILED -> {
-                report.failReport(request.errorMessage());
-                log.warn("리포트 생성 실패 - reportId: {}, error: {}", request.reportId(), request.errorMessage());
+                mainReport.failReport(request.errorMessage());
+                detailReport.failReport(request.errorMessage());
+                log.warn("리포트 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                        request.mainReportId(), request.detailReportId(), request.errorMessage());
             }
         }
     }
