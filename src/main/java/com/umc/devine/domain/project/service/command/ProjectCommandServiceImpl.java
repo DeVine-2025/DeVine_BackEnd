@@ -26,6 +26,7 @@ import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -68,7 +69,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             throw new ProjectException(INVALID_PERMISSION);
         }
 
-        Category category = categoryRepository.findById(request.categoryId())
+        Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
         validateRecruitmentDeadline(request.recruitmentDeadline());
@@ -97,7 +98,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
         validateOwner(project, memberId);
 
-        Category category = categoryRepository.findById(request.categoryId())
+        Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
         validateRecruitmentDeadline(request.recruitmentDeadline());
@@ -168,12 +169,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             ProjectReqDTO.RecruitmentDTO dto = recruitments.get(i);
             ProjectRequirementMember requirement = requirementEntities.get(i);
 
-            if (dto.techStackIds() == null || dto.techStackIds().isEmpty()) {
+            if (dto.techStacks() == null || dto.techStacks().isEmpty()) {
                 continue;
             }
 
-            for (Long techstackId : dto.techStackIds()) {
-                Techstack techstack = techstackRepository.findById(techstackId)
+            for (TechName techName : dto.techStacks()) {
+                Techstack techstack = techstackRepository.findByName(techName)
                         .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()

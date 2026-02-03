@@ -29,8 +29,6 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 @Transactional(readOnly = true)
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
-    private static final int DEFAULT_PAGE_SIZE = 4;
-
     private final ProjectRepository projectRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
@@ -68,8 +66,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
-        int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
+        Pageable pageable = request.toPageable();
 
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(request);
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
@@ -114,8 +111,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
             ProjectReqDTO.RecommendProjectsPageReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
-        int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
+        Pageable pageable = request.toPageable();
 
         Predicate predicate = ProjectPredicateBuilder.buildRecommendPagePredicate(request);
         Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);

@@ -1,6 +1,8 @@
 package com.umc.devine.domain.project.dto;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.enums.ProjectMode;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.enums.ProjectField;
@@ -25,10 +27,10 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 ID", example = "1")
-            Long categoryId,
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
             @Schema(description = "진행 방식", example = "HYBRID")
@@ -82,10 +84,10 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 ID", example = "1")
-            Long categoryId,
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
             @Schema(description = "진행 방식", example = "HYBRID")
@@ -145,11 +147,8 @@ public class ProjectResDTO {
 
     @Builder
     public record TechStackInfo(
-            @Schema(description = "기술 스택 ID", example = "1")
-            Long techStackId,
-
-            @Schema(description = "기술 스택 이름", example = "JAVA")
-            String techStackName
+            @Schema(description = "기술 스택", example = "JAVA")
+            TechName techStack
     ) {}
 
     @Builder
