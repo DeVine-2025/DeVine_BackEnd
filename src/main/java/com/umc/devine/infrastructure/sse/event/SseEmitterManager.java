@@ -7,19 +7,19 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 
 import java.io.IOException;
-import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
+import java.util.concurrent.atomic.AtomicBoolean;
 
-/**
- * SSE 연결(SseEmitter) 관리 컴포넌트
- *
- */
 @Component
 @Slf4j
 public class SseEmitterManager {
 
+    // SseEmitter 객체 관리 맵
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
+
+     // 애플리케이션 종료를 위한 플래그 (true가 되면 새로운 SSE 연결을 받지 않음)
+    private final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
 
     @Value("${sse.timeout}")
     private long sseTimeout;
@@ -29,6 +29,14 @@ public class SseEmitterManager {
      * compute()를 사용하여 원자적으로 기존 연결 종료 및 새 연결 생성
      */
     public SseEmitter create(Long memberId) {
+        // 레이스 컨디션 방지 : isShuttingDown 가 true이면 새로운 연결 요청을 받지 않음
+        if (isShuttingDown.get()) {
+            log.warn("서버 종료 중 SSE 연결 시도 거부 - memberId: {}", memberId);
+            SseEmitter emitter = new SseEmitter(0L);
+            emitter.complete();
+            return emitter;
+        }
+
         SseEmitter newEmitter = emitters.compute(memberId, (key, existing) -> {
             if (existing != null) {
                 existing.complete();
@@ -147,26 +155,33 @@ public class SseEmitterManager {
         return successCount;
     }
 
+    /**
+     * 애플리케이션 종료 시 모든 SSE 연결 정리
+     * Spring 컨테이너가 종료될 때 @PreDestroy 어노테이션에 의해 자동으로 호출됨.
+     */
     @PreDestroy
     public void shutdown() {
-        log.info("애플리케이션 종료. 모든 SSE 연결을 종료합니다. 연결 수: {}", emitters.size());
+        // 1. 새로운 연결 요청을 차단하기 위해 플래그를 true로 설정
+        isShuttingDown.set(true);
+        log.info("애플리케이션 종료 절차 시작. 모든 SSE 연결을 종료합니다. 현재 연결 수: {}", emitters.size());
 
-        Map<Long, SseEmitter> snapshot;
-        // 동기화 블록을 사용하여 맵에 대한 동시 접근 제어
-        synchronized (emitters) {
-            // 스냅샷 복사 후 순회하여 동시성 이슈 방지
-            snapshot = new HashMap<>(emitters);
-            emitters.clear(); // 먼저 clear하여 새 연결 방지
-        }
-
-        snapshot.forEach((memberId, emitter) -> {
+        // 2. 현재 활성화된 모든 Emitter에 대해 종료 이벤트를 전송
+        emitters.forEach((memberId, emitter) -> {
             try {
-                emitter.send(SseEmitter.event().name(SseEventType.SHUTDOWN.getEventName()).data("server shutdown"));
+                // 클라이언트에게 서버가 종료됨을 알리는 이벤트를 전송.
+                emitter.send(SseEmitter.event()
+                        .name(SseEventType.SHUTDOWN.getEventName())
+                        .data("server shutdown"));
+                // Emitter 연결을 정상적으로 완료 처리.
                 emitter.complete();
             } catch (IOException e) {
                 log.warn("SSE 종료 메시지 전송 실패 - memberId: {}", memberId);
             }
         });
+
+        // 3. 모든 Emitter 객체를 맵에서 제거
+        emitters.clear();
+        log.info("모든 SSE 연결이 성공적으로 종료되었습니다.");
     }
 
     private void setupCallbacks(Long memberId, SseEmitter emitter) {

@@ -6,10 +6,10 @@ Server-Sent Events(SSE)와 Redis Pub/Sub을 활용한 실시간 알림 시스템
 
 ### 관련 커밋
 - `10157fa` - 알림 도메인 기본 기능 구현
-- `3625581` - SSE 알림 시스템 Redis Pub/Sub으로 구현
-- `e2ea26e` - SSE 비동기 처리 및 CORS 설정 추가
-- `62e0317` - SSE 및 CORS 설정 외부화 및 안정성 개선
-- `ca6f06d` - yml 정리
+- `83bc4c7` - SSE 알림 시스템 인프라 구현
+- `5c2be0c` - SSE 및 비동기 설정 추가
+- `8ed133b` - 환경별 yml 설정 정리
+- `e3bd3be` - SSE 알림 서비스 연동
 
 ---
 
@@ -25,14 +25,43 @@ Server-Sent Events(SSE)와 Redis Pub/Sub을 활용한 실시간 알림 시스템
                            └───────────────────┘
 ```
 
+### 이벤트 흐름
+
+```
+[알림 생성 흐름]
+MatchingCommandService          NotificationCommandService         EventListener              SseEventPublisher
+       │                                │                               │                           │
+       │ create(MATCHING_APPLIED, ...)  │                               │                           │
+       │───────────────────────────────>│                               │                           │
+       │                                │ save(notification)            │                           │
+       │                                │ publishEvent(Created)         │                           │
+       │                                │──────────────────────────────>│ @TransactionalEventListener
+       │                                │                               │ (AFTER_COMMIT, @Async)    │
+       │                                │                               │ publishNotification()     │
+       │                                │                               │──────────────────────────>│
+       │                                │                               │                           │ Redis Pub
+                                                                                                    ▼
+[SSE 전송 흐름]                                                                            ┌─────────────┐
+SseEventSubscriber         SseEmitterManager        Client                                │    Redis    │
+       │                          │                    │                                   │  Pub/Sub    │
+       │ onMessage()              │                    │     ◄─────────────────────────────└─────────────┘
+       │ (Redis Sub)              │                    │
+       │ sendWithId()             │                    │
+       │─────────────────────────>│                    │
+       │                          │ SSE event          │
+       │                          │───────────────────>│
+```
+
 ### 주요 컴포넌트
 
-| 컴포넌트 | 역할 |
-|----------|------|
-| `SseEmitterManager` | SSE 연결 생성/관리, 클라이언트에게 이벤트 전송 |
-| `SseEventPublisher` | Redis Pub/Sub으로 이벤트 발행 |
-| `SseEventSubscriber` | Redis 메시지 구독 및 SSE 전송 |
-| `SseHeartbeatScheduler` | 연결 유지를 위한 주기적 하트비트 |
+| 컴포넌트 | 패키지 | 역할 |
+|----------|--------|------|
+| `SseEmitterManager` | infrastructure.sse | SSE 연결 생성/관리, 클라이언트에게 이벤트 전송 |
+| `SseEventPublisher` | infrastructure.sse | Redis Pub/Sub으로 이벤트 발행 |
+| `SseEventSubscriber` | infrastructure.sse | Redis 메시지 구독 및 SSE 전송 |
+| `SseHeartbeatScheduler` | infrastructure.sse | 연결 유지를 위한 주기적 하트비트 |
+| `NotificationCreatedEventListener` | domain.notification | 알림 생성 후 SSE 이벤트 발행 (트랜잭션 커밋 후) |
+| `SseConnectedEventListener` | domain.notification | SSE 재연결 시 놓친 알림 전송 |
 
 ---
 
@@ -155,27 +184,37 @@ PATCH /api/v1/notifications/read-all
 
 ## 설정 (application.yml)
 
+### 기본 설정 (application.yml)
+```yaml
+# Redis Channel (공통)
+redis:
+  channel:
+    notification-prefix: "notification:user:"
+    notification-pattern: "notification:user:*"
+```
+
+### 환경별 설정 (application-dev.yml)
 ```yaml
 # SSE Configuration
 sse:
   timeout: 3600000        # SSE 연결 타임아웃 (60분)
   heartbeat-rate: 30000   # 하트비트 주기 (30초)
   executor:
-    core-pool-size: 5     # dev: 5, prod: 10
-    max-pool-size: 10     # dev: 10, prod: 20
-    queue-capacity: 25    # dev: 25, prod: 50
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 25
 
-# Redis Channel
-redis:
-  channel:
-    notification-prefix: "notification:user:"
-    notification-pattern: "notification:user:*"
-
-# CORS
+# CORS (WebMvcConfig에서 기본값 제공)
 cors:
   allowed-origins:
     - http://localhost:3000
+    - http://127.0.0.1:3000
 ```
+
+### 설정 클래스
+- `AsyncConfig`: `@EnableAsync` 활성화
+- `RedisConfig`: Redis Pub/Sub 리스너 컨테이너 등록
+- `WebMvcConfig`: SSE 비동기 타임아웃, ThreadPool, CORS 설정
 
 ---
 
@@ -272,11 +311,11 @@ GET /api/v1/test/notifications/connections
 
 ```
 com.umc.devine
-├── domain.notification                    # 알림 도메인 (비즈니스 로직)
+├── domain.notification                        # 알림 도메인 (비즈니스 로직)
 │   ├── controller
-│   │   ├── NotificationController.java    # 알림 CRUD API
+│   │   ├── NotificationController.java        # 알림 CRUD API
 │   │   ├── NotificationControllerDocs.java
-│   │   ├── NotificationTestController.java # 테스트 API (dev/test only)
+│   │   ├── NotificationTestController.java    # 테스트 API (dev/test only)
 │   │   └── NotificationTestControllerDocs.java
 │   ├── converter
 │   │   └── NotificationConverter.java
@@ -288,7 +327,9 @@ com.umc.devine
 │   ├── enums
 │   │   └── NotificationType.java
 │   ├── event
-│   │   └── SseConnectedEventListener.java # SSE 이벤트 구독 (느슨한 결합)
+│   │   ├── NotificationCreatedEvent.java      # 알림 생성 이벤트 (ApplicationEvent)
+│   │   ├── NotificationCreatedEventListener.java  # 트랜잭션 커밋 후 SSE 발행
+│   │   └── SseConnectedEventListener.java     # 재연결 시 놓친 알림 전송
 │   ├── exception
 │   │   ├── NotificationException.java
 │   │   └── code
@@ -303,41 +344,94 @@ com.umc.devine
 │       └── query
 │           ├── NotificationQueryService.java
 │           └── NotificationQueryServiceImpl.java
-└── global
-    ├── config
-    │   ├── AsyncConfig.java               # @EnableAsync
-    │   ├── RedisConfig.java
-    │   └── WebMvcConfig.java
-    └── sse                                 # SSE 인프라 (재사용 가능)
-        ├── controller
-        │   ├── SseController.java         # SSE 연결 API
-        │   └── SseControllerDocs.java
-        ├── event
-        │   └── SseConnectedEvent.java     # 연결 이벤트 (Spring ApplicationEvent)
-        ├── dto
-        │   └── SseEventPayload.java
-        ├── SseEmitterManager.java
-        ├── SseEventPublisher.java
-        ├── SseEventSubscriber.java
-        └── SseHeartbeatScheduler.java
+├── infrastructure.sse                         # SSE 인프라 (재사용 가능)
+│   ├── controller
+│   │   ├── SseController.java                 # SSE 연결 API
+│   │   └── SseControllerDocs.java
+│   ├── dto
+│   │   └── SseEventPayload.java
+│   └── event
+│       ├── SseConnectedEvent.java             # 연결 이벤트 (ApplicationEvent)
+│       ├── SseEmitterManager.java
+│       ├── SseEventPublisher.java
+│       ├── SseEventSubscriber.java
+│       ├── SseEventType.java
+│       └── SseHeartbeatScheduler.java
+└── global.config
+    ├── AsyncConfig.java                       # @EnableAsync
+    ├── RedisConfig.java                       # Redis Pub/Sub 리스너 등록
+    └── WebMvcConfig.java                      # SSE 비동기 및 CORS 설정
 ```
 
 ### 모듈 의존 관계
 
 ```
-┌─────────────────────┐
-│  notification       │  (도메인 모듈)
-│  - 알림 비즈니스    │
-│  - CRUD API         │
-└─────────┬───────────┘
-          │ depends on
-          ▼
-┌─────────────────────┐
-│  global/sse         │  (인프라/공통 모듈)
-│  - SSE 연결 관리    │
-│  - Redis Pub/Sub    │
-└─────────────────────┘
+┌─────────────────────────────────────────┐
+│  domain.notification                    │  (도메인 모듈)
+│  - 알림 비즈니스 로직                   │
+│  - CRUD API                             │
+│  - 이벤트 리스너 (SSE 연동)             │
+└─────────────────┬───────────────────────┘
+                  │ depends on
+                  ▼
+┌─────────────────────────────────────────┐
+│  infrastructure.sse                     │  (인프라 모듈)
+│  - SSE 연결 관리 (SseEmitterManager)    │
+│  - Redis Pub/Sub (Publisher/Subscriber) │
+│  - 하트비트 스케줄러                    │
+└─────────────────────────────────────────┘
 ```
+
+---
+
+## 도메인 서비스 연동 예시
+
+### 매칭 서비스에서 알림 생성
+
+```java
+@Service
+@RequiredArgsConstructor
+@Transactional
+public class MatchingCommandServiceImpl implements MatchingCommandService {
+
+    private final NotificationCommandService notificationCommandService;
+
+    @Override
+    public MatchingResDTO.ProposeResDTO applyToProject(Long memberId, Long projectId) {
+        // ... 비즈니스 로직 ...
+
+        Matching savedMatching = matchingRepository.save(matching);
+
+        // PM에게 지원 알림 전송 (트랜잭션 내에서 호출)
+        sendApplyNotification(member, project, savedMatching);
+
+        return MatchingConverter.toMatchingResDTO(savedMatching);
+    }
+
+    private void sendApplyNotification(Member applicant, Project project, Matching matching) {
+        String content = String.format("%s님이 '%s' 프로젝트에 지원했습니다.",
+                applicant.getNickname(), project.getName());
+
+        notificationCommandService.create(
+                NotificationType.MATCHING_APPLIED,
+                project.getMember().getId(),  // receiver: PM
+                applicant.getId(),            // sender: 지원자
+                content,
+                matching.getId()              // referenceId: matchingId
+        );
+    }
+}
+```
+
+### 알림 생성 및 SSE 발행 흐름
+
+`NotificationCommandService.create()` 호출 시:
+1. `Notification` 엔티티 저장
+2. `NotificationCreatedEvent` 발행 (ApplicationEventPublisher)
+3. 트랜잭션 커밋 후 `NotificationCreatedEventListener`가 비동기로 처리
+4. `SseEventPublisher.publishNotification()`으로 Redis Pub 발행
+5. `SseEventSubscriber`가 Redis Sub 수신
+6. `SseEmitterManager.sendWithId()`로 클라이언트에 SSE 전송
 
 ---
 
@@ -359,3 +453,28 @@ com.umc.devine
 ### 4. 재연결 후 알림 누락
 - `Last-Event-ID` 헤더가 제대로 전송되는지 확인
 - `findMissedNotifications` 쿼리 동작 확인
+
+---
+
+## 주의사항 및 향후 개선점
+
+### 현재 구현 주의사항
+
+1. **N+1 문제**
+   - `findMissedNotifications` 쿼리에서 sender 조회 시 N+1 발생 가능
+   - 권장: `JOIN FETCH` 또는 `@EntityGraph` 적용
+
+2. **@Modifying 옵션**
+   - `markAllAsRead` bulk update 후 영속성 컨텍스트 동기화
+   - `@Modifying(clearAutomatically = true)` 확인 필요
+
+3. **Redis 연결 실패**
+   - 현재 로깅만 수행, 알림 누락 가능
+   - 재시도 로직 또는 Fallback 전략 고려
+
+### 향후 개선점
+
+- [ ] SecurityContext에서 memberId 추출 (현재 하드코딩)
+- [ ] Redis 발행 실패 시 재시도 또는 Dead Letter Queue 적용
+- [ ] SSE 연결 메트릭 수집 (Prometheus/Micrometer)
+- [ ] 대규모 트래픽 대응을 위한 Redis Cluster 구성

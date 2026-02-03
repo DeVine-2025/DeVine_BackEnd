@@ -1,12 +1,9 @@
-package com.umc.devine.domain.notification.event;
+package com.umc.devine.infrastructure.sse.event;
 
 import com.umc.devine.domain.notification.converter.NotificationConverter;
 import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.domain.notification.entity.Notification;
 import com.umc.devine.domain.notification.repository.NotificationRepository;
-import com.umc.devine.infrastructure.sse.event.SseEmitterManager;
-import com.umc.devine.infrastructure.sse.event.SseConnectedEvent;
-import com.umc.devine.infrastructure.sse.event.SseEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
@@ -17,7 +14,6 @@ import java.util.List;
 
 /**
  * SSE 재연결 시 놓친 알림 전송을 담당하는 이벤트 리스너
- * Notification 도메인이 SSE 인프라 이벤트를 구독하는 방식으로 느슨한 결합 유지
  */
 @Component
 @RequiredArgsConstructor
