@@ -7,6 +7,7 @@ import com.umc.devine.domain.notification.repository.NotificationRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.scheduling.annotation.Async;
 import org.springframework.stereotype.Component;
 
@@ -19,6 +20,12 @@ import java.util.List;
 @RequiredArgsConstructor
 @Slf4j
 public class SseConnectedEventListener {
+
+    /**
+     * 재연결 시 한 번에 전송할 최대 알림 개수
+     * 너무 많은 알림을 한 번에 전송하면 서버/클라이언트 부하 발생
+     */
+    private static final int MAX_MISSED_NOTIFICATIONS = 50;
 
     private final NotificationRepository notificationRepository;
     private final SseEmitterManager sseEmitterManager;
@@ -33,8 +40,12 @@ public class SseConnectedEventListener {
         Long memberId = event.getMemberId();
         Long lastEventId = event.getLastEventId();
 
-        List<Notification> missedNotifications =
-                notificationRepository.findMissedNotifications(memberId, lastEventId);
+        // 최대 개수 제한을 두어 대량 알림으로 인한 부하 방지
+        List<Notification> missedNotifications = notificationRepository.findMissedNotifications(
+                memberId,
+                lastEventId,
+                PageRequest.of(0, MAX_MISSED_NOTIFICATIONS)
+        );
 
         for (Notification notification : missedNotifications) {
             NotificationResDTO.NotificationDetail detail =
@@ -48,7 +59,12 @@ public class SseConnectedEventListener {
             );
         }
 
-        log.info("놓친 알림 전송 완료 - memberId: {}, lastEventId: {}, count: {}",
-                memberId, lastEventId, missedNotifications.size());
+        if (missedNotifications.size() >= MAX_MISSED_NOTIFICATIONS) {
+            log.info("놓친 알림 전송 완료 (제한 도달) - memberId: {}, lastEventId: {}, count: {}/{}",
+                    memberId, lastEventId, missedNotifications.size(), MAX_MISSED_NOTIFICATIONS);
+        } else {
+            log.info("놓친 알림 전송 완료 - memberId: {}, lastEventId: {}, count: {}",
+                    memberId, lastEventId, missedNotifications.size());
+        }
     }
 }

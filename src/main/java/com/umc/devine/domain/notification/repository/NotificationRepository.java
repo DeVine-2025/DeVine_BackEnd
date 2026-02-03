@@ -39,12 +39,20 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             @Param("now") LocalDateTime now
     );
 
+    /**
+     * 재연결 시 놓친 알림 조회
+     * @param receiverId 수신자 ID
+     * @param lastEventId 마지막으로 수신한 알림 ID
+     * @param pageable 페이징 설정 (최대 조회 개수 제한용)
+     * @return 놓친 알림 목록 (lastEventId 이후의 알림, ID 오름차순)
+     */
     @Query("SELECT n FROM Notification n " +
             "LEFT JOIN FETCH n.sender " +
             "WHERE n.receiver.id = :receiverId AND n.id > :lastEventId " +
             "ORDER BY n.id ASC")
     List<Notification> findMissedNotifications(
             @Param("receiverId") Long receiverId,
-            @Param("lastEventId") Long lastEventId
+            @Param("lastEventId") Long lastEventId,
+            Pageable pageable
     );
 }
