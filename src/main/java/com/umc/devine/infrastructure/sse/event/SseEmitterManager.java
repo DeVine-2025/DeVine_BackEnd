@@ -15,10 +15,12 @@ import java.util.concurrent.atomic.AtomicBoolean;
 @Slf4j
 public class SseEmitterManager {
 
+    private static final long IMMEDIATE_TIMEOUT = 0L;
+
     // SseEmitter 객체 관리 맵
     private final Map<Long, SseEmitter> emitters = new ConcurrentHashMap<>();
 
-     // 애플리케이션 종료를 위한 플래그 (true가 되면 새로운 SSE 연결을 받지 않음)
+    // 애플리케이션 종료를 위한 플래그 (true가 되면 새로운 SSE 연결을 받지 않음)
     private final AtomicBoolean isShuttingDown = new AtomicBoolean(false);
 
     @Value("${sse.timeout}")
@@ -26,26 +28,39 @@ public class SseEmitterManager {
 
     /**
      * 새로운 SSE 연결 생성
-     * compute()를 사용하여 원자적으로 기존 연결 종료 및 새 연결 생성
+     * 기존 연결이 있으면 새 연결로 교체 후 기존 연결 종료
+     * (순서 중요: 새 emitter 등록 -> 콜백 설정 -> 기존 emitter 종료)
      */
     public SseEmitter create(Long memberId) {
-        // 레이스 컨디션 방지 : isShuttingDown 가 true이면 새로운 연결 요청을 받지 않음
+        // 레이스 컨디션 방지: isShuttingDown이 true이면 새로운 연결 요청을 받지 않음
         if (isShuttingDown.get()) {
             log.warn("서버 종료 중 SSE 연결 시도 거부 - memberId: {}", memberId);
-            SseEmitter emitter = new SseEmitter(0L);
+            SseEmitter emitter = new SseEmitter(IMMEDIATE_TIMEOUT);
             emitter.complete();
             return emitter;
         }
 
-        SseEmitter newEmitter = emitters.compute(memberId, (key, existing) -> {
-            if (existing != null) {
-                existing.complete();
-                log.debug("기존 SSE 연결 종료 - memberId: {}", key);
-            }
-            return new SseEmitter(sseTimeout);
-        });
+        // 1. 기존 emitter 백업
+        SseEmitter oldEmitter = emitters.get(memberId);
 
+        // 2. 새 emitter 생성 및 등록 (기존 emitter의 onCompletion보다 먼저 등록)
+        SseEmitter newEmitter = new SseEmitter(sseTimeout);
+        emitters.put(memberId, newEmitter);
+
+        // 3. 새 emitter에 콜백 설정
         setupCallbacks(memberId, newEmitter);
+
+        // 4. 기존 emitter 종료 (onCompletion이 호출되어도 이미 새 emitter로 덮어씀)
+        if (oldEmitter != null) {
+            try {
+                oldEmitter.complete();
+            } catch (Exception e) {
+                log.debug("기존 SSE 연결 종료 중 예외 (무시) - memberId: {}", memberId);
+            }
+            log.debug("기존 SSE 연결 종료 - memberId: {}", memberId);
+        }
+
+        // 5. 연결 성공 이벤트 전송
         sendConnectEvent(memberId);
 
         log.info("SSE 연결 생성 - memberId: {}, 총 연결 수: {}", memberId, emitters.size());
@@ -68,7 +83,7 @@ public class SseEmitterManager {
                     .data(data));
         } catch (IOException e) {
             log.warn("SSE 전송 실패 - memberId: {}, error: {}", memberId, e.getMessage());
-            removeEmitter(memberId);
+            removeEmitterIfMatch(memberId, emitter);
         }
     }
 
@@ -93,7 +108,7 @@ public class SseEmitterManager {
             emitter.send(builder);
         } catch (IOException e) {
             log.warn("SSE 전송 실패 - memberId: {}", memberId);
-            removeEmitter(memberId);
+            removeEmitterIfMatch(memberId, emitter);
         }
     }
 
@@ -113,51 +128,49 @@ public class SseEmitterManager {
 
     /**
      * 모든 연결에 하트비트 전송
-     * Iterator를 사용하여 안전하게 순회하며 실패 시 제거
+     * ConcurrentHashMap.forEach를 사용하여 동시성 안전하게 순회
      */
     public void sendHeartbeatToAll() {
-        var iterator = emitters.entrySet().iterator();
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
+        emitters.forEach((memberId, emitter) -> {
             try {
-                entry.getValue().send(SseEmitter.event()
+                emitter.send(SseEmitter.event()
                         .name(SseEventType.HEARTBEAT.getEventName())
                         .data(Map.of("timestamp", System.currentTimeMillis())));
             } catch (IOException e) {
-                log.debug("하트비트 전송 실패 - memberId: {}", entry.getKey());
-                iterator.remove();
+                log.debug("하트비트 전송 실패 - memberId: {}", memberId);
+                removeEmitterIfMatch(memberId, emitter);
             }
-        }
+        });
     }
 
     /**
      * 모든 연결에 커스텀 이벤트 브로드캐스트
+     * ConcurrentHashMap.forEach를 사용하여 동시성 안전하게 순회
      * @return 전송 성공한 연결 수
      */
     public int broadcast(String eventName, Object data) {
-        int successCount = 0;
-        var iterator = emitters.entrySet().iterator();
+        int[] successCount = {0};
+        int totalCount = emitters.size();
 
-        while (iterator.hasNext()) {
-            var entry = iterator.next();
+        emitters.forEach((memberId, emitter) -> {
             try {
-                entry.getValue().send(SseEmitter.event()
+                emitter.send(SseEmitter.event()
                         .name(eventName)
                         .data(data));
-                successCount++;
+                successCount[0]++;
             } catch (IOException e) {
-                log.debug("브로드캐스트 전송 실패 - memberId: {}", entry.getKey());
-                iterator.remove();
+                log.debug("브로드캐스트 전송 실패 - memberId: {}", memberId);
+                removeEmitterIfMatch(memberId, emitter);
             }
-        }
+        });
 
-        log.info("브로드캐스트 완료 - eventName: {}, 성공: {}/{}", eventName, successCount, successCount + (emitters.size() - successCount));
-        return successCount;
+        log.info("브로드캐스트 완료 - eventName: {}, 성공: {}/{}", eventName, successCount[0], totalCount);
+        return successCount[0];
     }
 
     /**
      * 애플리케이션 종료 시 모든 SSE 연결 정리
-     * Spring 컨테이너가 종료될 때 @PreDestroy 어노테이션에 의해 자동으로 호출됨.
+     * Spring 컨테이너가 종료될 때 @PreDestroy 어노테이션에 의해 자동으로 호출됨
      */
     @PreDestroy
     public void shutdown() {
@@ -184,20 +197,26 @@ public class SseEmitterManager {
         log.info("모든 SSE 연결이 성공적으로 종료되었습니다.");
     }
 
+    /**
+     * SSE Emitter 콜백 설정
+     * 정확한 emitter 인스턴스만 제거하여 동시 연결 시 새 연결이 제거되는 것을 방지
+     */
     private void setupCallbacks(Long memberId, SseEmitter emitter) {
+        Runnable cleanup = () -> removeEmitterIfMatch(memberId, emitter); // 공통 정리 로직: 정확한 인스턴스만 제거
+
         emitter.onCompletion(() -> {
-            log.info("SSE 연결 완료 - memberId: {}", memberId);
-            removeEmitter(memberId);
+            log.debug("SSE 연결 완료 - memberId: {}", memberId);
+            cleanup.run();
         });
 
         emitter.onTimeout(() -> {
             log.info("SSE 타임아웃 - memberId: {}", memberId);
-            removeEmitter(memberId);
+            cleanup.run();
         });
 
         emitter.onError(e -> {
             log.warn("SSE 에러 - memberId: {}, error: {}", memberId, e.getMessage());
-            removeEmitter(memberId);
+            cleanup.run();
         });
     }
 
@@ -208,7 +227,11 @@ public class SseEmitterManager {
         ));
     }
 
-    private void removeEmitter(Long memberId) {
-        emitters.remove(memberId);
+    /**
+     * 정확한 emitter 인스턴스가 일치할 때만 제거
+     * 새 연결로 교체된 경우 기존 연결의 콜백이 새 연결을 제거하는 것을 방지
+     */
+    private void removeEmitterIfMatch(Long memberId, SseEmitter emitter) {
+        emitters.remove(memberId, emitter);
     }
 }
