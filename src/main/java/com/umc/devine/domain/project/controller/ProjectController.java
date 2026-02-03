@@ -93,7 +93,7 @@ public class ProjectController implements ProjectControllerDocs {
 
     // 추천 프로젝트 미리보기 (메인 하단 / 프로젝트·개발자 보기 탭 상단)
     @Override
-    @GetMapping("/recommended/preview")
+    @GetMapping("/recommend/preview")
     public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjectsPreview(
             @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
@@ -107,7 +107,7 @@ public class ProjectController implements ProjectControllerDocs {
 
     // 추천 프로젝트 페이지 (추천 프로젝트 탭용 - 필터링 + 페이징)
     @Override
-    @GetMapping("/recommended")
+    @GetMapping("/recommend")
     public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
             @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsPageReq request
     ) {
