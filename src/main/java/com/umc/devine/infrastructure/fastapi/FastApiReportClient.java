@@ -47,21 +47,23 @@ public class FastApiReportClient {
         try {
             githubToken = clerkApiClient.getGitHubAccessToken(event.getClerkId());
         } catch (Exception e) {
-            log.error("GitHub 토큰 조회 실패 - reportId: {}, error: {}", event.getReportId(), e.getMessage());
-            reportCommandService.deleteReport(event.getReportId());
+            log.error("GitHub 토큰 조회 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                    event.getMainReportId(), event.getDetailReportId(), e.getMessage());
+            reportCommandService.deleteReport(event.getMainReportId());
+            reportCommandService.deleteReport(event.getDetailReportId());
             return;
         }
 
         FastApiReqDto.ReportGenerationReq request = FastApiReqDto.ReportGenerationReq.builder()
-                .reportId(event.getReportId())
+                .mainReportId(event.getMainReportId())
+                .detailReportId(event.getDetailReportId())
                 .gitUrl(event.getGitUrl())
-                .reportType(event.getReportType())
                 .callbackUrl(callbackBaseUrl + "/api/v1/reports/callback")
                 .githubToken(githubToken)
                 .build();
 
-        log.info("FastAPI 리포트 생성 요청 - reportId: {}, gitUrl: {}, reportType: {}",
-                request.reportId(), request.gitUrl(), request.reportType());
+        log.info("FastAPI 리포트 생성 요청 (COMBINED) - mainReportId: {}, detailReportId: {}, gitUrl: {}",
+                request.mainReportId(), request.detailReportId(), request.gitUrl());
 
         try {
             FastApiResDto.ReportGenerationRes response = fastApiRestClient.post()
@@ -71,14 +73,17 @@ public class FastApiReportClient {
                     .retrieve()
                     .body(FastApiResDto.ReportGenerationRes.class);
 
-            log.info("FastAPI 응답 - reportId: {}, status: {}, message: {}",
-                    event.getReportId(),
+            log.info("FastAPI 응답 - mainReportId: {}, detailReportId: {}, status: {}, message: {}",
+                    event.getMainReportId(),
+                    event.getDetailReportId(),
                     response != null ? response.status() : "null",
                     response != null ? response.message() : "null");
 
         } catch (RestClientException e) {
-            log.error("FastAPI 호출 실패 - reportId: {}, error: {}", event.getReportId(), e.getMessage());
-            reportCommandService.deleteReport(event.getReportId());
+            log.error("FastAPI 호출 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                    event.getMainReportId(), event.getDetailReportId(), e.getMessage());
+            reportCommandService.deleteReport(event.getMainReportId());
+            reportCommandService.deleteReport(event.getDetailReportId());
         }
     }
 }

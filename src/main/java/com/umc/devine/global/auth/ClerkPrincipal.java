@@ -20,4 +20,8 @@ public class ClerkPrincipal implements Principal {
     public String getName() {
         return clerkId;
     }
+
+    public String getFullName() {
+        return name;
+    }
 }

@@ -1,6 +1,5 @@
 package com.umc.devine.domain.report.event;
 
-import com.umc.devine.domain.report.enums.ReportType;
 import lombok.Builder;
 import lombok.Getter;
 
@@ -8,8 +7,8 @@ import lombok.Getter;
 @Builder
 public class ReportCreatedEvent {
 
-    private final Long reportId;
+    private final Long mainReportId;
+    private final Long detailReportId;
     private final String gitUrl;
-    private final ReportType reportType;
     private final String clerkId;
 }
