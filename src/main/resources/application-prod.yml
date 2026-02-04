@@ -51,3 +51,10 @@ executor:
     core-pool-size: 20
     max-pool-size: 100
     queue-capacity: 500
+
+# fastapi
+fastapi:
+  report:
+    base-url: ${FASTAPI_URL:}
+    connect-timeout: ${FASTAPI_CONNECT_TIMEOUT:}
+    read-timeout: ${FASTAPI_READ_TIMEOUT:}
