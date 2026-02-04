@@ -33,7 +33,7 @@ public class FastApiReportClient {
         this.clerkApiClient = clerkApiClient;
     }
 
-    @Value("${app.callback.base-url:http://localhost:8080}")
+    @Value("${fastapi.callback.base-url:http://localhost:8080}")
     private String callbackBaseUrl;
 
     @Async

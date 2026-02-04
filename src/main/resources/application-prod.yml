@@ -54,6 +54,8 @@ executor:
 
 # fastapi
 fastapi:
+  callback:
+    base-url: ${FASTAPI_CALLBACK_URL:}
   report:
     base-url: ${FASTAPI_URL:}
     connect-timeout: ${FASTAPI_CONNECT_TIMEOUT:}
