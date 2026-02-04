@@ -11,6 +11,7 @@ import com.umc.devine.global.dto.PagedResponse;
 import java.util.List;
 
 public interface MemberQueryService {
+    MemberResDTO.TermsListDTO findAllTerms();
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
     MemberResDTO.UserProfileDTO findMemberByNickname(String nickname);
