@@ -35,19 +35,16 @@ spring:
       hibernate:
         format_sql: true
 
-  # TODO 추후 통합
+  # AWS S3
   cloud:
     aws:
+      credentials:
+        access-key: ${AWS_ACCESS_KEY:}
+        secret-key: ${AWS_SECRET_KEY:}
+      s3:
+        bucket: ${AWS_S3_BUCKET:}
       region:
         static: ap-northeast-2
-
-# AWS S3
-cloud:
-  aws:
-    s3:
-      bucket: ${AWS_S3_BUCKET:}
-    region:
-      static: ${AWS_S3_REGION:ap-northeast-2}
 
 # Clerk
 clerk:
@@ -60,3 +57,9 @@ github:
 # CORS
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# Redis Channel
+redis:
+  channel:
+    notification-prefix: "notification:user:"
+    notification-pattern: "notification:user:*"
