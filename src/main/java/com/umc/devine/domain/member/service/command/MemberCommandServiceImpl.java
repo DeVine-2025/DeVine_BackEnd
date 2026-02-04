@@ -64,7 +64,10 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             throw new MemberException(MemberErrorCode.ALREADY_REGISTERED);
         }
 
-        // 2. 약관 검증 및 필수 약관 동의 확인
+        // 2. 프로필 이미지 검증 (선택사항)
+        validateProfileImage(dto.imageUrl());
+
+        // 3. 약관 검증 및 필수 약관 동의 확인
         List<Terms> allTerms = termsRepository.findAll();
         List<Terms> requiredTerms = allTerms.stream()
                 .filter(Terms::getRequired)
@@ -82,13 +85,13 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             }
         }
 
-        // 3. 카테고리 검증
+        // 4. 관심 도메인 검증
         List<Category> categories = categoryRepository.findAllById(dto.categoryIds());
         if (categories.size() != dto.categoryIds().size()) {
             throw new MemberException(MemberErrorCode.CATEGORY_NOT_FOUND);
         }
 
-        // 4. 기술 스택 검증 (선택사항)
+        // 5. 기술 스택 검증 (선택사항)
         List<Techstack> techstacks = new ArrayList<>();
         if (dto.techstackIds() != null && !dto.techstackIds().isEmpty()) {
             techstacks = techstackRepository.findAllById(dto.techstackIds());
@@ -97,25 +100,25 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             }
         }
 
-        // 5. Member 생성 및 저장
+        // 6. Member 생성 및 저장
         Member member = MemberConverter.toMember(dto, principal);
         memberRepository.save(member);
 
-        // 6. 약관 동의 저장
+        // 7. 약관 동의 저장
         List<MemberAgreement> agreements = MemberConverter.toMemberAgreements(member, allTerms, dto.agreements());
         memberAgreementRepository.saveAll(agreements);
 
-        // 7. 관심 도메인 저장
+        // 8. 관심 도메인 저장
         List<MemberCategory> memberCategories = MemberConverter.toMemberCategories(member, categories);
         memberCategoryRepository.saveAll(memberCategories);
 
-        // 8. 기술 스택 저장 (선택사항)
+        // 9. 기술 스택 저장 (선택사항)
         if (!techstacks.isEmpty()) {
             List<DevTechstack> devTechstacks = MemberConverter.toDevTechstacks(member, techstacks);
             devTechstackRepository.saveAll(devTechstacks);
         }
 
-        // 9. 연락처 저장 (선택사항)
+        // 10. 연락처 저장 (선택사항)
         List<Contact> contacts = new ArrayList<>();
         if (principal.getEmail() != null) {
             contacts.add(MemberConverter.toSignupContact(member, ContactType.EMAIL, principal.getEmail()));
@@ -134,16 +137,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
 
         // 프로필 이미지 검증
-        if (dto.imageUrl() != null) {
-            Image image = imageRepository.findByImageUrl(dto.imageUrl())
-                    .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
-            if (image.getImageType() != ImageType.PROFILE) {
-                throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
-            }
-            if (!image.isUploaded()) {
-                throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
-            }
-        }
+        validateProfileImage(dto.imageUrl());
 
         // 멤버 업데이트
         member.updateProfile(dto);
@@ -206,5 +200,18 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         devTechstackRepository.deleteAll(deletedTechstacks);
 
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
+    }
+
+    private void validateProfileImage(String imageUrl) {
+        if (imageUrl == null) return;
+
+        Image image = imageRepository.findByImageUrl(imageUrl)
+                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+        if (image.getImageType() != ImageType.PROFILE) {
+            throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
+        }
+        if (!image.isUploaded()) {
+            throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
+        }
     }
 }
