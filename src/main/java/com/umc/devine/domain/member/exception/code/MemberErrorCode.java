@@ -33,6 +33,21 @@ public enum MemberErrorCode implements BaseErrorCode {
     TECHSTACK_ALREADY_EXISTS(HttpStatus.CONFLICT,
             "MEMBER409_1",
             "이미 보유한 기술 스택입니다."),
+    ALREADY_REGISTERED(HttpStatus.CONFLICT,
+            "MEMBER409_2",
+            "이미 가입된 회원입니다."),
+    TERMS_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "MEMBER404_2",
+            "해당 약관을 찾을 수 없습니다."),
+    REQUIRED_TERMS_NOT_AGREED(HttpStatus.BAD_REQUEST,
+            "MEMBER400_4",
+            "필수 약관에 동의해야 합니다."),
+    CATEGORY_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "MEMBER404_3",
+            "해당 카테고리를 찾을 수 없습니다."),
+    TECHSTACK_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "MEMBER404_4",
+            "해당 기술 스택을 찾을 수 없습니다."),
     ;
 
     private final HttpStatus status;

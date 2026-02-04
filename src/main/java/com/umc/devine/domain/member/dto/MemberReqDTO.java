@@ -8,11 +8,67 @@ import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
+import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
+import java.util.List;
+
 public class MemberReqDTO {
+
+    @Builder
+    @Schema(description = "회원가입 요청")
+    public record SignupDTO(
+            @Schema(description = "약관 동의 목록", requiredMode = Schema.RequiredMode.REQUIRED)
+            @NotEmpty(message = "약관 동의 정보는 필수입니다.")
+            @Valid
+            List<AgreementDTO> agreements,
+
+            @Schema(description = "닉네임", requiredMode = Schema.RequiredMode.REQUIRED, example = "devine")
+            @NotBlank(message = "닉네임은 필수입니다.")
+            @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하여야 합니다.")
+            String nickname,
+
+            @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.jpg")
+            String imageUrl,
+
+            @Schema(description = "역할 (PM / DEVELOPER)", requiredMode = Schema.RequiredMode.REQUIRED, example = "DEVELOPER")
+            @NotNull(message = "역할 선택은 필수입니다.")
+            MemberMainType mainType,
+
+            @Schema(description = "관심 도메인 ID 목록 (1~3개)", requiredMode = Schema.RequiredMode.REQUIRED, example = "[1, 2]")
+            @NotEmpty(message = "관심 도메인은 최소 1개 이상 선택해야 합니다.")
+            @Size(min = 1, max = 3, message = "관심 도메인은 1개 이상 3개 이하로 선택해야 합니다.")
+            List<Long> categoryIds,
+
+            @Schema(description = "보유 기술 스택 ID 목록", example = "[1, 2, 3]")
+            List<Long> techstackIds,
+
+            @Schema(description = "한줄 소개", example = "열정적인 백엔드 개발자입니다.")
+            @Size(max = 255, message = "한줄 소개는 255자 이하여야 합니다.")
+            String body,
+
+            @Schema(description = "이메일", example = "user@example.com")
+            String email,
+
+            @Schema(description = "링크드인 주소", example = "https://linkedin.com/in/username")
+            String linkedin
+    ) {}
+
+    @Builder
+    @Schema(description = "약관 동의 정보")
+    public record AgreementDTO(
+            @Schema(description = "약관 ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1")
+            @NotNull(message = "약관 ID는 필수입니다.")
+            Long termsId,
+
+            @Schema(description = "동의 여부", requiredMode = Schema.RequiredMode.REQUIRED, example = "true")
+            @NotNull(message = "동의 여부는 필수입니다.")
+            Boolean agreed
+    ) {}
     @Builder
     public record UpdateMemberDTO(
             @Schema(description = "닉네임", nullable = true, example = "devine") String nickname,

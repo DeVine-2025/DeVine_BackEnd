@@ -4,12 +4,49 @@ import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
+import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class MemberResDTO {
+
+    @Builder
+    @Schema(description = "회원가입 응답")
+    public record SignupResultDTO(
+            @Schema(description = "회원 ID", example = "1")
+            Long memberId,
+
+            @Schema(description = "닉네임", example = "devine")
+            String nickname,
+
+            @Schema(description = "역할", example = "DEVELOPER")
+            MemberMainType mainType
+    ) {}
+
+    @Builder
+    @Schema(description = "약관 목록 응답")
+    public record TermsListDTO(
+            @Schema(description = "약관 목록")
+            List<TermsDTO> terms
+    ) {}
+
+    @Builder
+    @Schema(description = "약관 정보")
+    public record TermsDTO(
+            @Schema(description = "약관 ID", example = "1")
+            Long termsId,
+
+            @Schema(description = "약관 제목", example = "서비스 이용약관")
+            String title,
+
+            @Schema(description = "약관 내용")
+            String content,
+
+            @Schema(description = "필수 동의 여부", example = "true")
+            Boolean required
+    ) {}
 
     @Builder
     public record MemberDetailDTO(
