@@ -1,5 +1,6 @@
 package com.umc.devine.domain.techstack.converter;
 
+import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.ReportTechStackResDTO;
 import com.umc.devine.domain.techstack.entity.DevReport;

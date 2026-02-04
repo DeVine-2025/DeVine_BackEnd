@@ -1,6 +1,6 @@
 package com.umc.devine.domain.techstack.repository;
 
-import com.umc.devine.domain.techstack.entity.DevReport;
+import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.techstack.entity.mapping.ReportTechstack;
 import org.springframework.data.jpa.repository.JpaRepository;
 

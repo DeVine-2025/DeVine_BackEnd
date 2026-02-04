@@ -11,12 +11,27 @@ import io.swagger.v3.oas.annotations.Operation;
 import java.util.List;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Members", description = "회원 관련 API")
 public interface MemberControllerDocs {
+
+    @Operation(summary = "회원가입 API", description = "소셜 로그인 후 추가 정보를 입력하여 회원가입을 완료하는 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (필수 약관 미동의, 유효성 검증 실패 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "카테고리 또는 기술 스택을 찾을 수 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 가입된 회원입니다.")
+    })
+    ApiResponse<MemberResDTO.SignupResultDTO> signup(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestBody @Valid MemberReqDTO.SignupDTO dto
+    );
 
     @Operation(summary = "닉네임 중복 체크 API", description = "닉네임 중복 여부를 확인하는 API입니다. isDuplicate가 true이면 이미 사용 중인 닉네임입니다.")
     @ApiResponses({

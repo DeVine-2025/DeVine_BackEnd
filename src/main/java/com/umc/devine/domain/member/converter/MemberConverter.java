@@ -4,14 +4,127 @@ import java.util.Arrays;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.entity.mapping.MemberCategory;
+import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.MemberAgreement;
+import com.umc.devine.domain.member.entity.Terms;
+import com.umc.devine.domain.member.enums.ContactType;
+import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
+import com.umc.devine.global.auth.ClerkPrincipal;
 
 public class MemberConverter {
+
+    //회원가입 관련 Converter
+
+    public static Member toMember(MemberReqDTO.SignupDTO dto, ClerkPrincipal principal) {
+        return Member.builder()
+                .clerkId(principal.getClerkId())
+                .name(principal.getFullName())
+                .nickname(dto.nickname())
+                .image(dto.imageUrl())
+                .body(dto.body())
+                .mainType(dto.mainType())
+                .disclosure(true)
+                .used(MemberStatus.ACTIVE)
+                .build();
+    }
+
+    public static MemberAgreement toMemberAgreement(Member member, Terms terms, Boolean agreed) {
+        return MemberAgreement.builder()
+                .member(member)
+                .terms(terms)
+                .agreed(agreed)
+                .build();
+    }
+
+    public static List<MemberAgreement> toMemberAgreements(
+            Member member,
+            List<Terms> termsList,
+            List<MemberReqDTO.AgreementDTO> agreementDTOs
+    ) {
+        return agreementDTOs.stream()
+                .map(dto -> {
+                    Terms terms = termsList.stream()
+                            .filter(t -> t.getId().equals(dto.termsId()))
+                            .findFirst()
+                            .orElseThrow(() -> new MemberException(MemberErrorCode.TERMS_NOT_FOUND));
+                    return toMemberAgreement(member, terms, dto.agreed());
+                })
+                .collect(Collectors.toList());
+    }
+
+    public static MemberCategory toMemberCategory(Member member, Category category) {
+        return MemberCategory.builder()
+                .member(member)
+                .category(category)
+                .build();
+    }
+
+    public static List<MemberCategory> toMemberCategories(Member member, List<Category> categories) {
+        return categories.stream()
+                .map(category -> toMemberCategory(member, category))
+                .collect(Collectors.toList());
+    }
+
+    public static DevTechstack toDevTechstack(Member member, Techstack techstack) {
+        return DevTechstack.builder()
+                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
+                .member(member)
+                .techstack(techstack)
+                .source(TechstackSource.MANUAL)
+                .build();
+    }
+
+    public static List<DevTechstack> toDevTechstacks(Member member, List<Techstack> techstacks) {
+        return techstacks.stream()
+                .map(techstack -> toDevTechstack(member, techstack))
+                .collect(Collectors.toList());
+    }
+
+    public static Contact toSignupContact(Member member, ContactType type, String value) {
+        return Contact.builder()
+                .member(member)
+                .contactType(type)
+                .value(value)
+                .build();
+    }
+
+    public static MemberResDTO.SignupResultDTO toSignupResultDTO(Member member) {
+        return MemberResDTO.SignupResultDTO.builder()
+                .memberId(member.getId())
+                .nickname(member.getNickname())
+                .mainType(member.getMainType())
+                .build();
+    }
+
+    public static MemberResDTO.TermsDTO toTermsDTO(Terms terms) {
+        return MemberResDTO.TermsDTO.builder()
+                .termsId(terms.getId())
+                .title(terms.getTitle())
+                .content(terms.getContent())
+                .required(terms.getRequired())
+                .build();
+    }
+
+    public static MemberResDTO.TermsListDTO toTermsListDTO(List<Terms> termsList) {
+        List<MemberResDTO.TermsDTO> termsDTOs = termsList.stream()
+                .map(MemberConverter::toTermsDTO)
+                .collect(Collectors.toList());
+
+        return MemberResDTO.TermsListDTO.builder()
+                .terms(termsDTOs)
+                .build();
+    }
 
     public static Contact toContact(Member member, MemberResDTO.ContactDTO dto) {
         return Contact.builder()

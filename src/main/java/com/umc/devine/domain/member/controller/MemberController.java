@@ -11,6 +11,7 @@ import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.dto.PagedResponse;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 
 import java.util.List;
@@ -26,7 +27,21 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/members")
 public class MemberController implements MemberControllerDocs {
     private final MemberQueryService memberQueryService;
+    private final MemberCommandService memberCommandService;
     private final AuthHelper authHelper;
+
+    // 회원가입
+    @Override
+    @PostMapping("/signup")
+    public ApiResponse<MemberResDTO.SignupResultDTO> signup(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestBody @Valid MemberReqDTO.SignupDTO dto
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.SIGNUP_SUCCESS,
+                memberCommandService.signup(principal, dto)
+        );
+    }
 
     // 닉네임 중복 체크
     @Override
