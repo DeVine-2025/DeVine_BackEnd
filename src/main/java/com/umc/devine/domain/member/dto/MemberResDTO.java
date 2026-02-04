@@ -22,10 +22,7 @@ public class MemberResDTO {
             String nickname,
 
             @Schema(description = "역할", example = "DEVELOPER")
-            MemberMainType mainType,
-
-            @Schema(description = "가입일시")
-            LocalDateTime createdAt
+            MemberMainType mainType
     ) {}
 
     @Builder

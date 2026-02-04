@@ -104,7 +104,6 @@ public class MemberConverter {
                 .memberId(member.getId())
                 .nickname(member.getNickname())
                 .mainType(member.getMainType())
-                .createdAt(member.getCreatedAt())
                 .build();
     }
 
