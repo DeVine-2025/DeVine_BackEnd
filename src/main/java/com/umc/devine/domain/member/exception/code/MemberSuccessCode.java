@@ -38,6 +38,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     CREATED_TECHSTACK(HttpStatus.OK,
             "MEMBER201_2",
             "성공적으로 보유 기술을 생성했습니다."),
+    SIGNUP_SUCCESS(HttpStatus.CREATED,
+            "MEMBER201_3",
+            "회원가입이 완료되었습니다."),
     ;
 
     private final HttpStatus status;
