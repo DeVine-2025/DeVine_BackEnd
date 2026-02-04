@@ -35,6 +35,12 @@ spring:
       hibernate:
         format_sql: true
 
+  # TODO 추후 통합
+  cloud:
+    aws:
+      region:
+        static: ap-northeast-2
+
 # AWS S3
 cloud:
   aws:
