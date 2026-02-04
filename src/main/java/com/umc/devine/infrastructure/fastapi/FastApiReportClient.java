@@ -5,8 +5,8 @@ import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.global.external.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
-import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.scheduling.annotation.Async;
@@ -18,12 +18,20 @@ import org.springframework.web.client.RestClientException;
 
 @Slf4j
 @Component
-@RequiredArgsConstructor
 public class FastApiReportClient {
 
     private final RestClient fastApiRestClient;
     private final ReportCommandService reportCommandService;
     private final ClerkApiClient clerkApiClient;
+
+    public FastApiReportClient(
+            @Qualifier("fastApiRestClient") RestClient fastApiRestClient,
+            ReportCommandService reportCommandService,
+            ClerkApiClient clerkApiClient) {
+        this.fastApiRestClient = fastApiRestClient;
+        this.reportCommandService = reportCommandService;
+        this.clerkApiClient = clerkApiClient;
+    }
 
     @Value("${app.callback.base-url:http://localhost:8080}")
     private String callbackBaseUrl;
