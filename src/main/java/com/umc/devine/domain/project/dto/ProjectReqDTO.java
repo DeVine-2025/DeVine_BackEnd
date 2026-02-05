@@ -1,15 +1,18 @@
 package com.umc.devine.domain.project.dto;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.annotation.ValidPage;
-import io.swagger.v3.oas.annotations.media.ArraySchema;
+import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.*;
 import lombok.Builder;
+import org.springframework.data.domain.Pageable;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,7 +23,7 @@ public class ProjectReqDTO {
         public record CreateProjectReq(
                         @Schema(description = "프로젝트 분야 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리(도메인) ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1") @NotNull(message = "도메인은 필수입니다.") @Min(value = 1, message = "카테고리 ID는 1 이상이어야 합니다.") Long categoryId,
+                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
@@ -43,7 +46,7 @@ public class ProjectReqDTO {
         public record UpdateProjectReq(
                         @Schema(description = "프로젝트 분야 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리(도메인) ID", requiredMode = Schema.RequiredMode.REQUIRED, example = "1") @NotNull(message = "도메인은 필수입니다.") @Min(value = 1, message = "카테고리 ID는 1 이상이어야 합니다.") Long categoryId,
+                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
@@ -68,26 +71,34 @@ public class ProjectReqDTO {
 
                         @Schema(description = "모집 인원 (1~10명)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "모집 인원은 필수입니다.") @Min(value = 1, message = "모집 인원은 최소 1명 이상이어야 합니다.") @Max(value = 10, message = "모집 인원은 최대 10명까지 가능합니다.") Integer count,
 
-                        @Schema(description = "기술 스택 ID 목록", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<@Min(value = 1, message = "기술 스택 ID는 1 이상이어야 합니다.") Long> techStackIds) {
+                        @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
         }
 
         // 프로젝트 검색 요청 DTO (프로젝트/개발자 보기 탭 하단)
         @Builder
         public record SearchProjectReq(
-                        @ArraySchema(schema = @Schema(description = "프로젝트 유형 필터", implementation = ProjectField.class)) List<ProjectField> projectFields,
+                        @Schema(description = "프로젝트 유형 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", nullable = true) ProjectField projectField,
 
-                        @ArraySchema(schema = @Schema(description = "카테고리(도메인) 필터", type = "integer", format = "int64", example = "1")) List<Long> categoryIds,
+                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true) CategoryGenre category,
 
-                        @ArraySchema(schema = @Schema(description = "포지션 필터", implementation = ProjectPart.class)) List<ProjectPart> positions,
+                        @Schema(description = "포지션 (BACKEND, FRONTEND, DESIGN, PM, IOS, ANDROID)", nullable = true) ProjectPart position,
 
-                        @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64", example = "1")) List<Long> techStackIds,
+                        @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
 
-                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) DurationRange durationRange,
+                        @Schema(description = "예상 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", nullable = true) DurationRange durationRange,
 
-                        @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page) {
+                        @Schema(description = "페이지 번호 (1부터 시작)", nullable = true, defaultValue = "1", example = "1") @ValidPage Integer page,
+
+                        @Schema(description = "페이지 크기", nullable = true, defaultValue = "10", example = "10") Integer size) {
                 public SearchProjectReq {
                         if (page == null)
                                 page = 1;
+                        if (size == null)
+                                size = 10;
+                }
+
+                public Pageable toPageable() {
+                        return PageRequest.of(page, size).toPageable();
                 }
         }
 
@@ -105,21 +116,28 @@ public class ProjectReqDTO {
         // 추천 프로젝트 페이지 요청 DTO (추천 프로젝트 탭용)
         @Builder
         public record RecommendProjectsPageReq(
-                        @ArraySchema(schema = @Schema(description = "프로젝트 유형 필터", implementation = ProjectField.class)) List<ProjectField> projectFields,
+                        @Schema(description = "프로젝트 유형 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", nullable = true) ProjectField projectField,
 
-                        @ArraySchema(schema = @Schema(description = "카테고리(도메인) 필터", type = "integer", format = "int64")) List<Long> categoryIds,
+                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true) CategoryGenre category,
 
-                        @ArraySchema(schema = @Schema(description = "포지션 필터", implementation = ProjectPart.class)) List<ProjectPart> positions,
+                        @Schema(description = "포지션 (BACKEND, FRONTEND, DESIGN, PM, IOS, ANDROID)", nullable = true) ProjectPart position,
 
-                        @ArraySchema(schema = @Schema(description = "기술 스택 필터", type = "integer", format = "int64")) List<Long> techStackIds,
+                        @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
 
-                        @Schema(description = "진행 기간 범위 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) DurationRange durationRange,
+                        @Schema(description = "예상 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", nullable = true) DurationRange durationRange,
 
-                        @Schema(description = "페이지 번호 (1부터 시작)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, defaultValue = "1", example = "1") @ValidPage Integer page) {
+                        @Schema(description = "페이지 번호 (1부터 시작)", nullable = true, defaultValue = "1", example = "1") @ValidPage Integer page,
+
+                        @Schema(description = "페이지 크기", nullable = true, defaultValue = "10", example = "10") Integer size) {
                 public RecommendProjectsPageReq {
-                        if (page == null) {
+                        if (page == null)
                                 page = 1;
-                        }
+                        if (size == null)
+                                size = 10;
+                }
+
+                public Pageable toPageable() {
+                        return PageRequest.of(page, size).toPageable();
                 }
         }
 }

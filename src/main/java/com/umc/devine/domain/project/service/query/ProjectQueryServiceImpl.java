@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -29,14 +30,12 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 @Transactional(readOnly = true)
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
-    private static final int DEFAULT_PAGE_SIZE = 4;
-
     private final ProjectRepository projectRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
     @Override
     @Transactional
-    public ProjectResDTO.UpdateProjectRes getProjectDetail(Long memberId, Long projectId) {
+    public ProjectResDTO.UpdateProjectRes getProjectDetail(Member member, Long projectId) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
@@ -68,8 +67,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
-        int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
+        Pageable pageable = request.toPageable();
 
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(request);
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
@@ -87,7 +85,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPreview(
-            Long memberId,
+            Member member,
             ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
@@ -110,12 +108,11 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
-            Long memberId,
+            Member member,
             ProjectReqDTO.RecommendProjectsPageReq request
     ) {
         // TODO: 추천 알고리즘 기반 정렬 추가
-        int pageIndex = request.page() - 1;
-        Pageable pageable = PageRequest.of(pageIndex, DEFAULT_PAGE_SIZE);
+        Pageable pageable = request.toPageable();
 
         Predicate predicate = ProjectPredicateBuilder.buildRecommendPagePredicate(request);
         Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);

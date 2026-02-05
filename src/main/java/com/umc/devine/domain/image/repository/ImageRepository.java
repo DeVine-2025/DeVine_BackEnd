@@ -17,8 +17,8 @@ public interface ImageRepository extends JpaRepository<Image, Long> {
             "WHERE i.imageType = com.umc.devine.domain.image.enums.ImageType.PROJECT " +
             "AND i.createdAt < :threshold " +
             "AND i.uploaded = true " +
-            "AND i.imageUrl NOT IN (SELECT pi.image FROM ProjectImage pi " +
-            "JOIN pi.project p WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED)")
+            "AND NOT EXISTS (SELECT 1 FROM ProjectImage pi JOIN pi.project p " +
+            "WHERE pi.image = i AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED)")
     List<Image> findOrphanProjectImages(@Param("threshold") LocalDateTime threshold);
 
     @Query("SELECT i FROM Image i " +
