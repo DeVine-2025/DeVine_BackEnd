@@ -84,7 +84,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorName(project.getMember().getName())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
-                .imageUrls(toImageUrlList(project.getImages()))
+                .images(toImageInfoList(project.getImages()))
                 .build();
     }
 
@@ -112,7 +112,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorName(project.getMember().getName())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
-                .imageUrls(toImageUrlList(project.getImages()))
+                .images(toImageInfoList(project.getImages()))
                 .build();
     }
 
@@ -241,13 +241,16 @@ public class ProjectConverter {
                 .toList();
     }
 
-    // ProjectImage 리스트 → 이미지 URL 리스트 변환
-    private static List<String> toImageUrlList(List<ProjectImage> images) {
+    // ProjectImage 리스트 → ImageInfo 리스트 변환
+    private static List<ProjectResDTO.ImageInfo> toImageInfoList(List<ProjectImage> images) {
         if (images == null || images.isEmpty()) {
             return new ArrayList<>();
         }
         return images.stream()
-                .map(ProjectImage::getImageUrl)
+                .map(img -> ProjectResDTO.ImageInfo.builder()
+                        .imageId(img.getImage().getId())
+                        .imageUrl(img.getImageUrl())
+                        .build())
                 .collect(Collectors.toList());
     }
 

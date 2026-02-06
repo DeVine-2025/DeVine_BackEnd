@@ -73,8 +73,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
 
-            @Schema(description = "프로젝트 이미지 URL 목록")
-            List<String> imageUrls
+            @Schema(description = "프로젝트 이미지 목록")
+            List<ImageInfo> images
     ) {}
 
     @Builder
@@ -133,8 +133,17 @@ public class ProjectResDTO {
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
 
-            @Schema(description = "프로젝트 이미지 URL 목록")
-            List<String> imageUrls
+            @Schema(description = "프로젝트 이미지 목록")
+            List<ImageInfo> images
+    ) {}
+
+    @Builder
+    public record ImageInfo(
+            @Schema(description = "이미지 ID", example = "1")
+            Long imageId,
+
+            @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
+            String imageUrl
     ) {}
 
     @Builder
