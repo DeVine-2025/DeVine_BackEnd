@@ -1,4 +1,4 @@
-package com.umc.devine.global.external.clerk.dto;
+package com.umc.devine.infrastructure.clerk.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;
