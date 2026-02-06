@@ -34,7 +34,7 @@ public class ProjectResDTO {
             @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식", example = "HYBRID")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
             @Schema(description = "진행 방식 이름", example = "온라인")
@@ -94,7 +94,7 @@ public class ProjectResDTO {
             @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식", example = "HYBRID")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
             @Schema(description = "진행 방식 이름", example = "온라인")
@@ -160,7 +160,7 @@ public class ProjectResDTO {
             @Schema(description = "현재 모집된 인원", example = "0")
             Integer currentCount,
 
-            @Schema(description = "기술 스택 목록 (ID와 이름)")
+            @Schema(description = "기술 스택 목록")
             List<TechStackInfo> techStacks
     ) {}
 
@@ -184,13 +184,16 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
-            @Schema(description = "진행 방식 이름", example = "온/오프라인")
+            @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
             @Schema(description = "진행 기간", example = "ONE_TO_THREE")
@@ -235,13 +238,16 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
-            @Schema(description = "진행 방식 이름", example = "온/오프라인")
+            @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
             @Schema(description = "진행 기간", example = "ONE_TO_THREE")
@@ -298,7 +304,7 @@ public class ProjectResDTO {
             @Schema(description = "현재 모집된 인원", example = "0")
             Integer currentCount,
 
-            @Schema(description = "기술 스택 목록 (ID와 이름)")
+            @Schema(description = "기술 스택 목록")
             List<TechStackInfo> techStacks
     ) {}
 
