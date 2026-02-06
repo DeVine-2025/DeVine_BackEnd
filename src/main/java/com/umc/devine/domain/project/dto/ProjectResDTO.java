@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.dto;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.ProjectPart;
@@ -39,8 +40,11 @@ public class ProjectResDTO {
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월 단위)", example = "2")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -96,8 +100,11 @@ public class ProjectResDTO {
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월 단위)", example = "2")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -174,8 +181,11 @@ public class ProjectResDTO {
             @Schema(description = "진행 방식 이름", example = "온/오프라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월)", example = "3")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -222,8 +232,11 @@ public class ProjectResDTO {
             @Schema(description = "진행 방식 이름", example = "온/오프라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월)", example = "3")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,

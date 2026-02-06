@@ -21,17 +21,17 @@ public class ProjectReqDTO {
 
         @Builder
         public record CreateProjectReq(
-                        @Schema(description = "프로젝트 분야 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
+                        @Schema(description = "프로젝트 분야 (WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
+                        @Schema(description = "카테고리 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
-                        @Schema(description = "진행 기간 (개월 단위, 예: 2)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 기간은 필수입니다.") @Min(value = 1, message = "진행 기간은 최소 한 달 이상이어야 합니다.") @Max(value = 13, message = "진행 기간은 최대 13개월 까지 가능합니다.") Integer durationMonths,
+                        @Schema(description = "진행 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 기간은 필수입니다.") DurationRange durationRange,
 
                         @Schema(description = "진행 장소 (ONLINE인 경우 '온라인', OFFLINE인 경우 구체적 장소)", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "진행 장소는 필수입니다.") @Size(max = 100, message = "진행 장소는 100자를 초과할 수 없습니다.") String location,
 
-                        @Schema(description = "모집 마감일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-01-25") @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
+                        @Schema(description = "모집 마감일 (형식: YYYY-MM-DD)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2026-03-05") @NotNull(message = "모집 마감일은 필수입니다.") LocalDate recruitmentDeadline,
 
                         @Schema(description = "모집 분야 목록 (포지션, 모집인원, 기술스택)", requiredMode = Schema.RequiredMode.REQUIRED) @NotEmpty(message = "모집 분야는 최소 1개 이상이어야 합니다.") @Size(max = 6, message = "모집 분야는 최대 6개까지 가능합니다.") @Valid List<RecruitmentDTO> recruitments,
 
@@ -44,13 +44,13 @@ public class ProjectReqDTO {
 
         @Builder
         public record UpdateProjectReq(
-                        @Schema(description = "프로젝트 분야 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
+                        @Schema(description = "프로젝트 분야 (WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
+                        @Schema(description = "카테고리 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
-                        @Schema(description = "진행 기간 (개월 단위)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 기간은 필수입니다.") @Min(value = 1, message = "진행 기간은 최소 1개월 이상이어야 합니다.") @Max(value = 13, message = "진행 기간은 최대 13개월까지 가능합니다.") Integer durationMonths,
+                        @Schema(description = "진행 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "진행 기간은 필수입니다.") DurationRange durationRange,
 
                         @Schema(description = "진행 장소", requiredMode = Schema.RequiredMode.REQUIRED) @NotBlank(message = "진행 장소는 필수입니다.") @Size(max = 100, message = "진행 장소는 100자를 초과할 수 없습니다.") String location,
 
@@ -67,21 +67,21 @@ public class ProjectReqDTO {
 
         @Builder
         public record RecruitmentDTO(
-                        @Schema(description = "포지션 (BACKEND, FRONTEND, DESIGN, PM, IOS, ANDROID)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "포지션은 필수입니다.") ProjectPart position,
+                        @Schema(description = "포지션 (FRONTEND, BACKEND, INFRA)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "포지션은 필수입니다.") ProjectPart position,
 
                         @Schema(description = "모집 인원 (1~10명)", requiredMode = Schema.RequiredMode.REQUIRED) @NotNull(message = "모집 인원은 필수입니다.") @Min(value = 1, message = "모집 인원은 최소 1명 이상이어야 합니다.") @Max(value = 10, message = "모집 인원은 최대 10명까지 가능합니다.") Integer count,
 
-                        @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED) @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
+                        @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[\"JAVA\"]") @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
         }
 
         // 프로젝트 검색 요청 DTO (프로젝트/개발자 보기 탭 하단)
         @Builder
         public record SearchProjectReq(
-                        @Schema(description = "프로젝트 유형 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", nullable = true) ProjectField projectField,
+                        @Schema(description = "프로젝트 유형 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", nullable = true) ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true) CategoryGenre category,
+                        @Schema(description = "카테고리 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", nullable = true) CategoryGenre category,
 
-                        @Schema(description = "포지션 (BACKEND, FRONTEND, DESIGN, PM, IOS, ANDROID)", nullable = true) ProjectPart position,
+                        @Schema(description = "포지션 (ALL, FRONTEND, BACKEND, INFRA)", nullable = true) ProjectPart position,
 
                         @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
 
@@ -116,11 +116,11 @@ public class ProjectReqDTO {
         // 추천 프로젝트 페이지 요청 DTO (추천 프로젝트 탭용)
         @Builder
         public record RecommendProjectsPageReq(
-                        @Schema(description = "프로젝트 유형 (WEB, MOBILE, AI, GAME, DATA, BACKEND, FRONTEND)", nullable = true) ProjectField projectField,
+                        @Schema(description = "프로젝트 유형 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", nullable = true) ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true) CategoryGenre category,
+                        @Schema(description = "카테고리 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", nullable = true) CategoryGenre category,
 
-                        @Schema(description = "포지션 (BACKEND, FRONTEND, DESIGN, PM, IOS, ANDROID)", nullable = true) ProjectPart position,
+                        @Schema(description = "포지션 (ALL, FRONTEND, BACKEND, INFRA)", nullable = true) ProjectPart position,
 
                         @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
 

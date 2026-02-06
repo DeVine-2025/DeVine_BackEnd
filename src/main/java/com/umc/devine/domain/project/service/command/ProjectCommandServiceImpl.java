@@ -100,7 +100,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 request.projectField(),
                 category,
                 request.mode(),
-                request.durationMonths(),
+                request.durationRange(),
                 request.location(),
                 request.recruitmentDeadline()
         );

@@ -2,6 +2,7 @@ package com.umc.devine.domain.project.entity;
 
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.enums.ProjectField;
@@ -44,8 +45,9 @@ public class Project extends BaseEntity {
     @Column(name = "project_mode", nullable = false, length = 20)
     private ProjectMode mode;
 
-    @Column(name = "duration_months", nullable = false)
-    private Integer durationMonths;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "duration_range", nullable = false, length = 20)
+    private DurationRange durationRange;
 
     @Column(name = "location", nullable = false, length = 100)
     private String location;
@@ -95,13 +97,13 @@ public class Project extends BaseEntity {
     public void updateProjectInfo(ProjectField projectField,
                                   Category category,
                                   ProjectMode mode,
-                                  Integer durationMonths,
+                                  DurationRange durationRange,
                                   String location,
                                   LocalDate recruitmentDeadline) {
         this.projectField = projectField;
         this.category = category;
         this.mode = mode;
-        this.durationMonths = durationMonths;
+        this.durationRange = durationRange;
         this.location = location;
         this.recruitmentDeadline = recruitmentDeadline;
     }
