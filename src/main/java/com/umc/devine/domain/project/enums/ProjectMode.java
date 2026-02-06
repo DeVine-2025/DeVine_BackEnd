@@ -8,7 +8,7 @@ public enum ProjectMode {
 
     ONLINE("온라인"),
     OFFLINE("오프라인"),
-    HYBRID("온라인/오프라인");   // 온오프라인 병행
+    HYBRID("온/오프라인");   // 온오프라인 병행
 
     private final String displayName;
 
