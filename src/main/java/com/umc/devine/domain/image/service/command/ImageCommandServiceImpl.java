@@ -8,9 +8,6 @@ import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
-import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.global.infra.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -25,20 +22,16 @@ import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequ
 public class ImageCommandServiceImpl implements ImageCommandService {
 
     private final ImageRepository imageRepository;
-    private final MemberRepository memberRepository;
     private final S3Service s3Service;
 
     @Override
-    public ImageResDTO.PresignedUrlRes createPresignedUrl(Long memberId, ImageReqDTO.PresignedUrlReq request) {
+    public ImageResDTO.PresignedUrlRes createPresignedUrl(Member member, ImageReqDTO.PresignedUrlReq request) {
         log.debug("[ImageService] Presigned URL 생성 요청 - memberId: {}, imageType: {}, fileName: {}",
-                memberId, request.imageType(), request.fileName());
+                member.getId(), request.imageType(), request.fileName());
 
         s3Service.validateExtension(request.fileName());
 
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
-        String s3Key = buildS3Key(request, memberId);
+        String s3Key = buildS3Key(request, member.getId());
         String imageUrl = s3Service.buildImageUrl(s3Key);
         String contentType = s3Service.guessContentType(request.fileName());
 
@@ -54,13 +47,13 @@ public class ImageCommandServiceImpl implements ImageCommandService {
     }
 
     @Override
-    public void confirmUpload(Long memberId, Long imageId) {
+    public void confirmUpload(Member member, Long imageId) {
         log.debug("[ImageService] 업로드 확인 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
 
-        validateImageOwner(image, memberId);
+        validateImageOwner(image, member.getId());
 
         image.confirmUpload();
 
@@ -68,13 +61,13 @@ public class ImageCommandServiceImpl implements ImageCommandService {
     }
 
     @Override
-    public void deleteImage(Long memberId, Long imageId) {
+    public void deleteImage(Member member, Long imageId) {
         log.debug("[ImageService] 이미지 삭제 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
                 .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
 
-        validateImageOwner(image, memberId);
+        validateImageOwner(image, member.getId());
 
         s3Service.deleteObject(image.getS3Key());
         imageRepository.delete(image);

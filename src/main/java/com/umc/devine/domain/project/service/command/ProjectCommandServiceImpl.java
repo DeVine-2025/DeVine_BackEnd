@@ -10,9 +10,6 @@ import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
-import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
-import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -24,9 +21,9 @@ import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
-import com.umc.devine.domain.project.validator.ProjectValidator;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -40,9 +37,10 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
+import java.time.LocalDate;
+
 import static com.umc.devine.domain.category.exception.code.CategoryErrorCode.CATEGORY_NOT_FOUND;
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.INVALID_PERMISSION;
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
+import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.*;
 
 @Slf4j
 @Service
@@ -55,29 +53,24 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final ProjectRequirementMemberRepository projectRequirementMemberRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
     private final TechstackRepository techstackRepository;
-    private final MemberRepository memberRepository;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
-    private final ProjectValidator projectValidator;
 
     @Override
-    public ProjectResDTO.CreateProjectRes createProject(Long memberId, ProjectReqDTO.CreateProjectReq request) {
-        Member member = memberRepository.findById(memberId)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
+    public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
         if (member.getMainType() != MemberMainType.PM) {
             throw new ProjectException(INVALID_PERMISSION);
         }
 
-        Category category = categoryRepository.findById(request.categoryId())
+        Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        projectValidator.validateRecruitmentDeadline(request.recruitmentDeadline());
+        validateRecruitmentDeadline(request.recruitmentDeadline());
 
         Project project = ProjectConverter.toProject(request, member, category);
         Project savedProject = projectRepository.save(project);
 
-        saveProjectImages(request.imageIds(), savedProject);
+        saveProjectImages(request.imageIds(), savedProject, member.getId());
 
         if (request.recruitments() != null && !request.recruitments().isEmpty()) {
             List<ProjectRequirementMember> requirements = request.recruitments().stream()
@@ -92,16 +85,16 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
-    public ProjectResDTO.UpdateProjectRes updateProject(Long memberId, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
+    public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        projectValidator.validateOwner(project, memberId);
+        validateOwner(project, member.getId());
 
-        Category category = categoryRepository.findById(request.categoryId())
+        Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        projectValidator.validateRecruitmentDeadline(request.recruitmentDeadline());
+        validateRecruitmentDeadline(request.recruitmentDeadline());
 
         project.updateProjectInfo(
                 request.projectField(),
@@ -120,7 +113,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         projectImageRepository.deleteAllByProject(project);
         project.clearImages();
 
-        saveProjectImages(request.imageIds(), project);
+        saveProjectImages(request.imageIds(), project, member.getId());
 
         List<ProjectRequirementMember> oldRequirements =
                 projectRequirementMemberRepository.findAllByProject(project);
@@ -152,11 +145,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
-    public void deleteProject(Long memberId, Long projectId) {
+    public void deleteProject(Member member, Long projectId) {
         Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        projectValidator.validateOwner(project, memberId);
+        validateOwner(project, member.getId());
 
         project.delete();
     }
@@ -169,12 +162,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             ProjectReqDTO.RecruitmentDTO dto = recruitments.get(i);
             ProjectRequirementMember requirement = requirementEntities.get(i);
 
-            if (dto.techStackIds() == null || dto.techStackIds().isEmpty()) {
+            if (dto.techStacks() == null || dto.techStacks().isEmpty()) {
                 continue;
             }
 
-            for (Long techstackId : dto.techStackIds()) {
-                Techstack techstack = techstackRepository.findById(techstackId)
+            for (TechName techName : dto.techStacks()) {
+                Techstack techstack = techstackRepository.findByName(techName)
                         .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()
@@ -191,7 +184,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
     }
 
-    private void saveProjectImages(List<Long> imageIds, Project project) {
+    private void saveProjectImages(List<Long> imageIds, Project project, Long memberId) {
         if (imageIds == null || imageIds.isEmpty()) {
             return;
         }
@@ -199,6 +192,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         List<Image> images = imageRepository.findAllById(imageIds);
         if (images.size() != imageIds.size()) {
             throw new ImageException(ImageErrorCode.IMAGE_NOT_FOUND);
+        }
+
+        boolean hasUnauthorized = images.stream()
+                .anyMatch(image -> !image.getUploader().getId().equals(memberId));
+        if (hasUnauthorized) {
+            throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
         }
 
         boolean hasNonProjectType = images.stream()
@@ -217,5 +216,17 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .collect(Collectors.toList());
 
         projectImageRepository.saveAll(projectImages).forEach(project::addImage);
+    }
+
+    private void validateOwner(Project project, Long memberId) {
+        if (!project.getMember().getId().equals(memberId)) {
+            throw new ProjectException(FORBIDDEN_PROJECT_ACCESS);
+        }
+    }
+
+    private void validateRecruitmentDeadline(LocalDate recruitmentDeadline) {
+        if (recruitmentDeadline.isBefore(LocalDate.now())) {
+            throw new ProjectException(INVALID_RECRUITMENT_DEADLINE);
+        }
     }
 }

@@ -20,13 +20,13 @@ public class ProjectPredicateBuilder {
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
         // 프로젝트 분야 필터
-        if (req.projectFields() != null && !req.projectFields().isEmpty()) {
-            builder.and(project.projectField.in(req.projectFields()));
+        if (req.projectField() != null) {
+            builder.and(project.projectField.eq(req.projectField()));
         }
 
         // 카테고리 필터
-        if (req.categoryIds() != null && !req.categoryIds().isEmpty()) {
-            builder.and(project.category.id.in(req.categoryIds()));
+        if (req.category() != null) {
+            builder.and(project.category.genre.eq(req.category()));
         }
 
         // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
@@ -50,17 +50,17 @@ public class ProjectPredicateBuilder {
         }
 
         // 포지션 필터
-        if (req.positions() != null && !req.positions().isEmpty()) {
-            builder.and(project.requirements.any().part.in(req.positions()));
+        if (req.position() != null) {
+            builder.and(project.requirements.any().part.eq(req.position()));
         }
 
         // 기술 스택 필터
-        if (req.techStackIds() != null && !req.techStackIds().isEmpty()) {
+        if (req.techstackName() != null) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.id.in(req.techStackIds()))
+                            .where(techstack.techstack.name.eq(req.techstackName()))
             ));
         }
 
@@ -78,13 +78,13 @@ public class ProjectPredicateBuilder {
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
         // 프로젝트 분야 필터
-        if (req.projectFields() != null && !req.projectFields().isEmpty()) {
-            builder.and(project.projectField.in(req.projectFields()));
+        if (req.projectField() != null) {
+            builder.and(project.projectField.eq(req.projectField()));
         }
 
         // 카테고리 필터
-        if (req.categoryIds() != null && !req.categoryIds().isEmpty()) {
-            builder.and(project.category.id.in(req.categoryIds()));
+        if (req.category() != null) {
+            builder.and(project.category.genre.eq(req.category()));
         }
 
         // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
@@ -108,17 +108,17 @@ public class ProjectPredicateBuilder {
         }
 
         // 포지션 필터
-        if (req.positions() != null && !req.positions().isEmpty()) {
-            builder.and(project.requirements.any().part.in(req.positions()));
+        if (req.position() != null) {
+            builder.and(project.requirements.any().part.eq(req.position()));
         }
 
         // 기술 스택 필터
-        if (req.techStackIds() != null && !req.techStackIds().isEmpty()) {
+        if (req.techstackName() != null) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.id.in(req.techStackIds()))
+                            .where(techstack.techstack.name.eq(req.techstackName()))
             ));
         }
 

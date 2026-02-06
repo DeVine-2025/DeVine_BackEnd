@@ -14,6 +14,8 @@ import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.TermsRepository;
+import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
@@ -51,6 +53,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final ReportTechstackRepository reportTechstackRepository;
     private final MemberCategoryRepository memberCategoryRepository;
     private final ContactRepository contactRepository;
+    private final TermsRepository termsRepository;
+
+    @Override
+    public MemberResDTO.TermsListDTO findAllTerms() {
+        List<Terms> termsList = termsRepository.findAll();
+        return MemberConverter.toTermsListDTO(termsList);
+    }
 
     @Override
     public MemberResDTO.MemberProfileDTO findMemberProfile(Member member) {

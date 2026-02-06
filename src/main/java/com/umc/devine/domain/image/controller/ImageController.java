@@ -4,7 +4,9 @@ import com.umc.devine.domain.image.dto.ImageReqDTO;
 import com.umc.devine.domain.image.dto.ImageResDTO;
 import com.umc.devine.domain.image.exception.code.ImageSuccessCode;
 import com.umc.devine.domain.image.service.command.ImageCommandService;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.auth.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
@@ -19,33 +21,31 @@ public class ImageController implements ImageControllerDocs {
     @Override
     @PostMapping("/presigned-url")
     public ApiResponse<ImageResDTO.PresignedUrlRes> createPresignedUrl(
+            @CurrentMember Member member,
             @RequestBody @Valid ImageReqDTO.PresignedUrlReq request
     ) {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
         ImageSuccessCode code = ImageSuccessCode.PRESIGNED_URL_CREATED;
-        ImageResDTO.PresignedUrlRes response = imageCommandService.createPresignedUrl(memberId, request);
+        ImageResDTO.PresignedUrlRes response = imageCommandService.createPresignedUrl(member, request);
         return ApiResponse.onSuccess(code, response);
     }
 
     @Override
     @PatchMapping("/confirm/{imageId}")
-    public ApiResponse<Void> confirmUpload(@PathVariable Long imageId) {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        imageCommandService.confirmUpload(memberId, imageId);
+    public ApiResponse<Void> confirmUpload(
+            @CurrentMember Member member,
+            @PathVariable Long imageId
+    ) {
+        imageCommandService.confirmUpload(member, imageId);
         return ApiResponse.onSuccess(ImageSuccessCode.UPLOAD_CONFIRMED, null);
     }
 
     @Override
     @DeleteMapping("/{imageId}")
-    public ApiResponse<Void> deleteImage(@PathVariable Long imageId) {
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-
-        imageCommandService.deleteImage(memberId, imageId);
+    public ApiResponse<Void> deleteImage(
+            @CurrentMember Member member,
+            @PathVariable Long imageId
+    ) {
+        imageCommandService.deleteImage(member, imageId);
         return ApiResponse.onSuccess(ImageSuccessCode.IMAGE_DELETED, null);
     }
 }
