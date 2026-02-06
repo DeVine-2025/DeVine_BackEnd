@@ -2,8 +2,11 @@ package com.umc.devine.domain.project.repository.querydsl;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.entity.QProject;
+import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.mapping.QProjectRequirementTechstack;
 
@@ -19,38 +22,23 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터
-        if (req.projectField() != null) {
+        // 프로젝트 분야 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.projectField() != null && req.projectField() != ProjectField.ALL) {
             builder.and(project.projectField.eq(req.projectField()));
         }
 
-        // 카테고리 필터
-        if (req.category() != null) {
+        // 카테고리 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.category() != null && req.category() != CategoryGenre.ALL) {
             builder.and(project.category.genre.eq(req.category()));
         }
 
-        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
+        // 진행 기간 필터
         if (req.durationRange() != null) {
-            int minMonths = req.durationRange().getMinMonths();
-            int maxMonths = req.durationRange().getMaxMonths();
-
-            // 6개월 이상인 경우
-            if (maxMonths == Integer.MAX_VALUE) {
-                builder.and(project.durationMonths.goe(minMonths));
-            }
-            // 1개월 이하인 경우
-            else if (minMonths == 0) {
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
-            // 1~3개월, 3~6개월인 경우
-            else {
-                builder.and(project.durationMonths.goe(minMonths));
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
+            builder.and(project.durationRange.eq(req.durationRange()));
         }
 
-        // 포지션 필터
-        if (req.position() != null) {
+        // 포지션 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.position() != null && req.position() != ProjectPart.ALL) {
             builder.and(project.requirements.any().part.eq(req.position()));
         }
 
@@ -77,38 +65,23 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터
-        if (req.projectField() != null) {
+        // 프로젝트 분야 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.projectField() != null && req.projectField() != ProjectField.ALL) {
             builder.and(project.projectField.eq(req.projectField()));
         }
 
-        // 카테고리 필터
-        if (req.category() != null) {
+        // 카테고리 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.category() != null && req.category() != CategoryGenre.ALL) {
             builder.and(project.category.genre.eq(req.category()));
         }
 
-        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
+        // 진행 기간 필터
         if (req.durationRange() != null) {
-            int minMonths = req.durationRange().getMinMonths();
-            int maxMonths = req.durationRange().getMaxMonths();
-
-            // 6개월 이상인 경우
-            if (maxMonths == Integer.MAX_VALUE) {
-                builder.and(project.durationMonths.goe(minMonths));
-            }
-            // 1개월 이하인 경우
-            else if (minMonths == 0) {
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
-            // 1~3개월, 3~6개월인 경우
-            else {
-                builder.and(project.durationMonths.goe(minMonths));
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
+            builder.and(project.durationRange.eq(req.durationRange()));
         }
 
-        // 포지션 필터
-        if (req.position() != null) {
+        // 포지션 필터 (ALL이면 전체 조회이므로 필터 미적용)
+        if (req.position() != null && req.position() != ProjectPart.ALL) {
             builder.and(project.requirements.any().part.eq(req.position()));
         }
 
