@@ -38,3 +38,8 @@ out/
 
 ### Environment Variables ###
 .env*
+
+### Logs ###
+*.log
+logs/
+log/
