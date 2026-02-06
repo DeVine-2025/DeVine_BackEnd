@@ -30,6 +30,16 @@ public class MemberController implements MemberControllerDocs {
     private final MemberCommandService memberCommandService;
     private final AuthHelper authHelper;
 
+    // 이용약관 조회
+    @Override
+    @GetMapping("/terms")
+    public ApiResponse<MemberResDTO.TermsListDTO> getTerms() {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.FOUND_TERMS,
+                memberQueryService.findAllTerms()
+        );
+    }
+
     // 회원가입
     @Override
     @PostMapping("/signup")
