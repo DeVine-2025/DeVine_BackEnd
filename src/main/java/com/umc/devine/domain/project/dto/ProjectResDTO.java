@@ -142,6 +142,9 @@ public class ProjectResDTO {
             @Schema(description = "포지션", example = "BACKEND")
             ProjectPart position,
 
+            @Schema(description = "포지션 이름", example = "백엔드")
+            String positionName,
+
             @Schema(description = "모집 인원", example = "2")
             Integer count,
 

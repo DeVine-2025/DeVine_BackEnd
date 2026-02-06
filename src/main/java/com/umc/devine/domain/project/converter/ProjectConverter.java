@@ -226,6 +226,7 @@ public class ProjectConverter {
 
                     return ProjectResDTO.RecruitmentInfo.builder()
                             .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
                             .count(req.getRequirementNum())
                             .currentCount(req.getCurrentCount())
                             .techStacks(
