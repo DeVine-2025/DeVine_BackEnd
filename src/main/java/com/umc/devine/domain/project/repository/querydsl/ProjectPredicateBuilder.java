@@ -22,33 +22,36 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.projectField() != null && req.projectField() != ProjectField.ALL) {
-            builder.and(project.projectField.eq(req.projectField()));
+        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()
+                && !req.projectFields().contains(ProjectField.ALL)) {
+            builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.category() != null && req.category() != CategoryGenre.ALL) {
-            builder.and(project.category.genre.eq(req.category()));
+        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()
+                && !req.categories().contains(CategoryGenre.ALL)) {
+            builder.and(project.category.genre.in(req.categories()));
         }
 
-        // 진행 기간 필터
-        if (req.durationRange() != null) {
-            builder.and(project.durationRange.eq(req.durationRange()));
+        // 진행 기간 필터 (복수 선택 가능)
+        if (req.durationRanges() != null && !req.durationRanges().isEmpty()) {
+            builder.and(project.durationRange.in(req.durationRanges()));
         }
 
-        // 포지션 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.position() != null && req.position() != ProjectPart.ALL) {
-            builder.and(project.requirements.any().part.eq(req.position()));
+        // 포지션 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.positions() != null && !req.positions().isEmpty()
+                && !req.positions().contains(ProjectPart.ALL)) {
+            builder.and(project.requirements.any().part.in(req.positions()));
         }
 
-        // 기술 스택 필터
-        if (req.techstackName() != null) {
+        // 기술 스택 필터 (복수 선택 가능)
+        if (req.techstackNames() != null && !req.techstackNames().isEmpty()) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.name.eq(req.techstackName()))
+                            .where(techstack.techstack.name.in(req.techstackNames()))
             ));
         }
 
@@ -65,33 +68,36 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.projectField() != null && req.projectField() != ProjectField.ALL) {
-            builder.and(project.projectField.eq(req.projectField()));
+        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()
+                && !req.projectFields().contains(ProjectField.ALL)) {
+            builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.category() != null && req.category() != CategoryGenre.ALL) {
-            builder.and(project.category.genre.eq(req.category()));
+        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()
+                && !req.categories().contains(CategoryGenre.ALL)) {
+            builder.and(project.category.genre.in(req.categories()));
         }
 
-        // 진행 기간 필터
-        if (req.durationRange() != null) {
-            builder.and(project.durationRange.eq(req.durationRange()));
+        // 진행 기간 필터 (복수 선택 가능)
+        if (req.durationRanges() != null && !req.durationRanges().isEmpty()) {
+            builder.and(project.durationRange.in(req.durationRanges()));
         }
 
-        // 포지션 필터 (ALL이면 전체 조회이므로 필터 미적용)
-        if (req.position() != null && req.position() != ProjectPart.ALL) {
-            builder.and(project.requirements.any().part.eq(req.position()));
+        // 포지션 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.positions() != null && !req.positions().isEmpty()
+                && !req.positions().contains(ProjectPart.ALL)) {
+            builder.and(project.requirements.any().part.in(req.positions()));
         }
 
-        // 기술 스택 필터
-        if (req.techstackName() != null) {
+        // 기술 스택 필터 (복수 선택 가능)
+        if (req.techstackNames() != null && !req.techstackNames().isEmpty()) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.name.eq(req.techstackName()))
+                            .where(techstack.techstack.name.in(req.techstackNames()))
             ));
         }
 

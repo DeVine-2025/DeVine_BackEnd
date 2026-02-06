@@ -23,7 +23,7 @@ public class ProjectReqDTO {
         public record CreateProjectReq(
                         @Schema(description = "프로젝트 분야 (WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "WEB") @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "ECOMMERCE") @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
+                        @Schema(description = "도메인 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "ECOMMERCE") @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED, example = "OFFLINE") @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
@@ -46,7 +46,7 @@ public class ProjectReqDTO {
         public record UpdateProjectReq(
                         @Schema(description = "프로젝트 분야 (WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "WEB") @NotNull(message = "프로젝트 분야는 필수입니다.") ProjectField projectField,
 
-                        @Schema(description = "카테고리 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "ECOMMERCE") @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
+                        @Schema(description = "도메인 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", requiredMode = Schema.RequiredMode.REQUIRED, example = "ECOMMERCE") @NotNull(message = "도메인은 필수입니다.") CategoryGenre category,
 
                         @Schema(description = "진행 방식 (ONLINE, OFFLINE, HYBRID)", requiredMode = Schema.RequiredMode.REQUIRED, example = "OFFLINE") @NotNull(message = "진행 방식은 필수입니다.") ProjectMode mode,
 
@@ -69,7 +69,7 @@ public class ProjectReqDTO {
         public record RecruitmentDTO(
                         @Schema(description = "포지션 (FRONTEND, BACKEND, INFRA)", requiredMode = Schema.RequiredMode.REQUIRED, example = "BACKEND") @NotNull(message = "포지션은 필수입니다.") ProjectPart position,
 
-                        @Schema(description = "모집 인원 (1~10명)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2") @NotNull(message = "모집 인원은 필수입니다.") @Min(value = 1, message = "모집 인원은 최소 1명 이상이어야 합니다.") @Max(value = 10, message = "모집 인원은 최대 10명까지 가능합니다.") Integer count,
+                        @Schema(description = "모집 인원 (1~8명)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2") @NotNull(message = "모집 인원은 필수입니다.") @Min(value = 1, message = "모집 인원은 최소 1명 이상이어야 합니다.") @Max(value = 8, message = "모집 인원은 최대 8명까지 가능합니다.") Integer count,
 
                         @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[\"JAVA\"]") @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
         }
@@ -77,15 +77,15 @@ public class ProjectReqDTO {
         // 프로젝트 검색 요청 DTO (프로젝트/개발자 보기 탭 하단)
         @Builder
         public record SearchProjectReq(
-                        @Schema(description = "프로젝트 유형 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", nullable = true) ProjectField projectField,
+                        @Schema(description = "프로젝트 유형 목록 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC), 복수 선택 가능", nullable = true, example = "[\"WEB\", \"MOBILE\"]") List<ProjectField> projectFields,
 
-                        @Schema(description = "카테고리 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", nullable = true) CategoryGenre category,
+                        @Schema(description = "도메인 목록 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC), 복수 선택 가능", nullable = true, example = "[\"ECOMMERCE\", \"FINTECH\"]") List<CategoryGenre> categories,
 
-                        @Schema(description = "포지션 (ALL, FRONTEND, BACKEND, INFRA)", nullable = true) ProjectPart position,
+                        @Schema(description = "포지션 목록 (ALL, FRONTEND, BACKEND, INFRA), 복수 선택 가능", nullable = true, example = "[\"BACKEND\", \"FRONTEND\"]") List<ProjectPart> positions,
 
-                        @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
+                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRING\"]") List<TechName> techstackNames,
 
-                        @Schema(description = "예상 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", nullable = true) DurationRange durationRange,
+                        @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges,
 
                         @Schema(description = "페이지 번호 (1부터 시작)", nullable = true, defaultValue = "1", example = "1") @ValidPage Integer page,
 
@@ -116,15 +116,15 @@ public class ProjectReqDTO {
         // 추천 프로젝트 페이지 요청 DTO (추천 프로젝트 탭용)
         @Builder
         public record RecommendProjectsPageReq(
-                        @Schema(description = "프로젝트 유형 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC)", nullable = true) ProjectField projectField,
+                        @Schema(description = "프로젝트 유형 목록 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC), 복수 선택 가능", nullable = true, example = "[\"WEB\", \"MOBILE\"]") List<ProjectField> projectFields,
 
-                        @Schema(description = "카테고리 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC)", nullable = true) CategoryGenre category,
+                        @Schema(description = "도메인 목록 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC), 복수 선택 가능", nullable = true, example = "[\"ECOMMERCE\", \"FINTECH\"]") List<CategoryGenre> categories,
 
-                        @Schema(description = "포지션 (ALL, FRONTEND, BACKEND, INFRA)", nullable = true) ProjectPart position,
+                        @Schema(description = "포지션 목록 (ALL, FRONTEND, BACKEND, INFRA), 복수 선택 가능", nullable = true, example = "[\"BACKEND\", \"FRONTEND\"]") List<ProjectPart> positions,
 
-                        @Schema(description = "기술스택 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true) TechName techstackName,
+                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRING\"]") List<TechName> techstackNames,
 
-                        @Schema(description = "예상 기간 (UNDER_ONE: 1개월 이하, ONE_TO_THREE: 1~3개월, THREE_TO_SIX: 3~6개월, SIX_PLUS: 6개월 이상)", nullable = true) DurationRange durationRange,
+                        @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges,
 
                         @Schema(description = "페이지 번호 (1부터 시작)", nullable = true, defaultValue = "1", example = "1") @ValidPage Integer page,
 
