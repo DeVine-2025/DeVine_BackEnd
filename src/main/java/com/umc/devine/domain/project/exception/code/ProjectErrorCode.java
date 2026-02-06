@@ -55,7 +55,19 @@ public enum ProjectErrorCode implements BaseErrorCode {
 
     INVALID_SIZE(HttpStatus.BAD_REQUEST,
             "PROJECT400_9",
-            "페이지 크기는 1 이상이어야 합니다.");
+            "페이지 크기는 1 이상이어야 합니다."),
+
+    INVALID_PROJECT_FIELD(HttpStatus.BAD_REQUEST,
+            "PROJECT400_10",
+            "프로젝트 분야에 '전체'는 선택할 수 없습니다."),
+
+    INVALID_CATEGORY(HttpStatus.BAD_REQUEST,
+            "PROJECT400_11",
+            "카테고리에 '전체'는 선택할 수 없습니다."),
+
+    INVALID_POSITION(HttpStatus.BAD_REQUEST,
+            "PROJECT400_12",
+            "포지션에 '전체'는 선택할 수 없습니다.");
 
     private final HttpStatus status;
     private final String code;
