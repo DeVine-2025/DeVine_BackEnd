@@ -15,6 +15,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Member", description = "회원가입, 내 정보 관련 API")
 public interface MyProfileControllerDocs {
@@ -42,7 +43,7 @@ public interface MyProfileControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공")
     })
-    ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(String nickname);
+    ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(@RequestParam("nickname") String nickname);
 
     @Operation(summary = "내 프로필 조회 API", description = "내 프로필 정보를 조회하는 API입니다.")
     @ApiResponses({

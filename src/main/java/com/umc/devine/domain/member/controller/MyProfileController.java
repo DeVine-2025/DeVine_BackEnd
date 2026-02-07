@@ -51,9 +51,9 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 닉네임 중복 체크
     @Override
-    @GetMapping("/nickname/{nickname}")
+    @GetMapping("/nickname/check")
     public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
-            @PathVariable("nickname") String nickname
+            @RequestParam("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
         return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
