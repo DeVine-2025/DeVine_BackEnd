@@ -136,6 +136,13 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Override
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
 
+        // 닉네임 중복 검증
+        if (dto.nickname() != null && !dto.nickname().equals(member.getNickname())) {
+            if (memberRepository.existsByNickname(dto.nickname())) {
+                throw new MemberException(MemberErrorCode.NICKNAME_DUPLICATED);
+            }
+        }
+
         // 프로필 이미지 검증
         validateProfileImage(dto.imageUrl());
 
