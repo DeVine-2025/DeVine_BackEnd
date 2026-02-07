@@ -53,7 +53,7 @@ public class MyProfileController implements MyProfileControllerDocs {
     @Override
     @GetMapping("/nickname/check")
     public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
-            @RequestParam("nickname") @ValidNickname String nickname
+            @RequestParam("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
         MemberResDTO.NicknameDuplicateDTO response = memberQueryService.checkNicknameDuplicate(nickname);

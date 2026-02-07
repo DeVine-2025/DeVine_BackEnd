@@ -9,10 +9,6 @@ import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.validation.annotation.ValidNickname;
-import jakarta.validation.Valid;
-import jakarta.validation.constraints.Max;
-import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
 
@@ -34,7 +30,7 @@ public class MemberController implements MemberControllerDocs {
     @GetMapping("/recommend")
     public ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
             @CurrentMember Member member,
-            @ParameterObject @ModelAttribute @Valid MemberReqDTO.RecommendDeveloperDTO dto
+            @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         PagedResponse<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopers(member, dto);
@@ -46,7 +42,7 @@ public class MemberController implements MemberControllerDocs {
     @GetMapping("/recommend/preview")
     public ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
             @CurrentMember Member member,
-            @RequestParam(defaultValue = "4") @Min(value = 1, message = "limit은 1 이상이어야 합니다.") @Max(value = 20, message = "limit은 20 이하여야 합니다.") int limit
+            @RequestParam(defaultValue = "4") int limit
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         List<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopersPreview(member, limit);
@@ -57,7 +53,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}")
     public ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(
-            @PathVariable("nickname") @ValidNickname String nickname
+            @PathVariable("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         MemberResDTO.UserProfileDTO response = memberQueryService.findMemberByNickname(nickname);
@@ -68,7 +64,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/search")
     public ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
-            @ParameterObject @ModelAttribute @Valid MemberReqDTO.SearchDeveloperDTO dto
+            @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         PagedResponse<MemberResDTO.UserProfileDTO> response = memberQueryService.searchDevelopers(dto);
@@ -79,7 +75,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
-            @PathVariable("nickname") @ValidNickname String nickname
+            @PathVariable("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(nickname);
@@ -90,7 +86,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/reports")
     public ApiResponse<DevReportResDTO.ReportListDTO> getReportsByNickname(
-            @PathVariable("nickname") @ValidNickname String nickname
+            @PathVariable("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
         DevReportResDTO.ReportListDTO response = memberQueryService.findReportsByNickname(nickname);

@@ -14,7 +14,10 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import org.springdoc.core.annotations.ParameterObject;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 @Tag(name = "Members", description = "특정 회원, 전체 회원 조회 관련 API")
@@ -30,7 +33,7 @@ public interface MemberControllerDocs {
     })
     ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
             @Parameter(hidden = true) @CurrentMember Member member,
-            @ParameterObject @Valid @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.RecommendDeveloperDTO dto
     );
 
     @Operation(summary = "개발자 추천 프리뷰 API", description = "나에게 맞는 개발자 추천 프리뷰입니다. limit 파라미터로 조회할 개수를 지정할 수 있습니다. (기본값: 4)")
@@ -41,6 +44,8 @@ public interface MemberControllerDocs {
     })
     ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
             @Parameter(hidden = true) @CurrentMember Member member,
+            @Min(value = 1, message = "limit은 1 이상이어야 합니다.")
+            @Max(value = 20, message = "limit은 20 이하여야 합니다.")
             int limit
     );
 
@@ -50,7 +55,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
-            @ParameterObject @Valid @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.SearchDeveloperDTO dto
     );
 
     @Operation(summary = "특정 회원 프로필 조회 API", description = "특정 회원 프로필 정보를 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요.")
@@ -61,14 +66,14 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(String nickname);
+    ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(@ValidNickname String nickname);
 
     @Operation(summary = "특정 회원 깃허브 기록 조회 API", description = "특정 회원의 깃허브 기록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. 외부 api 호출하지 않은 상태입니다. 반환 값은 Mock 데이터 입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(String nickname);
+    ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(@ValidNickname String nickname);
 
     @Operation(summary = "특정 회원 리포트 조회 API", description = "특정 회원의 개발 리포트 목록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요.")
     @ApiResponses({
@@ -78,5 +83,5 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<DevReportResDTO.ReportListDTO> getReportsByNickname(String nickname);
+    ApiResponse<DevReportResDTO.ReportListDTO> getReportsByNickname(@ValidNickname String nickname);
 }

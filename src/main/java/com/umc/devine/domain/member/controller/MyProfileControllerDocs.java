@@ -9,6 +9,8 @@ import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.validation.annotation.ValidNickname;
+
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
@@ -44,7 +46,7 @@ public interface MyProfileControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공")
     })
-    ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(@RequestParam("nickname") String nickname);
+    ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(@RequestParam("nickname") @ValidNickname String nickname);
 
     @Operation(summary = "내 프로필 조회 API", description = "내 프로필 정보를 조회하는 API입니다.")
     @ApiResponses({
