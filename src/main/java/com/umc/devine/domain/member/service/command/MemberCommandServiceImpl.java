@@ -209,6 +209,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
     }
 
+    // 탈퇴 기능을 위한 장치
+    @Override
+    public void withdraw(Member member) {
+        // 테스트 코드 등에서 회원의 상태를 DELETED로 변경하여 조회 필터링을 검증하기 위해 사용됩니다.
+        member.withdraw();
+        memberRepository.save(member);
+    }
+
     private void validateProfileImage(String imageUrl) {
         if (imageUrl == null) return;
 
