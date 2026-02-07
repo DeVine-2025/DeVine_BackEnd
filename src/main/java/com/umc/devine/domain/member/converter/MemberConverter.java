@@ -126,7 +126,7 @@ public class MemberConverter {
                 .build();
     }
 
-    public static Contact toContact(Member member, MemberResDTO.ContactDTO dto) {
+    public static Contact toContact(Member member, MemberReqDTO.ContactDTO dto) {
         return Contact.builder()
                 .member(member)
                 .contactType(dto.type())
@@ -135,7 +135,7 @@ public class MemberConverter {
                 .build();
     }
 
-    public static List<Contact> toContacts(Member member, MemberResDTO.ContactDTO[] dtos) {
+    public static List<Contact> toContacts(Member member, MemberReqDTO.ContactDTO[] dtos) {
         return Arrays.stream(dtos)
                 .map(dto -> toContact(member, dto))
                 .collect(Collectors.toList());
