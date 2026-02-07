@@ -12,4 +12,12 @@ public class FastApiReqDto {
             String callbackUrl,
             String githubToken
     ) {}
+
+    @Builder
+    public record ReportGenerationSyncReq(
+            Long mainReportId,
+            Long detailReportId,
+            String gitUrl,
+            String githubToken
+    ) {}
 }
