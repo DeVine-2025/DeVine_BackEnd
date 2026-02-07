@@ -16,7 +16,7 @@ import jakarta.validation.Valid;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 
-@Tag(name = "Member", description = "회원가입, 자신과 관련 API")
+@Tag(name = "Member", description = "회원가입, 내 정보 관련 API")
 public interface MyProfileControllerDocs {
 
     @Operation(summary = "이용약관 조회 API", description = "회원가입 시 필요한 이용약관 목록을 조회하는 API입니다.")
