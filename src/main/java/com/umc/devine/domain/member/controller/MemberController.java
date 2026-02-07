@@ -9,19 +9,24 @@ import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
+import com.umc.devine.global.validation.annotation.ValidNickname;
+import jakarta.validation.Valid;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 
 import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/members")
+@Validated
 public class MemberController implements MemberControllerDocs {
+
     private final MemberQueryService memberQueryService;
 
     // 나에게 맞는 개발자 추천
@@ -29,10 +34,11 @@ public class MemberController implements MemberControllerDocs {
     @GetMapping("/recommend")
     public ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
             @CurrentMember Member member,
-            @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.RecommendDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopers(member, dto));
+        PagedResponse<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopers(member, dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 나에게 맞는 개발자 추천 (프리뷰)
@@ -40,47 +46,54 @@ public class MemberController implements MemberControllerDocs {
     @GetMapping("/recommend/preview")
     public ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
             @CurrentMember Member member,
-            @RequestParam(defaultValue = "4") int limit
+            @RequestParam(defaultValue = "4") @Min(value = 1, message = "limit은 1 이상이어야 합니다.") @Max(value = 20, message = "limit은 20 이하여야 합니다.") int limit
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findAllDevelopersPreview(member, limit));
+        List<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopersPreview(member, limit);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 특정 회원 프로필 조회
     @Override
     @GetMapping("/{nickname}")
-    public ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(@PathVariable("nickname") String nickname) {
+    public ApiResponse<MemberResDTO.UserProfileDTO> getMemberByNickname(
+            @PathVariable("nickname") @ValidNickname String nickname
+    ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findMemberByNickname(nickname));
+        MemberResDTO.UserProfileDTO response = memberQueryService.findMemberByNickname(nickname);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 개발자 필터링 검색 (페이지네이션)
     @Override
     @GetMapping("/search")
     public ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
-            @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.SearchDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.searchDevelopers(dto));
+        PagedResponse<MemberResDTO.UserProfileDTO> response = memberQueryService.searchDevelopers(dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 사용자 깃허브 기록
     @Override
     @GetMapping("/{nickname}/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
-            @PathVariable("nickname") String nickname
+            @PathVariable("nickname") @ValidNickname String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findContributionsByNickname(nickname));
+        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(nickname);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 사용자 리포트
     @Override
     @GetMapping("/{nickname}/reports")
     public ApiResponse<DevReportResDTO.ReportListDTO> getReportsByNickname(
-            @PathVariable("nickname") String nickname
+            @PathVariable("nickname") @ValidNickname String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
-        return ApiResponse.onSuccess(code, memberQueryService.findReportsByNickname(nickname));
+        DevReportResDTO.ReportListDTO response = memberQueryService.findReportsByNickname(nickname);
+        return ApiResponse.onSuccess(code, response);
     }
 }

@@ -10,6 +10,7 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
@@ -53,7 +54,9 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@CurrentMember Member member);
+    ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 
     @Operation(summary = "내 프로필 수정 API", description = "내 프로필 정보를 수정하는 API입니다. 닉네임, 프로필 이미지 URL, 주소, 자기소개, 도메인들, 연락처들, 메인타입, 공개여부를 수정할 수 있습니다.")
     @ApiResponses({
@@ -64,7 +67,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<MemberResDTO.MemberProfileDTO> patchMember(
-            @CurrentMember Member member,
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Valid @RequestBody MemberReqDTO.UpdateMemberDTO dto
     );
 
@@ -74,7 +77,9 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@CurrentMember Member member);
+    ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 
     @Operation(summary = "내 보유 기술 추가 API", description = "내가 보유할 기술 추가하는 API입니다. techstackId를 입력 받아 추가합니다.")
     @ApiResponses({
@@ -86,7 +91,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 보유한 기술 스택입니다.")
     })
     ApiResponse<TechstackResDTO.DevTechstackListDTO> addMyTechstacks(
-            @CurrentMember Member member,
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Valid @RequestBody MemberReqDTO.AddTechstackDTO dto
     );
 
@@ -99,7 +104,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원 또는 기술 스택을 찾을 수 없습니다.")
     })
     ApiResponse<TechstackResDTO.DevTechstackListDTO> removeMyTechstacks(
-            @CurrentMember Member member,
+            @Parameter(hidden = true) @CurrentMember Member member,
             @Valid @RequestBody MemberReqDTO.RemoveTechstackDTO dto
     );
 
@@ -121,7 +126,9 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@CurrentMember Member member);
+    ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 
     @Operation(summary = "내 리포트 조회 API", description = "내가 가진 개발 리포트 목록을 조회하는 API입니다.")
     @ApiResponses({
@@ -131,5 +138,7 @@ public interface MyProfileControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@CurrentMember Member member);
+    ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 }

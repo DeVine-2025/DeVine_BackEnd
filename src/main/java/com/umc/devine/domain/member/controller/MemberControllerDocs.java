@@ -8,10 +8,12 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.Parameter;
 
 import java.util.List;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
@@ -27,8 +29,8 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
-            @CurrentMember Member member,
-            @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @ParameterObject @Valid @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
     );
 
     @Operation(summary = "개발자 추천 프리뷰 API", description = "나에게 맞는 개발자 추천 프리뷰입니다. limit 파라미터로 조회할 개수를 지정할 수 있습니다. (기본값: 4)")
@@ -38,7 +40,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다.")
     })
     ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
-            @CurrentMember Member member,
+            @Parameter(hidden = true) @CurrentMember Member member,
             int limit
     );
 
@@ -48,7 +50,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.UserProfileDTO>> searchDevelopers(
-            @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
+            @ParameterObject @Valid @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
     );
 
     @Operation(summary = "특정 회원 프로필 조회 API", description = "특정 회원 프로필 정보를 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요.")

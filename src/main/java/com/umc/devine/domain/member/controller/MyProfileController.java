@@ -12,17 +12,19 @@ import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
-@Validated
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/members")
+@Validated
 public class MyProfileController implements MyProfileControllerDocs {
+
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
 
@@ -30,10 +32,9 @@ public class MyProfileController implements MyProfileControllerDocs {
     @Override
     @GetMapping("/terms")
     public ApiResponse<MemberResDTO.TermsListDTO> getTerms() {
-        return ApiResponse.onSuccess(
-                MemberSuccessCode.FOUND_TERMS,
-                memberQueryService.findAllTerms()
-        );
+        MemberSuccessCode code = MemberSuccessCode.FOUND_TERMS;
+        MemberResDTO.TermsListDTO response = memberQueryService.findAllTerms();
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 회원가입
@@ -43,28 +44,31 @@ public class MyProfileController implements MyProfileControllerDocs {
             @AuthenticationPrincipal ClerkPrincipal principal,
             @RequestBody @Valid MemberReqDTO.SignupDTO dto
     ) {
-        return ApiResponse.onSuccess(
-                MemberSuccessCode.SIGNUP_SUCCESS,
-                memberCommandService.signup(principal, dto)
-        );
+        MemberSuccessCode code = MemberSuccessCode.SIGNUP_SUCCESS;
+        MemberResDTO.SignupResultDTO response = memberCommandService.signup(principal, dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 닉네임 중복 체크
     @Override
     @GetMapping("/nickname/check")
     public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
-            @RequestParam("nickname") String nickname
+            @RequestParam("nickname") @ValidNickname String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
-        return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
+        MemberResDTO.NicknameDuplicateDTO response = memberQueryService.checkNicknameDuplicate(nickname);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 프로필 조회
     @Override
     @GetMapping("/me")
-    public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@CurrentMember Member member) {
+    public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(
+            @CurrentMember Member member
+    ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findMemberProfile(member));
+        MemberResDTO.MemberProfileDTO response = memberQueryService.findMemberProfile(member);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 프로필 수정
@@ -75,15 +79,19 @@ public class MyProfileController implements MyProfileControllerDocs {
             @RequestBody @Valid MemberReqDTO.UpdateMemberDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.UPDATED;
-        return ApiResponse.onSuccess(code, memberCommandService.updateMember(member, dto));
+        MemberResDTO.MemberProfileDTO response = memberCommandService.updateMember(member, dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 보유 기술 조회
     @Override
     @GetMapping("/me/techstacks")
-    public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@CurrentMember Member member) {
+    public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(
+            @CurrentMember Member member
+    ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
-        return ApiResponse.onSuccess(code, memberQueryService.findMemberTechstacks(member));
+        TechstackResDTO.DevTechstackListDTO response = memberQueryService.findMemberTechstacks(member);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 보유 기술 추가
@@ -94,7 +102,8 @@ public class MyProfileController implements MyProfileControllerDocs {
             @RequestBody @Valid MemberReqDTO.AddTechstackDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.CREATED_TECHSTACK;
-        return ApiResponse.onSuccess(code, memberCommandService.addMemberTechstacks(member, dto));
+        TechstackResDTO.DevTechstackListDTO response = memberCommandService.addMemberTechstacks(member, dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 보유 기술 삭제
@@ -105,7 +114,8 @@ public class MyProfileController implements MyProfileControllerDocs {
             @RequestBody @Valid MemberReqDTO.RemoveTechstackDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.DELETED_TECHSTACK;
-        return ApiResponse.onSuccess(code, memberCommandService.removeMemberTechstacks(member, dto));
+        TechstackResDTO.DevTechstackListDTO response = memberCommandService.removeMemberTechstacks(member, dto);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 깃허브 기록
@@ -113,26 +123,31 @@ public class MyProfileController implements MyProfileControllerDocs {
     @GetMapping("/me/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContribution() {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-
         // TODO: 토큰 방식으로 변경
         Long memberId = 1L;
-
-        return ApiResponse.onSuccess(code, memberQueryService.findContributionsById(memberId));
+        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsById(memberId);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 프로젝트 조회
     @Override
     @GetMapping("/me/projects")
-    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@CurrentMember Member member) {
+    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(
+            @CurrentMember Member member
+    ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findMyProjects(member));
+        ProjectResDTO.ProjectListDTO response = memberQueryService.findMyProjects(member);
+        return ApiResponse.onSuccess(code, response);
     }
 
     // 내 리포트 조회
     @Override
     @GetMapping("/me/reports")
-    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@CurrentMember Member member) {
+    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(
+            @CurrentMember Member member
+    ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, memberQueryService.findMyReports(member));
+        DevReportResDTO.ReportListDTO response = memberQueryService.findMyReports(member);
+        return ApiResponse.onSuccess(code, response);
     }
 }
