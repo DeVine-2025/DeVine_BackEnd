@@ -37,7 +37,9 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 @Service
@@ -93,8 +95,16 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     public ProjectResDTO.ProjectListDTO findMyProjects(Member member) {
         List<Project> projects = projectRepository.findByMember(member);
 
+        if (projects.isEmpty()) {
+            return ProjectConverter.toProjectList(Collections.emptyList());
+        }
+
+        List<ProjectImage> allImages = projectImageRepository.findAllByProjectIn(projects);
+        Map<Long, List<ProjectImage>> imagesByProjectId = allImages.stream()
+                .collect(Collectors.groupingBy(image -> image.getProject().getId()));
+
         List<ProjectResDTO.ProjectDetailDTO> projectList = projects.stream().map(project -> {
-            List<ProjectImage> images = projectImageRepository.findByProject(project);
+            List<ProjectImage> images = imagesByProjectId.getOrDefault(project.getId(), Collections.emptyList());
             return ProjectConverter.toProjectDetail(project, images);
         }).collect(Collectors.toList());
 
@@ -115,9 +125,17 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
         List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
 
+        if (devReports.isEmpty()) {
+            return DevReportConverter.toReportListDTO(Collections.emptyList());
+        }
+
+        List<ReportTechstack> allReportTechstacks = reportTechstackRepository.findAllByDevReportIn(devReports);
+        Map<Long, List<ReportTechstack>> techstacksByReportId = allReportTechstacks.stream()
+                .collect(Collectors.groupingBy(rt -> rt.getDevReport().getId()));
+
         List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
                 .map(report -> {
-                    List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+                    List<ReportTechstack> reportTechstacks = techstacksByReportId.getOrDefault(report.getId(), Collections.emptyList());
                     return DevReportConverter.toReportDTO(report, reportTechstacks);
                 })
                 .collect(Collectors.toList());
@@ -137,9 +155,17 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
         List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
 
+        if (devReports.isEmpty()) {
+            return DevReportConverter.toReportListDTO(Collections.emptyList());
+        }
+
+        List<ReportTechstack> allReportTechstacks = reportTechstackRepository.findAllByDevReportIn(devReports);
+        Map<Long, List<ReportTechstack>> techstacksByReportId = allReportTechstacks.stream()
+                .collect(Collectors.groupingBy(rt -> rt.getDevReport().getId()));
+
         List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
                 .map(report -> {
-                    List<ReportTechstack> reportTechstacks = reportTechstackRepository.findAllByDevReport(report);
+                    List<ReportTechstack> reportTechstacks = techstacksByReportId.getOrDefault(report.getId(), Collections.emptyList());
                     return DevReportConverter.toReportDTO(report, reportTechstacks);
                 })
                 .collect(Collectors.toList());
@@ -203,9 +229,18 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 dto.toPageable()
         );
 
-        List<MemberResDTO.DeveloperDTO> developerDTOs = developerPage.getContent().stream()
+        List<Member> developers = developerPage.getContent();
+        if (developers.isEmpty()) {
+            return PagedResponse.of(developerPage, Collections.emptyList());
+        }
+
+        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberIn(developers);
+        Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
+        List<MemberResDTO.DeveloperDTO> developerDTOs = developers.stream()
                 .map(developer -> {
-                    List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(developer);
+                    List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
                     return MemberConverter.toDeveloperDTO(developer, devTechstacks);
                 })
                 .collect(Collectors.toList());
@@ -222,9 +257,17 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 org.springframework.data.domain.PageRequest.of(0, limit)
         );
 
+        if (developers.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberIn(developers);
+        Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
         return developers.stream()
                 .map(developer -> {
-                    List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(developer);
+                    List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
                     return MemberConverter.toDeveloperDTO(developer, devTechstacks);
                 })
                 .collect(Collectors.toList());
@@ -240,8 +283,17 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 request.toPageable()
         );
 
-        List<MemberResDTO.UserProfileDTO> developerDTOs = developerPage.getContent().stream().map(member -> {
-            List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMember(member);
+        List<Member> members = developerPage.getContent();
+        if (members.isEmpty()) {
+            return PagedResponse.of(developerPage, Collections.emptyList());
+        }
+
+        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberIn(members);
+        Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
+        List<MemberResDTO.UserProfileDTO> developerDTOs = members.stream().map(member -> {
+            List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(member.getId(), Collections.emptyList());
             return MemberConverter.toUserProfileDTO(member, devTechstacks);
         }).collect(Collectors.toList());
 

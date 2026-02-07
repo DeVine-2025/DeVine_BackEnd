@@ -9,6 +9,7 @@ import java.util.List;
 
 public interface DevTechstackRepository extends JpaRepository<DevTechstack, DevTechstack.DevTechstackId> {
     List<DevTechstack> findAllByMember(Member member);
+    List<DevTechstack> findAllByMemberIn(List<Member> members);
     List<DevTechstack> findAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
     void deleteAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
 }
