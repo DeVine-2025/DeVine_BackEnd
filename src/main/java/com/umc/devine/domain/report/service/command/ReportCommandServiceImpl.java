@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.service.command;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
@@ -11,6 +12,8 @@ import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
+import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -26,6 +29,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final DevReportRepository devReportRepository;
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FastApiSyncReportClient fastApiSyncReportClient;
 
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
@@ -72,6 +76,79 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         return ReportConverter.toCreateReportRes(savedMainReport, savedDetailReport);
     }
 
+    @Override
+    @Transactional(noRollbackFor = ReportException.class)
+    public ReportResDTO.CreateReportSyncRes createReportSync(Long memberId, ReportReqDTO.CreateReportReq request) {
+        GitRepoUrl gitRepoUrl = gitRepoUrlRepository.findByIdWithMember(request.gitRepoId())
+                .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
+
+        validateGitRepoOwnership(gitRepoUrl, memberId);
+        validateReportNotExists(request.gitRepoId());
+
+        DevReport mainReport = ReportConverter.toReport(gitRepoUrl, ReportType.MAIN);
+        DevReport detailReport = ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL);
+
+        DevReport savedMainReport = devReportRepository.save(mainReport);
+        DevReport savedDetailReport = devReportRepository.save(detailReport);
+        devReportRepository.flush();
+
+        String gitUrl = gitRepoUrl.getGitUrl();
+        String clerkUserId = gitRepoUrl.getMember().getClerkId();
+
+        log.info("Report 동기 생성 시작 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
+                memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
+
+        try {
+            FastApiResDto.ReportGenerationSyncRes response = fastApiSyncReportClient.requestReportGenerationSync(
+                    savedMainReport, savedDetailReport, gitUrl, clerkUserId);
+
+            if (response == null || !"SUCCESS".equals(response.status())) {
+                String errorMessage = response != null ? response.errorMessage() : "응답이 없습니다.";
+                log.warn("Report 동기 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                        savedMainReport.getId(), savedDetailReport.getId(), errorMessage);
+                savedMainReport.failReport(errorMessage);
+                savedDetailReport.failReport(errorMessage);
+                throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+            }
+
+            JsonNode content = response.content();
+            if (content == null || content.isNull()) {
+                log.warn("Report content가 null - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                savedMainReport.failReport("리포트 content가 null입니다.");
+                savedDetailReport.failReport("리포트 content가 null입니다.");
+                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+            }
+
+            JsonNode mainContent = content.get("main");
+            JsonNode detailContent = content.get("detail");
+
+            if (mainContent == null || mainContent.isNull() || detailContent == null || detailContent.isNull()) {
+                log.warn("Report content가 비어있음 - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                savedMainReport.failReport("리포트 content가 비어있습니다.");
+                savedDetailReport.failReport("리포트 content가 비어있습니다.");
+                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+            }
+
+            savedMainReport.completeReport(mainContent.toString());
+            savedDetailReport.completeReport(detailContent.toString());
+
+            log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
+                    savedMainReport.getId(), savedDetailReport.getId());
+
+            return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
+
+        } catch (ReportException e) {
+            throw e;
+        } catch (Exception e) {
+            log.error("Report 동기 생성 중 예외 발생 - mainReportId: {}, detailReportId: {}, error: {}",
+                    savedMainReport.getId(), savedDetailReport.getId(), e.getMessage());
+            savedMainReport.failReport(e.getMessage());
+            savedDetailReport.failReport(e.getMessage());
+            throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+        }
+    }
 
     @Override
     public void processCallback(ReportReqDTO.CallbackReq request) {

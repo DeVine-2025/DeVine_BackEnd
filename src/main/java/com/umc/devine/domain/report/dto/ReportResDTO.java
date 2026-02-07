@@ -63,4 +63,13 @@ public class ReportResDTO {
             @Schema(description = "메시지", example = "리포트 생성 요청이 접수되었습니다.")
             String message
     ) {}
+
+    @Builder
+    public record CreateReportSyncRes(
+            @Schema(description = "메인 리포트")
+            ReportRes mainReport,
+
+            @Schema(description = "상세 리포트")
+            ReportRes detailReport
+    ) {}
 }
