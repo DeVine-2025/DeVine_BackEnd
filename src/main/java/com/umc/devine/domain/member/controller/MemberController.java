@@ -27,41 +27,7 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/members")
 public class MemberController implements MemberControllerDocs {
     private final MemberQueryService memberQueryService;
-    private final MemberCommandService memberCommandService;
     private final AuthHelper authHelper;
-
-    // 이용약관 조회
-    @Override
-    @GetMapping("/terms")
-    public ApiResponse<MemberResDTO.TermsListDTO> getTerms() {
-        return ApiResponse.onSuccess(
-                MemberSuccessCode.FOUND_TERMS,
-                memberQueryService.findAllTerms()
-        );
-    }
-
-    // 회원가입
-    @Override
-    @PostMapping("/signup")
-    public ApiResponse<MemberResDTO.SignupResultDTO> signup(
-            @AuthenticationPrincipal ClerkPrincipal principal,
-            @RequestBody @Valid MemberReqDTO.SignupDTO dto
-    ) {
-        return ApiResponse.onSuccess(
-                MemberSuccessCode.SIGNUP_SUCCESS,
-                memberCommandService.signup(principal, dto)
-        );
-    }
-
-    // 닉네임 중복 체크
-    @Override
-    @GetMapping("/nickname/{nickname}")
-    public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
-            @PathVariable("nickname") String nickname
-    ) {
-        MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
-        return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
-    }
 
     // 나에게 맞는 개발자 추천
     @Override

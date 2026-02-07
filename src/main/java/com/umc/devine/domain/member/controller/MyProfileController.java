@@ -21,15 +21,48 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @Validated
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/member")
+@RequestMapping("/api/v1/members")
 public class MyProfileController implements MyProfileControllerDocs {
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
     private final AuthHelper authHelper;
 
+    // 이용약관 조회
+    @Override
+    @GetMapping("/terms")
+    public ApiResponse<MemberResDTO.TermsListDTO> getTerms() {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.FOUND_TERMS,
+                memberQueryService.findAllTerms()
+        );
+    }
+
+    // 회원가입
+    @Override
+    @PostMapping("/signup")
+    public ApiResponse<MemberResDTO.SignupResultDTO> signup(
+            @AuthenticationPrincipal ClerkPrincipal principal,
+            @RequestBody @Valid MemberReqDTO.SignupDTO dto
+    ) {
+        return ApiResponse.onSuccess(
+                MemberSuccessCode.SIGNUP_SUCCESS,
+                memberCommandService.signup(principal, dto)
+        );
+    }
+
+    // 닉네임 중복 체크
+    @Override
+    @GetMapping("/nickname/{nickname}")
+    public ApiResponse<MemberResDTO.NicknameDuplicateDTO> checkNicknameDuplicate(
+            @PathVariable("nickname") String nickname
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.NICKNAME_CHECKED;
+        return ApiResponse.onSuccess(code, memberQueryService.checkNicknameDuplicate(nickname));
+    }
+
     // 내 프로필 조회
     @Override
-    @GetMapping("/")
+    @GetMapping("/me")
     public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@AuthenticationPrincipal ClerkPrincipal principal){
 
         Member member = authHelper.getMember(principal);
@@ -40,7 +73,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 프로필 수정
     @Override
-    @PatchMapping("/")
+    @PatchMapping("/me")
     public ApiResponse<MemberResDTO.MemberProfileDTO> patchMember(
             @AuthenticationPrincipal ClerkPrincipal principal,
             @RequestBody @Valid MemberReqDTO.UpdateMemberDTO dto
@@ -54,7 +87,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 보유 기술 조회
     @Override
-    @GetMapping("/techstacks")
+    @GetMapping("/me/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@AuthenticationPrincipal ClerkPrincipal principal) {
         Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
@@ -64,7 +97,7 @@ public class MyProfileController implements MyProfileControllerDocs {
     
     // 내 보유 기술 추가
     @Override
-    @PostMapping("/techstacks")
+    @PostMapping("/me/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> addMyTechstacks(
             @AuthenticationPrincipal ClerkPrincipal principal,
             @RequestBody @Valid MemberReqDTO.AddTechstackDTO dto
@@ -77,7 +110,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 보유 기술 삭제
     @Override
-    @DeleteMapping("/techstacks")
+    @DeleteMapping("/me/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> removeMyTechstacks(
             @AuthenticationPrincipal ClerkPrincipal principal,
             @RequestBody @Valid MemberReqDTO.RemoveTechstackDTO dto
@@ -90,7 +123,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 깃허브 기록
     @Override
-    @GetMapping("/contributions")
+    @GetMapping("/me/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContribution() {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
 
@@ -102,7 +135,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 프로젝트 조회
     @Override
-    @GetMapping("/projects")
+    @GetMapping("/me/projects")
     public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@AuthenticationPrincipal ClerkPrincipal principal){
         Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.FOUND;
@@ -112,7 +145,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     // 내 리포트 조회
     @Override
-    @GetMapping("/reports")
+    @GetMapping("/me/reports")
     public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@AuthenticationPrincipal ClerkPrincipal principal) {
         Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.FOUND;
