@@ -1,6 +1,5 @@
 package com.umc.devine.domain.member.controller;
 
-import com.umc.devine.domain.auth.service.AuthHelper;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
@@ -12,6 +11,7 @@ import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.auth.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -25,7 +25,6 @@ import org.springframework.web.bind.annotation.*;
 public class MyProfileController implements MyProfileControllerDocs {
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
-    private final AuthHelper authHelper;
 
     // 이용약관 조회
     @Override
@@ -63,11 +62,8 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 프로필 조회
     @Override
     @GetMapping("/me")
-    public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@AuthenticationPrincipal ClerkPrincipal principal){
-
-        Member member = authHelper.getMember(principal);
+    public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberProfile(@CurrentMember Member member) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-
         return ApiResponse.onSuccess(code, memberQueryService.findMemberProfile(member));
     }
 
@@ -75,36 +71,29 @@ public class MyProfileController implements MyProfileControllerDocs {
     @Override
     @PatchMapping("/me")
     public ApiResponse<MemberResDTO.MemberProfileDTO> patchMember(
-            @AuthenticationPrincipal ClerkPrincipal principal,
+            @CurrentMember Member member,
             @RequestBody @Valid MemberReqDTO.UpdateMemberDTO dto
-    ){
-
-        Member member = authHelper.getMember(principal);
+    ) {
         MemberSuccessCode code = MemberSuccessCode.UPDATED;
-
         return ApiResponse.onSuccess(code, memberCommandService.updateMember(member, dto));
     }
 
     // 내 보유 기술 조회
     @Override
     @GetMapping("/me/techstacks")
-    public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@AuthenticationPrincipal ClerkPrincipal principal) {
-        Member member = authHelper.getMember(principal);
+    public ApiResponse<TechstackResDTO.DevTechstackListDTO> getMyTechstacks(@CurrentMember Member member) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
-
         return ApiResponse.onSuccess(code, memberQueryService.findMemberTechstacks(member));
     }
-    
+
     // 내 보유 기술 추가
     @Override
     @PostMapping("/me/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> addMyTechstacks(
-            @AuthenticationPrincipal ClerkPrincipal principal,
+            @CurrentMember Member member,
             @RequestBody @Valid MemberReqDTO.AddTechstackDTO dto
     ) {
-        Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.CREATED_TECHSTACK;
-
         return ApiResponse.onSuccess(code, memberCommandService.addMemberTechstacks(member, dto));
     }
 
@@ -112,12 +101,10 @@ public class MyProfileController implements MyProfileControllerDocs {
     @Override
     @DeleteMapping("/me/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> removeMyTechstacks(
-            @AuthenticationPrincipal ClerkPrincipal principal,
+            @CurrentMember Member member,
             @RequestBody @Valid MemberReqDTO.RemoveTechstackDTO dto
     ) {
-        Member member = authHelper.getMember(principal);
         MemberSuccessCode code = MemberSuccessCode.DELETED_TECHSTACK;
-
         return ApiResponse.onSuccess(code, memberCommandService.removeMemberTechstacks(member, dto));
     }
 
@@ -136,20 +123,16 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 프로젝트 조회
     @Override
     @GetMapping("/me/projects")
-    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@AuthenticationPrincipal ClerkPrincipal principal){
-        Member member = authHelper.getMember(principal);
+    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(@CurrentMember Member member) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-
         return ApiResponse.onSuccess(code, memberQueryService.findMyProjects(member));
     }
 
     // 내 리포트 조회
     @Override
     @GetMapping("/me/reports")
-    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@AuthenticationPrincipal ClerkPrincipal principal) {
-        Member member = authHelper.getMember(principal);
+    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(@CurrentMember Member member) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-
         return ApiResponse.onSuccess(code, memberQueryService.findMyReports(member));
     }
 }

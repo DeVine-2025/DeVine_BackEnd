@@ -2,9 +2,10 @@ package com.umc.devine.domain.member.controller;
 
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 
@@ -12,7 +13,6 @@ import java.util.List;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import org.springdoc.core.annotations.ParameterObject;
-import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 
 @Tag(name = "Members", description = "특정 회원, 전체 회원 조회 관련 API")
@@ -27,7 +27,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
-            @AuthenticationPrincipal ClerkPrincipal principal,
+            @CurrentMember Member member,
             @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
     );
 
@@ -38,7 +38,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다.")
     })
     ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
-            @AuthenticationPrincipal ClerkPrincipal principal,
+            @CurrentMember Member member,
             int limit
     );
 
