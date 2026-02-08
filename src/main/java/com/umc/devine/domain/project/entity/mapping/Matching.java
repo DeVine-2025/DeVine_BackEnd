@@ -1,7 +1,10 @@
 package com.umc.devine.domain.project.entity.mapping;
 
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
+import com.umc.devine.domain.project.exception.MatchingException;
+import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.global.entity.BaseEntity;
@@ -39,5 +42,41 @@ public class Matching extends BaseEntity {
 
     public void cancel() {
         this.status = MatchingStatus.CANCELLED;
+    }
+
+    public void accept() {
+        validatePendingStatus();
+        this.status = MatchingStatus.COMPLETED;
+    }
+
+    public void reject() {
+        validatePendingStatus();
+        this.status = MatchingStatus.CANCELLED;
+    }
+
+    public void applyDecision(MatchingDecision decision) {
+        if (decision == MatchingDecision.ACCEPT) {
+            accept();
+        } else {
+            reject();
+        }
+    }
+
+    private void validatePendingStatus() {
+        if (this.status != MatchingStatus.PENDING) {
+            throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
+        }
+    }
+
+    public boolean isApplyType() {
+        return this.matchingType == MatchingType.APPLY;
+    }
+
+    public boolean isProposeType() {
+        return this.matchingType == MatchingType.PROPOSE;
+    }
+
+    public boolean isTargetMember(Member member) {
+        return this.member.getId().equals(member.getId());
     }
 }
