@@ -35,8 +35,8 @@ public class S3Service {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${spring.cloud.aws.region.static}")
-    private String region;
+    @Value("${cloud.aws.cloudfront.domain}")
+    private String cloudfrontDomain;
 
     public void validateExtension(String fileName) {
         String ext = extractExtension(fileName);
@@ -111,7 +111,7 @@ public class S3Service {
     }
 
     public String buildImageUrl(String key) {
-        return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
+        return "https://" + cloudfrontDomain + "/" + key;
     }
 
     public String guessContentType(String fileName) {
