@@ -1,4 +1,4 @@
-package com.umc.devine.global.external.github.dto;
+package com.umc.devine.infrastructure.github.dto;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import com.fasterxml.jackson.annotation.JsonProperty;

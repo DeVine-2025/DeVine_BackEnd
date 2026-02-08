@@ -13,11 +13,16 @@ public class RestClientConfig {
     @Value("${fastapi.report.base-url:http://localhost:8000}")
     private String fastApiBaseUrl;
 
-    @Value("${fastapi.report.connect-timeout:5000}")
+    // 비동기 FastAPI 커넥션
+    @Value("${fastapi.report.connect-timeout:60000}")
     private int connectTimeout;
 
     @Value("${fastapi.report.read-timeout:30000}")
     private int readTimeout;
+
+    // 동기 FastAPI 커넥션 (평균처리 2분)
+    @Value("${fastapi.report.sync-read-timeout:180000}")
+    private int syncReadTimeout;
 
     @Bean
     @Primary
@@ -31,6 +36,18 @@ public class RestClientConfig {
         SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
         factory.setConnectTimeout(connectTimeout);
         factory.setReadTimeout(readTimeout);
+
+        return RestClient.builder()
+                .baseUrl(fastApiBaseUrl)
+                .requestFactory(factory)
+                .build();
+    }
+
+    @Bean
+    public RestClient fastApiSyncRestClient() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(connectTimeout);
+        factory.setReadTimeout(syncReadTimeout);
 
         return RestClient.builder()
                 .baseUrl(fastApiBaseUrl)

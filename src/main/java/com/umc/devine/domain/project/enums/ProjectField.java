@@ -6,13 +6,12 @@ import lombok.Getter;
 @Getter
 public enum ProjectField {
 
+    ALL("전체"),
     WEB("웹"),
     MOBILE("모바일/앱"),
-    AI("AI/머신러닝"),
     GAME("게임"),
-    DATA("데이터"),
-    BACKEND("백엔드"),
-    FRONTEND("프론트엔드");
+    BLOCKCHAIN("블록체인"),
+    ETC("기타");
 
     private final String displayName;
 

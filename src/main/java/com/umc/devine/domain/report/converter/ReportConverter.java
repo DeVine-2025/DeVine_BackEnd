@@ -52,6 +52,18 @@ public class ReportConverter {
                 .build();
     }
 
+    public static ReportResDTO.CreateReportSyncRes toCreateReportSyncRes(
+            DevReport mainReport,
+            DevReport detailReport,
+            JsonNode mainContent,
+            JsonNode detailContent
+    ) {
+        return ReportResDTO.CreateReportSyncRes.builder()
+                .mainReport(toReportRes(mainReport, mainContent))
+                .detailReport(toReportRes(detailReport, detailContent))
+                .build();
+    }
+
     public static ReportResDTO.ReportSummaryDTO toReportSummaryDTO(DevReport report) {
         GitRepoUrl gitRepoUrl = report.getGitRepoUrl();
         return ReportResDTO.ReportSummaryDTO.builder()

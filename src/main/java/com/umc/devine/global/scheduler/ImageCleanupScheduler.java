@@ -1,8 +1,8 @@
-package com.umc.devine.domain.image.scheduler;
+package com.umc.devine.global.scheduler;
 
 import com.umc.devine.domain.image.entity.Image;
 import com.umc.devine.domain.image.repository.ImageRepository;
-import com.umc.devine.global.infra.s3.S3Service;
+import com.umc.devine.infrastructure.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;

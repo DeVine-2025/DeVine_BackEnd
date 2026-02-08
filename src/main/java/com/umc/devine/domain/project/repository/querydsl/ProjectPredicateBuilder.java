@@ -2,8 +2,11 @@ package com.umc.devine.domain.project.repository.querydsl;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.entity.QProject;
+import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.mapping.QProjectRequirementTechstack;
 
@@ -19,48 +22,36 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터
-        if (req.projectField() != null) {
-            builder.and(project.projectField.eq(req.projectField()));
+        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()
+                && !req.projectFields().contains(ProjectField.ALL)) {
+            builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터
-        if (req.category() != null) {
-            builder.and(project.category.genre.eq(req.category()));
+        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()
+                && !req.categories().contains(CategoryGenre.ALL)) {
+            builder.and(project.category.genre.in(req.categories()));
         }
 
-        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
-        if (req.durationRange() != null) {
-            int minMonths = req.durationRange().getMinMonths();
-            int maxMonths = req.durationRange().getMaxMonths();
-
-            // 6개월 이상인 경우
-            if (maxMonths == Integer.MAX_VALUE) {
-                builder.and(project.durationMonths.goe(minMonths));
-            }
-            // 1개월 이하인 경우
-            else if (minMonths == 0) {
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
-            // 1~3개월, 3~6개월인 경우
-            else {
-                builder.and(project.durationMonths.goe(minMonths));
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
+        // 진행 기간 필터 (복수 선택 가능)
+        if (req.durationRanges() != null && !req.durationRanges().isEmpty()) {
+            builder.and(project.durationRange.in(req.durationRanges()));
         }
 
-        // 포지션 필터
-        if (req.position() != null) {
-            builder.and(project.requirements.any().part.eq(req.position()));
+        // 포지션 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.positions() != null && !req.positions().isEmpty()
+                && !req.positions().contains(ProjectPart.ALL)) {
+            builder.and(project.requirements.any().part.in(req.positions()));
         }
 
-        // 기술 스택 필터
-        if (req.techstackName() != null) {
+        // 기술 스택 필터 (복수 선택 가능)
+        if (req.techstackNames() != null && !req.techstackNames().isEmpty()) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.name.eq(req.techstackName()))
+                            .where(techstack.techstack.name.in(req.techstackNames()))
             ));
         }
 
@@ -77,48 +68,36 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터
-        if (req.projectField() != null) {
-            builder.and(project.projectField.eq(req.projectField()));
+        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()
+                && !req.projectFields().contains(ProjectField.ALL)) {
+            builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터
-        if (req.category() != null) {
-            builder.and(project.category.genre.eq(req.category()));
+        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()
+                && !req.categories().contains(CategoryGenre.ALL)) {
+            builder.and(project.category.genre.in(req.categories()));
         }
 
-        // 진행 기간 필터 (수정된 범위: 1개월 이하, 1~3개월, 3~6개월, 6개월 이상)
-        if (req.durationRange() != null) {
-            int minMonths = req.durationRange().getMinMonths();
-            int maxMonths = req.durationRange().getMaxMonths();
-
-            // 6개월 이상인 경우
-            if (maxMonths == Integer.MAX_VALUE) {
-                builder.and(project.durationMonths.goe(minMonths));
-            }
-            // 1개월 이하인 경우
-            else if (minMonths == 0) {
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
-            // 1~3개월, 3~6개월인 경우
-            else {
-                builder.and(project.durationMonths.goe(minMonths));
-                builder.and(project.durationMonths.loe(maxMonths));
-            }
+        // 진행 기간 필터 (복수 선택 가능)
+        if (req.durationRanges() != null && !req.durationRanges().isEmpty()) {
+            builder.and(project.durationRange.in(req.durationRanges()));
         }
 
-        // 포지션 필터
-        if (req.position() != null) {
-            builder.and(project.requirements.any().part.eq(req.position()));
+        // 포지션 필터 (비어있거나 ALL 포함 시 전체 조회)
+        if (req.positions() != null && !req.positions().isEmpty()
+                && !req.positions().contains(ProjectPart.ALL)) {
+            builder.and(project.requirements.any().part.in(req.positions()));
         }
 
-        // 기술 스택 필터
-        if (req.techstackName() != null) {
+        // 기술 스택 필터 (복수 선택 가능)
+        if (req.techstackNames() != null && !req.techstackNames().isEmpty()) {
             builder.and(project.id.in(
                     com.querydsl.jpa.JPAExpressions
                             .select(techstack.requirement.project.id)
                             .from(techstack)
-                            .where(techstack.techstack.name.eq(req.techstackName()))
+                            .where(techstack.techstack.name.in(req.techstackNames()))
             ));
         }
 

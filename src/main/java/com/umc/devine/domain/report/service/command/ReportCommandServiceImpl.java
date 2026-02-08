@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.service.command;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
@@ -11,9 +12,12 @@ import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
+import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -26,6 +30,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final DevReportRepository devReportRepository;
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final FastApiSyncReportClient fastApiSyncReportClient;
 
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
@@ -47,13 +52,14 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
 
         validateGitRepoOwnership(gitRepoUrl, memberId);
+        deleteFailedReportsIfExists(request.gitRepoId());
         validateReportNotExists(request.gitRepoId());
 
         DevReport mainReport = ReportConverter.toReport(gitRepoUrl, ReportType.MAIN);
         DevReport detailReport = ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL);
 
-        DevReport savedMainReport = devReportRepository.save(mainReport);
-        DevReport savedDetailReport = devReportRepository.save(detailReport);
+        DevReport savedMainReport = saveReportWithDuplicateCheck(mainReport);
+        DevReport savedDetailReport = saveReportWithDuplicateCheck(detailReport);
 
         String gitUrl = gitRepoUrl.getGitUrl();
         String clerkUserId = gitRepoUrl.getMember().getClerkId();
@@ -72,6 +78,91 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         return ReportConverter.toCreateReportRes(savedMainReport, savedDetailReport);
     }
 
+    @Override
+    @Transactional(noRollbackFor = ReportException.class)
+    public ReportResDTO.CreateReportSyncRes createReportSync(Long memberId, ReportReqDTO.CreateReportReq request) {
+        // 1. Git 저장소 조회 및 권한 검증
+        GitRepoUrl gitRepoUrl = gitRepoUrlRepository.findByIdWithMember(request.gitRepoId())
+                .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
+
+        validateGitRepoOwnership(gitRepoUrl, memberId);
+
+        // 2. 실패한 리포트 삭제 후 중복 체크 (실패한 리포트는 재시도 허용)
+        deleteFailedReportsIfExists(request.gitRepoId());
+        validateReportNotExists(request.gitRepoId());
+
+        // 3. MAIN/DETAIL 리포트 엔티티 생성 및 저장
+        DevReport mainReport = ReportConverter.toReport(gitRepoUrl, ReportType.MAIN);
+        DevReport detailReport = ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL);
+
+        // saveAndFlush로 즉시 INSERT하여 리포트 ID 확정 및 중복 체크
+        DevReport savedMainReport = saveReportWithDuplicateCheck(mainReport);
+        DevReport savedDetailReport = saveReportWithDuplicateCheck(detailReport);
+
+        String gitUrl = gitRepoUrl.getGitUrl();
+        String clerkUserId = gitRepoUrl.getMember().getClerkId();
+
+        log.info("Report 동기 생성 시작 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
+                memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
+
+        // 4. FastAPI 동기 호출 및 결과 처리
+        try {
+            FastApiResDto.ReportGenerationSyncRes response = fastApiSyncReportClient.requestReportGenerationSync(
+                    savedMainReport, savedDetailReport, gitUrl, clerkUserId);
+
+            // 4-1. 응답 상태 검증
+            if (response == null || !"SUCCESS".equals(response.status())) {
+                String errorMessage = response != null ? response.errorMessage() : "응답이 없습니다.";
+                log.warn("Report 동기 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                        savedMainReport.getId(), savedDetailReport.getId(), errorMessage);
+                savedMainReport.failReport(errorMessage);
+                savedDetailReport.failReport(errorMessage);
+                throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+            }
+
+            // 4-2. content 존재 여부 검증
+            JsonNode content = response.content();
+            if (content == null || content.isNull()) {
+                log.warn("Report content가 null - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                savedMainReport.failReport("리포트 content가 null입니다.");
+                savedDetailReport.failReport("리포트 content가 null입니다.");
+                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+            }
+
+            // 4-3. main/detail 필드 검증
+            JsonNode mainContent = content.get("main");
+            JsonNode detailContent = content.get("detail");
+
+            if (mainContent == null || mainContent.isNull() || detailContent == null || detailContent.isNull()) {
+                log.warn("Report content가 비어있음 - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                savedMainReport.failReport("리포트 content가 비어있습니다.");
+                savedDetailReport.failReport("리포트 content가 비어있습니다.");
+                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+            }
+
+            // 5. 리포트 완료 처리
+            savedMainReport.completeReport(mainContent.toString());
+            savedDetailReport.completeReport(detailContent.toString());
+
+            log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
+                    savedMainReport.getId(), savedDetailReport.getId());
+
+            return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
+
+        } catch (ReportException e) {
+            // ReportException은 그대로 전파 (실패 상태는 이미 저장됨)
+            throw e;
+        } catch (Exception e) {
+            // 예상치 못한 예외: 실패 상태 저장 후 ReportException으로 래핑
+            log.error("Report 동기 생성 중 예외 발생 - mainReportId: {}, detailReportId: {}",
+                    savedMainReport.getId(), savedDetailReport.getId(), e);
+            savedMainReport.failReport(e.getMessage());
+            savedDetailReport.failReport(e.getMessage());
+            throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+        }
+    }
 
     @Override
     public void processCallback(ReportReqDTO.CallbackReq request) {
@@ -136,8 +227,23 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     }
 
     private void validateReportNotExists(Long gitRepoId) {
-        if (devReportRepository.existsByGitRepoUrlId(gitRepoId)) {
+        if (devReportRepository.existsActiveReportByGitRepoUrlId(gitRepoId)) {
             log.warn("리포트 중복 생성 시도 - gitRepoId: {}", gitRepoId);
+            throw new ReportException(ReportErrorCode.REPORT_ALREADY_EXISTS);
+        }
+    }
+
+    private void deleteFailedReportsIfExists(Long gitRepoId) {
+        devReportRepository.deleteFailedReportsByGitRepoUrlId(gitRepoId);
+    }
+
+    // 리포트 저장 시 동시 요청으로 인한 중복 삽입을 처리
+    private DevReport saveReportWithDuplicateCheck(DevReport report) {
+        try {
+            return devReportRepository.saveAndFlush(report);
+        } catch (DataIntegrityViolationException e) {
+            log.warn("리포트 중복 저장 시도 (동시 요청) - gitRepoId: {}, reportType: {}",
+                    report.getGitRepoUrl().getId(), report.getReportType());
             throw new ReportException(ReportErrorCode.REPORT_ALREADY_EXISTS);
         }
     }

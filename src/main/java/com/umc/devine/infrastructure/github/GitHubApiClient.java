@@ -1,9 +1,9 @@
-package com.umc.devine.global.external.github;
+package com.umc.devine.infrastructure.github;
 
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
-import com.umc.devine.global.external.github.dto.GitHubContributionDTO;
-import com.umc.devine.global.external.github.dto.GitHubRepositoryDTO;
+import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
+import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpStatusCode;

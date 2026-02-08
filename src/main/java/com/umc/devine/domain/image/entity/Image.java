@@ -33,8 +33,11 @@ public class Image extends BaseEntity {
     @Column(name = "uploaded", nullable = false)
     private boolean uploaded = false;
 
+    @Column(name = "clerk_id", length = 255)
+    private String clerkId;
+
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "member_id", nullable = false)
+    @JoinColumn(name = "member_id")
     private Member uploader;
 
     public void confirmUpload() {

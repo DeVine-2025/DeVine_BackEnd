@@ -53,6 +53,15 @@ public class ReportController implements ReportControllerDocs {
     }
 
     @Override
+    @PostMapping("/callback")
+    public ApiResponse<Void> handleCallback(
+            @RequestBody @Valid ReportReqDTO.CallbackReq request
+    ) {
+        reportCommandService.processCallback(request);
+        return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
+    }
+
+    @Override
     @PostMapping
     public ApiResponse<ReportResDTO.CreateReportRes> createReport(
             @CurrentMember Member member,
@@ -63,12 +72,13 @@ public class ReportController implements ReportControllerDocs {
     }
 
     @Override
-    @PostMapping("/callback")
-    public ApiResponse<Void> handleCallback(
-            @RequestBody @Valid ReportReqDTO.CallbackReq request
+    @PostMapping("/sync")
+    public ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
+            @CurrentMember Member member,
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
     ) {
-        reportCommandService.processCallback(request);
-        return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
+        ReportResDTO.CreateReportSyncRes response = reportCommandService.createReportSync(member.getId(), request);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_CREATED, response);
     }
 
     @Override
