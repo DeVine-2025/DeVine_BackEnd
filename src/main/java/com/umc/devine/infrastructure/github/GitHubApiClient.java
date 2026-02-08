@@ -10,6 +10,10 @@ import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.time.LocalDate;
+import java.time.OffsetDateTime;
+import java.time.ZoneOffset;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -54,31 +58,49 @@ public class GitHubApiClient {
     }
 
     /**
-     * GitHub 레포지토리 목록 조회
+     * GitHub 레포지토리 목록 조회 (페이지네이션 처리)
      *
      * @param accessToken GitHub OAuth Access Token
      * @return 레포지토리 목록
      * @throws AuthException GitHub API 호출 실패 시
      */
     public List<GitHubRepositoryDTO> getRepositories(String accessToken) {
-        String url = GITHUB_API_BASE_URL + "/user/repos";
+        List<GitHubRepositoryDTO> allRepositories = new ArrayList<>();
+        int page = 1;
+        int perPage = 100;
 
         try {
-            List<GitHubRepositoryDTO> repositories = restClient.get()
-                    .uri(url)
-                    .header("Authorization", "Bearer " + accessToken)
-                    .header("Accept", "application/vnd.github+json")
-                    .header("X-GitHub-Api-Version", "2022-11-28")
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
-                    })
-                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
-                    })
-                    .body(new ParameterizedTypeReference<>() {});
+            while (true) {
+                String url = GITHUB_API_BASE_URL + "/user/repos?per_page=" + perPage + "&page=" + page;
 
-            return repositories != null ? repositories : new ArrayList<>();
+                List<GitHubRepositoryDTO> repositories = restClient.get()
+                        .uri(url)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept", "application/vnd.github+json")
+                        .header("X-GitHub-Api-Version", "2022-11-28")
+                        .retrieve()
+                        .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        })
+                        .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        })
+                        .body(new ParameterizedTypeReference<>() {});
+
+                if (repositories == null || repositories.isEmpty()) {
+                    break;
+                }
+
+                allRepositories.addAll(repositories);
+
+                if (repositories.size() < perPage) {
+                    break;
+                }
+
+                page++;
+            }
+
+            return allRepositories;
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
@@ -92,20 +114,38 @@ public class GitHubApiClient {
      *
      * @param accessToken GitHub OAuth Access Token
      * @param username GitHub 사용자명
+     * @param from 시작 날짜, null이면 기본값 사용
+     * @param to 종료 날짜, null이면 기본값 사용
      * @return 날짜별 기여 목록
      * @throws AuthException GitHub API 호출 실패 시
      */
-    public List<GitHubContributionDTO> getContributions(String accessToken, String username) {
+    public List<GitHubContributionDTO> getContributions(String accessToken, String username, LocalDate from, LocalDate to) {
         if (username == null || username.isBlank()) {
             throw new AuthException(AuthErrorCode.GITHUB_USER_NOT_FOUND);
         }
 
         String url = GITHUB_API_BASE_URL + "/graphql";
 
+        String dateParams = "";
+        if (from != null && to != null) {
+            dateParams = "(from: \"%s\", to: \"%s\")".formatted(
+                    from.atStartOfDay().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT),
+                    to.atTime(23, 59, 59).atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)
+            );
+        } else if (from != null) {
+            dateParams = "(from: \"%s\")".formatted(
+                    from.atStartOfDay().atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)
+            );
+        } else if (to != null) {
+            dateParams = "(to: \"%s\")".formatted(
+                    to.atTime(23, 59, 59).atOffset(ZoneOffset.UTC).format(DateTimeFormatter.ISO_INSTANT)
+            );
+        }
+
         String query = """
                 query {
                   user(login: "%s") {
-                    contributionsCollection {
+                    contributionsCollection%s {
                       contributionCalendar {
                         weeks {
                           contributionDays {
@@ -117,7 +157,7 @@ public class GitHubApiClient {
                     }
                   }
                 }
-                """.formatted(username);
+                """.formatted(username, dateParams);
 
         Map<String, Object> requestBody = Map.of("query", query);
 
@@ -190,7 +230,8 @@ public class GitHubApiClient {
                     continue;
                 }
 
-                String date = (String) day.get("date");
+                String dateStr = (String) day.get("date");
+                LocalDate date = (dateStr != null) ? LocalDate.parse(dateStr) : null;
                 Integer count = (Integer) day.get("contributionCount");
 
                 contributions.add(GitHubContributionDTO.builder()

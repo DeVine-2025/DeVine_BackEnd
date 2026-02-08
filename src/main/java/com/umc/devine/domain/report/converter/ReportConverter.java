@@ -6,6 +6,9 @@ import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.enums.ReportVisibility;
+import com.umc.devine.global.util.GitUrlParser;
+
+import java.util.List;
 
 public class ReportConverter {
 
@@ -58,6 +61,27 @@ public class ReportConverter {
         return ReportResDTO.CreateReportSyncRes.builder()
                 .mainReport(toReportRes(mainReport, mainContent))
                 .detailReport(toReportRes(detailReport, detailContent))
+                .build();
+    }
+
+    public static ReportResDTO.ReportSummaryDTO toReportSummaryDTO(DevReport report) {
+        GitRepoUrl gitRepoUrl = report.getGitRepoUrl();
+        return ReportResDTO.ReportSummaryDTO.builder()
+                .reportId(report.getId())
+                .reportType(report.getReportType())
+                .visibility(report.getVisibility())
+                .repoName(GitUrlParser.extractRepoName(gitRepoUrl.getGitUrl()))
+                .repoDescription(gitRepoUrl.getGitDescription())
+                .createdAt(report.getCreatedAt())
+                .build();
+    }
+
+    public static ReportResDTO.ReportSummaryListDTO toReportSummaryListDTO(List<DevReport> reports) {
+        List<ReportResDTO.ReportSummaryDTO> summaryList = reports.stream()
+                .map(ReportConverter::toReportSummaryDTO)
+                .toList();
+        return ReportResDTO.ReportSummaryListDTO.builder()
+                .reports(summaryList)
                 .build();
     }
 }

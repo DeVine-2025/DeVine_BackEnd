@@ -6,7 +6,7 @@ import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.techstack.enums.TechName;
-import com.umc.devine.global.annotation.ValidPage;
+import com.umc.devine.global.validation.annotation.ValidPage;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
