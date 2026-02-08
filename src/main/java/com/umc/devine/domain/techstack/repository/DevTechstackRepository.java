@@ -7,7 +7,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 
-public interface DevTechstackRepository extends JpaRepository<DevTechstack, DevTechstack.DevTechstackId> {
+public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long> {
     List<DevTechstack> findAllByMember(Member member);
     List<DevTechstack> findAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
     void deleteAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);

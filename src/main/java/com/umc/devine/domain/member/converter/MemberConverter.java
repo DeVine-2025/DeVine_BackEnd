@@ -78,7 +78,6 @@ public class MemberConverter {
 
     public static DevTechstack toDevTechstack(Member member, Techstack techstack) {
         return DevTechstack.builder()
-                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
                 .member(member)
                 .techstack(techstack)
                 .source(TechstackSource.MANUAL)
