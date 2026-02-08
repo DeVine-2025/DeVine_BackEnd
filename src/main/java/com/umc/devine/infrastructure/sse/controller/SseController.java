@@ -2,8 +2,8 @@ package com.umc.devine.infrastructure.sse.controller;
 
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.auth.CurrentMember;
-import com.umc.devine.infrastructure.sse.event.SseEmitterManager;
-import com.umc.devine.infrastructure.sse.event.SseConnectedEvent;
+import com.umc.devine.infrastructure.sse.core.SseEmitterManager;
+import com.umc.devine.infrastructure.sse.listener.SseConnectedEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -19,7 +19,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
  */
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/sse")
+@RequestMapping("/sse/v1")
 @Slf4j
 public class SseController implements SseControllerDocs {
 

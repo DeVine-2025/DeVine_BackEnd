@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.sse.event;
+package com.umc.devine.infrastructure.sse.core;
 
 import lombok.Getter;
 

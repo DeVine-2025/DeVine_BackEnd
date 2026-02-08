@@ -1,7 +1,8 @@
-package com.umc.devine.infrastructure.sse.event;
+package com.umc.devine.infrastructure.sse.pubsub;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.infrastructure.sse.core.SseEmitterManager;
 import com.umc.devine.infrastructure.sse.dto.SseEventPayload;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;

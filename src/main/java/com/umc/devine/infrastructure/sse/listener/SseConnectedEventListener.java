@@ -1,9 +1,11 @@
-package com.umc.devine.infrastructure.sse.event;
+package com.umc.devine.infrastructure.sse.listener;
 
 import com.umc.devine.domain.notification.converter.NotificationConverter;
 import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.domain.notification.entity.Notification;
 import com.umc.devine.domain.notification.repository.NotificationRepository;
+import com.umc.devine.infrastructure.sse.core.SseEmitterManager;
+import com.umc.devine.infrastructure.sse.core.SseEventType;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.event.EventListener;
