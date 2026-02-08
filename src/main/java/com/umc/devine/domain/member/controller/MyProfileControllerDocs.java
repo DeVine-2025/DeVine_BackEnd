@@ -130,4 +130,14 @@ public interface MyProfileControllerDocs {
     ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(
             @Parameter(hidden = true) @CurrentMember Member member
     );
+
+    @Operation(summary = "내 GitHub 레포지토리 목록 조회 API", description = "내 GitHub 계정에 연결된 레포지토리 목록을 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "GitHub 연동이 필요합니다.")
+    })
+    ApiResponse<MemberResDTO.GitRepoListDTO> syncGitRepos(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 }

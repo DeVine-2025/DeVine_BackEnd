@@ -139,4 +139,14 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, response);
     }
 
+    // 내 GitHub 레포지토리 목록 조회
+    @Override
+    @PostMapping("/me/git-repos")
+    public ApiResponse<MemberResDTO.GitRepoListDTO> syncGitRepos(
+            @CurrentMember Member member
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_GIT_REPOS;
+        MemberResDTO.GitRepoListDTO response = memberCommandService.syncGitHubRepositories(member);
+        return ApiResponse.onSuccess(code, response);
+    }
 }

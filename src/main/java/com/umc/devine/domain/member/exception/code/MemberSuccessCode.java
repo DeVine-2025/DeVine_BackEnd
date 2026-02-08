@@ -44,6 +44,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     SIGNUP_SUCCESS(HttpStatus.CREATED,
             "MEMBER201_3",
             "회원가입이 완료되었습니다."),
+    FOUND_GIT_REPOS(HttpStatus.OK,
+            "MEMBER200_9",
+            "GitHub 레포지토리 목록을 성공적으로 조회했습니다."),
     ;
 
     private final HttpStatus status;

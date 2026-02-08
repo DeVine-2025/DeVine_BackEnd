@@ -17,4 +17,10 @@ public interface MemberCommandService {
      * 테스트 코드에서 활성/비활성 상태에 따른 필터링 검증을 위해 사용됩니다.
      */
     void withdraw(Member member);
+
+    /**
+     * GitHub에서 레포지토리 목록을 가져와 DB에 저장합니다.
+     * 이미 존재하는 레포는 description을 업데이트합니다.
+     */
+    MemberResDTO.GitRepoListDTO syncGitHubRepositories(Member member);
 }

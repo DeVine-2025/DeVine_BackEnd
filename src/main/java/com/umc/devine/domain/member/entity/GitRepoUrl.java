@@ -27,4 +27,10 @@ public class GitRepoUrl extends BaseEntity {
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
 
+    public void updateDescription(String gitDescription) {
+        if (java.util.Objects.equals(this.gitDescription, gitDescription)) {
+            return;
+        }
+        this.gitDescription = gitDescription;
+    }
 }

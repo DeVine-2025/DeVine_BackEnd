@@ -54,31 +54,49 @@ public class GitHubApiClient {
     }
 
     /**
-     * GitHub 레포지토리 목록 조회
+     * GitHub 레포지토리 목록 조회 (페이지네이션 처리)
      *
      * @param accessToken GitHub OAuth Access Token
      * @return 레포지토리 목록
      * @throws AuthException GitHub API 호출 실패 시
      */
     public List<GitHubRepositoryDTO> getRepositories(String accessToken) {
-        String url = GITHUB_API_BASE_URL + "/user/repos";
+        List<GitHubRepositoryDTO> allRepositories = new ArrayList<>();
+        int page = 1;
+        int perPage = 100;
 
         try {
-            List<GitHubRepositoryDTO> repositories = restClient.get()
-                    .uri(url)
-                    .header("Authorization", "Bearer " + accessToken)
-                    .header("Accept", "application/vnd.github+json")
-                    .header("X-GitHub-Api-Version", "2022-11-28")
-                    .retrieve()
-                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
-                    })
-                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
-                    })
-                    .body(new ParameterizedTypeReference<>() {});
+            while (true) {
+                String url = GITHUB_API_BASE_URL + "/user/repos?per_page=" + perPage + "&page=" + page;
 
-            return repositories != null ? repositories : new ArrayList<>();
+                List<GitHubRepositoryDTO> repositories = restClient.get()
+                        .uri(url)
+                        .header("Authorization", "Bearer " + accessToken)
+                        .header("Accept", "application/vnd.github+json")
+                        .header("X-GitHub-Api-Version", "2022-11-28")
+                        .retrieve()
+                        .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        })
+                        .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        })
+                        .body(new ParameterizedTypeReference<>() {});
+
+                if (repositories == null || repositories.isEmpty()) {
+                    break;
+                }
+
+                allRepositories.addAll(repositories);
+
+                if (repositories.size() < perPage) {
+                    break;
+                }
+
+                page++;
+            }
+
+            return allRepositories;
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {

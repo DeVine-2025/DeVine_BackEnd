@@ -119,4 +119,27 @@ public class MemberResDTO {
     public record UserProfileListDTO(
             List<UserProfileDTO> developers
     ){}
+
+    @Builder
+    @Schema(description = "Git 레포지토리 정보")
+    public record GitRepoDTO(
+            @Schema(description = "Git 레포지토리 ID", example = "1")
+            Long gitRepoId,
+
+            @Schema(description = "레포지토리 이름", example = "my-project")
+            String name,
+
+            @Schema(description = "레포지토리 URL", example = "https://github.com/user/my-project")
+            String gitUrl,
+
+            @Schema(description = "레포지토리 설명", nullable = true)
+            String description
+    ) {}
+
+    @Builder
+    @Schema(description = "Git 레포지토리 목록 응답")
+    public record GitRepoListDTO(
+            @Schema(description = "레포지토리 목록")
+            List<GitRepoDTO> repos
+    ) {}
 }
