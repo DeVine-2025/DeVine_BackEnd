@@ -1,4 +1,4 @@
-package com.umc.devine.global.infra.s3;
+package com.umc.devine.infrastructure.s3;
 
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorCode;

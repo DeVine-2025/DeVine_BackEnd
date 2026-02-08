@@ -1,8 +1,8 @@
-package com.umc.devine.global.external.clerk;
+package com.umc.devine.infrastructure.clerk;
 
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
-import com.umc.devine.global.external.clerk.dto.ClerkOAuthTokenResponse;
+import com.umc.devine.infrastructure.clerk.dto.ClerkOAuthTokenResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;

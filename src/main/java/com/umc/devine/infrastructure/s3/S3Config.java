@@ -1,4 +1,4 @@
-package com.umc.devine.global.infra.s3;
+package com.umc.devine.infrastructure.s3;
 
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;

@@ -8,7 +8,7 @@ import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.global.infra.s3.S3Service;
+import com.umc.devine.infrastructure.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
