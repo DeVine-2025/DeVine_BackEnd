@@ -28,4 +28,11 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("member") Member member,
             @Param("matchingType") MatchingType matchingType,
             @Param("excludeStatus") MatchingStatus excludeStatus);
+
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH p.member " +
+            "JOIN FETCH m.member " +
+            "WHERE m.id = :matchingId")
+    Optional<Matching> findByIdWithDetails(@Param("matchingId") Long matchingId);
 }
