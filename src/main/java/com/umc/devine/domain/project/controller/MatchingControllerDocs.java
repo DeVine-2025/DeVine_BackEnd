@@ -52,4 +52,30 @@ public interface MatchingControllerDocs {
             @Parameter(description = "개발자 닉네임", required = true) @PathVariable String nickname,
             @RequestBody MatchingReqDTO.ProposeReqDTO dto
     );
+
+    @Operation(summary = "지원 수락/거절", description = "PM이 자신의 프로젝트에 온 지원을 수락하거나 거절합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지원 응답 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (이미 처리된 매칭, 잘못된 매칭 타입 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "PM만 응답 가능 또는 본인 프로젝트가 아님"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
+    })
+    ApiResponse<MatchingResDTO.ProposeResDTO> respondToApplication(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId,
+            @RequestBody MatchingReqDTO.DecisionReqDTO dto
+    );
+
+    @Operation(summary = "제안 수락/거절", description = "개발자가 PM으로부터 받은 프로젝트 제안을 수락하거나 거절합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "제안 응답 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (이미 처리된 매칭, 잘못된 매칭 타입 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "개발자만 응답 가능 또는 본인에게 온 제안이 아님"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
+    })
+    ApiResponse<MatchingResDTO.ProposeResDTO> respondToProposal(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId,
+            @RequestBody MatchingReqDTO.DecisionReqDTO dto
+    );
 }

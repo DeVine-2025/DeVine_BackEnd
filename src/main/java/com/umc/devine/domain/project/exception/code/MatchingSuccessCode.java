@@ -18,6 +18,18 @@ public enum MatchingSuccessCode implements BaseSuccessCode {
     PROPOSE_SUCCESS(HttpStatus.CREATED,
             "MATCHING201_2",
             "프로젝트 제안이 완료되었습니다."),
+    APPLICATION_ACCEPTED(HttpStatus.OK,
+            "MATCHING200_2",
+            "지원을 수락했습니다."),
+    APPLICATION_REJECTED(HttpStatus.OK,
+            "MATCHING200_3",
+            "지원을 거절했습니다."),
+    PROPOSAL_ACCEPTED(HttpStatus.OK,
+            "MATCHING200_4",
+            "제안을 수락했습니다."),
+    PROPOSAL_REJECTED(HttpStatus.OK,
+            "MATCHING200_5",
+            "제안을 거절했습니다."),
     ;
 
     private final HttpStatus status;

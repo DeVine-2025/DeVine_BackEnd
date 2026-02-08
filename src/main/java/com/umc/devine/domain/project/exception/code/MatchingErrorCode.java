@@ -48,6 +48,15 @@ public enum MatchingErrorCode implements BaseErrorCode {
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST,
             "MATCHING400_4",
             "이미 취소된 매칭입니다."),
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+            "MATCHING400_5",
+            "처리할 수 없는 상태의 매칭입니다."),
+    NOT_TARGET_MEMBER(HttpStatus.FORBIDDEN,
+            "MATCHING403_5",
+            "해당 매칭의 응답 대상이 아닙니다."),
+    INVALID_MATCHING_TYPE(HttpStatus.BAD_REQUEST,
+            "MATCHING400_6",
+            "해당 매칭 유형에 대한 응답 권한이 없습니다."),
     ;
 
     private final HttpStatus status;

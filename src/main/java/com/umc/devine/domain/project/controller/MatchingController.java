@@ -3,6 +3,7 @@ package com.umc.devine.domain.project.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingReqDTO;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.exception.code.MatchingSuccessCode;
 import com.umc.devine.domain.project.service.command.MatchingCommandService;
 import com.umc.devine.global.apiPayload.ApiResponse;
@@ -47,5 +48,33 @@ public class MatchingController implements MatchingControllerDocs {
     ) {
         MatchingResDTO.ProposeResDTO result = matchingCommandService.proposeToMember(member, nickname, dto.projectId());
         return ApiResponse.onSuccess(MatchingSuccessCode.PROPOSE_SUCCESS, result);
+    }
+
+    @Override
+    @PatchMapping("/{matchingId}/application/respond")
+    public ApiResponse<MatchingResDTO.ProposeResDTO> respondToApplication(
+            @CurrentMember Member member,
+            @PathVariable Long matchingId,
+            @Valid @RequestBody MatchingReqDTO.DecisionReqDTO dto
+    ) {
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.respondToApplication(member, matchingId, dto.decision());
+        MatchingSuccessCode successCode = dto.decision() == MatchingDecision.ACCEPT
+                ? MatchingSuccessCode.APPLICATION_ACCEPTED
+                : MatchingSuccessCode.APPLICATION_REJECTED;
+        return ApiResponse.onSuccess(successCode, result);
+    }
+
+    @Override
+    @PatchMapping("/{matchingId}/proposal/respond")
+    public ApiResponse<MatchingResDTO.ProposeResDTO> respondToProposal(
+            @CurrentMember Member member,
+            @PathVariable Long matchingId,
+            @Valid @RequestBody MatchingReqDTO.DecisionReqDTO dto
+    ) {
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.respondToProposal(member, matchingId, dto.decision());
+        MatchingSuccessCode successCode = dto.decision() == MatchingDecision.ACCEPT
+                ? MatchingSuccessCode.PROPOSAL_ACCEPTED
+                : MatchingSuccessCode.PROPOSAL_REJECTED;
+        return ApiResponse.onSuccess(successCode, result);
     }
 }
