@@ -11,7 +11,7 @@ import java.util.Optional;
 
 public interface TechstackRepository extends JpaRepository<Techstack, Long> {
 
-    Optional<Techstack> findByName(TechName name);
+    Optional<Techstack> findByNameAndParentStackName(TechName name, TechName parentName);
 
     List<Techstack> findAllByParentStackIsNull();
 

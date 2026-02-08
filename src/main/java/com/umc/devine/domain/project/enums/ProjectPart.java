@@ -5,12 +5,10 @@ import lombok.Getter;
 @Getter
 public enum ProjectPart {
 
-    BACKEND("백엔드"),
+    ALL("전체"),
     FRONTEND("프론트엔드"),
-    DESIGN("디자인"),
-    PM("기획/PM"),
-    IOS("iOS"),
-    ANDROID("Android");
+    BACKEND("백엔드"),
+    INFRA("인프라");
 
     private final String displayName;
 

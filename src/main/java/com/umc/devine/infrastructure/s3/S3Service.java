@@ -35,8 +35,8 @@ public class S3Service {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${spring.cloud.aws.region.static}")
-    private String region;
+    @Value("${spring.cloud.aws.cloudfront.domain}")
+    private String cloudfrontDomain;
 
     public void validateExtension(String fileName) {
         String ext = extractExtension(fileName);
@@ -87,9 +87,9 @@ public class S3Service {
         }
     }
 
-    public String buildProfileKey(Long memberId, String fileName) {
+    public String buildProfileKey(String identifier, String fileName) {
         String ext = extractExtension(fileName);
-        String key = "profiles/" + memberId + "/" + UUID.randomUUID() + "." + ext;
+        String key = "profiles/" + identifier + "/" + UUID.randomUUID() + "." + ext;
         log.debug("[S3Service] Profile key 생성 - {}", key);
         return key;
     }
@@ -111,7 +111,7 @@ public class S3Service {
     }
 
     public String buildImageUrl(String key) {
-        return "https://" + bucket + ".s3." + region + ".amazonaws.com/" + key;
+        return "https://" + cloudfrontDomain + "/" + key;
     }
 
     public String guessContentType(String fileName) {

@@ -28,7 +28,7 @@ public class ProjectConverter {
                 .category(category)
                 .projectField(request.projectField())
                 .mode(request.mode())
-                .durationMonths(request.durationMonths())
+                .durationRange(request.durationRange())
                 .location(request.location())
                 .recruitmentDeadline(request.recruitmentDeadline())
                 .name(request.title())
@@ -73,7 +73,8 @@ public class ProjectConverter {
                 .categoryName(project.getCategory().getGenre().getDisplayName())
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
-                .durationMonths(project.getDurationMonths())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
@@ -83,7 +84,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorName(project.getMember().getName())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
-                .imageUrls(toImageUrlList(project.getImages()))
+                .images(toImageInfoList(project.getImages()))
                 .build();
     }
 
@@ -100,7 +101,8 @@ public class ProjectConverter {
                 .categoryName(project.getCategory().getGenre().getDisplayName())
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
-                .durationMonths(project.getDurationMonths())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
@@ -110,7 +112,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorName(project.getMember().getName())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
-                .imageUrls(toImageUrlList(project.getImages()))
+                .images(toImageInfoList(project.getImages()))
                 .build();
     }
 
@@ -142,10 +144,12 @@ public class ProjectConverter {
                 .title(project.getTitle())
                 .projectField(project.getProjectField())
                 .projectFieldName(project.getProjectField().getDisplayName())
+                .category(project.getCategory().getGenre())
                 .categoryName(project.getCategory().getGenre().getDisplayName())
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
-                .durationMonths(project.getDurationMonths())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
@@ -191,10 +195,12 @@ public class ProjectConverter {
                 .title(project.getTitle())
                 .projectField(project.getProjectField())
                 .projectFieldName(project.getProjectField().getDisplayName())
+                .category(project.getCategory().getGenre())
                 .categoryName(project.getCategory().getGenre().getDisplayName())
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
-                .durationMonths(project.getDurationMonths())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
                 .location(project.getLocation())
                 .recruitmentDeadline(project.getRecruitmentDeadline())
                 .daysUntilDeadline(calculateDaysUntilDeadline(project.getRecruitmentDeadline()))
@@ -222,6 +228,7 @@ public class ProjectConverter {
 
                     return ProjectResDTO.RecruitmentInfo.builder()
                             .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
                             .count(req.getRequirementNum())
                             .currentCount(req.getCurrentCount())
                             .techStacks(
@@ -236,13 +243,16 @@ public class ProjectConverter {
                 .toList();
     }
 
-    // ProjectImage 리스트 → 이미지 URL 리스트 변환
-    private static List<String> toImageUrlList(List<ProjectImage> images) {
+    // ProjectImage 리스트 → ImageInfo 리스트 변환
+    private static List<ProjectResDTO.ImageInfo> toImageInfoList(List<ProjectImage> images) {
         if (images == null || images.isEmpty()) {
             return new ArrayList<>();
         }
         return images.stream()
-                .map(ProjectImage::getImageUrl)
+                .map(img -> ProjectResDTO.ImageInfo.builder()
+                        .imageId(img.getImage().getId())
+                        .imageUrl(img.getImageUrl())
+                        .build())
                 .collect(Collectors.toList());
     }
 

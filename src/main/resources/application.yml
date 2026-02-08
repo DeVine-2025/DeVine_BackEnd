@@ -45,6 +45,8 @@ spring:
         bucket: ${AWS_S3_BUCKET:}
       region:
         static: ap-northeast-2
+      cloudfront:
+        domain: ${AWS_CLOUDFRONT_DOMAIN:}
 
 # Clerk
 clerk:
