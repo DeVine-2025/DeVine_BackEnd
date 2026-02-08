@@ -164,7 +164,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
                     MemberMainType.DEVELOPER,
                     null,
                     null,
-                    null,
                     PageRequest.of(0, 10)
             );
 
@@ -187,38 +186,12 @@ class MemberRepositoryTest extends IntegrationTestSupport {
                     MemberMainType.DEVELOPER,
                     CategoryGenre.HEALTHCARE,
                     null,
-                    null,
                     PageRequest.of(0, 10)
             );
 
             // then
             assertThat(result.getContent()).hasSize(1);
             assertThat(result.getContent().get(0).getNickname()).isEqualTo("testuser");
-        }
-
-        @Test
-        @DisplayName("기술 장르로 필터링하여 개발자를 조회한다")
-        void findDevelopersByFilters_withTechGenre() {
-            // given
-            DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
-                    .member(testMember)
-                    .techstack(testTechstack)
-                    .source(TechstackSource.MANUAL)
-                    .build();
-            devTechstackRepository.save(devTechstack);
-
-            // when
-            Page<Member> result = memberRepository.findDevelopersByFilters(
-                    MemberMainType.DEVELOPER,
-                    null,
-                    TechGenre.LANGUAGE,
-                    null,
-                    PageRequest.of(0, 10)
-            );
-
-            // then
-            assertThat(result.getContent()).hasSize(1);
         }
 
         @Test
@@ -236,7 +209,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
                     MemberMainType.DEVELOPER,
-                    null,
                     null,
                     TechName.JAVA,
                     PageRequest.of(0, 10)
@@ -262,7 +234,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
                     MemberMainType.DEVELOPER,
-                    null,
                     null,
                     null,
                     PageRequest.of(0, 10)

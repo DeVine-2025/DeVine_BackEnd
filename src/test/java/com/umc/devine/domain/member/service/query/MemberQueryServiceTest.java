@@ -280,9 +280,15 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     class FindAllDevelopersTest {
 
         @Test
-        @DisplayName("추천 목록 페이지네이션 조회 성공")
+        @DisplayName("프로젝트 기반 추천 목록 페이지네이션 조회 성공")
         void findAllDevelopers_success() {
             // given
+            MemberCategory memberCategory = MemberCategory.builder()
+                    .member(testMember)
+                    .category(testCategory)
+                    .build();
+            memberCategoryRepository.save(memberCategory);
+
             DevTechstack devTechstack = DevTechstack.builder()
                     .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
@@ -291,7 +297,21 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
             devTechstackRepository.save(devTechstack);
 
+            Project project = projectRepository.save(Project.builder()
+                    .name("테스트 프로젝트")
+                    .content("내용")
+                    .status(ProjectStatus.RECRUITING)
+                    .projectField(ProjectField.BACKEND)
+                    .mode(ProjectMode.ONLINE)
+                    .durationMonths(3)
+                    .location("서울")
+                    .recruitmentDeadline(LocalDate.now().plusDays(7))
+                    .category(testCategory)
+                    .member(testMember)
+                    .build());
+
             MemberReqDTO.RecommendDeveloperDTO dto = MemberReqDTO.RecommendDeveloperDTO.builder()
+                    .projectId(project.getId())
                     .page(1)
                     .size(10)
                     .build();

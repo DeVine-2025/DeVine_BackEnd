@@ -15,9 +15,12 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
+
+import java.time.LocalDate;
 
 @Tag(name = "Member", description = "회원가입, 내 정보 관련 API")
 public interface MyProfileControllerDocs {
@@ -109,15 +112,18 @@ public interface MyProfileControllerDocs {
             @Valid @RequestBody MemberReqDTO.RemoveTechstackDTO dto
     );
 
-    @Operation(summary = "내 깃허브 기록 조회 API", description = "내 깃허브 기록을 조회하는 API입니다. 현재는 하드코딩된 ID(1L)를 사용하고 있고, 외부 api 호출하지 않은 상태입니다. 반환 값은 Mock 데이터 입니다.")
+    @Operation(summary = "내 깃허브 기록 조회 API", description = "내 깃허브 기록(잔디)을 조회하는 API입니다. GitHub GraphQL API를 통해 기여 데이터를 가져옵니다. from/to 파라미터로 조회 기간을 지정할 수 있습니다. (ISO 8601 형식, 예: 2024-01-01T00:00:00Z)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "GitHub 연동이 필요합니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.ContributionListDTO> getContribution();
+    ApiResponse<MemberResDTO.ContributionListDTO> getContribution(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    );
 
     @Operation(summary = "내 프로젝트 조회 API", description = "내 프로젝트 목록을 조회하는 API입니다.")
     @ApiResponses({

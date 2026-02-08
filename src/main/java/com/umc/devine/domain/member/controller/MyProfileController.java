@@ -14,7 +14,10 @@ import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
+
+import java.time.LocalDate;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -120,11 +123,13 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 깃허브 기록
     @Override
     @GetMapping("/me/contributions")
-    public ApiResponse<MemberResDTO.ContributionListDTO> getContribution() {
-        MemberSuccessCode code = MemberSuccessCode.FOUND;
-        // TODO: 토큰 방식으로 변경
-        Long memberId = 1L;
-        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsById(memberId);
+    public ApiResponse<MemberResDTO.ContributionListDTO> getContribution(
+            @CurrentMember Member member,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_CONTRIBUTIONS;
+        MemberResDTO.ContributionListDTO response = memberQueryService.findMyContributions(member, from, to);
         return ApiResponse.onSuccess(code, response);
     }
 

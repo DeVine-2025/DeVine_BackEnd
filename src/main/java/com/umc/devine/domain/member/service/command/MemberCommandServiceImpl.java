@@ -174,7 +174,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         return MemberConverter.toMemberProfileDTO(
                 member,
-                memberCategoryRepository.findAllByMember(member),
+                memberCategoryRepository.findAllByMemberWithCategory(member),
                 contactRepository.findAllByMember(member)
         );
     }
@@ -196,7 +196,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 TechstackConverter.toDevTechstacks(member, techstacks, TechstackSource.MANUAL)
         );
 
-        return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMember(member));
+        return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMemberWithTechstack(member));
     }
 
     @Override
@@ -207,7 +207,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             throw new TechstackException(TechstackErrorCode.NOT_FOUND);
         }
 
-        List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
+        List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackInWithTechstack(member, techstacks);
 
         List<DevTechstack> deletedTechstacks = targetTechstacks.stream()
                 .filter(dt -> dto.source() == null || dt.getSource() == dto.source())

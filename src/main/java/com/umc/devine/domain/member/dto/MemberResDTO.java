@@ -7,6 +7,7 @@ import com.umc.devine.domain.member.enums.MemberStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -94,7 +95,7 @@ public class MemberResDTO {
 
     @Builder
     public record ContributionDTO(
-        String date,
+        LocalDate date,
         Integer count
     ){}
     @Builder

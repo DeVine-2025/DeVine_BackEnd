@@ -9,8 +9,10 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import org.springdoc.core.annotations.ParameterObject;
@@ -74,10 +76,12 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
-            @PathVariable("nickname") String nickname
+            @PathVariable("nickname") String nickname,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
+            @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
-        MemberSuccessCode code = MemberSuccessCode.FOUND;
-        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(nickname);
+        MemberSuccessCode code = MemberSuccessCode.FOUND_CONTRIBUTIONS;
+        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(nickname, from, to);
         return ApiResponse.onSuccess(code, response);
     }
 

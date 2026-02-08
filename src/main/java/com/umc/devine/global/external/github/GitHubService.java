@@ -10,6 +10,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
@@ -47,10 +48,12 @@ public class GitHubService {
      * GitHub username을 자동으로 조회하여 사용
      *
      * @param clerkId Clerk 사용자 ID
+     * @param from 시작 날짜, null이면 기본값 사용
+     * @param to 종료 날짜, null이면 기본값 사용
      * @return 날짜별 기여 목록
      * @throws AuthException GitHub 연동이 없거나 API 호출 실패 시
      */
-    public List<GitHubContributionDTO> getContributions(String clerkId) {
+    public List<GitHubContributionDTO> getContributions(String clerkId, LocalDate from, LocalDate to) {
         String accessToken = clerkApiClient.getGitHubAccessToken(clerkId);
 
         // GitHub username 조회
@@ -61,7 +64,7 @@ public class GitHubService {
             throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
         }
 
-        return githubApiClient.getContributions(accessToken, username);
+        return githubApiClient.getContributions(accessToken, username, from, to);
     }
 
     /**
@@ -84,9 +87,11 @@ public class GitHubService {
      * 비로그인 또는 GitHub 연동이 없는 사용자도 호출 가능
      *
      * @param githubUsername 조회할 GitHub 사용자명
+     * @param from 시작 날짜, null이면 기본값 사용
+     * @param to 종료 날짜, null이면 기본값 사용
      * @return 날짜별 기여 목록, 서비스 토큰이 없으면 빈 목록 반환
      */
-    public List<GitHubContributionDTO> getContributionsByUsername(String githubUsername) {
+    public List<GitHubContributionDTO> getContributionsByUsername(String githubUsername, LocalDate from, LocalDate to) {
         if (githubUsername == null || githubUsername.isEmpty()) {
             return Collections.emptyList();
         }
@@ -97,7 +102,7 @@ public class GitHubService {
         }
 
         try {
-            return githubApiClient.getContributions(serviceToken, githubUsername);
+            return githubApiClient.getContributions(serviceToken, githubUsername, from, to);
         } catch (AuthException e) {
             log.warn("Failed to fetch contributions for {}: {}", githubUsername, e.getMessage());
             return Collections.emptyList();

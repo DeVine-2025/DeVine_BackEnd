@@ -47,6 +47,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     FOUND_GIT_REPOS(HttpStatus.OK,
             "MEMBER200_9",
             "GitHub 레포지토리 목록을 성공적으로 조회했습니다."),
+    FOUND_CONTRIBUTIONS(HttpStatus.OK,
+            "MEMBER200_10",
+            "GitHub 기여 기록을 성공적으로 조회했습니다."),
     ;
 
     private final HttpStatus status;

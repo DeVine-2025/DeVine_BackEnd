@@ -2,7 +2,6 @@ package com.umc.devine.domain.member.dto;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.MemberMainType;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
@@ -148,18 +147,9 @@ public class MemberReqDTO {
 
     @Builder
     public record RecommendDeveloperDTO(
-            @Schema(description = "프로젝트 ID 목록", nullable = true)
-            @Size(max = 10, message = "프로젝트는 최대 10개까지 선택할 수 있습니다.")
-            Long[] projectIds,
-
-            @Schema(description = "도메인 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
-            CategoryGenre category,
-
-            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
-            TechGenre techGenre,
-
-            @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
-            TechName techstackName,
+            @Schema(description = "프로젝트 ID", requiredMode = Schema.RequiredMode.REQUIRED)
+            @NotNull(message = "프로젝트 ID는 필수입니다.")
+            Long projectId,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
             @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
@@ -184,9 +174,6 @@ public class MemberReqDTO {
     public record SearchDeveloperDTO(
             @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
             CategoryGenre category,
-
-            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
-            TechGenre techGenre,
 
             @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
             TechName techstackName,

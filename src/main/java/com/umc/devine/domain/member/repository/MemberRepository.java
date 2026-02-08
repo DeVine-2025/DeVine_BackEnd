@@ -3,7 +3,6 @@ package com.umc.devine.domain.member.repository;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -27,12 +26,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
            "AND m.disclosure = true " +
            "AND m.used = 'ACTIVE' " +
            "AND (:category IS NULL OR EXISTS (SELECT 1 FROM MemberCategory mc WHERE mc.member = m AND mc.category.genre = :category)) " +
-           "AND (:techGenre IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.genre = :techGenre)) " +
-           "AND (:techstackName IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt2 WHERE dt2.member = m AND dt2.techstack.name = :techstackName))")
+           "AND (:techstackName IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.name = :techstackName))")
     Page<Member> findDevelopersByFilters(
             @Param("mainType") MemberMainType mainType,
             @Param("category") CategoryGenre category,
-            @Param("techGenre") TechGenre techGenre,
             @Param("techstackName") TechName techstackName,
             Pageable pageable);
 
