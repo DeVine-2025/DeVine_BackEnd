@@ -5,6 +5,7 @@ import com.umc.devine.global.apiPayload.code.BaseErrorCode;
 import com.umc.devine.global.apiPayload.code.GeneralErrorCode;
 import com.umc.devine.global.apiPayload.exception.GeneralException;
 import jakarta.validation.ConstraintViolationException;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
@@ -13,6 +14,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 import java.util.HashMap;
 import java.util.Map;
 
+@Slf4j
 @RestControllerAdvice
 public class GeneralExceptionAdvice {
 
@@ -21,6 +23,7 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<Void>> handleException(
             GeneralException ex
     ) {
+        log.error("GeneralException 발생 - code: {}, message: {}", ex.getCode().getCode(), ex.getCode().getMessage(), ex);
 
         return ResponseEntity.status(ex.getCode().getStatus())
                 .body(ApiResponse.onFailure(
@@ -74,6 +77,7 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<String>> handleException(
             Exception ex
     ) {
+        log.error("Unhandled Exception 발생 - type: {}, message: {}", ex.getClass().getName(), ex.getMessage(), ex);
 
         BaseErrorCode code = GeneralErrorCode.INTERNAL_SERVER_ERROR;
 

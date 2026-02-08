@@ -14,6 +14,7 @@ import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
+import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.MemberAgreement;
 import com.umc.devine.domain.member.entity.Terms;
@@ -21,6 +22,7 @@ import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
+import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
@@ -34,6 +36,8 @@ import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.infrastructure.github.GitHubService;
+import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -41,6 +45,9 @@ import org.springframework.transaction.annotation.Transactional;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Map;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 @Service
 @RequiredArgsConstructor
@@ -56,6 +63,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final ImageRepository imageRepository;
     private final TermsRepository termsRepository;
     private final MemberAgreementRepository memberAgreementRepository;
+    private final GitRepoUrlRepository gitRepoUrlRepository;
+    private final GitHubService gitHubService;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -136,6 +145,13 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Override
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
 
+        // 닉네임 중복 검증
+        if (dto.nickname() != null && !dto.nickname().equals(member.getNickname())) {
+            if (memberRepository.existsByNickname(dto.nickname())) {
+                throw new MemberException(MemberErrorCode.NICKNAME_DUPLICATED);
+            }
+        }
+
         // 프로필 이미지 검증
         validateProfileImage(dto.imageUrl());
 
@@ -158,7 +174,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         return MemberConverter.toMemberProfileDTO(
                 member,
-                memberCategoryRepository.findAllByMember(member),
+                memberCategoryRepository.findAllByMemberWithCategory(member),
                 contactRepository.findAllByMember(member)
         );
     }
@@ -180,7 +196,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                 TechstackConverter.toDevTechstacks(member, techstacks, TechstackSource.MANUAL)
         );
 
-        return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMember(member));
+        return TechstackConverter.toDevTechstackListDTO(devTechstackRepository.findAllByMemberWithTechstack(member));
     }
 
     @Override
@@ -191,7 +207,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             throw new TechstackException(TechstackErrorCode.NOT_FOUND);
         }
 
-        List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
+        List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackInWithTechstack(member, techstacks);
 
         List<DevTechstack> deletedTechstacks = targetTechstacks.stream()
                 .filter(dt -> dto.source() == null || dt.getSource() == dto.source())
@@ -200,6 +216,50 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         devTechstackRepository.deleteAll(deletedTechstacks);
 
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
+    }
+
+    // 탈퇴 기능을 위한 장치
+    @Override
+    public void withdraw(Member member) {
+        // 테스트 코드 등에서 회원의 상태를 DELETED로 변경하여 조회 필터링을 검증하기 위해 사용됩니다.
+        member.withdraw();
+        memberRepository.save(member);
+    }
+
+    @Override
+    public MemberResDTO.GitRepoListDTO syncGitHubRepositories(Member member) {
+        List<GitHubRepositoryDTO> githubRepos = gitHubService.getRepositories(member.getClerkId());
+
+        // 기존 레포를 한 번에 조회하여 Map으로 변환 (gitUrl -> GitRepoUrl)
+        Map<String, GitRepoUrl> existingRepos = gitRepoUrlRepository.findAllByMember(member).stream()
+                .collect(Collectors.toMap(GitRepoUrl::getGitUrl, Function.identity()));
+
+        List<GitRepoUrl> newRepos = new ArrayList<>();
+        List<GitRepoUrl> result = new ArrayList<>();
+
+        for (GitHubRepositoryDTO repo : githubRepos) {
+            GitRepoUrl existing = existingRepos.get(repo.getHtmlUrl());
+
+            if (existing != null) {
+                // 값이 같으면 dirty 표시 안됨 → UPDATE 쿼리 발생 안함
+                existing.updateDescription(repo.getDescription());
+                result.add(existing);
+            } else {
+                GitRepoUrl newRepo = GitRepoUrl.builder()
+                        .member(member)
+                        .gitUrl(repo.getHtmlUrl())
+                        .gitDescription(repo.getDescription())
+                        .build();
+                newRepos.add(newRepo);
+                result.add(newRepo);
+            }
+        }
+
+        if (!newRepos.isEmpty()) {
+            gitRepoUrlRepository.saveAll(newRepos);
+        }
+
+        return MemberConverter.toGitRepoListDTO(result);
     }
 
     private void validateProfileImage(String imageUrl) {

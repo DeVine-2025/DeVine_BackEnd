@@ -7,8 +7,36 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 public class ReportResDTO {
+
+    @Builder
+    public record ReportSummaryDTO(
+            @Schema(description = "리포트 ID", example = "1")
+            Long reportId,
+
+            @Schema(description = "리포트 타입", example = "MAIN")
+            ReportType reportType,
+
+            @Schema(description = "공개 범위", example = "PUBLIC")
+            ReportVisibility visibility,
+
+            @Schema(description = "레포지토리 이름", example = "my-project")
+            String repoName,
+
+            @Schema(description = "레포지토리 설명", example = "프로젝트 설명입니다.", nullable = true)
+            String repoDescription,
+
+            @Schema(description = "생성 시간")
+            LocalDateTime createdAt
+    ) {}
+
+    @Builder
+    public record ReportSummaryListDTO(
+            @Schema(description = "리포트 목록")
+            List<ReportSummaryDTO> reports
+    ) {}
 
     @Builder
     public record ReportRes(
@@ -62,5 +90,14 @@ public class ReportResDTO {
 
             @Schema(description = "메시지", example = "리포트 생성 요청이 접수되었습니다.")
             String message
+    ) {}
+
+    @Builder
+    public record CreateReportSyncRes(
+            @Schema(description = "메인 리포트")
+            ReportRes mainReport,
+
+            @Schema(description = "상세 리포트")
+            ReportRes detailReport
     ) {}
 }

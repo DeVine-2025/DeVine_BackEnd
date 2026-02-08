@@ -4,12 +4,24 @@ public enum TechName {
     // 포지션 (Root)
     BACKEND, FRONTEND, INFRA,
 
-    // 상세 기술
-    JAVA, PYTHON, GO, C, KOTLIN, PHP, // Backend 언어
-    SPRINGBOOT, NODEJS, EXPRESS, NESTJS, DJANGO, FLASK, // Backend 프레임워크
-    MONGODB, MYSQL, // Database
-    JAVASCRIPT, TYPESCRIPT, REACT, VUEJS, NEXTJS, SVELTE, // Frontend
-    REACT_NATIVE, FLUTTER, SWIFT, // Mobile
-    AWS, FIREBASE, // Cloud
-    DOCKER, KUBERNETES // Container
+    // Frontend - 언어/프레임워크
+    JAVASCRIPT, TYPESCRIPT, REACT, VUEJS, NEXTJS, SVELTE,
+
+    // Frontend - 모바일
+    REACT_NATIVE, FLUTTER, KOTLIN, SWIFT,
+
+    // Backend - 언어
+    JAVA, PYTHON, GO, C, PHP,
+
+    // Backend - 프레임워크
+    SPRINGBOOT, NODEJS, EXPRESS, NESTJS, DJANGO,
+
+    // Backend - 데이터베이스
+    MONGODB, MYSQL,
+
+    // Infra - 클라우드
+    AWS, FIREBASE,
+
+    // Infra - 컨테이너
+    DOCKER, KUBERNETES
 }

@@ -3,6 +3,7 @@ package com.umc.devine.domain.report.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
+import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
@@ -52,6 +53,15 @@ public class ReportController implements ReportControllerDocs {
     }
 
     @Override
+    @PostMapping("/callback")
+    public ApiResponse<Void> handleCallback(
+            @RequestBody @Valid ReportReqDTO.CallbackReq request
+    ) {
+        reportCommandService.processCallback(request);
+        return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
+    }
+
+    @Override
     @PostMapping
     public ApiResponse<ReportResDTO.CreateReportRes> createReport(
             @CurrentMember Member member,
@@ -62,11 +72,32 @@ public class ReportController implements ReportControllerDocs {
     }
 
     @Override
-    @PostMapping("/callback")
-    public ApiResponse<Void> handleCallback(
-            @RequestBody @Valid ReportReqDTO.CallbackReq request
+    @PostMapping("/sync")
+    public ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
+            @CurrentMember Member member,
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
     ) {
-        reportCommandService.processCallback(request);
-        return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
+        ReportResDTO.CreateReportSyncRes response = reportCommandService.createReportSync(member.getId(), request);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_CREATED, response);
+    }
+
+    @Override
+    @GetMapping("/me")
+    public ApiResponse<ReportResDTO.ReportSummaryListDTO> getMyReports(
+            @CurrentMember Member member,
+            @RequestParam(required = false) ReportType type
+    ) {
+        ReportResDTO.ReportSummaryListDTO response = reportQueryService.getMyReports(member, type);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
+    }
+
+    @Override
+    @GetMapping("/members/{nickname}")
+    public ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
+            @PathVariable String nickname,
+            @RequestParam(required = false) ReportType type
+    ) {
+        ReportResDTO.ReportSummaryListDTO response = reportQueryService.getReportsByNickname(nickname, type);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 }

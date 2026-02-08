@@ -3,6 +3,7 @@ package com.umc.devine.domain.member.repository;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,4 +15,6 @@ public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
 
     @Query("SELECT g FROM GitRepoUrl g JOIN FETCH g.member WHERE g.id = :id")
     Optional<GitRepoUrl> findByIdWithMember(@Param("id") Long id);
+
+    Optional<GitRepoUrl> findByMemberAndGitUrl(Member member, String gitUrl);
 }
