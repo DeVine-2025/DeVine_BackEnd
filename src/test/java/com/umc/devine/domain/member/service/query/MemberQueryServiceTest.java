@@ -19,6 +19,7 @@ import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectStatus;
@@ -231,9 +232,9 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .name("테스트 프로젝트")
                     .content("내용")
                     .status(ProjectStatus.RECRUITING)
-                    .projectField(ProjectField.BACKEND)
+                    .projectField(ProjectField.ALL)
                     .mode(ProjectMode.ONLINE)
-                    .durationMonths(3)
+                    .durationRange(DurationRange.ONE_TO_THREE)
                     .location("서울")
                     .recruitmentDeadline(LocalDate.now().plusDays(7))
                     .category(testCategory)
@@ -301,9 +302,9 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .name("테스트 프로젝트")
                     .content("내용")
                     .status(ProjectStatus.RECRUITING)
-                    .projectField(ProjectField.BACKEND)
+                    .projectField(ProjectField.ALL)
                     .mode(ProjectMode.ONLINE)
-                    .durationMonths(3)
+                    .durationRange(DurationRange.ONE_TO_THREE)
                     .location("서울")
                     .recruitmentDeadline(LocalDate.now().plusDays(7))
                     .category(testCategory)
