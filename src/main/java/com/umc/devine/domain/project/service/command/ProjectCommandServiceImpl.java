@@ -201,7 +201,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
 
         boolean hasUnauthorized = images.stream()
-                .anyMatch(image -> !image.getUploader().getId().equals(memberId));
+                .anyMatch(image -> image.getUploader() == null || !image.getUploader().getId().equals(memberId));
         if (hasUnauthorized) {
             throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
         }

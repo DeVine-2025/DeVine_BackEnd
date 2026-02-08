@@ -87,9 +87,9 @@ public class S3Service {
         }
     }
 
-    public String buildProfileKey(Long memberId, String fileName) {
+    public String buildProfileKey(String identifier, String fileName) {
         String ext = extractExtension(fileName);
-        String key = "profiles/" + memberId + "/" + UUID.randomUUID() + "." + ext;
+        String key = "profiles/" + identifier + "/" + UUID.randomUUID() + "." + ext;
         log.debug("[S3Service] Profile key 생성 - {}", key);
         return key;
     }

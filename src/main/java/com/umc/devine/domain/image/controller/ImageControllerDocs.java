@@ -2,14 +2,14 @@ package com.umc.devine.domain.image.controller;
 
 import com.umc.devine.domain.image.dto.ImageReqDTO;
 import com.umc.devine.domain.image.dto.ImageResDTO;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.auth.ClerkPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -27,7 +27,7 @@ public interface ImageControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리소스를 찾을 수 없습니다.")
     })
     ApiResponse<ImageResDTO.PresignedUrlRes> createPresignedUrl(
-            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal ClerkPrincipal principal,
             @Valid @RequestBody ImageReqDTO.PresignedUrlReq request);
 
     @Operation(
@@ -40,7 +40,7 @@ public interface ImageControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 이미지입니다.")
     })
     ApiResponse<Void> confirmUpload(
-            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal ClerkPrincipal principal,
             @PathVariable Long imageId);
 
     @Operation(
@@ -55,6 +55,6 @@ public interface ImageControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "이미지 삭제 처리 중 오류가 발생했습니다.")
     })
     ApiResponse<Void> deleteImage(
-            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal ClerkPrincipal principal,
             @PathVariable Long imageId);
 }
