@@ -35,7 +35,7 @@ public class S3Service {
     @Value("${spring.cloud.aws.s3.bucket}")
     private String bucket;
 
-    @Value("${cloud.aws.cloudfront.domain}")
+    @Value("${spring.cloud.aws.cloudfront.domain}")
     private String cloudfrontDomain;
 
     public void validateExtension(String fileName) {
