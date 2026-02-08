@@ -1,4 +1,4 @@
-package com.umc.devine.domain.project.scheduler;
+package com.umc.devine.global.scheduler;
 
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;

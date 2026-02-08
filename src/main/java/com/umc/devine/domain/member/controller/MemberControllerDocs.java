@@ -20,6 +20,12 @@ import org.springframework.web.bind.annotation.RequestBody;
 @Tag(name = "Members", description = "회원 관련 API")
 public interface MemberControllerDocs {
 
+    @Operation(summary = "이용약관 조회 API", description = "회원가입 시 필요한 이용약관 목록을 조회하는 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공")
+    })
+    ApiResponse<MemberResDTO.TermsListDTO> getTerms();
+
     @Operation(summary = "회원가입 API", description = "소셜 로그인 후 추가 정보를 입력하여 회원가입을 완료하는 API입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "회원가입 성공"),
