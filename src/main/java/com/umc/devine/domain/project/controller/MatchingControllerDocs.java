@@ -3,12 +3,14 @@ package com.umc.devine.domain.project.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingReqDTO;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
+import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
@@ -77,5 +79,27 @@ public interface MatchingControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId,
             @RequestBody MatchingReqDTO.DecisionReqDTO dto
+    );
+
+    @Operation(summary = "PM - 개발자 목록 조회", description = "PM이 제안한 개발자 또는 지원받은 개발자 목록을 조회합니다. type=PROPOSE(제안한), type=APPLY(지원받은)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "개발자 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "PM만 조회 가능")
+    })
+    ApiResponse<MatchingResDTO.DevelopersRes> getDevelopers(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "매칭 타입 (PROPOSE: 제안한, APPLY: 지원받은)", required = true) MatchingType type,
+            @Parameter(hidden = true) Pageable pageable
+    );
+
+    @Operation(summary = "개발자 - 프로젝트 목록 조회", description = "개발자가 제안받은 또는 지원한 프로젝트 목록을 조회합니다. type=PROPOSE(제안받은), type=APPLY(지원한)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로젝트 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "개발자만 조회 가능")
+    })
+    ApiResponse<MatchingResDTO.ProjectsRes> getProjects(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "매칭 타입 (PROPOSE: 제안받은, APPLY: 지원한)", required = true) MatchingType type,
+            @Parameter(hidden = true) Pageable pageable
     );
 }

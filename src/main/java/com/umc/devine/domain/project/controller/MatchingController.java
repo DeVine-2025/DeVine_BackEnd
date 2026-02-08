@@ -4,12 +4,16 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingReqDTO;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
+import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.code.MatchingSuccessCode;
 import com.umc.devine.domain.project.service.command.MatchingCommandService;
+import com.umc.devine.domain.project.service.query.MatchingQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
@@ -18,6 +22,7 @@ import org.springframework.web.bind.annotation.*;
 public class MatchingController implements MatchingControllerDocs {
 
     private final MatchingCommandService matchingCommandService;
+    private final MatchingQueryService matchingQueryService;
 
     @Override
     @PostMapping("/projects/{projectId}")
@@ -76,5 +81,27 @@ public class MatchingController implements MatchingControllerDocs {
                 ? MatchingSuccessCode.PROPOSAL_ACCEPTED
                 : MatchingSuccessCode.PROPOSAL_REJECTED;
         return ApiResponse.onSuccess(successCode, result);
+    }
+
+    @Override
+    @GetMapping("/pm/developers")
+    public ApiResponse<MatchingResDTO.DevelopersRes> getDevelopers(
+            @CurrentMember Member member,
+            @RequestParam MatchingType type,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        MatchingResDTO.DevelopersRes result = matchingQueryService.getDevelopers(member, type, pageable);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_DEVELOPERS_SUCCESS, result);
+    }
+
+    @Override
+    @GetMapping("/developer/projects")
+    public ApiResponse<MatchingResDTO.ProjectsRes> getProjects(
+            @CurrentMember Member member,
+            @RequestParam MatchingType type,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        MatchingResDTO.ProjectsRes result = matchingQueryService.getProjects(member, type, pageable);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_PROJECTS_SUCCESS, result);
     }
 }

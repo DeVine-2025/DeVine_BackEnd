@@ -75,6 +75,18 @@ public class MatchingValidator {
         }
     }
 
+    public void validatePmRole(Member member) {
+        if (!member.isPM()) {
+            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
+        }
+    }
+
+    public void validateDeveloperRole(Member member) {
+        if (!member.isDeveloper()) {
+            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
+        }
+    }
+
     private boolean existsActiveMatching(Project project, Member member, MatchingType type) {
         return matchingRepository.existsByProjectAndMemberAndMatchingTypeAndStatusNot(
                 project, member, type, MatchingStatus.CANCELLED);

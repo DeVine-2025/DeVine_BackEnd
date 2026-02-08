@@ -30,6 +30,12 @@ public enum MatchingSuccessCode implements BaseSuccessCode {
     PROPOSAL_REJECTED(HttpStatus.OK,
             "MATCHING200_5",
             "제안을 거절했습니다."),
+    GET_DEVELOPERS_SUCCESS(HttpStatus.OK,
+            "MATCHING200_6",
+            "개발자 목록 조회에 성공했습니다."),
+    GET_PROJECTS_SUCCESS(HttpStatus.OK,
+            "MATCHING200_7",
+            "프로젝트 목록 조회에 성공했습니다."),
     ;
 
     private final HttpStatus status;
