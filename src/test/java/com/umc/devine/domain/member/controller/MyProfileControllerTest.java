@@ -227,22 +227,6 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("내 리포트 조회")
-    class GetMyReportsTest {
-
-        @Test
-        @DisplayName("내 리포트 조회 성공")
-        void getMyReports_success() throws Exception {
-            mockMvc.perform(get("/api/v1/members/me/reports")
-                            .with(authentication(testAuth))
-                            .contentType(MediaType.APPLICATION_JSON))
-                    .andDo(print())
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isSuccess").value(true));
-        }
-    }
-
-    @Nested
     @DisplayName("회원가입")
     class SignupTest {
 

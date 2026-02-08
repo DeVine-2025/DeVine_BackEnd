@@ -7,7 +7,6 @@ import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
-import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
@@ -140,14 +139,4 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 내 리포트 조회
-    @Override
-    @GetMapping("/me/reports")
-    public ApiResponse<DevReportResDTO.ReportListDTO> getMyReports(
-            @CurrentMember Member member
-    ) {
-        MemberSuccessCode code = MemberSuccessCode.FOUND;
-        DevReportResDTO.ReportListDTO response = memberQueryService.findMyReports(member);
-        return ApiResponse.onSuccess(code, response);
-    }
 }

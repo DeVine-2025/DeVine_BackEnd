@@ -6,13 +6,11 @@ import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
-import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
-import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.member.entity.Terms;
@@ -22,16 +20,10 @@ import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
-import com.umc.devine.domain.report.entity.DevReport;
-import com.umc.devine.domain.report.repository.DevReportRepository;
-import com.umc.devine.domain.techstack.converter.DevReportConverter;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
-import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.entity.mapping.ReportTechstack;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
-import com.umc.devine.domain.techstack.repository.ReportTechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -52,9 +44,6 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final ProjectRepository projectRepository;
     private final ProjectImageRepository projectImageRepository;
     private final DevTechstackRepository devTechstackRepository;
-    private final GitRepoUrlRepository gitRepoUrlRepository;
-    private final DevReportRepository devReportRepository;
-    private final ReportTechstackRepository reportTechstackRepository;
     private final MemberCategoryRepository memberCategoryRepository;
     private final ContactRepository contactRepository;
     private final TermsRepository termsRepository;
@@ -120,59 +109,6 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .nickname(nickname)
                 .isDuplicate(isDuplicate)
                 .build();
-    }
-
-    @Override
-    public DevReportResDTO.ReportListDTO findMyReports(Member member) {
-        List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
-        List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
-
-        if (devReports.isEmpty()) {
-            return DevReportConverter.toReportListDTO(Collections.emptyList());
-        }
-
-        List<ReportTechstack> allReportTechstacks = reportTechstackRepository.findAllByDevReportIn(devReports);
-        Map<Long, List<ReportTechstack>> techstacksByReportId = allReportTechstacks.stream()
-                .collect(Collectors.groupingBy(rt -> rt.getDevReport().getId()));
-
-        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
-                .map(report -> {
-                    List<ReportTechstack> reportTechstacks = techstacksByReportId.getOrDefault(report.getId(), Collections.emptyList());
-                    return DevReportConverter.toReportDTO(report, reportTechstacks);
-                })
-                .collect(Collectors.toList());
-
-        return DevReportConverter.toReportListDTO(reportDTOs);
-    }
-
-    @Override
-    public DevReportResDTO.ReportListDTO findReportsByNickname(String nickname) {
-        Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
-
-        if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
-        }
-
-        List<GitRepoUrl> gitRepoUrls = gitRepoUrlRepository.findAllByMember(member);
-        List<DevReport> devReports = devReportRepository.findAllByGitRepoUrlIn(gitRepoUrls);
-
-        if (devReports.isEmpty()) {
-            return DevReportConverter.toReportListDTO(Collections.emptyList());
-        }
-
-        List<ReportTechstack> allReportTechstacks = reportTechstackRepository.findAllByDevReportIn(devReports);
-        Map<Long, List<ReportTechstack>> techstacksByReportId = allReportTechstacks.stream()
-                .collect(Collectors.groupingBy(rt -> rt.getDevReport().getId()));
-
-        List<DevReportResDTO.ReportDTO> reportDTOs = devReports.stream()
-                .map(report -> {
-                    List<ReportTechstack> reportTechstacks = techstacksByReportId.getOrDefault(report.getId(), Collections.emptyList());
-                    return DevReportConverter.toReportDTO(report, reportTechstacks);
-                })
-                .collect(Collectors.toList());
-
-        return DevReportConverter.toReportListDTO(reportDTOs);
     }
 
     @Override

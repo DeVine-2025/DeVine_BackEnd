@@ -5,7 +5,6 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
-import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
@@ -82,14 +81,4 @@ public class MemberController implements MemberControllerDocs {
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 사용자 리포트
-    @Override
-    @GetMapping("/{nickname}/reports")
-    public ApiResponse<DevReportResDTO.ReportListDTO> getReportsByNickname(
-            @PathVariable("nickname") String nickname
-    ) {
-        MemberSuccessCode code = MemberSuccessCode.FOUND_REPORT;
-        DevReportResDTO.ReportListDTO response = memberQueryService.findReportsByNickname(nickname);
-        return ApiResponse.onSuccess(code, response);
-    }
 }

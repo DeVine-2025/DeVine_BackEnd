@@ -3,6 +3,7 @@ package com.umc.devine.domain.report.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
+import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
@@ -68,5 +69,25 @@ public class ReportController implements ReportControllerDocs {
     ) {
         reportCommandService.processCallback(request);
         return ApiResponse.onSuccess(ReportSuccessCode.CALLBACK_PROCESSED, null);
+    }
+
+    @Override
+    @GetMapping("/me")
+    public ApiResponse<ReportResDTO.ReportSummaryListDTO> getMyReports(
+            @CurrentMember Member member,
+            @RequestParam(required = false) ReportType type
+    ) {
+        ReportResDTO.ReportSummaryListDTO response = reportQueryService.getMyReports(member, type);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
+    }
+
+    @Override
+    @GetMapping("/members/{nickname}")
+    public ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
+            @PathVariable String nickname,
+            @RequestParam(required = false) ReportType type
+    ) {
+        ReportResDTO.ReportSummaryListDTO response = reportQueryService.getReportsByNickname(nickname, type);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 }

@@ -8,7 +8,6 @@ import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
-import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.member.enums.ContactType;
@@ -16,7 +15,6 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.repository.ContactRepository;
-import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -25,11 +23,6 @@ import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.ProjectRepository;
-import com.umc.devine.domain.report.entity.DevReport;
-import com.umc.devine.domain.report.enums.ReportType;
-import com.umc.devine.domain.report.enums.ReportVisibility;
-import com.umc.devine.domain.report.repository.DevReportRepository;
-import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
@@ -80,12 +73,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private ProjectRepository projectRepository;
-
-    @Autowired
-    private GitRepoUrlRepository gitRepoUrlRepository;
-
-    @Autowired
-    private DevReportRepository devReportRepository;
 
     private Member testMember;
     private Category testCategory;
@@ -263,78 +250,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("내 리포트 조회")
-    class FindMyReportsTest {
-
-        @Test
-        @DisplayName("내 리포트 목록을 조회한다")
-        void findMyReports_success() {
-            // given
-            GitRepoUrl gitRepoUrl = gitRepoUrlRepository.save(GitRepoUrl.builder()
-                    .member(testMember)
-                    .gitUrl("https://github.com/test/repo")
-                    .build());
-
-            devReportRepository.save(DevReport.builder()
-                    .gitRepoUrl(gitRepoUrl)
-                    .reportType(ReportType.MAIN)
-                    .visibility(ReportVisibility.PUBLIC)
-                    .build());
-
-            // when
-            DevReportResDTO.ReportListDTO result = memberQueryService.findMyReports(testMember);
-
-            // then
-            assertThat(result.reports()).hasSize(1);
-        }
-    }
-
-    @Nested
-    @DisplayName("닉네임으로 리포트 조회")
-    class FindReportsByNicknameTest {
-
-        @Test
-        @DisplayName("공개 프로필 회원의 리포트를 조회한다")
-        void findReportsByNickname_success() {
-            // given
-            GitRepoUrl gitRepoUrl = gitRepoUrlRepository.save(GitRepoUrl.builder()
-                    .member(testMember)
-                    .gitUrl("https://github.com/test/repo")
-                    .build());
-
-            devReportRepository.save(DevReport.builder()
-                    .gitRepoUrl(gitRepoUrl)
-                    .reportType(ReportType.MAIN)
-                    .visibility(ReportVisibility.PUBLIC)
-                    .build());
-
-            // when
-            DevReportResDTO.ReportListDTO result = memberQueryService.findReportsByNickname("testuser");
-
-            // then
-            assertThat(result.reports()).hasSize(1);
-        }
-
-        @Test
-        @DisplayName("비공개 프로필 회원의 리포트 조회 시 예외 발생")
-        void findReportsByNickname_notPublic() {
-            // given
-            memberRepository.save(Member.builder()
-                    .clerkId("clerk_private_456")
-                    .name("비공개")
-                    .nickname("privateuser")
-                    .mainType(MemberMainType.DEVELOPER)
-                    .disclosure(false)
-                    .used(MemberStatus.ACTIVE)
-                    .build());
-
-            // when & then
-            assertThatThrownBy(() -> memberQueryService.findReportsByNickname("privateuser"))
-                    .isInstanceOf(MemberException.class);
-        }
-    }
-
-    @Nested
     @DisplayName("닉네임 중복 체크")
     class CheckNicknameDuplicateTest {
 
@@ -500,18 +415,4 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         }
     }
 
-    @Nested
-    @DisplayName("리포트 없는 경우")
-    class FindMyReportsEmptyTest {
-
-        @Test
-        @DisplayName("리포트가 없으면 빈 리스트를 반환한다")
-        void findMyReports_empty() {
-            // when
-            DevReportResDTO.ReportListDTO result = memberQueryService.findMyReports(testMember);
-
-            // then
-            assertThat(result.reports()).isEmpty();
-        }
-    }
 }

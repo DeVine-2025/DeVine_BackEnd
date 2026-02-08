@@ -1,6 +1,7 @@
 package com.umc.devine.domain.report.repository;
 
 import com.umc.devine.domain.member.entity.GitRepoUrl;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
 import org.springframework.data.jpa.repository.JpaRepository;
@@ -30,4 +31,14 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     Optional<DevReport> findByIdWithMember(@Param("reportId") Long reportId);
 
     boolean existsByGitRepoUrlId(Long gitRepoId);
+
+    @Query("SELECT r FROM DevReport r " +
+            "JOIN FETCH r.gitRepoUrl g " +
+            "WHERE g.member = :member " +
+            "AND (:reportType IS NULL OR r.reportType = :reportType) " +
+            "ORDER BY r.createdAt DESC")
+    List<DevReport> findAllByMemberAndReportType(
+            @Param("member") Member member,
+            @Param("reportType") ReportType reportType
+    );
 }

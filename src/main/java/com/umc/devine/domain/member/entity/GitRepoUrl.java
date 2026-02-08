@@ -20,6 +20,9 @@ public class GitRepoUrl extends BaseEntity {
     @Column(name = "git_url", nullable = false, length = 500)
     private String gitUrl;
 
+    @Column(name="git_description", nullable = true, length = 500)
+    private String gitDescription;
+
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "member_id", nullable = false)
     private Member member;
