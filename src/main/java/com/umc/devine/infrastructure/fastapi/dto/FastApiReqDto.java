@@ -10,6 +10,7 @@ public class FastApiReqDto {
             Long detailReportId,
             String gitUrl,
             String callbackUrl,
+            String embeddingCallbackUrl,
             String githubToken
     ) {}
 
@@ -19,5 +20,10 @@ public class FastApiReqDto {
             Long detailReportId,
             String gitUrl,
             String githubToken
+    ) {}
+
+    @Builder
+    public record ProjectEmbeddingReq(
+            String text
     ) {}
 }
