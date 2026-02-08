@@ -172,8 +172,9 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 continue;
             }
 
+            TechName parentName = TechName.valueOf(dto.position().name());
             for (TechName techName : dto.techStacks()) {
-                Techstack techstack = techstackRepository.findByName(techName)
+                Techstack techstack = techstackRepository.findByNameAndParentStackName(techName, parentName)
                         .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()

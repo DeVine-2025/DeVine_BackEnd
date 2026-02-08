@@ -1,6 +1,9 @@
 package com.umc.devine.domain.techstack.enums;
 
 public enum TechName {
+    // 포지션 (Root)
+    BACKEND, FRONTEND, INFRA,
+
     // Frontend - 언어/프레임워크
     JAVASCRIPT, TYPESCRIPT, REACT, VUEJS, NEXTJS, SVELTE,
 
