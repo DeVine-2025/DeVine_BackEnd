@@ -45,6 +45,7 @@ public class MatchingConverter {
                 .developerImageUrl(developer.getImage())
                 .status(matching.getStatus())
                 .matchingType(matching.getMatchingType())
+                .decision(matching.getDecision())
                 .createdAt(matching.getCreatedAt())
                 .build();
     }
@@ -63,6 +64,7 @@ public class MatchingConverter {
                 .pmImageUrl(pm.getImage())
                 .status(matching.getStatus())
                 .matchingType(matching.getMatchingType())
+                .decision(matching.getDecision())
                 .createdAt(matching.getCreatedAt())
                 .build();
     }

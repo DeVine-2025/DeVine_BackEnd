@@ -1,22 +1,32 @@
 package com.umc.devine.domain.project.entity.mapping;
 
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
 import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
-import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+
+import java.util.Objects;
 
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Table(name = "matching")
+@Table(
+        name = "matching",
+        uniqueConstraints = {
+                @UniqueConstraint(
+                        name = "uk_matching_active",
+                        columnNames = {"project_id", "member_id", "matching_type", "status"}
+                )
+        }
+)
 public class Matching extends BaseEntity {
 
     @Id
@@ -31,6 +41,11 @@ public class Matching extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(name = "matching_type", nullable = false)
     private MatchingType matchingType;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false)
+    @Builder.Default
+    private MatchingDecision decision = MatchingDecision.PENDING;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)
@@ -55,6 +70,8 @@ public class Matching extends BaseEntity {
     }
 
     public void applyDecision(MatchingDecision decision) {
+        Objects.requireNonNull(decision, "decision must not be null");
+        this.decision = decision;
         if (decision == MatchingDecision.ACCEPT) {
             accept();
         } else {
@@ -78,5 +95,9 @@ public class Matching extends BaseEntity {
 
     public boolean isTargetMember(Member member) {
         return this.member.getId().equals(member.getId());
+    }
+
+    public boolean isPending() {
+        return this.status == MatchingStatus.PENDING;
     }
 }

@@ -55,6 +55,9 @@ public class MatchingValidator {
         if (!pm.isPM()) {
             throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
         }
+        if (!matching.isPending()) {
+            throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
+        }
         if (!matching.isApplyType()) {
             throw new MatchingException(MatchingErrorCode.INVALID_MATCHING_TYPE);
         }
@@ -66,6 +69,9 @@ public class MatchingValidator {
     public void validateForProposalResponse(Member developer, Matching matching) {
         if (!developer.isDeveloper()) {
             throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
+        }
+        if (!matching.isPending()) {
+            throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
         }
         if (!matching.isProposeType()) {
             throw new MatchingException(MatchingErrorCode.INVALID_MATCHING_TYPE);

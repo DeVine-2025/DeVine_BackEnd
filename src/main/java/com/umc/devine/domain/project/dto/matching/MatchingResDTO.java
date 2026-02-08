@@ -1,5 +1,6 @@
 package com.umc.devine.domain.project.dto.matching;
 
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.global.dto.PagedResponse;
@@ -50,6 +51,9 @@ public class MatchingResDTO {
             @Schema(description = "매칭 타입", example = "APPLY")
             MatchingType matchingType,
 
+            @Schema(description = "수락 여부", example = "PENDING")
+            MatchingDecision decision,
+
             @Schema(description = "생성 일시")
             LocalDateTime createdAt
     ) {}
@@ -80,6 +84,9 @@ public class MatchingResDTO {
 
             @Schema(description = "매칭 타입", example = "PROPOSE")
             MatchingType matchingType,
+
+            @Schema(description = "수락 여부", example = "PENDING")
+            MatchingDecision decision,
 
             @Schema(description = "생성 일시")
             LocalDateTime createdAt
