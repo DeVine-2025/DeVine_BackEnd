@@ -62,6 +62,10 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/weekly-best").permitAll()
                         // 리포트 콜백 (임시) // TODO 프론트 json 확인을 위해서 임시 활성화, 마스터키로 인증 변경
                         .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
+                        // AI 서버 콜백 (내부 통신)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/embeddings/callback").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/embeddings/callback/**").permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
