@@ -3,7 +3,7 @@
 # ===========================================
 
 server:
-  port: ${SPRING_PORT}
+  port: ${SPRING_PORT:8080}
 
 spring:
   jpa:
@@ -58,5 +58,6 @@ fastapi:
     base-url: ${FASTAPI_CALLBACK_URL:}
   report:
     base-url: ${FASTAPI_URL:}
-    connect-timeout: ${FASTAPI_CONNECT_TIMEOUT:}
-    read-timeout: ${FASTAPI_READ_TIMEOUT:}
+    connect-timeout: ${FASTAPI_CONNECT_TIMEOUT:60000}
+    read-timeout: ${FASTAPI_READ_TIMEOUT:30000}
+    sync-read-timeout: ${FASTAPI_READ_TIMEOUT_SYNC:180000}

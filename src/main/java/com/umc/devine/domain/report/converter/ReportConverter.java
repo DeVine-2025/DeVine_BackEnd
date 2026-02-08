@@ -48,4 +48,16 @@ public class ReportConverter {
                 .message(REPORT_GENERATION_REQUESTED_MESSAGE)
                 .build();
     }
+
+    public static ReportResDTO.CreateReportSyncRes toCreateReportSyncRes(
+            DevReport mainReport,
+            DevReport detailReport,
+            JsonNode mainContent,
+            JsonNode detailContent
+    ) {
+        return ReportResDTO.CreateReportSyncRes.builder()
+                .mainReport(toReportRes(mainReport, mainContent))
+                .detailReport(toReportRes(detailReport, detailContent))
+                .build();
+    }
 }
