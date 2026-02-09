@@ -3,7 +3,7 @@ package com.umc.devine.infrastructure.fastapi;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
-import com.umc.devine.global.external.clerk.ClerkApiClient;
+import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.extern.slf4j.Slf4j;

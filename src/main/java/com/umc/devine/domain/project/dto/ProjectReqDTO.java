@@ -6,7 +6,7 @@ import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.techstack.enums.TechName;
-import com.umc.devine.global.annotation.ValidPage;
+import com.umc.devine.global.validation.annotation.ValidPage;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.Valid;
@@ -71,7 +71,7 @@ public class ProjectReqDTO {
 
                         @Schema(description = "모집 인원 (1~8명)", requiredMode = Schema.RequiredMode.REQUIRED, example = "2") @NotNull(message = "모집 인원은 필수입니다.") @Min(value = 1, message = "모집 인원은 최소 1명 이상이어야 합니다.") @Max(value = 8, message = "모집 인원은 최대 8명까지 가능합니다.") Integer count,
 
-                        @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[\"JAVA\"]") @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
+                        @Schema(description = "기술 스택 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등)", requiredMode = Schema.RequiredMode.NOT_REQUIRED, example = "[\"JAVA\"]") @Size(max = 10, message = "기술 스택은 최대 10개까지 가능합니다.") List<TechName> techStacks) {
         }
 
         // 프로젝트 검색 요청 DTO (프로젝트/개발자 보기 탭 하단)
@@ -83,7 +83,7 @@ public class ProjectReqDTO {
 
                         @Schema(description = "포지션 목록 (ALL, FRONTEND, BACKEND, INFRA), 복수 선택 가능", nullable = true, example = "[\"BACKEND\", \"FRONTEND\"]") List<ProjectPart> positions,
 
-                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRING\"]") List<TechName> techstackNames,
+                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRINGBOOT\"]") List<TechName> techstackNames,
 
                         @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges,
 
@@ -122,7 +122,7 @@ public class ProjectReqDTO {
 
                         @Schema(description = "포지션 목록 (ALL, FRONTEND, BACKEND, INFRA), 복수 선택 가능", nullable = true, example = "[\"BACKEND\", \"FRONTEND\"]") List<ProjectPart> positions,
 
-                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRING 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRING\"]") List<TechName> techstackNames,
+                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRINGBOOT\"]") List<TechName> techstackNames,
 
                         @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges,
 

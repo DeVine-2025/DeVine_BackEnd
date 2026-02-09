@@ -18,6 +18,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
+    Optional<Project> findByIdWithCategory(@Param("id") Long id);
+
     // 주간 베스트 프로젝트 조회
     // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
     // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)

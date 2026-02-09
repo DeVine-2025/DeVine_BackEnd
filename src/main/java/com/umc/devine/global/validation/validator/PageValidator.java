@@ -1,10 +1,10 @@
-package com.umc.devine.global.validator;
+package com.umc.devine.global.validation.validator;
 
-import com.umc.devine.global.annotation.ValidPage;
+import com.umc.devine.global.validation.annotation.ValidPage;
 import jakarta.validation.ConstraintValidator;
 import jakarta.validation.ConstraintValidatorContext;
 
-public class ValidPageValidator implements ConstraintValidator<ValidPage, Integer> {
+public class PageValidator implements ConstraintValidator<ValidPage, Integer> {
 
     @Override
     public void initialize(ValidPage constraintAnnotation) {
