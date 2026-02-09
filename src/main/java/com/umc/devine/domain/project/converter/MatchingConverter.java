@@ -68,4 +68,14 @@ public class MatchingConverter {
                 .createdAt(matching.getCreatedAt())
                 .build();
     }
+
+    // 단순 매칭 상태 변환
+    public static MatchingResDTO.MatchingStatusRes toMatchingStatusRes(Matching matching) {
+        return MatchingResDTO.MatchingStatusRes.builder()
+                .exists(true)
+                .matchingId(matching.getId())
+                .projectId(matching.getProject().getId())
+                .status(matching.getStatus())
+                .build();
+    }
 }

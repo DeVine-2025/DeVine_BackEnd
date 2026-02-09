@@ -104,4 +104,27 @@ public class MatchingController implements MatchingControllerDocs {
         MatchingResDTO.ProjectsRes result = matchingQueryService.getProjects(member, type, pageable);
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_PROJECTS_SUCCESS, result);
     }
+
+    @Override
+    @GetMapping("/projects/{projectId}/my-apply")
+    public ApiResponse<MatchingResDTO.MatchingStatusRes> getMyApplyStatus(
+            @CurrentMember Member member,
+            @PathVariable Long projectId
+    ) {
+        MatchingResDTO.MatchingStatusRes result =
+                matchingQueryService.getMyApplyStatus(member, projectId);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_MY_MATCHING_STATUS_SUCCESS, result);
+    }
+
+    @Override
+    @GetMapping("/projects/{projectId}/propose/{memberId}")
+    public ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
+            @CurrentMember Member member,
+            @PathVariable Long projectId,
+            @PathVariable Long memberId
+    ) {
+        MatchingResDTO.MatchingStatusRes result =
+                matchingQueryService.getMyProposeStatus(member, projectId, memberId);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_APPLICANT_STATUS_SUCCESS, result);
+    }
 }
