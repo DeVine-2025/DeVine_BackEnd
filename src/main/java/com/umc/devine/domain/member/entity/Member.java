@@ -109,13 +109,4 @@ public class Member extends BaseEntity {
         this.used = MemberStatus.DELETED;
     }
 
-    // ==================== 도메인 검증 메서드 ====================
-
-    public boolean isDeveloper() {
-        return this.mainType == MemberMainType.DEVELOPER;
-    }
-
-    public boolean isPM() {
-        return this.mainType == MemberMainType.PM;
-    }
 }

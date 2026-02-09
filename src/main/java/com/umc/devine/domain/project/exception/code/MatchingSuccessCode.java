@@ -36,6 +36,12 @@ public enum MatchingSuccessCode implements BaseSuccessCode {
     GET_PROJECTS_SUCCESS(HttpStatus.OK,
             "MATCHING200_7",
             "프로젝트 목록 조회에 성공했습니다."),
+    GET_MY_MATCHING_STATUS_SUCCESS(HttpStatus.OK,
+            "MATCHING200_8",
+            "내 지원 상태 조회에 성공했습니다."),
+    GET_APPLICANT_STATUS_SUCCESS(HttpStatus.OK,
+            "MATCHING200_9",
+            "지원자 상태 조회에 성공했습니다."),
     ;
 
     private final HttpStatus status;
