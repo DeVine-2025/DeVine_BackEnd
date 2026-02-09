@@ -1,21 +1,20 @@
 package com.umc.devine.domain.project.service.command;
 
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.repository.MemberRepository;
-import com.umc.devine.domain.notification.enums.NotificationType;
-import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.project.converter.MatchingConverter;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
-import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
 import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.domain.project.helper.MatchingNotificationHelper;
 import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.project.validator.MatchingValidator;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,59 +27,27 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private final MatchingRepository matchingRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
-    private final NotificationCommandService notificationCommandService;
+    private final MatchingValidator matchingValidator;
+    private final MatchingNotificationHelper notificationHelper;
 
     @Override
     public MatchingResDTO.ProposeResDTO applyToProject(Member member, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+        Project project = getProject(projectId);
 
-        // 개발자만 지원 가능
-        if (member.getMainType() != MemberMainType.DEVELOPER) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
-        }
+        matchingValidator.validateForApply(member, project);
 
-        // 모집 중인 프로젝트만 지원 가능
-        if (project.getStatus() != ProjectStatus.RECRUITING) {
-            throw new MatchingException(MatchingErrorCode.PROJECT_NOT_RECRUITING);
-        }
-
-        // 본인 프로젝트에 지원 불가
-        if (project.getMember().getId().equals(member.getId())) {
-            throw new MatchingException(MatchingErrorCode.CANNOT_APPLY_OWN_PROJECT);
-        }
-
-        // 중복 지원 체크 (취소된 매칭 제외)
-        if (matchingRepository.existsByProjectAndMemberAndMatchingTypeAndStatusNot(project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)) {
-            throw new MatchingException(MatchingErrorCode.ALREADY_APPLIED);
-        }
-
-        Matching matching = MatchingConverter.toMatching(project, member, MatchingType.APPLY);
-        Matching savedMatching = matchingRepository.save(matching);
-
-        // PM에게 지원 알림 전송
-        sendApplyNotification(member, project, savedMatching);
-
-        return MatchingConverter.toMatchingResDTO(savedMatching);
-    }
-
-    private void sendApplyNotification(Member applicant, Project project, Matching matching) {
-        String content = String.format("%s님이 '%s' 프로젝트에 지원했습니다.",
-                applicant.getNickname(), project.getName());
-
-        notificationCommandService.create(
-                NotificationType.MATCHING_APPLIED,
-                project.getMember().getId(),  // receiver: PM
-                applicant.getId(),            // sender: 지원자
-                content,
-                matching.getId()              // referenceId: matchingId
+        Matching matching = matchingRepository.save(
+                MatchingConverter.toMatching(project, member, MatchingType.APPLY)
         );
+
+        notificationHelper.notifyApply(matching);
+
+        return MatchingConverter.toMatchingResDTO(matching);
     }
 
     @Override
     public MatchingResDTO.ProposeResDTO cancelApplication(Member member, Long projectId) {
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+        Project project = getProject(projectId);
 
         Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
                         project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
@@ -93,56 +60,58 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
     @Override
     public MatchingResDTO.ProposeResDTO proposeToMember(Member pmMember, String targetNickname, Long projectId) {
-        Member targetMember = memberRepository.findByNickname(targetNickname)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
+        Member targetMember = getMember(targetNickname);
+        Project project = getProject(projectId);
 
-        Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+        matchingValidator.validateForPropose(pmMember, targetMember, project);
 
-        // PM만 제안 가능
-        if (pmMember.getMainType() != MemberMainType.PM) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
-        }
+        Matching matching = matchingRepository.save(
+                MatchingConverter.toMatching(project, targetMember, MatchingType.PROPOSE)
+        );
 
-        // 본인 프로젝트만 제안 가능
-        if (!project.getMember().getId().equals(pmMember.getId())) {
-            throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
-        }
+        notificationHelper.notifyPropose(pmMember, matching);
 
-        // 대상이 개발자여야 함
-        if (targetMember.getMainType() != MemberMainType.DEVELOPER) {
-            throw new MatchingException(MatchingErrorCode.TARGET_NOT_DEVELOPER);
-        }
-
-        // 모집 중인 프로젝트만 제안 가능
-        if (project.getStatus() != ProjectStatus.RECRUITING) {
-            throw new MatchingException(MatchingErrorCode.PROJECT_NOT_RECRUITING);
-        }
-
-        // 중복 제안 체크 (취소된 매칭 제외)
-        if (matchingRepository.existsByProjectAndMemberAndMatchingTypeAndStatusNot(project, targetMember, MatchingType.PROPOSE, MatchingStatus.CANCELLED)) {
-            throw new MatchingException(MatchingErrorCode.ALREADY_PROPOSED);
-        }
-
-        Matching matching = MatchingConverter.toMatching(project, targetMember, MatchingType.PROPOSE);
-        Matching savedMatching = matchingRepository.save(matching);
-
-        // 개발자에게 제안 알림 전송
-        sendProposeNotification(pmMember, targetMember, project, savedMatching);
-
-        return MatchingConverter.toMatchingResDTO(savedMatching);
+        return MatchingConverter.toMatchingResDTO(matching);
     }
 
-    private void sendProposeNotification(Member pm, Member developer, Project project, Matching matching) {
-        String content = String.format("%s님이 '%s' 프로젝트 참여를 제안했습니다.",
-                pm.getNickname(), project.getName());
+    @Override
+    public MatchingResDTO.ProposeResDTO respondToApplication(Member pm, Long matchingId, MatchingDecision decision) {
+        Matching matching = getMatching(matchingId);
 
-        notificationCommandService.create(
-                NotificationType.MATCHING_PROPOSED,
-                developer.getId(),  // receiver: 개발자
-                pm.getId(),         // sender: PM
-                content,
-                matching.getId()    // referenceId: matchingId
-        );
+        matchingValidator.validateForApplicationResponse(pm, matching);
+
+        matching.applyDecision(decision);
+
+        notificationHelper.notifyApplicationDecision(matching, decision);
+
+        return MatchingConverter.toMatchingResDTO(matching);
+    }
+
+    @Override
+    public MatchingResDTO.ProposeResDTO respondToProposal(Member developer, Long matchingId, MatchingDecision decision) {
+        Matching matching = getMatching(matchingId);
+
+        matchingValidator.validateForProposalResponse(developer, matching);
+
+        matching.applyDecision(decision);
+
+        notificationHelper.notifyProposalDecision(matching, decision);
+
+        return MatchingConverter.toMatchingResDTO(matching);
+    }
+
+    private Project getProject(Long projectId) {
+        return projectRepository.findById(projectId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+    }
+
+    private Member getMember(String nickname) {
+        return memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
+    }
+
+    private Matching getMatching(Long matchingId) {
+        return matchingRepository.findByIdWithDetails(matchingId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
     }
 }
