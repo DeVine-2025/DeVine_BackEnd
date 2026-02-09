@@ -15,13 +15,9 @@ import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.member.entity.Terms;
-import com.umc.devine.domain.project.converter.ProjectConverter;
-import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
-import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
-import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
@@ -48,7 +44,6 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
-    private final ProjectImageRepository projectImageRepository;
     private final DevTechstackRepository devTechstackRepository;
     private final MemberCategoryRepository memberCategoryRepository;
     private final ContactRepository contactRepository;
@@ -87,26 +82,6 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMemberWithTechstack(member);
 
         return MemberConverter.toUserProfileDTO(member, devTechstacks);
-    }
-
-    @Override
-    public ProjectResDTO.ProjectListDTO findMyProjects(Member member) {
-        List<Project> projects = projectRepository.findByMember(member);
-
-        if (projects.isEmpty()) {
-            return ProjectConverter.toProjectList(Collections.emptyList());
-        }
-
-        List<ProjectImage> allImages = projectImageRepository.findAllByProjectIn(projects);
-        Map<Long, List<ProjectImage>> imagesByProjectId = allImages.stream()
-                .collect(Collectors.groupingBy(image -> image.getProject().getId()));
-
-        List<ProjectResDTO.ProjectDetailDTO> projectList = projects.stream().map(project -> {
-            List<ProjectImage> images = imagesByProjectId.getOrDefault(project.getId(), Collections.emptyList());
-            return ProjectConverter.toProjectDetail(project, images);
-        }).collect(Collectors.toList());
-
-        return ProjectConverter.toProjectList(projectList);
     }
 
     @Override
