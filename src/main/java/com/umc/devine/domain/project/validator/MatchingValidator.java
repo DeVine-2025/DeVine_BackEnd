@@ -19,9 +19,6 @@ public class MatchingValidator {
     private final MatchingRepository matchingRepository;
 
     public void validateForApply(Member member, Project project) {
-        if (!member.isDeveloper()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
-        }
         if (!project.isRecruiting()) {
             throw new MatchingException(MatchingErrorCode.PROJECT_NOT_RECRUITING);
         }
@@ -34,14 +31,8 @@ public class MatchingValidator {
     }
 
     public void validateForPropose(Member pm, Member target, Project project) {
-        if (!pm.isPM()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
-        }
         if (!project.isOwnedBy(pm)) {
             throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
-        }
-        if (!target.isDeveloper()) {
-            throw new MatchingException(MatchingErrorCode.TARGET_NOT_DEVELOPER);
         }
         if (!project.isRecruiting()) {
             throw new MatchingException(MatchingErrorCode.PROJECT_NOT_RECRUITING);
@@ -52,9 +43,6 @@ public class MatchingValidator {
     }
 
     public void validateForApplicationResponse(Member pm, Matching matching) {
-        if (!pm.isPM()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
-        }
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
         }
@@ -67,9 +55,6 @@ public class MatchingValidator {
     }
 
     public void validateForProposalResponse(Member developer, Matching matching) {
-        if (!developer.isDeveloper()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
-        }
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
         }
@@ -78,18 +63,6 @@ public class MatchingValidator {
         }
         if (!matching.isTargetMember(developer)) {
             throw new MatchingException(MatchingErrorCode.NOT_TARGET_MEMBER);
-        }
-    }
-
-    public void validatePmRole(Member member) {
-        if (!member.isPM()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_PROPOSE);
-        }
-    }
-
-    public void validateDeveloperRole(Member member) {
-        if (!member.isDeveloper()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MEMBER_TYPE_FOR_APPLY);
         }
     }
 

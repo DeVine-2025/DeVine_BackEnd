@@ -315,7 +315,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
                     .build());
 
             MemberReqDTO.AddTechstackDTO dto = MemberReqDTO.AddTechstackDTO.builder()
-                    .techstackIds(new Long[]{newTechstack.getId()})
+                    .techstackIds(List.of(newTechstack.getId()))
                     .build();
 
             // when
@@ -330,7 +330,6 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
         void addMemberTechstacks_alreadyExists() {
             // given
             DevTechstack existing = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
@@ -338,7 +337,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             devTechstackRepository.save(existing);
 
             MemberReqDTO.AddTechstackDTO dto = MemberReqDTO.AddTechstackDTO.builder()
-                    .techstackIds(new Long[]{testTechstack.getId()})
+                    .techstackIds(List.of(testTechstack.getId()))
                     .build();
 
             // when & then
@@ -375,7 +374,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
         void removeMemberTechstacks_notFound() {
             // given
             MemberReqDTO.RemoveTechstackDTO dto = MemberReqDTO.RemoveTechstackDTO.builder()
-                    .techstackIds(new Long[]{999L}) // 존재하지 않는 ID
+                    .techstackIds(List.of(999L)) // 존재하지 않는 ID
                     .build();
 
             // when & then

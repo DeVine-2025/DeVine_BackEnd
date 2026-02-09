@@ -174,4 +174,29 @@ public class MatchingResDTO {
             @Schema(description = "프로젝트 목록")
             PagedResponse<ProjectMatchingInfo> projects
     ) {}
+
+    // 단순 매칭 상태 응답
+    @Builder
+    public record MatchingStatusRes(
+            @Schema(description = "매칭 존재 여부", example = "true")
+            boolean exists,
+
+            @Schema(description = "매칭 ID (존재하지 않으면 null)", example = "1")
+            Long matchingId,
+
+            @Schema(description = "프로젝트 ID", example = "10")
+            Long projectId,
+
+            @Schema(description = "매칭 상태 (존재하지 않으면 null)", example = "PENDING")
+            MatchingStatus status
+    ) {
+        public static MatchingStatusRes notFound(Long projectId) {
+            return MatchingStatusRes.builder()
+                    .exists(false)
+                    .matchingId(null)
+                    .projectId(projectId)
+                    .status(null)
+                    .build();
+        }
+    }
 }

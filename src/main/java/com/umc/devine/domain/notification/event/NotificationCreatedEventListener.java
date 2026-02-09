@@ -1,6 +1,6 @@
 package com.umc.devine.domain.notification.event;
 
-import com.umc.devine.infrastructure.sse.event.SseEventPublisher;
+import com.umc.devine.infrastructure.sse.pubsub.SseEventPublisher;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

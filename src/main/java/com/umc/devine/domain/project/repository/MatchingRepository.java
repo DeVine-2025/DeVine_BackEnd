@@ -97,4 +97,18 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("decision") MatchingDecision decision,
             @Param("projectStatuses") List<ProjectStatus> projectStatuses,
             Pageable pageable);
+
+    // 특정 프로젝트-회원-타입 매칭 조회 (CANCELLED 제외)
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH m.member mem " +
+            "WHERE p.id = :projectId " +
+            "AND mem.id = :memberId " +
+            "AND m.matchingType = :matchingType " +
+            "AND m.status <> :excludeStatus")
+    Optional<Matching> findByProjectIdAndMemberIdAndTypeAndStatusNot(
+            @Param("projectId") Long projectId,
+            @Param("memberId") Long memberId,
+            @Param("matchingType") MatchingType matchingType,
+            @Param("excludeStatus") MatchingStatus excludeStatus);
 }

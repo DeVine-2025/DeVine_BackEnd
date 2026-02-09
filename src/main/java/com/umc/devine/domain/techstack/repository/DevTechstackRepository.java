@@ -9,7 +9,7 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 
-public interface DevTechstackRepository extends JpaRepository<DevTechstack, DevTechstack.DevTechstackId> {
+public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long> {
     List<DevTechstack> findAllByMember(Member member);
     List<DevTechstack> findAllByMemberIn(List<Member> members);
     List<DevTechstack> findAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);

@@ -291,7 +291,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             memberCategoryRepository.save(memberCategory);
 
             DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
@@ -335,7 +334,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         void findAllDevelopersPreview_success() {
             // given
             DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
@@ -366,7 +364,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             memberCategoryRepository.save(memberCategory);
 
             DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
@@ -396,7 +393,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         void findMemberTechstacks_success() {
             // given
             DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
