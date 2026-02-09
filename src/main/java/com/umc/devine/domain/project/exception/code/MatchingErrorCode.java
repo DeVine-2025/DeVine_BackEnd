@@ -29,10 +29,10 @@ public enum MatchingErrorCode implements BaseErrorCode {
             "이미 제안한 회원입니다."),
     INVALID_MEMBER_TYPE_FOR_APPLY(HttpStatus.FORBIDDEN,
             "MATCHING403_1",
-            "개발자만 프로젝트에 지원할 수 있습니다."),
+            "개발자만 사용할 수 있는 기능입니다."),
     INVALID_MEMBER_TYPE_FOR_PROPOSE(HttpStatus.FORBIDDEN,
             "MATCHING403_2",
-            "PM만 프로젝트를 제안할 수 있습니다."),
+            "PM만 사용할 수 있는 기능입니다."),
     TARGET_NOT_DEVELOPER(HttpStatus.BAD_REQUEST,
             "MATCHING400_2",
             "제안 대상은 개발자여야 합니다."),
@@ -48,6 +48,15 @@ public enum MatchingErrorCode implements BaseErrorCode {
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST,
             "MATCHING400_4",
             "이미 취소된 매칭입니다."),
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+            "MATCHING400_5",
+            "처리할 수 없는 상태의 매칭입니다."),
+    NOT_TARGET_MEMBER(HttpStatus.FORBIDDEN,
+            "MATCHING403_5",
+            "해당 매칭의 응답 대상이 아닙니다."),
+    INVALID_MATCHING_TYPE(HttpStatus.BAD_REQUEST,
+            "MATCHING400_6",
+            "해당 매칭 유형에 대한 응답 권한이 없습니다."),
     ;
 
     private final HttpStatus status;

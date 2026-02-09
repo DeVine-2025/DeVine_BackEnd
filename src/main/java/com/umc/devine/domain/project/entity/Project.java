@@ -136,4 +136,14 @@ public class Project extends BaseEntity {
     public void clearRequirements() {
         this.requirements.clear();
     }
+
+    // ==================== 도메인 검증 메서드 ====================
+
+    public boolean isRecruiting() {
+        return this.status == ProjectStatus.RECRUITING;
+    }
+
+    public boolean isOwnedBy(Member member) {
+        return this.member.getId().equals(member.getId());
+    }
 }
