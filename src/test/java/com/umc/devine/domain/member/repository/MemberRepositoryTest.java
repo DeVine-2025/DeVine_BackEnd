@@ -199,7 +199,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
         void findDevelopersByFilters_withTechstackName() {
             // given
             DevTechstack devTechstack = DevTechstack.builder()
-                    .id(new DevTechstack.DevTechstackId(testMember.getId(), testTechstack.getId()))
                     .member(testMember)
                     .techstack(testTechstack)
                     .source(TechstackSource.MANUAL)
