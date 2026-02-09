@@ -102,4 +102,43 @@ public interface MatchingControllerDocs {
             @Parameter(description = "매칭 타입 (PROPOSE: 제안받은, APPLY: 지원한)", required = true) MatchingType type,
             @Parameter(hidden = true) Pageable pageable
     );
+
+    @Operation(summary = "개발자 - 내 지원 상태 조회",
+            description = "특정 프로젝트에 대한 본인의 지원 상태를 조회합니다. (APPLY 타입만) exists=false이면 지원하지 않은 상태입니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "지원 상태 조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트를 찾을 수 없음"
+            )
+    })
+    ApiResponse<MatchingResDTO.MatchingStatusRes> getMyApplyStatus(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId
+    );
+
+    @Operation(summary = "PM - 제안 상태 조회",
+            description = "PM이 특정 개발자에게 제안한 상태를 조회합니다. (PROPOSE 타입만) exists=false이면 제안하지 않은 상태입니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "200",
+                    description = "제안 상태 조회 성공"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "403",
+                    description = "본인 프로젝트만 조회 가능"
+            ),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(
+                    responseCode = "404",
+                    description = "프로젝트 또는 회원을 찾을 수 없음"
+            )
+    })
+    ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
+            @Parameter(description = "대상 회원 ID", required = true) @PathVariable Long memberId
+    );
 }

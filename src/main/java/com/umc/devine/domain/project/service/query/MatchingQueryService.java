@@ -12,4 +12,10 @@ public interface MatchingQueryService {
 
     // 개발자용: 프로젝트 목록 조회 (제안받은/지원한)
     MatchingResDTO.ProjectsRes getProjects(Member developer, MatchingType type, Pageable pageable);
+
+    // 개발자용: 본인의 지원 상태 조회 (APPLY 타입만)
+    MatchingResDTO.MatchingStatusRes getMyApplyStatus(Member member, Long projectId);
+
+    // PM용: 특정 개발자에게 제안한 상태 조회 (PROPOSE 타입만)
+    MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, Long memberId);
 }
