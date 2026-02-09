@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.service.command;
 
 import com.umc.devine.domain.category.entity.Category;
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.exception.CategoryException;
 import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.image.entity.Image;
@@ -16,6 +17,8 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
+import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
@@ -62,6 +65,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             throw new ProjectException(INVALID_PERMISSION);
         }
 
+        validateNotAllValues(request.projectField(), request.category(), request.recruitments());
+
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
@@ -90,6 +95,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         validateOwner(project, member.getId());
+        validateNotAllValues(request.projectField(), request.category(), request.recruitments());
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
@@ -100,7 +106,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 request.projectField(),
                 category,
                 request.mode(),
-                request.durationMonths(),
+                request.durationRange(),
                 request.location(),
                 request.recruitmentDeadline()
         );
@@ -166,8 +172,9 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 continue;
             }
 
+            TechName parentName = TechName.valueOf(dto.position().name());
             for (TechName techName : dto.techStacks()) {
-                Techstack techstack = techstackRepository.findByName(techName)
+                Techstack techstack = techstackRepository.findByNameAndParentStackName(techName, parentName)
                         .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()
@@ -195,7 +202,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
 
         boolean hasUnauthorized = images.stream()
-                .anyMatch(image -> !image.getUploader().getId().equals(memberId));
+                .anyMatch(image -> image.getUploader() == null || !image.getUploader().getId().equals(memberId));
         if (hasUnauthorized) {
             throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
         }
@@ -227,6 +234,24 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private void validateRecruitmentDeadline(LocalDate recruitmentDeadline) {
         if (recruitmentDeadline.isBefore(LocalDate.now())) {
             throw new ProjectException(INVALID_RECRUITMENT_DEADLINE);
+        }
+    }
+
+    private void validateNotAllValues(ProjectField projectField,
+                                       CategoryGenre category,
+                                       List<ProjectReqDTO.RecruitmentDTO> recruitments) {
+        if (projectField == ProjectField.ALL) {
+            throw new ProjectException(INVALID_PROJECT_FIELD);
+        }
+        if (category == CategoryGenre.ALL) {
+            throw new ProjectException(INVALID_CATEGORY);
+        }
+        if (recruitments != null) {
+            boolean hasAllPosition = recruitments.stream()
+                    .anyMatch(r -> r.position() == ProjectPart.ALL);
+            if (hasAllPosition) {
+                throw new ProjectException(INVALID_POSITION);
+            }
         }
     }
 }

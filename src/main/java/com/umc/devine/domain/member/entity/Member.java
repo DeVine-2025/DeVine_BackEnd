@@ -100,4 +100,22 @@ public class Member extends BaseEntity {
     public void updateGithubUsername(String githubUsername) {
         this.githubUsername = githubUsername;
     }
+
+    /**
+     * 회원 탈퇴 처리를 위한 메서드
+     * 현재는 주로 테스트 코드에서 회원의 상태를 변경하여 필터링 로직을 검증하는 용도로 사용됩니다.
+     */
+    public void withdraw() {
+        this.used = MemberStatus.DELETED;
+    }
+
+    // ==================== 도메인 검증 메서드 ====================
+
+    public boolean isDeveloper() {
+        return this.mainType == MemberMainType.DEVELOPER;
+    }
+
+    public boolean isPM() {
+        return this.mainType == MemberMainType.PM;
+    }
 }

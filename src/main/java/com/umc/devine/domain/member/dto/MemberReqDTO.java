@@ -2,12 +2,15 @@ package com.umc.devine.domain.member.dto;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.MemberMainType;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
+import com.umc.devine.domain.member.enums.ContactType;
 import jakarta.validation.Valid;
+import jakarta.validation.constraints.Email;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
@@ -33,6 +36,7 @@ public class MemberReqDTO {
             String nickname,
 
             @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.jpg")
+            @Size(max = 500, message = "프로필 이미지 URL은 500자 이하여야 합니다.")
             String imageUrl,
 
             @Schema(description = "역할 (PM / DEVELOPER)", requiredMode = Schema.RequiredMode.REQUIRED, example = "DEVELOPER")
@@ -45,6 +49,7 @@ public class MemberReqDTO {
             List<Long> categoryIds,
 
             @Schema(description = "보유 기술 스택 ID 목록", example = "[1, 2, 3]")
+            @Size(max = 50, message = "기술 스택은 최대 50개까지 선택할 수 있습니다.")
             List<Long> techstackIds,
 
             @Schema(description = "한줄 소개", example = "열정적인 백엔드 개발자입니다.")
@@ -52,9 +57,12 @@ public class MemberReqDTO {
             String body,
 
             @Schema(description = "이메일", example = "user@example.com")
+            @Email(message = "올바른 이메일 형식이어야 합니다.")
+            @Size(max = 100, message = "이메일은 100자 이하여야 합니다.")
             String email,
 
             @Schema(description = "링크드인 주소", example = "https://linkedin.com/in/username")
+            @Size(max = 500, message = "링크드인 주소는 500자 이하여야 합니다.")
             String linkedin
     ) {}
 
@@ -69,22 +77,61 @@ public class MemberReqDTO {
             @NotNull(message = "동의 여부는 필수입니다.")
             Boolean agreed
     ) {}
+
+    @Builder
+    @Schema(description = "연락처 정보")
+    public record ContactDTO(
+            @Schema(description = "연락처 유형", requiredMode = Schema.RequiredMode.REQUIRED)
+            @NotNull(message = "연락처 유형은 필수입니다.")
+            ContactType type,
+
+            @Schema(description = "연락처 값", example = "user@example.com")
+            @Size(max = 100, message = "연락처 값은 100자 이하여야 합니다.")
+            String value,
+
+            @Schema(description = "연락처 링크", example = "https://github.com/username")
+            @Size(max = 500, message = "연락처 링크는 500자 이하여야 합니다.")
+            String link
+    ) {}
     @Builder
     public record UpdateMemberDTO(
-            @Schema(description = "닉네임", nullable = true, example = "devine") String nickname,
-            @Schema(description = "이미지 url", nullable = true, example = "https://devine.com/image.jpg") String imageUrl,
-            @Schema(description = "주소", nullable = true, example = "서울 구로구") String address,
-            @Schema(description = "자기소개", nullable = true, example = "자기 소개 내용입니다.") String body,
-            @Schema(description = "도메인", nullable = true) CategoryGenre[] domains,
-            @Schema(description = "연락처", nullable = true) @Valid MemberResDTO.ContactDTO[] contacts,
-            @Schema(description = "메인권한", nullable = true) MemberMainType mainType,
-            @Schema(description = "개발자 검색 노출 공개", nullable = true) Boolean disclosure
-            ) {}
+            @Schema(description = "닉네임", nullable = true, example = "devine")
+            @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하여야 합니다.")
+            String nickname,
+
+            @Schema(description = "이미지 url", nullable = true, example = "https://devine.com/image.jpg")
+            @Size(max = 500, message = "이미지 URL은 500자 이하여야 합니다.")
+            String imageUrl,
+
+            @Schema(description = "주소", nullable = true, example = "서울 구로구")
+            @Size(max = 100, message = "주소는 100자 이하여야 합니다.")
+            String address,
+
+            @Schema(description = "자기소개", nullable = true, example = "자기 소개 내용입니다.")
+            @Size(max = 255, message = "자기소개는 255자 이하여야 합니다.")
+            String body,
+
+            @Schema(description = "도메인", nullable = true)
+            @Size(max = 3, message = "도메인은 최대 3개까지 선택할 수 있습니다.")
+            CategoryGenre[] domains,
+
+            @Schema(description = "연락처", nullable = true)
+            @Valid
+            @Size(max = 10, message = "연락처는 최대 10개까지 등록할 수 있습니다.")
+            ContactDTO[] contacts,
+
+            @Schema(description = "메인권한", nullable = true)
+            MemberMainType mainType,
+
+            @Schema(description = "개발자 검색 노출 공개", nullable = true)
+            Boolean disclosure
+    ) {}
 
     @Builder
     public record AddTechstackDTO(
             @Schema(description = "추가할 기술 스택 ID 목록", required = true)
             @NotEmpty(message = "기술 스택 ID 목록은 필수입니다.")
+            @Size(max = 50, message = "기술 스택은 최대 50개까지 추가할 수 있습니다.")
             Long[] techstackIds
     ) {}
 
@@ -92,6 +139,7 @@ public class MemberReqDTO {
     public record RemoveTechstackDTO(
             @Schema(description = "삭제할 기술 스택 ID 목록", required = true)
             @NotEmpty(message = "기술 스택 ID 목록은 필수입니다.")
+            @Size(max = 50, message = "기술 스택은 최대 50개까지 삭제할 수 있습니다.")
             Long[] techstackIds,
             @Schema(description = "삭제할 기술 종류", required = false)
             TechstackSource source
@@ -99,22 +147,17 @@ public class MemberReqDTO {
 
     @Builder
     public record RecommendDeveloperDTO(
-            @Schema(description = "프로젝트 ID 목록", nullable = true)
-            Long[] projectIds,
-
-            @Schema(description = "도메인 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
-            CategoryGenre category,
-
-            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
-            TechGenre techGenre,
-
-            @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
-            TechName techstackName,
+            @Schema(description = "프로젝트 ID", requiredMode = Schema.RequiredMode.REQUIRED)
+            @NotNull(message = "프로젝트 ID는 필수입니다.")
+            Long projectId,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
             Integer page,
 
             @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
             Integer size
     ) {
         public RecommendDeveloperDTO {
@@ -132,16 +175,16 @@ public class MemberReqDTO {
             @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
             CategoryGenre category,
 
-            @Schema(description = "기술 장르 (LANGUAGE, FRAMEWORK, DATABASE, CLOUD, CONTAINER, MOBILE)", nullable = true)
-            TechGenre techGenre,
-
             @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
             TechName techstackName,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
             Integer page,
 
             @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
             Integer size
     ) {
         public SearchDeveloperDTO {

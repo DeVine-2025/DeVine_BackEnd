@@ -7,11 +7,12 @@ import com.umc.devine.domain.member.entity.Member;
 
 public class ImageConverter {
 
-    public static Image toImage(ImageType imageType, String imageUrl, String s3Key, Member uploader) {
+    public static Image toImage(ImageType imageType, String imageUrl, String s3Key, String clerkId, Member uploader) {
         return Image.builder()
                 .imageType(imageType)
                 .imageUrl(imageUrl)
                 .s3Key(s3Key)
+                .clerkId(clerkId)
                 .uploader(uploader)
                 .build();
     }

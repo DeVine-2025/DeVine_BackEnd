@@ -8,4 +8,5 @@ import java.util.List;
 
 public interface ReportTechstackRepository extends JpaRepository<ReportTechstack, Long> {
     List<ReportTechstack> findAllByDevReport(DevReport devReport);
+    List<ReportTechstack> findAllByDevReportIn(List<DevReport> devReports);
 }

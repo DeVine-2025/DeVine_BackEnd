@@ -29,8 +29,8 @@
 
 | 구분 | 메서드 | 토큰 | 용도 |
 |------|--------|------|------|
-| **내 데이터 조회** | `getContributions(clerkId)` | 사용자 토큰 (Clerk) | 내 잔디, 내 레포 조회 |
-| **다른 사람 조회** | `getContributionsByUsername(username)` | 서비스 토큰 (환경변수) | 다른 회원 잔디 조회 |
+| **내 데이터 조회** | `getContributions(clerkId, from, to)` | 사용자 토큰 (Clerk) | 내 잔디, 내 레포 조회 |
+| **다른 사람 조회** | `getContributionsByUsername(username, from, to)` | 서비스 토큰 (환경변수) | 다른 회원 잔디 조회 |
 
 ---
 
@@ -81,14 +81,14 @@ public ContributionListDTO findContributionsById(Long memberId) {
 | 메서드 | 설명 | 파라미터 |
 |--------|------|----------|
 | `getRepositories(clerkId)` | 내 레포지토리 목록 조회 | clerkId |
-| `getContributions(clerkId)` | 내 잔디 데이터 조회 | clerkId |
+| `getContributions(clerkId, from, to)` | 내 잔디 데이터 조회 | clerkId, from, to (LocalDate) |
 | `getUserInfo(clerkId)` | 내 GitHub 사용자 정보 조회 | clerkId |
 
 #### 서비스 토큰 사용 (다른 사용자 조회)
 
 | 메서드 | 설명 | 파라미터 |
 |--------|------|----------|
-| `getContributionsByUsername(username)` | 다른 사용자의 잔디 조회 | GitHub 사용자명 |
+| `getContributionsByUsername(username, from, to)` | 다른 사용자의 잔디 조회 | GitHub 사용자명, from, to (LocalDate) |
 
 > **참고**: `getContributionsByUsername`은 서비스 토큰(`GITHUB_SERVICE_TOKEN`)이 설정되어 있어야 동작합니다. 토큰이 없으면 빈 목록을 반환합니다.
 
@@ -125,14 +125,14 @@ for (GitHubRepositoryDTO repo : repos) {
 
 ```java
 public class GitHubContributionDTO {
-    private String date;             // 날짜 (YYYY-MM-DD 형식)
+    private LocalDate date;             // 날짜 (LocalDate)
     private Integer contributionCount; // 해당 날짜의 기여 수
 }
 ```
 
 **사용 예시:**
 ```java
-List<GitHubContributionDTO> contributions = gitHubService.getContributions(clerkId);
+List<GitHubContributionDTO> contributions = gitHubService.getContributions(clerkId, from, to);
 
 for (GitHubContributionDTO contribution : contributions) {
     System.out.println(contribution.getDate() + ": " + contribution.getContributionCount() + "개");

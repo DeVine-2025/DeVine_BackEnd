@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.dto;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.ProjectPart;
@@ -33,14 +34,17 @@ public class ProjectResDTO {
             @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식", example = "HYBRID")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월 단위)", example = "2")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -69,8 +73,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
 
-            @Schema(description = "프로젝트 이미지 URL 목록")
-            List<String> imageUrls
+            @Schema(description = "프로젝트 이미지 목록")
+            List<ImageInfo> images
     ) {}
 
     @Builder
@@ -90,14 +94,17 @@ public class ProjectResDTO {
             @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식", example = "HYBRID")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월 단위)", example = "2")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -126,8 +133,17 @@ public class ProjectResDTO {
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
 
-            @Schema(description = "프로젝트 이미지 URL 목록")
-            List<String> imageUrls
+            @Schema(description = "프로젝트 이미지 목록")
+            List<ImageInfo> images
+    ) {}
+
+    @Builder
+    public record ImageInfo(
+            @Schema(description = "이미지 ID", example = "1")
+            Long imageId,
+
+            @Schema(description = "이미지 URL", example = "https://example.com/image.jpg")
+            String imageUrl
     ) {}
 
     @Builder
@@ -135,13 +151,16 @@ public class ProjectResDTO {
             @Schema(description = "포지션", example = "BACKEND")
             ProjectPart position,
 
+            @Schema(description = "포지션 이름", example = "백엔드")
+            String positionName,
+
             @Schema(description = "모집 인원", example = "2")
             Integer count,
 
             @Schema(description = "현재 모집된 인원", example = "0")
             Integer currentCount,
 
-            @Schema(description = "기술 스택 목록 (ID와 이름)")
+            @Schema(description = "기술 스택 목록")
             List<TechStackInfo> techStacks
     ) {}
 
@@ -165,17 +184,23 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
-            @Schema(description = "진행 방식 이름", example = "온/오프라인")
+            @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월)", example = "3")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -213,17 +238,23 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 분야 이름", example = "웹")
             String projectFieldName,
 
-            @Schema(description = "카테고리 이름", example = "ECOMMERCE")
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
             String categoryName,
 
-            @Schema(description = "진행 방식")
+            @Schema(description = "진행 방식", example = "ONLINE")
             ProjectMode mode,
 
-            @Schema(description = "진행 방식 이름", example = "온/오프라인")
+            @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "진행 기간 (개월)", example = "3")
-            Integer durationMonths,
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
 
             @Schema(description = "진행 장소", example = "서울 강남구")
             String location,
@@ -273,7 +304,7 @@ public class ProjectResDTO {
             @Schema(description = "현재 모집된 인원", example = "0")
             Integer currentCount,
 
-            @Schema(description = "기술 스택 목록 (ID와 이름)")
+            @Schema(description = "기술 스택 목록")
             List<TechStackInfo> techStacks
     ) {}
 
