@@ -19,7 +19,8 @@ public class FastApiReqDto {
             Long mainReportId,
             Long detailReportId,
             String gitUrl,
-            String githubToken
+            String githubToken,
+            String embeddingCallbackUrl
     ) {}
 
     @Builder
