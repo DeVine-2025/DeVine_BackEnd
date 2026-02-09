@@ -35,7 +35,7 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @PatchMapping("/projects/{projectId}")
+    @PatchMapping("/projects/{projectId}/cancel")
     public ApiResponse<MatchingResDTO.ProposeResDTO> cancelApplication(
             @CurrentMember Member member,
             @PathVariable Long projectId
