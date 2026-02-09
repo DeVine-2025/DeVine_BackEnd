@@ -10,7 +10,6 @@ import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
-import lombok.Getter;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -326,21 +325,69 @@ public class ProjectResDTO {
             PagedResponse<RecommendedProjectSummary> projects
     ) {}
 
-    // TODO: 내 프로젝트 조회용 DTO 추후 통합 할 것
+    // 내 프로젝트 정보 (PM/개발자 공통)
     @Builder
-    @Getter
-    public static class ProjectDetailDTO {
-        private Long id;
-        private String name;
-        private String content;
-        private ProjectStatus status;
-        private List<String> imageUrls;
-    }
+    public record MyProjectInfo(
+            @Schema(description = "프로젝트 ID", example = "1")
+            Long projectId,
 
-    // TODO: 내 프로젝트 조회용 DTO 추후 통합 할 것
+            @Schema(description = "프로젝트 제목", example = "AI 협업 플랫폼")
+            String title,
+
+            @Schema(description = "프로젝트 썸네일 이미지 URL")
+            String thumbnailUrl,
+
+            @Schema(description = "프로젝트 분야", example = "WEB")
+            ProjectField projectField,
+
+            @Schema(description = "프로젝트 분야 이름", example = "웹")
+            String projectFieldName,
+
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
+            String categoryName,
+
+            @Schema(description = "진행 장소", example = "서울 강남구")
+            String location,
+
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
+
+            @Schema(description = "진행 방식", example = "ONLINE")
+            ProjectMode mode,
+
+            @Schema(description = "진행 방식 이름", example = "온라인")
+            String modeName,
+
+            @Schema(description = "모집 파트별 인원 정보")
+            List<PositionSummary> positions,
+
+            @Schema(description = "프로젝트 기술 스택 목록")
+            List<TechStackInfo> techStacks,
+
+            @Schema(description = "내 파트 (개발자인 경우, PM은 null)", example = "BACKEND")
+            ProjectPart myPart,
+
+            @Schema(description = "내 파트 이름 (개발자인 경우, PM은 null)", example = "백엔드")
+            String myPartName,
+
+            @Schema(description = "프로젝트 상태", example = "IN_PROGRESS")
+            ProjectStatus projectStatus,
+
+            @Schema(description = "프로젝트 상태 이름", example = "진행 중")
+            String projectStatusName
+    ) {}
+
+    // 내 프로젝트 목록 응답 (PM/개발자 공통)
     @Builder
-    @Getter
-    public static class ProjectListDTO {
-        private List<ProjectDetailDTO> projects;
-    }
+    public record MyProjectsRes(
+            @Schema(description = "내 프로젝트 목록")
+            PagedResponse<MyProjectInfo> projects
+    ) {}
+
 }

@@ -8,6 +8,8 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
+import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
@@ -270,22 +272,72 @@ public class ProjectConverter {
         return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
 
-    public static ProjectResDTO.ProjectDetailDTO toProjectDetail(Project project, List<ProjectImage> images) {
-        List<String> imageUrls = (images != null) ? images.stream()
-                .map(ProjectImage::getImageUrl)
-                .collect(Collectors.toList()) : List.of();
-        return ProjectResDTO.ProjectDetailDTO.builder()
-                .id(project.getId())
-                .name(project.getName())
-                .content(project.getContent())
-                .status(project.getStatus())
-                .imageUrls(imageUrls)
-                .build();
+    // PM용: Project → MyProjectInfo (myPart = null)
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(
+            Project project,
+            ProjectRequirementTechstackRepository techstackRepository
+    ) {
+        return buildMyProjectInfo(project, null, techstackRepository);
     }
 
-    public static ProjectResDTO.ProjectListDTO toProjectList(List<ProjectResDTO.ProjectDetailDTO> projectInfoList) {
-        return ProjectResDTO.ProjectListDTO.builder()
-                .projects(projectInfoList)
+    // 개발자용: Matching → MyProjectInfo (myPart = matching.getPart())
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(
+            Matching matching,
+            ProjectRequirementTechstackRepository techstackRepository
+    ) {
+        return buildMyProjectInfo(matching.getProject(), matching.getPart(), techstackRepository);
+    }
+
+    private static ProjectResDTO.MyProjectInfo buildMyProjectInfo(
+            Project project,
+            ProjectPart myPart,
+            ProjectRequirementTechstackRepository techstackRepository
+    ) {
+        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
+                .map(req -> {
+                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
+                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
+                                    .techStack(reqTechstack.getTechstack().getName())
+                                    .build())
+                            .toList();
+                    return ProjectResDTO.PositionSummary.builder()
+                            .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
+                            .count(req.getRequirementNum())
+                            .currentCount(req.getCurrentCount())
+                            .techStacks(techStacks)
+                            .build();
+                })
+                .toList();
+
+        List<ProjectResDTO.TechStackInfo> allTechStacks = positions.stream()
+                .flatMap(p -> p.techStacks().stream())
+                .distinct()
+                .toList();
+
+        String thumbnailUrl = project.getImages().isEmpty()
+                ? null
+                : project.getImages().get(0).getImageUrl();
+
+        return ProjectResDTO.MyProjectInfo.builder()
+                .projectId(project.getId())
+                .title(project.getTitle())
+                .thumbnailUrl(thumbnailUrl)
+                .projectField(project.getProjectField())
+                .projectFieldName(project.getProjectField().getDisplayName())
+                .category(project.getCategory().getGenre())
+                .categoryName(project.getCategory().getGenre().getDisplayName())
+                .location(project.getLocation())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
+                .mode(project.getMode())
+                .modeName(project.getMode().getDisplayName())
+                .positions(positions)
+                .techStacks(allTechStacks)
+                .myPart(myPart)
+                .myPartName(myPart != null ? myPart.getDisplayName() : null)
+                .projectStatus(project.getStatus())
+                .projectStatusName(project.getStatus().getDisplayName())
                 .build();
     }
 }

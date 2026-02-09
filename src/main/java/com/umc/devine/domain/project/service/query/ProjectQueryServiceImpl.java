@@ -6,8 +6,11 @@ import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -31,6 +34,7 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     private final ProjectRepository projectRepository;
+    private final MatchingRepository matchingRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
     @Override
@@ -125,6 +129,41 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
         return ProjectResDTO.RecommendedProjectsRes.builder()
                 .projects(pagedData)
+                .build();
+    }
+
+    @Override
+    public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        if (member.isPM()) {
+            return getMyProjectsForPm(member, statuses, pageable);
+        } else {
+            return getMyProjectsForDeveloper(member, statuses, pageable);
+        }
+    }
+
+    private ProjectResDTO.MyProjectsRes getMyProjectsForPm(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        Page<Project> projectPage = projectRepository.findByMemberAndStatusIn(member, statuses, pageable);
+
+        List<ProjectResDTO.MyProjectInfo> infos = projectPage.getContent().stream()
+                .map(project -> ProjectConverter.toMyProjectInfo(project, projectRequirementTechstackRepository))
+                .toList();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(PagedResponse.of(projectPage, infos))
+                .build();
+    }
+
+    private ProjectResDTO.MyProjectsRes getMyProjectsForDeveloper(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        Page<Matching> matchingPage = matchingRepository.findByMemberAndDecisionAndProjectStatusIn(
+                member, MatchingDecision.ACCEPT, statuses, pageable
+        );
+
+        List<ProjectResDTO.MyProjectInfo> infos = matchingPage.getContent().stream()
+                .map(matching -> ProjectConverter.toMyProjectInfo(matching, projectRequirementTechstackRepository))
+                .toList();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(PagedResponse.of(matchingPage, infos))
                 .build();
     }
 
