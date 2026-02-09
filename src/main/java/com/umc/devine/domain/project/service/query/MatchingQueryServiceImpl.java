@@ -7,7 +7,6 @@ import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.repository.MatchingRepository;
-import com.umc.devine.domain.project.validator.MatchingValidator;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -23,12 +22,9 @@ import java.util.List;
 public class MatchingQueryServiceImpl implements MatchingQueryService {
 
     private final MatchingRepository matchingRepository;
-    private final MatchingValidator matchingValidator;
 
     @Override
     public MatchingResDTO.DevelopersRes getDevelopers(Member pm, MatchingType type, Pageable pageable) {
-        matchingValidator.validatePmRole(pm);
-
         Page<Matching> matchingPage = matchingRepository.findByProjectOwnerAndMatchingType(
                 pm, type, MatchingStatus.CANCELLED, pageable
         );
@@ -44,8 +40,6 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
 
     @Override
     public MatchingResDTO.ProjectsRes getProjects(Member developer, MatchingType type, Pageable pageable) {
-        matchingValidator.validateDeveloperRole(developer);
-
         Page<Matching> matchingPage = matchingRepository.findByMemberAndMatchingType(
                 developer, type, MatchingStatus.CANCELLED, pageable
         );
