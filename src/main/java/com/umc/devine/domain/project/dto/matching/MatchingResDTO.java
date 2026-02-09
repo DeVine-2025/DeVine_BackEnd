@@ -1,8 +1,14 @@
 package com.umc.devine.domain.project.dto.matching;
 
+import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.project.enums.DurationRange;
+import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectMode;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -45,13 +51,25 @@ public class MatchingResDTO {
             @Schema(description = "개발자 프로필 이미지 URL")
             String developerImageUrl,
 
-            @Schema(description = "매칭 상태", example = "PENDING")
-            MatchingStatus status,
+            @Schema(description = "지원/제안 파트", example = "BACKEND")
+            ProjectPart part,
+
+            @Schema(description = "지원/제안 파트 이름", example = "백엔드")
+            String partName,
+
+            @Schema(description = "개발자 관심 도메인")
+            List<CategoryInfo> categories,
+
+            @Schema(description = "개발자 보유 기술 스택")
+            List<TechName> techStacks,
+
+            @Schema(description = "개발자 한줄소개")
+            String body,
 
             @Schema(description = "매칭 타입", example = "APPLY")
             MatchingType matchingType,
 
-            @Schema(description = "수락 여부", example = "PENDING")
+            @Schema(description = "수락/거절 상태", example = "PENDING")
             MatchingDecision decision,
 
             @Schema(description = "생성 일시")
@@ -70,26 +88,77 @@ public class MatchingResDTO {
             @Schema(description = "프로젝트 이름", example = "AI 협업 플랫폼")
             String projectName,
 
-            @Schema(description = "PM ID", example = "5")
-            Long pmId,
+            @Schema(description = "프로젝트 썸네일 이미지 URL")
+            String thumbnailUrl,
 
-            @Schema(description = "PM 닉네임", example = "pmlee")
-            String pmNickname,
+            @Schema(description = "프로젝트 분야", example = "WEB")
+            ProjectField projectField,
 
-            @Schema(description = "PM 프로필 이미지 URL")
-            String pmImageUrl,
+            @Schema(description = "프로젝트 분야 이름", example = "웹")
+            String projectFieldName,
 
-            @Schema(description = "매칭 상태", example = "PENDING")
-            MatchingStatus status,
+            @Schema(description = "카테고리", example = "ECOMMERCE")
+            CategoryGenre category,
+
+            @Schema(description = "카테고리 이름", example = "이커머스")
+            String categoryName,
+
+            @Schema(description = "진행 장소", example = "서울 강남구")
+            String location,
+
+            @Schema(description = "진행 기간", example = "ONE_TO_THREE")
+            DurationRange durationRange,
+
+            @Schema(description = "진행 기간 이름", example = "1~3개월")
+            String durationRangeName,
+
+            @Schema(description = "진행 방식", example = "ONLINE")
+            ProjectMode mode,
+
+            @Schema(description = "진행 방식 이름", example = "온라인")
+            String modeName,
+
+            @Schema(description = "모집 파트별 인원 정보")
+            List<PositionInfo> positions,
+
+            @Schema(description = "프로젝트 기술 스택 목록")
+            List<TechName> techStacks,
+
+            @Schema(description = "제안 내용 (제안받은 경우에만)")
+            String content,
 
             @Schema(description = "매칭 타입", example = "PROPOSE")
             MatchingType matchingType,
 
-            @Schema(description = "수락 여부", example = "PENDING")
+            @Schema(description = "수락/거절 상태", example = "PENDING")
             MatchingDecision decision,
 
             @Schema(description = "생성 일시")
             LocalDateTime createdAt
+    ) {}
+
+    @Builder
+    public record CategoryInfo(
+            @Schema(description = "카테고리", example = "FINTECH")
+            CategoryGenre genre,
+
+            @Schema(description = "카테고리 이름", example = "핀테크")
+            String displayName
+    ) {}
+
+    @Builder
+    public record PositionInfo(
+            @Schema(description = "파트", example = "BACKEND")
+            ProjectPart part,
+
+            @Schema(description = "파트 이름", example = "백엔드")
+            String partName,
+
+            @Schema(description = "현재 인원", example = "1")
+            Integer currentCount,
+
+            @Schema(description = "모집 인원", example = "3")
+            Integer requirementCount
     ) {}
 
     // PM용: 개발자 목록 응답 (제안한/지원받은)

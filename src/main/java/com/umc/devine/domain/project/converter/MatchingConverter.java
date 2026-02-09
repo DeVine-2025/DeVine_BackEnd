@@ -1,20 +1,29 @@
 package com.umc.devine.domain.project.converter;
 
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
+import com.umc.devine.domain.techstack.enums.TechName;
+
+import java.util.List;
 
 public class MatchingConverter {
 
-    public static Matching toMatching(Project project, Member member, MatchingType matchingType) {
+    public static Matching toMatching(Project project, Member member, MatchingType matchingType, ProjectPart part, String content) {
         return Matching.builder()
                 .project(project)
                 .member(member)
                 .status(MatchingStatus.PENDING)
                 .matchingType(matchingType)
+                .part(part)
+                .content(content)
                 .build();
     }
 
@@ -32,9 +41,24 @@ public class MatchingConverter {
     }
 
     // PM용: 개발자 매칭 정보 변환
-    public static MatchingResDTO.DeveloperMatchingInfo toDeveloperMatchingInfo(Matching matching) {
+    public static MatchingResDTO.DeveloperMatchingInfo toDeveloperMatchingInfo(
+            Matching matching,
+            List<MemberCategory> memberCategories,
+            List<DevTechstack> devTechstacks
+    ) {
         Member developer = matching.getMember();
         Project project = matching.getProject();
+
+        List<MatchingResDTO.CategoryInfo> categories = memberCategories.stream()
+                .map(mc -> MatchingResDTO.CategoryInfo.builder()
+                        .genre(mc.getCategory().getGenre())
+                        .displayName(mc.getCategory().getGenre().getDisplayName())
+                        .build())
+                .toList();
+
+        List<TechName> techStacks = devTechstacks.stream()
+                .map(dt -> dt.getTechstack().getName())
+                .toList();
 
         return MatchingResDTO.DeveloperMatchingInfo.builder()
                 .matchingId(matching.getId())
@@ -43,7 +67,11 @@ public class MatchingConverter {
                 .developerId(developer.getId())
                 .developerNickname(developer.getNickname())
                 .developerImageUrl(developer.getImage())
-                .status(matching.getStatus())
+                .part(matching.getPart())
+                .partName(matching.getPart() != null ? matching.getPart().getDisplayName() : null)
+                .categories(categories)
+                .techStacks(techStacks)
+                .body(developer.getBody())
                 .matchingType(matching.getMatchingType())
                 .decision(matching.getDecision())
                 .createdAt(matching.getCreatedAt())
@@ -51,18 +79,46 @@ public class MatchingConverter {
     }
 
     // 개발자용: 프로젝트 매칭 정보 변환
-    public static MatchingResDTO.ProjectMatchingInfo toProjectMatchingInfo(Matching matching) {
+    public static MatchingResDTO.ProjectMatchingInfo toProjectMatchingInfo(
+            Matching matching,
+            List<ProjectRequirementTechstack> projectTechstacks
+    ) {
         Project project = matching.getProject();
-        Member pm = project.getMember();
+
+        List<MatchingResDTO.PositionInfo> positions = project.getRequirements().stream()
+                .map(req -> MatchingResDTO.PositionInfo.builder()
+                        .part(req.getPart())
+                        .partName(req.getPart().getDisplayName())
+                        .currentCount(req.getCurrentCount())
+                        .requirementCount(req.getRequirementNum())
+                        .build())
+                .toList();
+
+        List<TechName> techStacks = projectTechstacks.stream()
+                .map(pt -> pt.getTechstack().getName())
+                .toList();
+
+        String thumbnailUrl = project.getImages().isEmpty()
+                ? null
+                : project.getImages().get(0).getImageUrl();
 
         return MatchingResDTO.ProjectMatchingInfo.builder()
                 .matchingId(matching.getId())
                 .projectId(project.getId())
                 .projectName(project.getName())
-                .pmId(pm.getId())
-                .pmNickname(pm.getNickname())
-                .pmImageUrl(pm.getImage())
-                .status(matching.getStatus())
+                .thumbnailUrl(thumbnailUrl)
+                .projectField(project.getProjectField())
+                .projectFieldName(project.getProjectField().getDisplayName())
+                .category(project.getCategory().getGenre())
+                .categoryName(project.getCategory().getGenre().getDisplayName())
+                .location(project.getLocation())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
+                .mode(project.getMode())
+                .modeName(project.getMode().getDisplayName())
+                .positions(positions)
+                .techStacks(techStacks)
+                .content(matching.getContent())
                 .matchingType(matching.getMatchingType())
                 .decision(matching.getDecision())
                 .createdAt(matching.getCreatedAt())
