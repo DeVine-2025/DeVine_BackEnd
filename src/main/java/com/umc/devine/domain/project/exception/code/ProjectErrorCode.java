@@ -67,7 +67,11 @@ public enum ProjectErrorCode implements BaseErrorCode {
 
     INVALID_POSITION(HttpStatus.BAD_REQUEST,
             "PROJECT400_12",
-            "포지션에 '전체'는 선택할 수 없습니다.");
+            "포지션에 '전체'는 선택할 수 없습니다."),
+
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+            "PROJECT400_13",
+            "유효하지 않은 프로젝트 상태 전환입니다.");
 
     private final HttpStatus status;
     private final String code;

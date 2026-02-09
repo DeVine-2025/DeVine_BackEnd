@@ -23,7 +23,11 @@ public enum ProjectSuccessCode implements BaseSuccessCode {
 
     FOUND(HttpStatus.OK,
             "PROJECT200_3",
-            "프로젝트 조회에 성공하였습니다.");
+            "프로젝트 조회에 성공하였습니다."),
+
+    STATUS_CHANGED(HttpStatus.OK,
+            "PROJECT200_4",
+            "프로젝트 상태가 변경되었습니다.");
 
     private final HttpStatus status;
     private final String code;
