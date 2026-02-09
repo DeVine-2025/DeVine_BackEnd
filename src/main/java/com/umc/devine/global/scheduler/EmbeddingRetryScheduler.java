@@ -1,5 +1,6 @@
 package com.umc.devine.global.scheduler;
 
+import com.umc.devine.domain.embedding.service.command.EmbeddingCommandService;
 import com.umc.devine.domain.project.entity.ProjectEmbedding;
 import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.global.enums.EmbeddingStatus;
@@ -20,6 +21,7 @@ public class EmbeddingRetryScheduler {
 
     private final ProjectEmbeddingRepository projectEmbeddingRepository;
     private final FastApiEmbeddingClient fastApiEmbeddingClient;
+    private final EmbeddingCommandService embeddingCommandService;
 
     /**
      * 매 30분마다 실패한 프로젝트 임베딩 재시도
@@ -54,6 +56,21 @@ public class EmbeddingRetryScheduler {
                 }
             } catch (Exception e) {
                 failCount++;
+
+                // 예외 발생 시에도 실패 횟수를 DB에 반영하여 무한 재시도 방지
+                try {
+                    String errorMessage = String.format("[%s] %s",
+                            e.getClass().getSimpleName(),
+                            e.getMessage() != null ? e.getMessage() : "상세 메시지 없음");
+                    embeddingCommandService.saveProjectEmbeddingFailure(
+                            embedding.getProject().getId(),
+                            errorMessage
+                    );
+                } catch (Exception saveEx) {
+                    log.error("[EmbeddingRetry] 실패 정보 저장 중 오류 발생 - projectId: {}",
+                            embedding.getProject().getId(), saveEx);
+                }
+
                 if (embedding.getRetryCount() >= MAX_RETRY_COUNT - 1) {
                     log.error("[EmbeddingRetry] 최종 재시도 실패 - 관리자 확인 필요 - projectId: {}, retryCount: {}",
                             embedding.getProject().getId(), embedding.getRetryCount(), e);
