@@ -59,18 +59,16 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 .toList();
 
         // 개발자별 카테고리 일괄 조회
-        Map<Long, List<MemberCategory>> categoryMap = developers.stream()
-                .collect(Collectors.toMap(
-                        Member::getId,
-                        memberCategoryRepository::findAllByMemberWithCategory
-                ));
+        Map<Long, List<MemberCategory>> categoryMap = memberCategoryRepository
+                .findAllByMemberInWithCategory(developers)
+                .stream()
+                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
 
         // 개발자별 기술스택 일괄 조회
-        Map<Long, List<DevTechstack>> techstackMap = developers.stream()
-                .collect(Collectors.toMap(
-                        Member::getId,
-                        devTechstackRepository::findAllByMemberWithTechstack
-                ));
+        Map<Long, List<DevTechstack>> techstackMap = devTechstackRepository
+                .findAllByMemberInWithTechstack(developers)
+                .stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
 
         List<MatchingResDTO.DeveloperMatchingInfo> developerInfos = matchingPage.getContent().stream()
                 .map(matching -> {

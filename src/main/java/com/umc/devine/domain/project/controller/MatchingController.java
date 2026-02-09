@@ -124,6 +124,8 @@ public class MatchingController implements MatchingControllerDocs {
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_PROJECTS_SUCCESS, result);
     }
 
+    // 내 지원/개발 상태 조회(버튼 체크 용도)
+
     @Override
     @GetMapping("/projects/{projectId}/my-apply")
     public ApiResponse<MatchingResDTO.MatchingStatusRes> getMyApplyStatus(

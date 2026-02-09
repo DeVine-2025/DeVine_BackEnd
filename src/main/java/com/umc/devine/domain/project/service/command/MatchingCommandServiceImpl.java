@@ -129,9 +129,11 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
     private void incrementCurrentCount(Matching matching) {
         if (matching.getPart() == null) {
-            return;
+            throw new MatchingException(MatchingErrorCode.PART_REQUIRED);
         }
-        requirementMemberRepository.findByProjectAndPart(matching.getProject(), matching.getPart())
-                .ifPresent(ProjectRequirementMember::incrementCurrentCount);
+        ProjectRequirementMember requirement = requirementMemberRepository
+                .findByProjectAndPart(matching.getProject(), matching.getPart())
+                .orElseThrow(() -> new MatchingException(MatchingErrorCode.INVALID_PART));
+        requirement.incrementCurrentCount();
     }
 }

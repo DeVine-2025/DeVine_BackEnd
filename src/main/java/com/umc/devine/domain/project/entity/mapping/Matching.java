@@ -24,7 +24,7 @@ import java.util.Objects;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_matching_active",
-                        columnNames = {"project_id", "member_id", "matching_type", "status"}
+                        columnNames = {"project_id", "member_id", "matching_type"}
                 )
         }
 )

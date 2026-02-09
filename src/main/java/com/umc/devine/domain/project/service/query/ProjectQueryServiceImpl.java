@@ -2,6 +2,7 @@ package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -33,6 +34,8 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 @Transactional(readOnly = true)
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
+    private static final int WEEKLY_BEST_LIMIT = 4;
+
     private final ProjectRepository projectRepository;
     private final MatchingRepository matchingRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
@@ -58,9 +61,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
         List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
-        // 최대 4개만 반환
+        // 최대 N개만 반환
         List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
-                .limit(4)
+                .limit(WEEKLY_BEST_LIMIT)
                 .map(project -> ProjectConverter.toProjectSummary(project, projectRequirementTechstackRepository))
                 .toList();
 
@@ -134,7 +137,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
-        if (member.isPM()) {
+        if (member.getMainType().equals(MemberMainType.PM)) {
             return getMyProjectsForPm(member, statuses, pageable);
         } else {
             return getMyProjectsForDeveloper(member, statuses, pageable);
