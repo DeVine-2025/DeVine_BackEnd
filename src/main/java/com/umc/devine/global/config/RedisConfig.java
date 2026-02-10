@@ -1,6 +1,6 @@
 package com.umc.devine.global.config;
 
-import com.umc.devine.infrastructure.sse.event.SseEventSubscriber;
+import com.umc.devine.infrastructure.sse.pubsub.SseEventSubscriber;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

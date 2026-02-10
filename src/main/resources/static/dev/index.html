@@ -1,0 +1,372 @@
+<!doctype html>
+<html>
+<head>
+    <title>DeVine - Token Generator</title>
+    <style>
+        * {
+            box-sizing: border-box;
+        }
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #0f172a;
+            color: #e2e8f0;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+        .container {
+            background: #1e293b;
+            border-radius: 12px;
+            padding: 40px;
+            width: 100%;
+            max-width: 500px;
+            box-shadow: 0 25px 50px -12px rgba(0, 0, 0, 0.5);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 32px;
+        }
+        .header h1 {
+            margin: 0 0 8px 0;
+            font-size: 28px;
+            color: #f8fafc;
+        }
+        .header p {
+            margin: 0;
+            color: #94a3b8;
+            font-size: 14px;
+        }
+        .user-section {
+            background: #334155;
+            border-radius: 8px;
+            padding: 20px;
+            margin-bottom: 24px;
+            text-align: center;
+        }
+        .user-email {
+            font-size: 16px;
+            color: #f8fafc;
+            margin-bottom: 4px;
+        }
+        .user-status {
+            font-size: 12px;
+            color: #10b981;
+        }
+        .user-status.not-auth {
+            color: #f59e0b;
+        }
+        .social-info {
+            display: flex;
+            justify-content: center;
+            gap: 8px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+        .social-badge {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 500;
+        }
+        .social-badge.google {
+            background: #4285f4;
+            color: white;
+        }
+        .social-badge.github {
+            background: #333;
+            color: white;
+        }
+        .social-badge.apple {
+            background: #000;
+            color: white;
+        }
+        .social-badge.microsoft {
+            background: #00a4ef;
+            color: white;
+        }
+        .social-badge.facebook {
+            background: #1877f2;
+            color: white;
+        }
+        .social-badge.default {
+            background: #6b7280;
+            color: white;
+        }
+        .social-icon {
+            width: 14px;
+            height: 14px;
+        }
+        .token-section {
+            margin-bottom: 24px;
+        }
+        .token-box {
+            background: #0f172a;
+            border: 1px solid #334155;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Menlo', monospace;
+            font-size: 12px;
+            word-break: break-all;
+            max-height: 120px;
+            overflow-y: auto;
+            color: #a5b4fc;
+            display: none;
+        }
+        .token-box.visible {
+            display: block;
+        }
+        .btn-group {
+            display: flex;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .btn {
+            flex: 1;
+            min-width: 120px;
+            padding: 12px 20px;
+            border: none;
+            border-radius: 8px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        .btn-primary {
+            background: #3b82f6;
+            color: white;
+        }
+        .btn-primary:hover:not(:disabled) {
+            background: #2563eb;
+        }
+        .btn-secondary {
+            background: #475569;
+            color: white;
+        }
+        .btn-secondary:hover:not(:disabled) {
+            background: #64748b;
+        }
+        .btn-danger {
+            background: #ef4444;
+            color: white;
+        }
+        .btn-danger:hover:not(:disabled) {
+            background: #dc2626;
+        }
+        .btn-success {
+            background: #10b981 !important;
+        }
+        .hidden {
+            display: none !important;
+        }
+        .footer {
+            text-align: center;
+            margin-top: 24px;
+            padding-top: 24px;
+            border-top: 1px solid #334155;
+        }
+        .footer a {
+            color: #60a5fa;
+            text-decoration: none;
+            font-size: 14px;
+        }
+        .footer a:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="container">
+    <div class="header">
+        <h1>DeVine Token Generator</h1>
+        <p>Development JWT Token for API Testing</p>
+    </div>
+
+    <div class="user-section">
+        <div id="user-email" class="user-email">Loading...</div>
+        <div id="user-status" class="user-status">Checking authentication...</div>
+        <div id="social-info" class="social-info"></div>
+    </div>
+
+    <div class="token-section">
+        <div id="token-box" class="token-box"></div>
+    </div>
+
+    <div class="btn-group" id="logged-out-btns">
+        <button id="login-btn" class="btn btn-primary" disabled>Loading...</button>
+    </div>
+
+    <div class="btn-group hidden" id="logged-in-btns">
+        <button id="copy-btn" class="btn btn-primary">Copy Token</button>
+        <button id="show-btn" class="btn btn-secondary">Show Token</button>
+        <button id="logout-btn" class="btn btn-danger">Logout</button>
+    </div>
+
+    <div class="footer">
+        <a href="/swagger-ui.html" target="_blank">Open Swagger UI</a>
+    </div>
+</div>
+
+<script>
+    const CLERK_PUBLISHABLE_KEY = "pk_test_ZW5oYW5jZWQtYnV6emFyZC0yOS5jbGVyay5hY2NvdW50cy5kZXYk";
+
+    const socialIcons = {
+        google: `<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/><path d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84C3.99 20.53 7.7 23 12 23z"/><path d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/><path d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/></svg>`,
+        github: `<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M12 0C5.37 0 0 5.37 0 12c0 5.31 3.435 9.795 8.205 11.385.6.105.825-.255.825-.57 0-.285-.015-1.23-.015-2.235-3.015.555-3.795-.735-4.035-1.41-.135-.345-.72-1.41-1.23-1.695-.42-.225-1.02-.78-.015-.795.945-.015 1.62.87 1.845 1.23 1.08 1.815 2.805 1.305 3.495.99.105-.78.42-1.305.765-1.605-2.67-.3-5.46-1.335-5.46-5.925 0-1.305.465-2.385 1.23-3.225-.12-.3-.54-1.53.12-3.18 0 0 1.005-.315 3.3 1.23.96-.27 1.98-.405 3-.405s2.04.135 3 .405c2.295-1.56 3.3-1.23 3.3-1.23.66 1.65.24 2.88.12 3.18.765.84 1.23 1.905 1.23 3.225 0 4.605-2.805 5.625-5.475 5.925.435.375.81 1.095.81 2.22 0 1.605-.015 2.895-.015 3.3 0 .315.225.69.825.57A12.02 12.02 0 0024 12c0-6.63-5.37-12-12-12z"/></svg>`,
+        apple: `<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M18.71 19.5c-.83 1.24-1.71 2.45-3.05 2.47-1.34.03-1.77-.79-3.29-.79-1.53 0-2 .77-3.27.82-1.31.05-2.3-1.32-3.14-2.53C4.25 17 2.94 12.45 4.7 9.39c.87-1.52 2.43-2.48 4.12-2.51 1.28-.02 2.5.87 3.29.87.78 0 2.26-1.07 3.81-.91.65.03 2.47.26 3.64 1.98-.09.06-2.17 1.28-2.15 3.81.03 3.02 2.65 4.03 2.68 4.04-.03.07-.42 1.44-1.38 2.83M13 3.5c.73-.83 1.94-1.46 2.94-1.5.13 1.17-.34 2.35-1.04 3.19-.69.85-1.83 1.51-2.95 1.42-.15-1.15.41-2.35 1.05-3.11z"/></svg>`,
+        microsoft: `<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M11.4 24H0V12.6h11.4V24zM24 24H12.6V12.6H24V24zM11.4 11.4H0V0h11.4v11.4zm12.6 0H12.6V0H24v11.4z"/></svg>`,
+        facebook: `<svg class="social-icon" viewBox="0 0 24 24" fill="currentColor"><path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/></svg>`
+    };
+
+    function getSocialBadgeClass(provider) {
+        const p = provider.toLowerCase();
+        if (p.includes('google')) return 'google';
+        if (p.includes('github')) return 'github';
+        if (p.includes('apple')) return 'apple';
+        if (p.includes('microsoft')) return 'microsoft';
+        if (p.includes('facebook')) return 'facebook';
+        return 'default';
+    }
+
+    function getSocialIcon(provider) {
+        const p = provider.toLowerCase();
+        if (p.includes('google')) return socialIcons.google;
+        if (p.includes('github')) return socialIcons.github;
+        if (p.includes('apple')) return socialIcons.apple;
+        if (p.includes('microsoft')) return socialIcons.microsoft;
+        if (p.includes('facebook')) return socialIcons.facebook;
+        return '';
+    }
+
+    function getProviderDisplayName(provider) {
+        const p = provider.toLowerCase();
+        if (p.includes('google')) return 'Google';
+        if (p.includes('github')) return 'GitHub';
+        if (p.includes('apple')) return 'Apple';
+        if (p.includes('microsoft')) return 'Microsoft';
+        if (p.includes('facebook')) return 'Facebook';
+        return provider;
+    }
+
+    const script = document.createElement("script");
+    script.setAttribute("data-clerk-publishable-key", CLERK_PUBLISHABLE_KEY);
+    script.async = true;
+    script.src = "https://cdn.jsdelivr.net/npm/@clerk/clerk-js@latest/dist/clerk.browser.js";
+
+    script.addEventListener("load", async () => {
+        const userEmail = document.getElementById("user-email");
+        const userStatus = document.getElementById("user-status");
+        const socialInfo = document.getElementById("social-info");
+        const tokenBox = document.getElementById("token-box");
+        const loggedOutBtns = document.getElementById("logged-out-btns");
+        const loggedInBtns = document.getElementById("logged-in-btns");
+        const loginBtn = document.getElementById("login-btn");
+        const copyBtn = document.getElementById("copy-btn");
+        const showBtn = document.getElementById("show-btn");
+        const logoutBtn = document.getElementById("logout-btn");
+
+        let currentToken = null;
+
+        try {
+            await window.Clerk.load();
+
+            if (window.Clerk.user) {
+                const email = window.Clerk.user.primaryEmailAddress?.emailAddress || window.Clerk.user.id;
+                userEmail.textContent = email;
+                userStatus.textContent = "Authenticated";
+                userStatus.classList.remove("not-auth");
+
+                // 소셜 로그인 정보 표시
+                const externalAccounts = window.Clerk.user.externalAccounts || [];
+                if (externalAccounts.length > 0) {
+                    socialInfo.innerHTML = externalAccounts.map(account => {
+                        const provider = account.provider || account.verification?.strategy || 'unknown';
+                        const badgeClass = getSocialBadgeClass(provider);
+                        const icon = getSocialIcon(provider);
+                        const displayName = getProviderDisplayName(provider);
+                        return `<span class="social-badge ${badgeClass}">${icon} ${displayName}</span>`;
+                    }).join('');
+                } else {
+                    socialInfo.innerHTML = '<span class="social-badge default">Email</span>';
+                }
+
+                currentToken = await window.Clerk.session.getToken();
+
+                loggedOutBtns.classList.add("hidden");
+                loggedInBtns.classList.remove("hidden");
+
+                copyBtn.onclick = async () => {
+                    try {
+                        await navigator.clipboard.writeText(currentToken);
+                        copyBtn.textContent = "Copied!";
+                        copyBtn.classList.add("btn-success");
+                        setTimeout(() => {
+                            copyBtn.textContent = "Copy Token";
+                            copyBtn.classList.remove("btn-success");
+                        }, 2000);
+                    } catch (err) {
+                        const textarea = document.createElement("textarea");
+                        textarea.value = currentToken;
+                        document.body.appendChild(textarea);
+                        textarea.select();
+                        document.execCommand("copy");
+                        document.body.removeChild(textarea);
+                        copyBtn.textContent = "Copied!";
+                        copyBtn.classList.add("btn-success");
+                        setTimeout(() => {
+                            copyBtn.textContent = "Copy Token";
+                            copyBtn.classList.remove("btn-success");
+                        }, 2000);
+                    }
+                };
+
+                showBtn.onclick = () => {
+                    if (tokenBox.classList.contains("visible")) {
+                        tokenBox.classList.remove("visible");
+                        showBtn.textContent = "Show Token";
+                    } else {
+                        tokenBox.textContent = currentToken;
+                        tokenBox.classList.add("visible");
+                        showBtn.textContent = "Hide Token";
+                    }
+                };
+
+                logoutBtn.onclick = () => {
+                    window.Clerk.signOut().then(() => location.reload());
+                };
+
+            } else {
+                userEmail.textContent = "Not logged in";
+                userStatus.textContent = "Please login to generate token";
+                userStatus.classList.add("not-auth");
+
+                loginBtn.textContent = "Login with Clerk";
+                loginBtn.disabled = false;
+                loginBtn.onclick = () => {
+                    window.Clerk.openSignIn();
+                };
+            }
+
+        } catch (error) {
+            console.error("Clerk error:", error);
+            userEmail.textContent = "Error";
+            userStatus.textContent = "Failed to load Clerk";
+            userStatus.classList.add("not-auth");
+            loginBtn.textContent = "Clerk Error";
+            loginBtn.disabled = true;
+        }
+    });
+
+    document.head.appendChild(script);
+</script>
+</body>
+</html>

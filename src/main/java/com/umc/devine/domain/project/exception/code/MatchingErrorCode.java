@@ -48,6 +48,12 @@ public enum MatchingErrorCode implements BaseErrorCode {
     INVALID_MATCHING_TYPE(HttpStatus.BAD_REQUEST,
             "MATCHING400_6",
             "해당 매칭 유형에 대한 응답 권한이 없습니다."),
+    PART_REQUIRED(HttpStatus.BAD_REQUEST,
+            "MATCHING400_7",
+            "지원/제안 시 파트 선택은 필수입니다."),
+    INVALID_PART(HttpStatus.BAD_REQUEST,
+            "MATCHING400_8",
+            "해당 프로젝트에서 모집하지 않는 파트입니다."),
     ;
 
     private final HttpStatus status;

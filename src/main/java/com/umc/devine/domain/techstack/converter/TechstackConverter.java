@@ -64,7 +64,6 @@ public class TechstackConverter {
     
     public static DevTechstack toDevTechstack(Member member, Techstack techstack, TechstackSource source) {
         return DevTechstack.builder()
-                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
                 .member(member)
                 .techstack(techstack)
                 .source(source)

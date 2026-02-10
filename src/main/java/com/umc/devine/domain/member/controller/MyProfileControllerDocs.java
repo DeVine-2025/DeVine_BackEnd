@@ -3,7 +3,6 @@ package com.umc.devine.domain.member.controller;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
@@ -123,18 +122,6 @@ public interface MyProfileControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
-    );
-
-    @Operation(summary = "내 프로젝트 조회 API", description = "내 프로젝트 목록을 조회하는 API입니다.")
-    @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
-    })
-    ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(
-            @Parameter(hidden = true) @CurrentMember Member member
     );
 
     @Operation(summary = "내 GitHub 레포지토리 목록 조회 API", description = "내 GitHub 계정에 연결된 레포지토리 목록을 조회합니다.")

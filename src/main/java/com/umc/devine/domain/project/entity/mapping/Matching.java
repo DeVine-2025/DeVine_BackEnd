@@ -2,6 +2,7 @@ package com.umc.devine.domain.project.entity.mapping;
 
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
@@ -23,7 +24,7 @@ import java.util.Objects;
         uniqueConstraints = {
                 @UniqueConstraint(
                         name = "uk_matching_active",
-                        columnNames = {"project_id", "member_id", "matching_type", "status"}
+                        columnNames = {"project_id", "member_id", "matching_type"}
                 )
         }
 )
@@ -46,6 +47,13 @@ public class Matching extends BaseEntity {
     @Column(nullable = false)
     @Builder.Default
     private MatchingDecision decision = MatchingDecision.PENDING;
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "part")
+    private ProjectPart part;
+
+    @Column(name = "content", columnDefinition = "TEXT")
+    private String content;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "project_id", nullable = false)

@@ -3,6 +3,7 @@ package com.umc.devine.domain.project.service.command;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 
 public interface ProjectCommandService {
 
@@ -11,4 +12,6 @@ public interface ProjectCommandService {
     ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request);
 
     void deleteProject(Member member, Long projectId);
+
+    void changeProjectStatus(Member member, Long projectId, ProjectStatus status);
 }

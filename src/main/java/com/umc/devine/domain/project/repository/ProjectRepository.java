@@ -1,7 +1,6 @@
 package com.umc.devine.domain.project.repository;
 
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.querydsl.ProjectQueryDsl;
@@ -10,11 +9,26 @@ import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+
 import java.util.List;
 import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
-    List<Project> findByMember(Member member);
+    // PM용: 본인 프로젝트를 상태별로 조회
+    @Query(value = "SELECT p FROM Project p " +
+            "JOIN FETCH p.category " +
+            "WHERE p.member = :member " +
+            "AND p.status IN :statuses " +
+            "ORDER BY p.createdAt DESC",
+            countQuery = "SELECT COUNT(p) FROM Project p " +
+            "WHERE p.member = :member " +
+            "AND p.status IN :statuses")
+    Page<Project> findByMemberAndStatusIn(
+            @Param("member") Member member,
+            @Param("statuses") List<ProjectStatus> statuses,
+            Pageable pageable);
 
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 

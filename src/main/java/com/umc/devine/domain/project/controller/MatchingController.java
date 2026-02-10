@@ -25,17 +25,18 @@ public class MatchingController implements MatchingControllerDocs {
     private final MatchingQueryService matchingQueryService;
 
     @Override
-    @PostMapping("/projects/{projectId}")
+    @PostMapping("/applications/projects/{projectId}")
     public ApiResponse<MatchingResDTO.ProposeResDTO> applyToProject(
             @CurrentMember Member member,
-            @PathVariable Long projectId
+            @PathVariable Long projectId,
+            @Valid @RequestBody MatchingReqDTO.ApplyReqDTO dto
     ) {
-        MatchingResDTO.ProposeResDTO result = matchingCommandService.applyToProject(member, projectId);
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.applyToProject(member, projectId, dto.part());
         return ApiResponse.onSuccess(MatchingSuccessCode.APPLY_SUCCESS, result);
     }
 
     @Override
-    @PatchMapping("/projects/{projectId}")
+    @PatchMapping("/applications/projects/{projectId}/cancel")
     public ApiResponse<MatchingResDTO.ProposeResDTO> cancelApplication(
             @CurrentMember Member member,
             @PathVariable Long projectId
@@ -45,18 +46,7 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @PostMapping("/members/{nickname}")
-    public ApiResponse<MatchingResDTO.ProposeResDTO> proposeToMember(
-            @CurrentMember Member member,
-            @PathVariable String nickname,
-            @Valid @RequestBody MatchingReqDTO.ProposeReqDTO dto
-    ) {
-        MatchingResDTO.ProposeResDTO result = matchingCommandService.proposeToMember(member, nickname, dto.projectId());
-        return ApiResponse.onSuccess(MatchingSuccessCode.PROPOSE_SUCCESS, result);
-    }
-
-    @Override
-    @PatchMapping("/{matchingId}/application/respond")
+    @PatchMapping("/applications/{matchingId}/respond")
     public ApiResponse<MatchingResDTO.ProposeResDTO> respondToApplication(
             @CurrentMember Member member,
             @PathVariable Long matchingId,
@@ -70,7 +60,18 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @PatchMapping("/{matchingId}/proposal/respond")
+    @PostMapping("/proposals/members/{nickname}")
+    public ApiResponse<MatchingResDTO.ProposeResDTO> proposeToMember(
+            @CurrentMember Member member,
+            @PathVariable String nickname,
+            @Valid @RequestBody MatchingReqDTO.ProposeReqDTO dto
+    ) {
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.proposeToMember(member, nickname, dto.projectId(), dto.part(), dto.content());
+        return ApiResponse.onSuccess(MatchingSuccessCode.PROPOSE_SUCCESS, result);
+    }
+
+    @Override
+    @PatchMapping("/proposals/{matchingId}/respond")
     public ApiResponse<MatchingResDTO.ProposeResDTO> respondToProposal(
             @CurrentMember Member member,
             @PathVariable Long matchingId,
@@ -84,26 +85,46 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @GetMapping("/pm/developers")
-    public ApiResponse<MatchingResDTO.DevelopersRes> getDevelopers(
+    @GetMapping("/pm/proposed-developers")
+    public ApiResponse<MatchingResDTO.DevelopersRes> getProposedDevelopers(
             @CurrentMember Member member,
-            @RequestParam MatchingType type,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        MatchingResDTO.DevelopersRes result = matchingQueryService.getDevelopers(member, type, pageable);
+        MatchingResDTO.DevelopersRes result = matchingQueryService.getDevelopers(member, MatchingType.PROPOSE, pageable);
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_DEVELOPERS_SUCCESS, result);
     }
 
     @Override
-    @GetMapping("/developer/projects")
-    public ApiResponse<MatchingResDTO.ProjectsRes> getProjects(
+    @GetMapping("/pm/applications")
+    public ApiResponse<MatchingResDTO.DevelopersRes> getPmApplications(
             @CurrentMember Member member,
-            @RequestParam MatchingType type,
             @PageableDefault(size = 10) Pageable pageable
     ) {
-        MatchingResDTO.ProjectsRes result = matchingQueryService.getProjects(member, type, pageable);
+        MatchingResDTO.DevelopersRes result = matchingQueryService.getDevelopers(member, MatchingType.APPLY, pageable);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_DEVELOPERS_SUCCESS, result);
+    }
+
+    @Override
+    @GetMapping("/developer/received-proposals")
+    public ApiResponse<MatchingResDTO.ProjectsRes> getReceivedProposals(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        MatchingResDTO.ProjectsRes result = matchingQueryService.getProjects(member, MatchingType.PROPOSE, pageable);
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_PROJECTS_SUCCESS, result);
     }
+
+    @Override
+    @GetMapping("/developer/applications")
+    public ApiResponse<MatchingResDTO.ProjectsRes> getDeveloperApplications(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        MatchingResDTO.ProjectsRes result = matchingQueryService.getProjects(member, MatchingType.APPLY, pageable);
+        return ApiResponse.onSuccess(MatchingSuccessCode.GET_PROJECTS_SUCCESS, result);
+    }
+
+    // 내 지원/개발 상태 조회(버튼 체크 용도)
 
     @Override
     @GetMapping("/projects/{projectId}/my-apply")

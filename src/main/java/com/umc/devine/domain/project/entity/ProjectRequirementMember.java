@@ -32,4 +32,8 @@ public class ProjectRequirementMember extends BaseEntity {
     @Column(name = "current_count")
     @Builder.Default
     private Integer currentCount = 0;
+
+    public void incrementCurrentCount() {
+        this.currentCount++;
+    }
 }

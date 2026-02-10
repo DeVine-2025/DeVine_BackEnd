@@ -1,5 +1,7 @@
 package com.umc.devine.domain.project.service.query;
 
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
+import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
@@ -13,6 +15,11 @@ import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
 import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
 import com.umc.devine.domain.project.repository.MatchingRepository;
+import com.umc.devine.domain.project.validator.MatchingValidator;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
+import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
+import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -22,6 +29,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
 import java.util.Optional;
 
 @Service
@@ -32,6 +41,10 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
     private final MatchingRepository matchingRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
+    private final MatchingValidator matchingValidator;
+    private final MemberCategoryRepository memberCategoryRepository;
+    private final DevTechstackRepository devTechstackRepository;
+    private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
     @Override
     public MatchingResDTO.DevelopersRes getDevelopers(Member pm, MatchingType type, Pageable pageable) {
@@ -39,12 +52,35 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 pm, type, MatchingStatus.CANCELLED, pageable
         );
 
-        List<MatchingResDTO.DeveloperMatchingInfo> developers = matchingPage.getContent().stream()
-                .map(MatchingConverter::toDeveloperMatchingInfo)
+        // 개발자 목록 추출
+        List<Member> developers = matchingPage.getContent().stream()
+                .map(Matching::getMember)
+                .distinct()
+                .toList();
+
+        // 개발자별 카테고리 일괄 조회
+        Map<Long, List<MemberCategory>> categoryMap = memberCategoryRepository
+                .findAllByMemberInWithCategory(developers)
+                .stream()
+                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
+
+        // 개발자별 기술스택 일괄 조회
+        Map<Long, List<DevTechstack>> techstackMap = devTechstackRepository
+                .findAllByMemberInWithTechstack(developers)
+                .stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
+        List<MatchingResDTO.DeveloperMatchingInfo> developerInfos = matchingPage.getContent().stream()
+                .map(matching -> {
+                    Long devId = matching.getMember().getId();
+                    List<MemberCategory> categories = categoryMap.getOrDefault(devId, List.of());
+                    List<DevTechstack> techstacks = techstackMap.getOrDefault(devId, List.of());
+                    return MatchingConverter.toDeveloperMatchingInfo(matching, categories, techstacks);
+                })
                 .toList();
 
         return MatchingResDTO.DevelopersRes.builder()
-                .developers(PagedResponse.of(matchingPage, developers))
+                .developers(PagedResponse.of(matchingPage, developerInfos))
                 .build();
     }
 
@@ -54,12 +90,21 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 developer, type, MatchingStatus.CANCELLED, pageable
         );
 
-        List<MatchingResDTO.ProjectMatchingInfo> projects = matchingPage.getContent().stream()
-                .map(MatchingConverter::toProjectMatchingInfo)
+        List<MatchingResDTO.ProjectMatchingInfo> projectInfos = matchingPage.getContent().stream()
+                .map(matching -> {
+                    // 요구사항별 기술스택 그룹핑 조회
+                    Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement =
+                            matching.getProject().getRequirements().stream()
+                                    .collect(Collectors.toMap(
+                                            req -> req.getId(),
+                                            req -> projectRequirementTechstackRepository.findByRequirement(req)
+                                    ));
+                    return MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement);
+                })
                 .toList();
 
         return MatchingResDTO.ProjectsRes.builder()
-                .projects(PagedResponse.of(matchingPage, projects))
+                .projects(PagedResponse.of(matchingPage, projectInfos))
                 .build();
     }
 

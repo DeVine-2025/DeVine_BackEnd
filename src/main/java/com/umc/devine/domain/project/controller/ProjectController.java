@@ -3,6 +3,7 @@ package com.umc.devine.domain.project.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.code.ProjectSuccessCode;
 import com.umc.devine.domain.project.service.command.ProjectCommandService;
 import com.umc.devine.domain.project.service.query.ProjectQueryService;
@@ -11,7 +12,11 @@ import com.umc.devine.global.auth.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
+
+import java.util.List;
 
 @RestController
 @RequiredArgsConstructor
@@ -42,6 +47,17 @@ public class ProjectController implements ProjectControllerDocs {
         ProjectSuccessCode code = ProjectSuccessCode.UPDATED;
         ProjectResDTO.UpdateProjectRes response = projectCommandService.updateProject(member, projectId, request);
         return ApiResponse.onSuccess(code, response);
+    }
+
+    @Override
+    @PatchMapping("/{projectId}/status")
+    public ApiResponse<Void> changeProjectStatus(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId,
+            @RequestBody @Valid ProjectReqDTO.ChangeStatusReq request
+    ) {
+        projectCommandService.changeProjectStatus(member, projectId, request.status());
+        return ApiResponse.onSuccess(ProjectSuccessCode.STATUS_CHANGED, null);
     }
 
     @Override
@@ -107,5 +123,44 @@ public class ProjectController implements ProjectControllerDocs {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
         ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjectsPage(member, request);
         return ApiResponse.onSuccess(code, response);
+    }
+
+    // 내 프로젝트: 모집 중
+    @Override
+    @GetMapping("/my/recruiting")
+    public ApiResponse<ProjectResDTO.MyProjectsRes> getMyRecruitingProjects(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
+                member, List.of(ProjectStatus.RECRUITING), pageable
+        );
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
+    }
+
+    // 내 프로젝트: 진행 중
+    @Override
+    @GetMapping("/my/in-progress")
+    public ApiResponse<ProjectResDTO.MyProjectsRes> getMyInProgressProjects(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
+                member, List.of(ProjectStatus.IN_PROGRESS), pageable
+        );
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
+    }
+
+    // 내 프로젝트: 완료
+    @Override
+    @GetMapping("/my/completed")
+    public ApiResponse<ProjectResDTO.MyProjectsRes> getMyCompletedProjects(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
+                member, List.of(ProjectStatus.COMPLETED), pageable
+        );
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }
 }
