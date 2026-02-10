@@ -19,7 +19,9 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import jakarta.annotation.PostConstruct;
 import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -34,6 +36,13 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final ApplicationEventPublisher eventPublisher;
     private final FastApiSyncReportClient fastApiSyncReportClient;
     private final PlatformTransactionManager transactionManager;
+    private TransactionTemplate requiresNewTxTemplate;
+
+    @PostConstruct
+    void initTransactionTemplate() {
+        this.requiresNewTxTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTxTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
@@ -251,10 +260,9 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         }
     }
 
-    // 별도 트랜잭션에서 리포트 저장 (트랜잭션 오염 방지) 후 현재 영속성 컨텍스트에 merge
+    // REQUIRES_NEW 트랜잭션에서 리포트 저장 (트랜잭션 오염 방지) 후 현재 영속성 컨텍스트에 merge
     private DevReport saveReportWithDuplicateCheckInNewTransaction(DevReport report) {
-        TransactionTemplate txTemplate = new TransactionTemplate(transactionManager);
-        DevReport saved = txTemplate.execute(status -> {
+        DevReport saved = requiresNewTxTemplate.execute(status -> {
             try {
                 return devReportRepository.saveAndFlush(report);
             } catch (DataIntegrityViolationException e) {
