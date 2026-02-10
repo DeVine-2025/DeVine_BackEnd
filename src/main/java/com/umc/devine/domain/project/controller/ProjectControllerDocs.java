@@ -86,12 +86,12 @@ public interface ProjectControllerDocs {
         @Operation(
                         summary = "추천 프로젝트 미리보기 조회 (메인 하단 / 프로젝트·개발자 보기 탭 상단)",
                         description = """
-                                        사용자에게 맞는 추천 프로젝트를 미리보기 형태로 제공합니다.
+                                        벡터 유사도 기반 복합 점수로 추천 프로젝트를 미리보기 형태로 제공합니다.
 
                                         - 메인 화면 하단: limit=6 (기본값)
                                         - 프로젝트·개발자 보기 탭 상단: limit=4
 
-                                        **추천 알고리즘:** TODO - 현재는 최신순으로 반환
+                                        개발자는 리포트 임베딩 기반 개인화 추천, PM 또는 임베딩 미보유 시 최신 모집 중 프로젝트를 반환합니다.
                                         """
         )
         @ApiResponses({
@@ -104,21 +104,25 @@ public interface ProjectControllerDocs {
                         @ParameterObject @Valid @ModelAttribute ProjectReqDTO.RecommendProjectsPreviewReq request);
 
         @Operation(
-                        summary = "추천 프로젝트 페이지 조회 (추천 프로젝트 탭용)",
+                        summary = "추천 프로젝트 조회 (추천 프로젝트 탭용)",
                         description = """
-                                        사용자에게 맞는 추천 프로젝트를 필터링 및 페이징하여 제공합니다.
+                                        벡터 유사도 기반 복합 점수(리포트 유사도 60% + 기술스택 매칭 20% + 도메인 일치도 20%)로
+                                        상위 10개 프로젝트를 추천합니다.
 
-                                        **추천 알고리즘:** TODO - 현재는 최신순으로 반환
+                                        - 개발자: 리포트 임베딩 기반 개인화 추천
+                                        - PM 또는 임베딩 미보유: 최신 모집 중 프로젝트 반환
+
+                                        필터 미선택 시 전체 대상으로 추천합니다.
                                         """
         )
         @ApiResponses({
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 프로젝트 페이지 조회 성공", content = @Content(schema = @Schema(implementation = ProjectResDTO.RecommendedProjectsRes.class))),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "추천 프로젝트 조회 성공", content = @Content(schema = @Schema(implementation = ProjectResDTO.RecommendedProjectsRes.class))),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
         })
         ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
                         @Parameter(hidden = true) @CurrentMember Member member,
-                        @ParameterObject @Valid @ModelAttribute ProjectReqDTO.RecommendProjectsPageReq request);
+                        @ParameterObject @Valid @ModelAttribute ProjectReqDTO.RecommendProjectsReq request);
 
         @Operation(summary = "프로젝트 상태 변경 API", description = "프로젝트 상태를 변경합니다. 모집 중 → 진행 중 → 완료 순서로만 전환 가능합니다. 작성자 본인만 변경 가능합니다.")
         @ApiResponses({
