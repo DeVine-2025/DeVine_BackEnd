@@ -2,7 +2,6 @@ package com.umc.devine.domain.project.repository.querydsl;
 
 import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
-import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.entity.QProject;
 import com.umc.devine.domain.project.enums.ProjectField;
@@ -28,9 +27,8 @@ public class ProjectPredicateBuilder {
             builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
-        if (req.categories() != null && !req.categories().isEmpty()
-                && !req.categories().contains(CategoryGenre.ALL)) {
+        // 카테고리 필터 (비어있으면 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()) {
             builder.and(project.category.genre.in(req.categories()));
         }
 
@@ -74,9 +72,8 @@ public class ProjectPredicateBuilder {
             builder.and(project.projectField.in(req.projectFields()));
         }
 
-        // 카테고리 필터 (비어있거나 ALL 포함 시 전체 조회)
-        if (req.categories() != null && !req.categories().isEmpty()
-                && !req.categories().contains(CategoryGenre.ALL)) {
+        // 카테고리 필터 (비어있으면 전체 조회)
+        if (req.categories() != null && !req.categories().isEmpty()) {
             builder.and(project.category.genre.in(req.categories()));
         }
 
