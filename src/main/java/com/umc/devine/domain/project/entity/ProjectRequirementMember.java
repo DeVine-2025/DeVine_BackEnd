@@ -23,7 +23,7 @@ public class ProjectRequirementMember extends BaseEntity {
     private Project project;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "req_mem_part", nullable = false)
+    @Column(name = "req_mem_part", nullable = false, length = 30)
     private ProjectPart part;
 
     @Column(name = "req_mem_num", nullable = false)

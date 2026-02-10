@@ -16,6 +16,9 @@ public class ReportResDTO {
             @Schema(description = "리포트 ID", example = "1")
             Long reportId,
 
+            @Schema(description = "Git 저장소 ID", example = "1")
+            Long gitRepoId,
+
             @Schema(description = "리포트 타입", example = "MAIN")
             ReportType reportType,
 

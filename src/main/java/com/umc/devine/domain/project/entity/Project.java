@@ -34,7 +34,7 @@ public class Project extends BaseEntity {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "project_status", nullable = false)
+    @Column(name = "project_status", nullable = false, length = 20)
     private ProjectStatus status;
 
     @Enumerated(EnumType.STRING)

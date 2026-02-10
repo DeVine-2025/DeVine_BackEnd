@@ -3,6 +3,7 @@ package com.umc.devine.domain.techstack.converter;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.techstack.dto.DevReportResDTO;
 import com.umc.devine.domain.techstack.dto.ReportTechStackResDTO;
+import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ReportTechstack;
 
 import java.util.List;
@@ -11,9 +12,10 @@ import java.util.stream.Collectors;
 public class DevReportConverter {
 
     public static ReportTechStackResDTO.ReportTechstackDTO toReportTechstackDTO(ReportTechstack reportTechstack) {
+        Techstack techstack = reportTechstack.getTechstack();
         return ReportTechStackResDTO.ReportTechstackDTO.builder()
-                .techstackName(reportTechstack.getTechstack().getName().toString())
-                .techGenre(reportTechstack.getTechstack().getGenre().toString())
+                .techstackName(techstack.getName().toString())
+                .techGenre(techstack.getGenre() != null ? techstack.getGenre().toString() : null)
                 .rate(reportTechstack.getRate())
                 .build();
     }

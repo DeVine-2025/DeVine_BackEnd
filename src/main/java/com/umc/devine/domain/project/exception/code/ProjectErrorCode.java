@@ -69,8 +69,16 @@ public enum ProjectErrorCode implements BaseErrorCode {
             "PROJECT400_12",
             "포지션에 '전체'는 선택할 수 없습니다."),
 
-    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+    EMBEDDING_VECTOR_EMPTY(HttpStatus.BAD_REQUEST,
             "PROJECT400_13",
+            "임베딩 벡터가 비어있습니다."),
+
+    EMBEDDING_INVALID_DIMENSION(HttpStatus.BAD_REQUEST,
+            "PROJECT400_14",
+            "임베딩 벡터 차원이 올바르지 않습니다."),
+
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+            "PROJECT400_15",
             "유효하지 않은 프로젝트 상태 전환입니다.");
 
     private final HttpStatus status;

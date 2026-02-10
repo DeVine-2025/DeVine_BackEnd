@@ -198,7 +198,9 @@ public class MemberConverter {
                 .collect(java.util.stream.Collectors.toList());
 
         List<String> techGenres = devTechstacks.stream()
-                .map(devTechstack -> devTechstack.getTechstack().getGenre().toString())
+                .map(devTechstack -> devTechstack.getTechstack().getGenre())
+                .filter(genre -> genre != null)
+                .map(genre -> genre.toString())
                 .distinct()
                 .collect(java.util.stream.Collectors.toList());
 

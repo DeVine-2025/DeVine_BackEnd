@@ -22,6 +22,7 @@ import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.infrastructure.github.GitHubService;
@@ -143,7 +144,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(
                 MemberMainType.DEVELOPER,
-                category,
+                List.of(category),
                 null,
                 dto.toPageable()
         );
@@ -194,10 +195,15 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     @Override
     public PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO request) {
+        List<CategoryGenre> categories = request.categories() != null && !request.categories().isEmpty()
+                ? request.categories() : null;
+        List<TechName> techstackNames = request.techstackNames() != null && !request.techstackNames().isEmpty()
+                ? request.techstackNames() : null;
+
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(
                 MemberMainType.DEVELOPER,
-                request.category(),
-                request.techstackName(),
+                categories,
+                techstackNames,
                 request.toPageable()
         );
 

@@ -3,6 +3,8 @@ package com.umc.devine.infrastructure.fastapi.dto;
 import com.fasterxml.jackson.databind.JsonNode;
 import lombok.Builder;
 
+import java.util.List;
+
 public class FastApiResDto {
 
     @Builder
@@ -20,5 +22,11 @@ public class FastApiResDto {
             String status,
             JsonNode content,
             String errorMessage
+    ) {}
+
+    @Builder
+    public record EmbeddingRes(
+            List<Double> vector,
+            Integer dimension
     ) {}
 }
