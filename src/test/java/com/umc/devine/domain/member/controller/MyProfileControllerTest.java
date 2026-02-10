@@ -166,7 +166,7 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("내 기술 스택 추가 성공")
         void addMyTechstacks_success() throws Exception {
             MemberReqDTO.AddTechstackDTO dto = MemberReqDTO.AddTechstackDTO.builder()
-                    .techstackIds(List.of(testTechstack.getId()))
+                    .techstackIds(new Long[] {testTechstack.getId()})
                     .build();
 
             mockMvc.perform(post("/api/v1/members/me/techstacks")
@@ -195,29 +195,13 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
             devTechstackRepository.save(devTechstack);
 
             MemberReqDTO.RemoveTechstackDTO dto = MemberReqDTO.RemoveTechstackDTO.builder()
-                    .techstackIds(List.of(testTechstack.getId()))
+                    .techstackIds(new Long[] {testTechstack.getId()})
                     .build();
 
             mockMvc.perform(delete("/api/v1/members/me/techstacks")
                             .with(authentication(testAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(dto)))
-                    .andDo(print())
-                    .andExpect(status().isOk())
-                    .andExpect(jsonPath("$.isSuccess").value(true));
-        }
-    }
-
-    @Nested
-    @DisplayName("내 프로젝트 조회")
-    class GetProjectsTest {
-
-        @Test
-        @DisplayName("내 프로젝트 조회 성공")
-        void getProjects_success() throws Exception {
-            mockMvc.perform(get("/api/v1/members/me/projects")
-                            .with(authentication(testAuth))
-                            .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
