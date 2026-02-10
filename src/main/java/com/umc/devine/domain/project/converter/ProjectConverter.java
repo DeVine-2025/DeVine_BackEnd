@@ -162,18 +162,15 @@ public class ProjectConverter {
                 .build();
     }
 
-    // Project → RecommendedProjectSummary 변환 (추천 프로젝트 요약 - 점수 포함, 포지션별 모집 정보 포함)
+    // Project → RecommendedProjectSummary 변환 (추천 프로젝트 요약 - 벡터 검색 점수 포함)
     public static ProjectResDTO.RecommendedProjectSummary toRecommendedProjectSummary(
             Project project,
-            ProjectRequirementTechstackRepository techstackRepository
+            ProjectRequirementTechstackRepository techstackRepository,
+            Double totalScore,
+            Double similarityScorePercent,
+            Double techstackScorePercent,
+            Boolean domainMatch
     ) {
-        // TODO: 실제 추천 알고리즘 기반 점수 계산
-        // 현재는 더미 점수 반환
-        int techScore = 4;
-        int domainScore = 4;
-        int techStackCountScore = 3;
-        int totalScore = calculateTotalScore(techScore, domainScore, techStackCountScore);
-
         List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
                 .map(req -> {
                     List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
@@ -210,10 +207,10 @@ public class ProjectConverter {
                 .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImageUrl())
                 .positions(positions)
                 .creatorName(project.getMember().getName())
-                .techScore(techScore)
-                .domainScore(domainScore)
-                .techStackCountScore(techStackCountScore)
-                .totalScore(totalScore)
+                .totalScore(totalScore != null ? Math.round(totalScore * 10) / 10.0 : null)
+                .similarityScorePercent(similarityScorePercent != null ? Math.round(similarityScorePercent * 10) / 10.0 : null)
+                .techstackScorePercent(techstackScorePercent != null ? Math.round(techstackScorePercent * 10) / 10.0 : null)
+                .domainMatch(domainMatch)
                 .build();
     }
 
@@ -262,14 +259,6 @@ public class ProjectConverter {
     private static Long calculateDaysUntilDeadline(LocalDate recruitmentDeadline) {
         LocalDate today = LocalDate.now();
         return ChronoUnit.DAYS.between(today, recruitmentDeadline);
-    }
-
-    // 총점 계산 (5점 만점 점수들을 100점 만점으로 환산)
-    private static int calculateTotalScore(int techScore, int domainScore, int techStackCountScore) {
-        double techWeight = (techScore / 5.0) * 100 / 3.0;
-        double domainWeight = (domainScore / 5.0) * 100 / 3.0;
-        double techStackWeight = (techStackCountScore / 5.0) * 100 / 3.0;
-        return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
 
     // PM용: Project → MyProjectInfo (myPart = PM)
