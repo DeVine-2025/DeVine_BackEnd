@@ -64,7 +64,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
 
         validateGitRepoOwnership(gitRepoUrl, memberId);
-        deleteFailedReportsIfExists(request.gitRepoId());
         validateReportNotExists(request.gitRepoId());
 
         DevReport mainReport = ReportConverter.toReport(gitRepoUrl, ReportType.MAIN);
@@ -99,8 +98,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
         validateGitRepoOwnership(gitRepoUrl, memberId);
 
-        // 2. 실패한 리포트 삭제 후 중복 체크 (실패한 리포트는 재시도 허용)
-        deleteFailedReportsIfExists(request.gitRepoId());
+        // 2. 활성 리포트 중복 체크 (실패한 리포트는 partial unique index에서 제외되어 재시도 가능)
         validateReportNotExists(request.gitRepoId());
 
         // 3. MAIN/DETAIL 리포트 엔티티 생성 및 저장
@@ -245,11 +243,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         }
     }
 
-    private void deleteFailedReportsIfExists(Long gitRepoId) {
-        devReportRepository.deleteFailedReportsByGitRepoUrlId(gitRepoId);
-    }
-
-    // 리포트 저장 시 동시 요청으로 인한 중복 삽입을 처리
+    // 리포트 저장 시 동시 요청으로 인한 중복 삽입을 처리 (partial unique index 위반 대응)
     private DevReport saveReportWithDuplicateCheck(DevReport report) {
         try {
             return devReportRepository.saveAndFlush(report);
