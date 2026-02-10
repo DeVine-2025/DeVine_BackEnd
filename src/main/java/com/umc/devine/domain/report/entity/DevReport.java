@@ -16,11 +16,7 @@ import java.time.LocalDateTime;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Table(name = "dev_report",
-        uniqueConstraints = @UniqueConstraint(
-                name = "uk_dev_report_git_repo_type",
-                columnNames = {"git_repo_id", "report_type"}
-        ))
+@Table(name = "dev_report")
 public class DevReport extends BaseEntity {
 
     @Id
