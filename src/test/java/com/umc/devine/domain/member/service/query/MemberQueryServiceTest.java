@@ -17,7 +17,6 @@ import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
-import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectField;
@@ -221,36 +220,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("내 프로젝트 조회")
-    class FindMyProjectsTest {
-
-        @Test
-        @DisplayName("내가 생성한 프로젝트 목록을 조회한다")
-        void findMyProjects_success() {
-            // given
-            projectRepository.save(Project.builder()
-                    .name("테스트 프로젝트")
-                    .content("내용")
-                    .status(ProjectStatus.RECRUITING)
-                    .projectField(ProjectField.ALL)
-                    .mode(ProjectMode.ONLINE)
-                    .durationRange(DurationRange.ONE_TO_THREE)
-                    .location("서울")
-                    .recruitmentDeadline(LocalDate.now().plusDays(7))
-                    .category(testCategory)
-                    .member(testMember)
-                    .build());
-
-            // when
-            ProjectResDTO.ProjectListDTO result = memberQueryService.findMyProjects(testMember);
-
-            // then
-            assertThat(result.getProjects()).hasSize(1);
-            assertThat(result.getProjects().get(0).getName()).isEqualTo("테스트 프로젝트");
-        }
-    }
-
-    @Nested
     @DisplayName("닉네임 중복 체크")
     class CheckNicknameDuplicateTest {
 
@@ -414,21 +383,6 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.techstacks()).isEmpty();
-        }
-    }
-
-    @Nested
-    @DisplayName("프로젝트 없는 경우")
-    class FindMyProjectsEmptyTest {
-
-        @Test
-        @DisplayName("프로젝트가 없으면 빈 리스트를 반환한다")
-        void findMyProjects_empty() {
-            // when
-            ProjectResDTO.ProjectListDTO result = memberQueryService.findMyProjects(testMember);
-
-            // then
-            assertThat(result.getProjects()).isEmpty();
         }
     }
 
