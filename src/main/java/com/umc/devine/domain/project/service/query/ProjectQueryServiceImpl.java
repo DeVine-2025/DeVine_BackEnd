@@ -148,7 +148,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Page<Project> projectPage = projectRepository.findByMemberAndStatusIn(member, statuses, pageable);
 
         List<ProjectResDTO.MyProjectInfo> infos = projectPage.getContent().stream()
-                .map(project -> ProjectConverter.toMyProjectInfo(project, projectRequirementTechstackRepository))
+                .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
         return ProjectResDTO.MyProjectsRes.builder()
@@ -162,7 +162,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         );
 
         List<ProjectResDTO.MyProjectInfo> infos = matchingPage.getContent().stream()
-                .map(matching -> ProjectConverter.toMyProjectInfo(matching, projectRequirementTechstackRepository))
+                .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
         return ProjectResDTO.MyProjectsRes.builder()

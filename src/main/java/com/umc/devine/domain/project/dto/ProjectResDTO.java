@@ -364,12 +364,6 @@ public class ProjectResDTO {
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "모집 파트별 인원 정보")
-            List<PositionSummary> positions,
-
-            @Schema(description = "프로젝트 기술 스택 목록")
-            List<TechStackInfo> techStacks,
-
             @Schema(description = "내 파트 (개발자인 경우, PM은 null)", example = "BACKEND")
             ProjectPart myPart,
 

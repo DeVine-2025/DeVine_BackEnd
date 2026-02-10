@@ -272,49 +272,17 @@ public class ProjectConverter {
         return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
 
-    // PM용: Project → MyProjectInfo (myPart = null)
-    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(
-            Project project,
-            ProjectRequirementTechstackRepository techstackRepository
-    ) {
-        return buildMyProjectInfo(project, null, techstackRepository);
+    // PM용: Project → MyProjectInfo (myPart = PM)
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(Project project) {
+        return buildMyProjectInfo(project, ProjectPart.PM);
     }
 
     // 개발자용: Matching → MyProjectInfo (myPart = matching.getPart())
-    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(
-            Matching matching,
-            ProjectRequirementTechstackRepository techstackRepository
-    ) {
-        return buildMyProjectInfo(matching.getProject(), matching.getPart(), techstackRepository);
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(Matching matching) {
+        return buildMyProjectInfo(matching.getProject(), matching.getPart());
     }
 
-    private static ProjectResDTO.MyProjectInfo buildMyProjectInfo(
-            Project project,
-            ProjectPart myPart,
-            ProjectRequirementTechstackRepository techstackRepository
-    ) {
-        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
-                .map(req -> {
-                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
-                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
-                                    .techStack(reqTechstack.getTechstack().getName())
-                                    .build())
-                            .toList();
-                    return ProjectResDTO.PositionSummary.builder()
-                            .position(req.getPart())
-                            .positionName(req.getPart().getDisplayName())
-                            .count(req.getRequirementNum())
-                            .currentCount(req.getCurrentCount())
-                            .techStacks(techStacks)
-                            .build();
-                })
-                .toList();
-
-        List<ProjectResDTO.TechStackInfo> allTechStacks = positions.stream()
-                .flatMap(p -> p.techStacks().stream())
-                .distinct()
-                .toList();
-
+    private static ProjectResDTO.MyProjectInfo buildMyProjectInfo(Project project, ProjectPart myPart) {
         String thumbnailUrl = project.getImages().isEmpty()
                 ? null
                 : project.getImages().get(0).getImageUrl();
@@ -332,8 +300,6 @@ public class ProjectConverter {
                 .durationRangeName(project.getDurationRange().getDisplayName())
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
-                .positions(positions)
-                .techStacks(allTechStacks)
                 .myPart(myPart)
                 .myPartName(myPart != null ? myPart.getDisplayName() : null)
                 .projectStatus(project.getStatus())
