@@ -24,7 +24,7 @@ public class Bookmark extends BaseEntity {
     private Member member;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "target_type", nullable = false)
+    @Column(name = "target_type", nullable = false, length = 20)
     private BookmarkType targetType;
 
     @Column(name = "target_id", nullable = false)

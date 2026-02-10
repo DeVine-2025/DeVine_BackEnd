@@ -33,12 +33,12 @@ public class DevReport extends BaseEntity {
     private String content;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "visibility", nullable = false)
+    @Column(name = "visibility", nullable = false, length = 20)
     @Builder.Default
     private ReportVisibility visibility = ReportVisibility.PUBLIC;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "report_type", nullable = false)
+    @Column(name = "report_type", nullable = false, length = 20)
     private ReportType reportType;
 
     @Column(name = "completed_at")
