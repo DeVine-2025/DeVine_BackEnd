@@ -9,7 +9,8 @@ import lombok.*;
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Table(name = "git_repo_url")
+@Table(name = "git_repo_url",
+        uniqueConstraints = @UniqueConstraint(columnNames = {"member_id", "git_url"}))
 public class GitRepoUrl extends BaseEntity {
 
     @Id
