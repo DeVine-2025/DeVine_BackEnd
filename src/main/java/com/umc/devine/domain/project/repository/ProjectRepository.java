@@ -64,4 +64,19 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "p.lastViewResetDate = :resetDate " +
             "WHERE p.lastViewResetDate IS NULL OR p.lastViewResetDate < :resetDate")
     int rotateWeeklyViewCount(@Param("resetDate") java.time.LocalDate resetDate);
+
+    // N+1 방지용 IN 쿼리 (추천 프로젝트 조회 - List 컬렉션 동시 FETCH 불가하므로 category/member만)
+    @Query("SELECT DISTINCT p FROM Project p " +
+            "LEFT JOIN FETCH p.category " +
+            "LEFT JOIN FETCH p.member " +
+            "WHERE p.id IN :ids")
+    List<Project> findAllByIdIn(@Param("ids") List<Long> ids);
+
+    // 기본 추천용: 최신 모집 중 프로젝트 조회
+    @Query("SELECT p FROM Project p " +
+            "LEFT JOIN FETCH p.category " +
+            "LEFT JOIN FETCH p.member " +
+            "WHERE p.status = :status " +
+            "ORDER BY p.createdAt DESC")
+    List<Project> findByStatusOrderByCreatedAtDesc(@Param("status") ProjectStatus status);
 }
