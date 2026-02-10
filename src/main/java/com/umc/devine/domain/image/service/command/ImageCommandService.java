@@ -2,7 +2,7 @@ package com.umc.devine.domain.image.service.command;
 
 import com.umc.devine.domain.image.dto.ImageReqDTO;
 import com.umc.devine.domain.image.dto.ImageResDTO;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 
 public interface ImageCommandService {
 

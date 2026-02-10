@@ -2,7 +2,7 @@ package com.umc.devine.global.config;
 
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
-import com.umc.devine.global.auth.CurrentMemberArgumentResolver;
+import com.umc.devine.global.security.CurrentMemberArgumentResolver;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.web.servlet.config.annotation.AsyncSupportConfigurer;

@@ -3,7 +3,7 @@ package com.umc.devine.domain.notification.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
