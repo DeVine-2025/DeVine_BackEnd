@@ -19,6 +19,6 @@ public class Category extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "genre", nullable = false)
+    @Column(name = "genre", nullable = false, length = 30)
     private CategoryGenre genre;
 }

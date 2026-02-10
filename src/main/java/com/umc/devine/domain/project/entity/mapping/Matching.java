@@ -32,20 +32,20 @@ public class Matching extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private MatchingStatus status;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "matching_type", nullable = false)
+    @Column(name = "matching_type", nullable = false, length = 20)
     private MatchingType matchingType;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     @Builder.Default
     private MatchingDecision decision = MatchingDecision.PENDING;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "part")
+    @Column(name = "part", length = 20)
     private ProjectPart part;
 
     @Column(name = "content", columnDefinition = "TEXT")
