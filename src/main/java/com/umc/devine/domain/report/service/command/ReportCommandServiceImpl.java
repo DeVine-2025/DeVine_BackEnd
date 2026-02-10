@@ -2,6 +2,7 @@ package com.umc.devine.domain.report.service.command;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
@@ -12,6 +13,12 @@ import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.techstack.entity.Techstack;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.enums.TechName;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
+import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
+import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.RequiredArgsConstructor;
@@ -25,6 +32,8 @@ import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.util.*;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -36,6 +45,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final ApplicationEventPublisher eventPublisher;
     private final FastApiSyncReportClient fastApiSyncReportClient;
     private final PlatformTransactionManager transactionManager;
+    private final TechstackRepository techstackRepository;
+    private final DevTechstackRepository devTechstackRepository;
     private TransactionTemplate requiresNewTxTemplate;
 
     @PostConstruct
@@ -156,6 +167,9 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             savedMainReport.completeReport(mainContent.toString());
             savedDetailReport.completeReport(detailContent.toString());
 
+            // 6. 응답에서 techstacks 추출하여 DevTechstack AUTO로 저장
+            saveAutoTechstacks(gitRepoUrl.getMember(), response.techstacks());
+
             log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
                     savedMainReport.getId(), savedDetailReport.getId());
 
@@ -176,7 +190,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
     @Override
     public void processCallback(ReportReqDTO.CallbackReq request) {
-        DevReport mainReport = devReportRepository.findById(request.mainReportId())
+        DevReport mainReport = devReportRepository.findByIdWithMember(request.mainReportId())
                 .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
         DevReport detailReport = devReportRepository.findById(request.detailReportId())
                 .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
@@ -203,6 +217,11 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
                 mainReport.completeReport(mainContent.toString());
                 detailReport.completeReport(detailContent.toString());
+
+                // techstacks 처리
+                Member member = mainReport.getGitRepoUrl().getMember();
+                saveAutoTechstacks(member, request.techstacks());
+
                 log.info("리포트 생성 완료 - mainReportId: {}, detailReportId: {}", request.mainReportId(), request.detailReportId());
             }
             case FAILED -> {
@@ -267,5 +286,83 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         });
         // 현재 영속성 컨텍스트에 merge하여 이후 변경사항이 자동 저장되도록 함
         return devReportRepository.save(saved);
+    }
+
+    private void saveAutoTechstacks(Member member, List<String> techstackNames) {
+        if (techstackNames == null || techstackNames.isEmpty()) {
+            log.info("저장할 techstacks가 없습니다. memberId: {}", member.getId());
+            return;
+        }
+
+        // String을 TechName enum으로 변환
+        List<TechName> techNames = techstackNames.stream()
+                .map(name -> {
+                    try {
+                        return TechName.valueOf(name);
+                    } catch (IllegalArgumentException e) {
+                        log.warn("알 수 없는 TechName: {}", name);
+                        return null;
+                    }
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
+
+        if (techNames.isEmpty()) {
+            log.info("유효한 techstacks가 없습니다. memberId: {}", member.getId());
+            return;
+        }
+
+        // Techstack 엔티티 조회 (parent fetch join)
+        List<Techstack> techstacks = techstackRepository.findAllByNameInWithParent(techNames);
+
+        if (techstacks.isEmpty()) {
+            log.info("매칭되는 Techstack이 없습니다. memberId: {}", member.getId());
+            return;
+        }
+
+        // 하위 techstack + parent를 모두 수집 (중복 제거)
+        Set<Techstack> allTechstacks = new HashSet<>(techstacks);
+        for (Techstack ts : techstacks) {
+            if (ts.getParentStack() != null) {
+                allTechstacks.add(ts.getParentStack());
+            }
+        }
+
+        List<Techstack> techstackList = new ArrayList<>(allTechstacks);
+
+        // 이미 존재하는 DevTechstack 조회 (fetch join으로 N+1 방지)
+        List<DevTechstack> existingDevTechstacks = devTechstackRepository.findAllByMemberAndTechstackInWithTechstack(member, techstackList);
+        Map<Long, DevTechstack> existingMap = existingDevTechstacks.stream()
+                .collect(java.util.stream.Collectors.toMap(dt -> dt.getTechstack().getId(), dt -> dt));
+
+        List<DevTechstack> toSave = new ArrayList<>();
+        int updatedCount = 0;
+
+        for (Techstack ts : techstackList) {
+            DevTechstack existing = existingMap.get(ts.getId());
+
+            if (existing == null) {
+                // 새로 추가
+                toSave.add(DevTechstack.builder()
+                        .member(member)
+                        .techstack(ts)
+                        .source(TechstackSource.AUTO)
+                        .build());
+            } else if (existing.getSource() == TechstackSource.MANUAL) {
+                // MANUAL → AUTO로 업데이트 (AUTO가 더 강한 권한)
+                existing.updateSourceToAuto();
+                updatedCount++;
+            }
+            // AUTO인 경우는 그대로 유지
+        }
+
+        if (!toSave.isEmpty()) {
+            devTechstackRepository.saveAll(toSave);
+            log.info("DevTechstack AUTO 신규 저장 - memberId: {}, count: {}", member.getId(), toSave.size());
+        }
+
+        if (updatedCount > 0) {
+            log.info("DevTechstack MANUAL → AUTO 업데이트 - memberId: {}, count: {}", member.getId(), updatedCount);
+        }
     }
 }
