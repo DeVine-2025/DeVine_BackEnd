@@ -136,4 +136,28 @@ public class Project extends BaseEntity {
     public void clearRequirements() {
         this.requirements.clear();
     }
+
+    // ==================== 상태 전환 메서드 ====================
+
+    public void startProgress() {
+        this.status = ProjectStatus.IN_PROGRESS;
+    }
+
+    public void complete() {
+        this.status = ProjectStatus.COMPLETED;
+    }
+
+    // ==================== 도메인 검증 메서드 ====================
+
+    public boolean isRecruiting() {
+        return this.status == ProjectStatus.RECRUITING;
+    }
+
+    public boolean isInProgress() {
+        return this.status == ProjectStatus.IN_PROGRESS;
+    }
+
+    public boolean isOwnedBy(Member member) {
+        return this.member.getId().equals(member.getId());
+    }
 }

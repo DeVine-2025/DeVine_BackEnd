@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.sse.event;
+package com.umc.devine.infrastructure.sse.listener;
 
 import lombok.Getter;
 import org.springframework.context.ApplicationEvent;

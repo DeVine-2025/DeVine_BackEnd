@@ -75,7 +75,11 @@ public enum ProjectErrorCode implements BaseErrorCode {
 
     EMBEDDING_INVALID_DIMENSION(HttpStatus.BAD_REQUEST,
             "PROJECT400_14",
-            "임베딩 벡터 차원이 올바르지 않습니다.");
+            "임베딩 벡터 차원이 올바르지 않습니다."),
+
+    INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST,
+            "PROJECT400_15",
+            "유효하지 않은 프로젝트 상태 전환입니다.");
 
     private final HttpStatus status;
     private final String code;

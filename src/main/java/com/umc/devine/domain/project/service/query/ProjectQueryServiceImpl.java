@@ -2,12 +2,16 @@ package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
@@ -30,7 +34,10 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 @Transactional(readOnly = true)
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
+    private static final int WEEKLY_BEST_LIMIT = 4;
+
     private final ProjectRepository projectRepository;
+    private final MatchingRepository matchingRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
 
     @Override
@@ -54,9 +61,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
         List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
-        // 최대 4개만 반환
+        // 최대 N개만 반환
         List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
-                .limit(4)
+                .limit(WEEKLY_BEST_LIMIT)
                 .map(project -> ProjectConverter.toProjectSummary(project, projectRequirementTechstackRepository))
                 .toList();
 
@@ -125,6 +132,41 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
         return ProjectResDTO.RecommendedProjectsRes.builder()
                 .projects(pagedData)
+                .build();
+    }
+
+    @Override
+    public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        if (member.getMainType().equals(MemberMainType.PM)) {
+            return getMyProjectsForPm(member, statuses, pageable);
+        } else {
+            return getMyProjectsForDeveloper(member, statuses, pageable);
+        }
+    }
+
+    private ProjectResDTO.MyProjectsRes getMyProjectsForPm(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        Page<Project> projectPage = projectRepository.findByMemberAndStatusIn(member, statuses, pageable);
+
+        List<ProjectResDTO.MyProjectInfo> infos = projectPage.getContent().stream()
+                .map(ProjectConverter::toMyProjectInfo)
+                .toList();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(PagedResponse.of(projectPage, infos))
+                .build();
+    }
+
+    private ProjectResDTO.MyProjectsRes getMyProjectsForDeveloper(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        Page<Matching> matchingPage = matchingRepository.findByMemberAndDecisionAndProjectStatusIn(
+                member, MatchingDecision.ACCEPT, statuses, pageable
+        );
+
+        List<ProjectResDTO.MyProjectInfo> infos = matchingPage.getContent().stream()
+                .map(ProjectConverter::toMyProjectInfo)
+                .toList();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(PagedResponse.of(matchingPage, infos))
                 .build();
     }
 

@@ -13,6 +13,7 @@ import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -118,4 +119,44 @@ public interface ProjectControllerDocs {
         ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @ParameterObject @Valid @ModelAttribute ProjectReqDTO.RecommendProjectsPageReq request);
+
+        @Operation(summary = "프로젝트 상태 변경 API", description = "프로젝트 상태를 변경합니다. 모집 중 → 진행 중 → 완료 순서로만 전환 가능합니다. 작성자 본인만 변경 가능합니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 상태 변경 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 상태 전환입니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
+        })
+        ApiResponse<Void> changeProjectStatus(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @PathVariable("projectId") Long projectId,
+                        @Valid @RequestBody ProjectReqDTO.ChangeStatusReq request);
+
+        @Operation(summary = "내 프로젝트 - 모집 중", description = "내 프로젝트 중 모집 중인 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+        })
+        ApiResponse<ProjectResDTO.MyProjectsRes> getMyRecruitingProjects(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @Parameter(hidden = true) Pageable pageable);
+
+        @Operation(summary = "내 프로젝트 - 진행 중", description = "내 프로젝트 중 진행 중인 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+        })
+        ApiResponse<ProjectResDTO.MyProjectsRes> getMyInProgressProjects(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @Parameter(hidden = true) Pageable pageable);
+
+        @Operation(summary = "내 프로젝트 - 완료", description = "내 프로젝트 중 완료된 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+        })
+        ApiResponse<ProjectResDTO.MyProjectsRes> getMyCompletedProjects(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @Parameter(hidden = true) Pageable pageable);
 }

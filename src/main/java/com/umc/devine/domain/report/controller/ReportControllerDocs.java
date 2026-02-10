@@ -3,6 +3,7 @@ package com.umc.devine.domain.report.controller;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
+import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
@@ -12,6 +13,7 @@ import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Report", description = "리포트 관련 API")
 public interface ReportControllerDocs {
@@ -80,5 +82,25 @@ public interface ReportControllerDocs {
     ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
             @Parameter(hidden = true) @CurrentMember Member member,
             @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    );
+
+    @Operation(summary = "내 리포트 목록 조회", description = "현재 로그인한 사용자의 리포트 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리포트 목록 조회 성공")
+    })
+    ApiResponse<ReportResDTO.ReportSummaryListDTO> getMyReports(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "리포트 타입 필터 (MAIN, DETAIL). 미지정 시 전체 조회") @RequestParam(required = false) ReportType type
+    );
+
+    @Operation(summary = "특정 회원 리포트 목록 조회", description = "닉네임으로 특정 회원의 공개 리포트 목록을 조회합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리포트 목록 조회 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "프로필이 비공개 상태"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "회원을 찾을 수 없음")
+    })
+    ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
+            @Parameter(description = "조회할 회원의 닉네임", required = true) @PathVariable String nickname,
+            @Parameter(description = "리포트 타입 필터 (MAIN, DETAIL). 미지정 시 전체 조회") @RequestParam(required = false) ReportType type
     );
 }

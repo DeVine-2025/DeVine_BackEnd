@@ -8,6 +8,8 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
+import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
@@ -270,22 +272,38 @@ public class ProjectConverter {
         return (int) Math.round(techWeight + domainWeight + techStackWeight);
     }
 
-    public static ProjectResDTO.ProjectDetailDTO toProjectDetail(Project project, List<ProjectImage> images) {
-        List<String> imageUrls = (images != null) ? images.stream()
-                .map(ProjectImage::getImageUrl)
-                .collect(Collectors.toList()) : List.of();
-        return ProjectResDTO.ProjectDetailDTO.builder()
-                .id(project.getId())
-                .name(project.getName())
-                .content(project.getContent())
-                .status(project.getStatus())
-                .imageUrls(imageUrls)
-                .build();
+    // PM용: Project → MyProjectInfo (myPart = PM)
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(Project project) {
+        return buildMyProjectInfo(project, ProjectPart.PM);
     }
 
-    public static ProjectResDTO.ProjectListDTO toProjectList(List<ProjectResDTO.ProjectDetailDTO> projectInfoList) {
-        return ProjectResDTO.ProjectListDTO.builder()
-                .projects(projectInfoList)
+    // 개발자용: Matching → MyProjectInfo (myPart = matching.getPart())
+    public static ProjectResDTO.MyProjectInfo toMyProjectInfo(Matching matching) {
+        return buildMyProjectInfo(matching.getProject(), matching.getPart());
+    }
+
+    private static ProjectResDTO.MyProjectInfo buildMyProjectInfo(Project project, ProjectPart myPart) {
+        String thumbnailUrl = project.getImages().isEmpty()
+                ? null
+                : project.getImages().get(0).getImageUrl();
+
+        return ProjectResDTO.MyProjectInfo.builder()
+                .projectId(project.getId())
+                .title(project.getTitle())
+                .thumbnailUrl(thumbnailUrl)
+                .projectField(project.getProjectField())
+                .projectFieldName(project.getProjectField().getDisplayName())
+                .category(project.getCategory().getGenre())
+                .categoryName(project.getCategory().getGenre().getDisplayName())
+                .location(project.getLocation())
+                .durationRange(project.getDurationRange())
+                .durationRangeName(project.getDurationRange().getDisplayName())
+                .mode(project.getMode())
+                .modeName(project.getMode().getDisplayName())
+                .myPart(myPart)
+                .myPartName(myPart != null ? myPart.getDisplayName() : null)
+                .projectStatus(project.getStatus())
+                .projectStatusName(project.getStatus().getDisplayName())
                 .build();
     }
 }

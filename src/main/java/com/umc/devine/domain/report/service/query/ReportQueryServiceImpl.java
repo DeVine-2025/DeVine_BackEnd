@@ -3,6 +3,10 @@ package com.umc.devine.domain.report.service.query;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
@@ -16,6 +20,8 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
+
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -23,6 +29,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class ReportQueryServiceImpl implements ReportQueryService {
 
     private final DevReportRepository reportRepository;
+    private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -54,6 +61,31 @@ public class ReportQueryServiceImpl implements ReportQueryService {
                 throw new ReportException(ReportErrorCode.UNAUTHORIZED_ACCESS);
             }
         }
+    }
+
+    @Override
+    public ReportResDTO.ReportSummaryListDTO getMyReports(Member member, ReportType reportType) {
+        List<DevReport> reports = reportRepository.findAllByMemberAndReportType(member, reportType);
+        return ReportConverter.toReportSummaryListDTO(reports);
+    }
+
+    @Override
+    public ReportResDTO.ReportSummaryListDTO getReportsByNickname(String nickname, ReportType reportType) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
+        List<DevReport> reports = reportRepository.findAllByMemberAndReportType(member, reportType);
+
+        // 비공개 리포트 필터링 (타인 조회 시)
+        List<DevReport> publicReports = reports.stream()
+                .filter(report -> report.getVisibility() == ReportVisibility.PUBLIC)
+                .toList();
+
+        return ReportConverter.toReportSummaryListDTO(publicReports);
     }
 
     private JsonNode parseJsonContent(String content, Long reportId) {

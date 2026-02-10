@@ -10,9 +10,11 @@ import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
+import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.MemberAgreement;
 import com.umc.devine.domain.member.entity.Terms;
+import com.umc.devine.global.util.GitUrlParser;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
@@ -78,7 +80,6 @@ public class MemberConverter {
 
     public static DevTechstack toDevTechstack(Member member, Techstack techstack) {
         return DevTechstack.builder()
-                .id(new DevTechstack.DevTechstackId(member.getId(), techstack.getId()))
                 .member(member)
                 .techstack(techstack)
                 .source(TechstackSource.MANUAL)
@@ -126,7 +127,7 @@ public class MemberConverter {
                 .build();
     }
 
-    public static Contact toContact(Member member, MemberResDTO.ContactDTO dto) {
+    public static Contact toContact(Member member, MemberReqDTO.ContactDTO dto) {
         return Contact.builder()
                 .member(member)
                 .contactType(dto.type())
@@ -135,7 +136,7 @@ public class MemberConverter {
                 .build();
     }
 
-    public static List<Contact> toContacts(Member member, MemberResDTO.ContactDTO[] dtos) {
+    public static List<Contact> toContacts(Member member, MemberReqDTO.ContactDTO[] dtos) {
         return Arrays.stream(dtos)
                 .map(dto -> toContact(member, dto))
                 .collect(Collectors.toList());
@@ -221,6 +222,25 @@ public class MemberConverter {
                 .image(member.getImage())
                 .body(member.getBody())
                 .techstacks(techstackNames)
+                .build();
+    }
+
+    public static MemberResDTO.GitRepoDTO toGitRepoDTO(GitRepoUrl gitRepoUrl) {
+        return MemberResDTO.GitRepoDTO.builder()
+                .gitRepoId(gitRepoUrl.getId())
+                .name(GitUrlParser.extractRepoName(gitRepoUrl.getGitUrl()))
+                .gitUrl(gitRepoUrl.getGitUrl())
+                .description(gitRepoUrl.getGitDescription())
+                .build();
+    }
+
+    public static MemberResDTO.GitRepoListDTO toGitRepoListDTO(List<GitRepoUrl> gitRepoUrls) {
+        List<MemberResDTO.GitRepoDTO> repos = gitRepoUrls.stream()
+                .map(MemberConverter::toGitRepoDTO)
+                .collect(Collectors.toList());
+
+        return MemberResDTO.GitRepoListDTO.builder()
+                .repos(repos)
                 .build();
     }
 }
