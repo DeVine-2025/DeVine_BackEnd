@@ -59,6 +59,7 @@ public class FastApiReportClient {
                 .detailReportId(event.getDetailReportId())
                 .gitUrl(event.getGitUrl())
                 .callbackUrl(callbackBaseUrl + "/api/v1/reports/callback")
+                .embeddingCallbackUrl(callbackBaseUrl + "/api/v1/embeddings/callback")
                 .githubToken(githubToken)
                 .build();
 

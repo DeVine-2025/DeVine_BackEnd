@@ -31,8 +31,10 @@ import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
+import com.umc.devine.domain.project.event.ProjectEmbeddingEvent;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -58,6 +60,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final TechstackRepository techstackRepository;
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
@@ -85,6 +88,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
             saveTechstacks(savedProject, request.recruitments());
         }
+
+        // 프로젝트 임베딩 요청 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
+        eventPublisher.publishEvent(ProjectEmbeddingEvent.builder()
+                .projectId(savedProject.getId())
+                .content(savedProject.getContent())
+                .build());
 
         return ProjectConverter.toCreateProjectRes(savedProject, projectRequirementTechstackRepository);
     }
@@ -146,6 +155,12 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
             saveTechstacks(project, request.recruitments());
         }
+
+        // 프로젝트 임베딩 업데이트 요청 이벤트 발행 (트랜잭션 커밋 후 비동기 처리)
+        eventPublisher.publishEvent(ProjectEmbeddingEvent.builder()
+                .projectId(project.getId())
+                .content(project.getContent())
+                .build());
 
         return ProjectConverter.toUpdateProjectRes(project, projectRequirementTechstackRepository);
     }

@@ -8,6 +8,7 @@ import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
@@ -19,6 +20,9 @@ public class FastApiSyncReportClient {
 
     private final RestClient fastApiSyncRestClient;
     private final ClerkApiClient clerkApiClient;
+
+    @Value("${fastapi.callback.base-url:http://localhost:8080}")
+    private String callbackBaseUrl;
 
     public FastApiSyncReportClient(
             @Qualifier("fastApiSyncRestClient") RestClient fastApiSyncRestClient,
@@ -48,6 +52,7 @@ public class FastApiSyncReportClient {
                 .detailReportId(detailReport.getId())
                 .gitUrl(gitUrl)
                 .githubToken(githubToken)
+                .embeddingCallbackUrl(callbackBaseUrl + "/api/v1/embeddings/callback")
                 .build();
 
         log.info("FastAPI 동기 리포트 생성 요청 - mainReportId: {}, detailReportId: {}, gitUrl: {}",

@@ -60,7 +60,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/terms").permitAll()
                         // 이번 주 추천 프로젝트 조회
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/weekly-best").permitAll()
-                        // 리포트 콜백 (임시) // TODO 프론트 json 확인을 위해서 임시 활성화, 마스터키로 인증 변경
+                        // AI 서버 콜백 (내부 통신) // TODO 마스터키 인증으로 변경 필요
                         .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
