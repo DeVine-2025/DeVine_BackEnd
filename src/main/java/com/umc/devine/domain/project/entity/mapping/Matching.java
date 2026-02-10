@@ -14,20 +14,16 @@ import lombok.*;
 
 import java.util.Objects;
 
+/**
+ * partial unique index : uk_matching_active 확인
+ * JPA는 @Index나 @UniqueConstraint는 WHERE 조건을 지원하지 않아서 부분 인덱스를 직접 매핑할 수 없음
+ * 따라서, 부분 인덱스는 데이터베이스 수준에서 수동으로 생성 (추후 Flyway 등 마이그레이션 도구 사용 예정)
+ */
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
-@Table(
-        name = "matching",
-        uniqueConstraints = {
-                @UniqueConstraint(
-                        name = "uk_matching_active",
-                        columnNames = {"project_id", "member_id", "matching_type"}
-                )
-        }
-)
 public class Matching extends BaseEntity {
 
     @Id
