@@ -84,7 +84,7 @@ public class ProjectConverter {
                 .content(project.getContent())
                 .status(project.getStatus())
                 .creatorId(project.getMember().getId())
-                .creatorName(project.getMember().getName())
+                .creatorNickname(project.getMember().getNickname())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
                 .images(toImageInfoList(project.getImages()))
                 .build();
@@ -112,7 +112,7 @@ public class ProjectConverter {
                 .content(project.getContent())
                 .status(project.getStatus())
                 .creatorId(project.getMember().getId())
-                .creatorName(project.getMember().getName())
+                .creatorNickname(project.getMember().getNickname())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
                 .images(toImageInfoList(project.getImages()))
                 .build();
@@ -158,7 +158,7 @@ public class ProjectConverter {
                 .status(project.getStatus())
                 .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImageUrl())
                 .positions(positions)
-                .creatorName(project.getMember().getName())
+                .creatorNickname(project.getMember().getNickname())
                 .build();
     }
 
@@ -206,7 +206,7 @@ public class ProjectConverter {
                 .status(project.getStatus())
                 .thumbnailUrl(project.getImages().isEmpty() ? null : project.getImages().get(0).getImageUrl())
                 .positions(positions)
-                .creatorName(project.getMember().getName())
+                .creatorNickname(project.getMember().getNickname())
                 .totalScore(totalScore != null ? Math.round(totalScore * 10) / 10.0 : null)
                 .similarityScorePercent(similarityScorePercent != null ? Math.round(similarityScorePercent * 10) / 10.0 : null)
                 .techstackScorePercent(techstackScorePercent != null ? Math.round(techstackScorePercent * 10) / 10.0 : null)

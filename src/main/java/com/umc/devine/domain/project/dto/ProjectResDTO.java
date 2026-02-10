@@ -66,8 +66,8 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 생성자 ID", example = "1")
             Long creatorId,
 
-            @Schema(description = "프로젝트 생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "프로젝트 생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
@@ -126,8 +126,8 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 생성자 ID", example = "1")
             Long creatorId,
 
-            @Schema(description = "프로젝트 생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "프로젝트 생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
@@ -219,8 +219,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 포지션 목록 (간략 정보)")
             List<PositionSummary> positions,
 
-            @Schema(description = "생성자 이름", example = "김개발")
-            String creatorName
+            @Schema(description = "생성자 닉네임", example = "김개발")
+            String creatorNickname
     ) {}
 
     @Builder
@@ -273,8 +273,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 포지션 목록 (간략 정보)")
             List<PositionSummary> positions,
 
-            @Schema(description = "생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
             @Schema(description = "총 추천 점수 (100점 만점)", example = "83.0")
             Double totalScore,
