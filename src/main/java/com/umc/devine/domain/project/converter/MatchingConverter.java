@@ -13,6 +13,7 @@ import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstac
 import com.umc.devine.domain.techstack.enums.TechName;
 
 import java.util.List;
+import java.util.Map;
 
 public class MatchingConverter {
 
@@ -81,21 +82,25 @@ public class MatchingConverter {
     // 개발자용: 프로젝트 매칭 정보 변환
     public static MatchingResDTO.ProjectMatchingInfo toProjectMatchingInfo(
             Matching matching,
-            List<ProjectRequirementTechstack> projectTechstacks
+            Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement
     ) {
         Project project = matching.getProject();
 
         List<MatchingResDTO.PositionInfo> positions = project.getRequirements().stream()
-                .map(req -> MatchingResDTO.PositionInfo.builder()
-                        .part(req.getPart())
-                        .partName(req.getPart().getDisplayName())
-                        .currentCount(req.getCurrentCount())
-                        .requirementCount(req.getRequirementNum())
-                        .build())
-                .toList();
+                .map(req -> {
+                    List<TechName> techStacks = techstacksByRequirement
+                            .getOrDefault(req.getId(), List.of()).stream()
+                            .map(pt -> pt.getTechstack().getName())
+                            .toList();
 
-        List<TechName> techStacks = projectTechstacks.stream()
-                .map(pt -> pt.getTechstack().getName())
+                    return MatchingResDTO.PositionInfo.builder()
+                            .part(req.getPart())
+                            .partName(req.getPart().getDisplayName())
+                            .currentCount(req.getCurrentCount())
+                            .requirementCount(req.getRequirementNum())
+                            .techStacks(techStacks)
+                            .build();
+                })
                 .toList();
 
         String thumbnailUrl = project.getImages().isEmpty()
@@ -117,7 +122,6 @@ public class MatchingConverter {
                 .mode(project.getMode())
                 .modeName(project.getMode().getDisplayName())
                 .positions(positions)
-                .techStacks(techStacks)
                 .content(matching.getContent())
                 .matchingType(matching.getMatchingType())
                 .decision(matching.getDecision())

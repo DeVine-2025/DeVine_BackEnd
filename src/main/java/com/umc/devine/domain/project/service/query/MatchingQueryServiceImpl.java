@@ -92,11 +92,14 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
 
         List<MatchingResDTO.ProjectMatchingInfo> projectInfos = matchingPage.getContent().stream()
                 .map(matching -> {
-                    // 프로젝트의 모든 요구사항에 대한 기술스택 조회
-                    List<ProjectRequirementTechstack> techstacks = matching.getProject().getRequirements().stream()
-                            .flatMap(req -> projectRequirementTechstackRepository.findByRequirement(req).stream())
-                            .toList();
-                    return MatchingConverter.toProjectMatchingInfo(matching, techstacks);
+                    // 요구사항별 기술스택 그룹핑 조회
+                    Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement =
+                            matching.getProject().getRequirements().stream()
+                                    .collect(Collectors.toMap(
+                                            req -> req.getId(),
+                                            req -> projectRequirementTechstackRepository.findByRequirement(req)
+                                    ));
+                    return MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement);
                 })
                 .toList();
 

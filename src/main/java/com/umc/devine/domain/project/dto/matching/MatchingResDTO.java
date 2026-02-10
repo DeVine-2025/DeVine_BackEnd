@@ -118,11 +118,8 @@ public class MatchingResDTO {
             @Schema(description = "진행 방식 이름", example = "온라인")
             String modeName,
 
-            @Schema(description = "모집 파트별 인원 정보")
+            @Schema(description = "모집 파트별 인원 및 기술 스택 정보")
             List<PositionInfo> positions,
-
-            @Schema(description = "프로젝트 기술 스택 목록")
-            List<TechName> techStacks,
 
             @Schema(description = "제안 내용 (제안받은 경우에만)")
             String content,
@@ -158,7 +155,10 @@ public class MatchingResDTO {
             Integer currentCount,
 
             @Schema(description = "모집 인원", example = "3")
-            Integer requirementCount
+            Integer requirementCount,
+
+            @Schema(description = "해당 파트 기술 스택 목록")
+            List<TechName> techStacks
     ) {}
 
     // PM용: 개발자 목록 응답 (제안한/지원받은)
