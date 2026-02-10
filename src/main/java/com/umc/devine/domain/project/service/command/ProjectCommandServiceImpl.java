@@ -225,6 +225,30 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         projectImageRepository.saveAll(projectImages).forEach(project::addImage);
     }
 
+    @Override
+    public void changeProjectStatus(Member member, Long projectId, ProjectStatus status) {
+        Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
+                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+
+        validateOwner(project, member.getId());
+
+        switch (status) {
+            case IN_PROGRESS -> {
+                if (!project.isRecruiting()) {
+                    throw new ProjectException(INVALID_STATUS_TRANSITION);
+                }
+                project.startProgress();
+            }
+            case COMPLETED -> {
+                if (!project.isInProgress()) {
+                    throw new ProjectException(INVALID_STATUS_TRANSITION);
+                }
+                project.complete();
+            }
+            default -> throw new ProjectException(INVALID_STATUS_TRANSITION);
+        }
+    }
+
     private void validateOwner(Project project, Long memberId) {
         if (!project.getMember().getId().equals(memberId)) {
             throw new ProjectException(FORBIDDEN_PROJECT_ACCESS);

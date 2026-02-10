@@ -3,6 +3,10 @@ package com.umc.devine.domain.project.service.query;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
+import org.springframework.data.domain.Pageable;
+
+import java.util.List;
 
 public interface ProjectQueryService {
     // 프로젝트 상세 조회
@@ -25,4 +29,7 @@ public interface ProjectQueryService {
             Member member,
             ProjectReqDTO.RecommendProjectsPageReq request
     );
+
+    // 내 프로젝트 목록 조회 (상태별)
+    ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable);
 }

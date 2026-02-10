@@ -6,12 +6,10 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
-import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.auth.ClerkPrincipal;
 import com.umc.devine.global.auth.CurrentMember;
-import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
@@ -130,17 +128,6 @@ public class MyProfileController implements MyProfileControllerDocs {
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_CONTRIBUTIONS;
         MemberResDTO.ContributionListDTO response = memberQueryService.findMyContributions(member, from, to);
-        return ApiResponse.onSuccess(code, response);
-    }
-
-    // 내 프로젝트 조회
-    @Override
-    @GetMapping("/me/projects")
-    public ApiResponse<ProjectResDTO.ProjectListDTO> getProjects(
-            @CurrentMember Member member
-    ) {
-        MemberSuccessCode code = MemberSuccessCode.FOUND;
-        ProjectResDTO.ProjectListDTO response = memberQueryService.findMyProjects(member);
         return ApiResponse.onSuccess(code, response);
     }
 

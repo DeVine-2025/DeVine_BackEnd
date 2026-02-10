@@ -14,4 +14,7 @@ public interface MemberCategoryRepository extends JpaRepository<MemberCategory, 
 
     @Query("SELECT mc FROM MemberCategory mc JOIN FETCH mc.category WHERE mc.member = :member")
     List<MemberCategory> findAllByMemberWithCategory(@Param("member") Member member);
+
+    @Query("SELECT mc FROM MemberCategory mc JOIN FETCH mc.category WHERE mc.member IN :members")
+    List<MemberCategory> findAllByMemberInWithCategory(@Param("members") List<Member> members);
 }

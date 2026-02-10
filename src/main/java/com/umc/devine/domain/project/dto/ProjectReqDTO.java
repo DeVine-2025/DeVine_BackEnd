@@ -5,6 +5,7 @@ import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.global.validation.annotation.ValidPage;
 import com.umc.devine.global.dto.PageRequest;
@@ -140,4 +141,10 @@ public class ProjectReqDTO {
                         return PageRequest.of(page, size).toPageable();
                 }
         }
+
+        public record ChangeStatusReq(
+                        @Schema(description = "변경할 상태 (IN_PROGRESS, COMPLETED)", example = "IN_PROGRESS")
+                        @NotNull(message = "변경할 상태는 필수입니다.")
+                        ProjectStatus status
+        ) {}
 }
