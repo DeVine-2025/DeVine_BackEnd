@@ -113,6 +113,7 @@ public class ProjectConverter {
                 .status(project.getStatus())
                 .creatorId(project.getMember().getId())
                 .creatorNickname(project.getMember().getNickname())
+                .creatorImage(project.getMember().getImage())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
                 .images(toImageInfoList(project.getImages()))
                 .build();
