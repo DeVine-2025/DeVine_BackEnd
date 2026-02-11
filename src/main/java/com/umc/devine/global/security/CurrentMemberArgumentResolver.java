@@ -1,4 +1,4 @@
-package com.umc.devine.global.auth;
+package com.umc.devine.global.security;
 
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorCode;

@@ -35,7 +35,7 @@ import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;

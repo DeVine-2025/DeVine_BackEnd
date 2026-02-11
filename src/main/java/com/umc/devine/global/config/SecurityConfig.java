@@ -1,7 +1,7 @@
 package com.umc.devine.global.config;
 
-import com.umc.devine.global.auth.ClerkJwtAuthenticationConverter;
-import com.umc.devine.global.auth.CustomAuthenticationEntryPoint;
+import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
+import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;

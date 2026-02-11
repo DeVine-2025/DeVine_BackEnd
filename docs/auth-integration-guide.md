@@ -9,7 +9,7 @@
 ### 1. 컨트롤러에서 인증된 사용자 정보 받기
 
 ```java
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @RestController

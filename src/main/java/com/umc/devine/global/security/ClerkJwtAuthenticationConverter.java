@@ -1,4 +1,4 @@
-package com.umc.devine.global.auth;
+package com.umc.devine.global.security;
 
 import org.springframework.core.convert.converter.Converter;
 import org.springframework.security.authentication.AbstractAuthenticationToken;

@@ -4,7 +4,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;

@@ -1,4 +1,4 @@
-package com.umc.devine.global.auth;
+package com.umc.devine.global.security;
 
 import java.lang.annotation.ElementType;
 import java.lang.annotation.Retention;

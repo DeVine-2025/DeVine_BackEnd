@@ -6,7 +6,7 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;

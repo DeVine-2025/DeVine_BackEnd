@@ -5,8 +5,8 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.ClerkPrincipal;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.ClerkPrincipal;
+import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.validation.annotation.ValidNickname;
 
 import io.swagger.v3.oas.annotations.Operation;

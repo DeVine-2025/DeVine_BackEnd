@@ -9,7 +9,7 @@ import com.umc.devine.domain.project.exception.code.MatchingSuccessCode;
 import com.umc.devine.domain.project.service.command.MatchingCommandService;
 import com.umc.devine.domain.project.service.query.MatchingQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
