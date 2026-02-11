@@ -2,6 +2,8 @@ package com.umc.devine.infrastructure.fastapi.dto;
 
 import lombok.Builder;
 
+import java.util.List;
+
 public class FastApiReqDto {
 
     @Builder
@@ -11,7 +13,8 @@ public class FastApiReqDto {
             String gitUrl,
             String callbackUrl,
             String embeddingCallbackUrl,
-            String githubToken
+            String githubToken,
+            List<String> techstacks
     ) {}
 
     @Builder
@@ -20,7 +23,8 @@ public class FastApiReqDto {
             Long detailReportId,
             String gitUrl,
             String githubToken,
-            String embeddingCallbackUrl
+            String embeddingCallbackUrl,
+            List<String> techstacks
     ) {}
 
     @Builder

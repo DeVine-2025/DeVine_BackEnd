@@ -7,8 +7,6 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Entity
@@ -59,10 +57,6 @@ public class Member extends BaseEntity {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberStatus used;
-
-    @OneToMany(mappedBy = "member")
-    @Builder.Default
-    private List<Login> loginList = new ArrayList<>();
 
     public void updateNickname(String nickname) {
         this.nickname = nickname;
