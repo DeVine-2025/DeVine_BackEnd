@@ -8,10 +8,12 @@ import com.umc.devine.domain.member.service.command.MemberCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.validation.annotation.Validated;
 
@@ -134,11 +136,12 @@ public class MyProfileController implements MyProfileControllerDocs {
     // 내 GitHub 레포지토리 목록 조회
     @Override
     @PostMapping("/me/git-repos")
-    public ApiResponse<MemberResDTO.GitRepoListDTO> syncGitRepos(
-            @CurrentMember Member member
+    public ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> syncGitRepos(
+            @CurrentMember Member member,
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_GIT_REPOS;
-        MemberResDTO.GitRepoListDTO response = memberCommandService.syncGitHubRepositories(member);
+        PagedResponse<MemberResDTO.GitRepoDTO> response = memberCommandService.syncGitHubRepositories(member, dto);
         return ApiResponse.onSuccess(code, response);
     }
 }

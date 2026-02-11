@@ -13,11 +13,12 @@ public interface MemberQueryService {
     MemberResDTO.TermsListDTO findAllTerms();
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
-    MemberResDTO.UserProfileDTO findMemberByNickname(String nickname);
+    TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname);
+    MemberResDTO.MemberProfileDTO findMemberByNickname(String nickname);
     MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname);
     MemberResDTO.ContributionListDTO findMyContributions(Member member, LocalDate from, LocalDate to);
     MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname, LocalDate from, LocalDate to);
-    PagedResponse<MemberResDTO.DeveloperDTO> findAllDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto);
-    List<MemberResDTO.DeveloperDTO> findAllDevelopersPreview(Member member, int limit);
-    PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO dto);
+    PagedResponse<MemberResDTO.RecommendedDeveloperDTO> findRecommendedDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto);
+    List<MemberResDTO.RecommendedDeveloperDTO> findRecommendedDevelopersPreview(Member member, Long projectId, int limit);
+    PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO dto);
 }

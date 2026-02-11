@@ -32,7 +32,7 @@ public class GitHubService {
     private String serviceToken;
 
     /**
-     * GitHub 레포지토리 목록 조회
+     * GitHub 레포지토리 목록 조회 (권한 있는 모든 레포)
      *
      * @param clerkId Clerk 사용자 ID
      * @return 레포지토리 목록 (이름, 설명, URL)
@@ -41,6 +41,20 @@ public class GitHubService {
     public List<GitHubRepositoryDTO> getRepositories(String clerkId) {
         String accessToken = clerkApiClient.getGitHubAccessToken(clerkId);
         return githubApiClient.getRepositories(accessToken);
+    }
+
+    /**
+     * 내가 소유한 레포 + 기여한 레포 목록 조회
+     * - 내가 소유한 레포지토리
+     * - 내가 커밋/PR로 기여한 레포지토리 (조직 레포 포함)
+     *
+     * @param clerkId Clerk 사용자 ID
+     * @return 레포지토리 목록 (중복 제거됨)
+     * @throws AuthException GitHub 연동이 없거나 API 호출 실패 시
+     */
+    public List<GitHubRepositoryDTO> getContributedRepositories(String clerkId) {
+        String accessToken = clerkApiClient.getGitHubAccessToken(clerkId);
+        return githubApiClient.getContributedRepositories(accessToken);
     }
 
     /**

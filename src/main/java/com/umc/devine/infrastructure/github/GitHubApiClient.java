@@ -15,9 +15,11 @@ import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 
 @Component
 @RequiredArgsConstructor
@@ -242,5 +244,150 @@ public class GitHubApiClient {
         }
 
         return contributions;
+    }
+
+    /**
+     * 내가 소유한 레포 + 기여한 레포 목록 조회 (GraphQL API 사용)
+     * - 내가 소유한 레포지토리 (ownerAffiliations: OWNER)
+     * - 내가 커밋/PR로 기여한 레포지토리 (repositoriesContributedTo)
+     *
+     * @param accessToken GitHub OAuth Access Token
+     * @return 레포지토리 목록 (중복 제거됨)
+     * @throws AuthException GitHub API 호출 실패 시
+     */
+    public List<GitHubRepositoryDTO> getContributedRepositories(String accessToken) {
+        String url = GITHUB_API_BASE_URL + "/graphql";
+
+        Set<String> seenUrls = new HashSet<>();
+        List<GitHubRepositoryDTO> allRepositories = new ArrayList<>();
+
+        // 1. 내가 소유한 레포 조회 (페이지네이션)
+        String ownedCursor = null;
+        do {
+            String afterClause = ownedCursor != null ? ", after: \"%s\"".formatted(ownedCursor) : "";
+            String query = """
+                    query {
+                      viewer {
+                        repositories(first: 100, ownerAffiliations: [OWNER]%s) {
+                          pageInfo {
+                            hasNextPage
+                            endCursor
+                          }
+                          nodes {
+                            name
+                            url
+                            description
+                          }
+                        }
+                      }
+                    }
+                    """.formatted(afterClause);
+
+            Map<String, Object> response = executeGraphQL(accessToken, url, query);
+            ownedCursor = parseRepositoriesPage(response, "repositories", allRepositories, seenUrls);
+        } while (ownedCursor != null);
+
+        // 2. 내가 기여한 레포 조회 (페이지네이션)
+        String contributedCursor = null;
+        do {
+            String afterClause = contributedCursor != null ? ", after: \"%s\"".formatted(contributedCursor) : "";
+            String query = """
+                    query {
+                      viewer {
+                        repositoriesContributedTo(first: 100, contributionTypes: [COMMIT, PULL_REQUEST]%s) {
+                          pageInfo {
+                            hasNextPage
+                            endCursor
+                          }
+                          nodes {
+                            name
+                            url
+                            description
+                          }
+                        }
+                      }
+                    }
+                    """.formatted(afterClause);
+
+            Map<String, Object> response = executeGraphQL(accessToken, url, query);
+            contributedCursor = parseRepositoriesPage(response, "repositoriesContributedTo", allRepositories, seenUrls);
+        } while (contributedCursor != null);
+
+        return allRepositories;
+    }
+
+    /**
+     * GraphQL 쿼리 실행
+     */
+    private Map<String, Object> executeGraphQL(String accessToken, String url, String query) {
+        Map<String, Object> requestBody = Map.of("query", query);
+
+        try {
+            return restClient.post()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Accept", "application/vnd.github+json")
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .body(requestBody)
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                    })
+                    .body(new ParameterizedTypeReference<>() {});
+        } catch (AuthException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+        }
+    }
+
+    /**
+     * GraphQL 응답에서 레포지토리 페이지 파싱
+     *
+     * @param response GraphQL 응답
+     * @param fieldName 조회할 필드명 (repositories 또는 repositoriesContributedTo)
+     * @param repositories 결과를 추가할 리스트
+     * @param seenUrls 중복 확인용 Set
+     * @return 다음 페이지 커서 (없으면 null)
+     */
+    @SuppressWarnings("unchecked")
+    private String parseRepositoriesPage(Map<String, Object> response, String fieldName,
+                                         List<GitHubRepositoryDTO> repositories, Set<String> seenUrls) {
+        Map<String, Object> viewer = Optional.ofNullable(response)
+                .map(r -> (Map<String, Object>) r.get("data"))
+                .map(data -> (Map<String, Object>) data.get("viewer"))
+                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_API_ERROR));
+
+        Map<String, Object> reposData = (Map<String, Object>) viewer.get(fieldName);
+        if (reposData == null) {
+            return null;
+        }
+
+        List<Map<String, Object>> nodes = (List<Map<String, Object>>) reposData.get("nodes");
+        if (nodes != null) {
+            for (Map<String, Object> node : nodes) {
+                if (node == null) continue;
+
+                String url = (String) node.get("url");
+                if (url != null && !seenUrls.contains(url)) {
+                    seenUrls.add(url);
+                    repositories.add(GitHubRepositoryDTO.builder()
+                            .name((String) node.get("name"))
+                            .htmlUrl(url)
+                            .description((String) node.get("description"))
+                            .build());
+                }
+            }
+        }
+
+        Map<String, Object> pageInfo = (Map<String, Object>) reposData.get("pageInfo");
+        if (pageInfo != null && Boolean.TRUE.equals(pageInfo.get("hasNextPage"))) {
+            return (String) pageInfo.get("endCursor");
+        }
+
+        return null;
     }
 }

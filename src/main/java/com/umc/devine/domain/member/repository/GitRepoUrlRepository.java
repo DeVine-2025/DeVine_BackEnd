@@ -2,6 +2,8 @@ package com.umc.devine.domain.member.repository;
 
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -11,6 +13,8 @@ import java.util.Optional;
 
 public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
     List<GitRepoUrl> findAllByMember(Member member);
+
+    Page<GitRepoUrl> findAllByMember(Member member, Pageable pageable);
 
     @Query("SELECT g FROM GitRepoUrl g JOIN FETCH g.member WHERE g.id = :id")
     Optional<GitRepoUrl> findByIdWithMember(@Param("id") Long id);
