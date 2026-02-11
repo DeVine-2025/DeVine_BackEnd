@@ -290,14 +290,7 @@ public class ProjectResDTO {
 
             @Schema(description = "도메인 일치 여부", example = "true")
             Boolean domainMatch
-    ) {
-        public RecommendedProjectSummary {
-            if (totalScore == null) totalScore = 0.0;
-            if (similarityScorePercent == null) similarityScorePercent = 0.0;
-            if (techstackScorePercent == null) techstackScorePercent = 0.0;
-            if (domainMatch == null) domainMatch = false;
-        }
-    }
+    ) {}
 
     @Builder
     public record PositionSummary(
