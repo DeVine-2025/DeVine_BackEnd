@@ -26,5 +26,9 @@ public class MemberAgreement extends BaseEntity {
     private Terms terms;
 
     @Column(nullable = false)
-    private Boolean agreed;
+    private boolean agreed;
+
+    public boolean getAgreed() {
+        return agreed;
+    }
 }

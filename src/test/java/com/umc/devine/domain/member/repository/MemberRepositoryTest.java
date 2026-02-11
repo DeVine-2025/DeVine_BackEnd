@@ -161,7 +161,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
         void findDevelopersByFilters_noFilter() {
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
-                    MemberMainType.DEVELOPER,
                     null,
                     null,
                     PageRequest.of(0, 10)
@@ -183,7 +182,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
 
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
-                    MemberMainType.DEVELOPER,
                     List.of(CategoryGenre.HEALTHCARE),
                     null,
                     PageRequest.of(0, 10)
@@ -207,7 +205,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
 
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
-                    MemberMainType.DEVELOPER,
                     null,
                     List.of(TechName.JAVA),
                     PageRequest.of(0, 10)
@@ -221,7 +218,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
         @DisplayName("비공개 프로필은 조회되지 않는다")
         void findDevelopersByFilters_excludePrivate() {
             // given
-            Member privateMember = memberRepository.save(Member.builder()
+            memberRepository.save(Member.builder()
                     .clerkId("clerk_private_123")
                     .name("비공개")
                     .nickname("privateuser")
@@ -232,7 +229,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
 
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
-                    MemberMainType.DEVELOPER,
                     null,
                     null,
                     PageRequest.of(0, 10)
@@ -246,26 +242,25 @@ class MemberRepositoryTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findAllByMainType")
-    class FindAllByMainTypeTest {
+    @DisplayName("findAllPublicMembers")
+    class FindAllPublicMembersTest {
 
         @Test
-        @DisplayName("역할별로 회원을 조회한다")
-        void findAllByMainType_success() {
+        @DisplayName("공개된 활성 회원을 조회한다")
+        void findAllPublicMembers_success() {
             // when
-            List<Member> result = memberRepository.findAllByMainType(
-                    MemberMainType.DEVELOPER,
+            List<Member> result = memberRepository.findAllPublicMembers(
                     PageRequest.of(0, 10)
             );
 
             // then
             assertThat(result).isNotEmpty();
-            assertThat(result).allMatch(m -> m.getMainType() == MemberMainType.DEVELOPER);
+            assertThat(result).allMatch(Member::getDisclosure);
         }
 
         @Test
         @DisplayName("limit 만큼만 조회한다")
-        void findAllByMainType_limit() {
+        void findAllPublicMembers_limit() {
             // given
             for (int i = 0; i < 5; i++) {
                 memberRepository.save(Member.builder()
@@ -279,8 +274,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
             }
 
             // when
-            List<Member> result = memberRepository.findAllByMainType(
-                    MemberMainType.DEVELOPER,
+            List<Member> result = memberRepository.findAllPublicMembers(
                     PageRequest.of(0, 3)
             );
 

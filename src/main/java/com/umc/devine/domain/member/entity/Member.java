@@ -36,7 +36,11 @@ public class Member extends BaseEntity {
     private String address = null;
 
     @Column(nullable = false)
-    private Boolean disclosure;
+    private boolean disclosure;
+
+    public boolean getDisclosure() {
+        return disclosure;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "main_type", nullable = false)
@@ -78,7 +82,7 @@ public class Member extends BaseEntity {
         this.mainType = mainType;
     }
 
-    public void disclosure(Boolean disclosure) {
+    public void updateDisclosure(boolean disclosure) {
         this.disclosure = disclosure;
     }
 
@@ -88,7 +92,7 @@ public class Member extends BaseEntity {
         Optional.ofNullable(dto.address()).ifPresent(this::updateAddress);
         Optional.ofNullable(dto.body()).ifPresent(this::updateBody);
         Optional.ofNullable(dto.mainType()).ifPresent(this::updateMainType);
-        Optional.ofNullable(dto.disclosure()).ifPresent(this::disclosure);
+        Optional.ofNullable(dto.disclosure()).ifPresent(this::updateDisclosure);
     }
 
     public void updateGithubUsername(String githubUsername) {

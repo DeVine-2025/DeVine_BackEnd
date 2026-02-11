@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.validation.annotation.ValidNickname;
@@ -14,8 +15,10 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -124,13 +127,14 @@ public interface MyProfileControllerDocs {
             @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     );
 
-    @Operation(summary = "내 GitHub 레포지토리 목록 조회 API", description = "내 GitHub 계정에 연결된 레포지토리 목록을 조회합니다.")
+    @Operation(summary = "내 GitHub 레포지토리 목록 조회 API", description = "내 GitHub 계정에 연결된 레포지토리 목록을 동기화하고 페이지네이션된 결과를 조회합니다. 내가 소유한 레포와 기여한 레포(커밋/PR)만 가져옵니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "GitHub 연동이 필요합니다.")
     })
-    ApiResponse<MemberResDTO.GitRepoListDTO> syncGitRepos(
-            @Parameter(hidden = true) @CurrentMember Member member
+    ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> syncGitRepos(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     );
 }
