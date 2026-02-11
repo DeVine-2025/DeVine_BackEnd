@@ -8,6 +8,7 @@ import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
+import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.member.enums.ContactType;
@@ -15,17 +16,25 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.repository.ContactRepository;
+import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.entity.ProjectEmbedding;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
 import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
+import com.umc.devine.domain.report.entity.DevReport;
+import com.umc.devine.domain.report.entity.ReportEmbedding;
+import com.umc.devine.domain.report.enums.ReportType;
+import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.report.repository.ReportEmbeddingRepository;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
@@ -37,6 +46,7 @@ import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
+import com.umc.devine.global.enums.EmbeddingStatus;
 import com.umc.devine.support.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -84,6 +94,18 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
+
+    @Autowired
+    private GitRepoUrlRepository gitRepoUrlRepository;
+
+    @Autowired
+    private DevReportRepository devReportRepository;
+
+    @Autowired
+    private ReportEmbeddingRepository reportEmbeddingRepository;
+
+    @Autowired
+    private ProjectEmbeddingRepository projectEmbeddingRepository;
 
     private Member testMember;
     private Category testCategory;
@@ -261,9 +283,9 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     class FindRecommendedDevelopersTest {
 
         @Test
-        @DisplayName("프로젝트 기반 추천 목록 페이지네이션 조회 성공")
-        void findRecommendedDevelopers_success() {
-            // given
+        @DisplayName("임베딩이 없으면 빈 배열 반환")
+        void findRecommendedDevelopers_noEmbedding_returnsEmpty() {
+            // given - 임베딩 없이 프로젝트만 생성
             MemberCategory memberCategory = MemberCategory.builder()
                     .member(testMember)
                     .category(testCategory)
@@ -299,9 +321,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent()).isNotEmpty();
-            assertThat(result.getContent().get(0).member().nickname()).isEqualTo("testuser");
+            // then - 임베딩이 없으면 빈 배열 반환
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
@@ -323,8 +344,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("여러 개발자 조회 시 N+1 없이 정상 조회")
-        void findRecommendedDevelopers_multipleDevs_noN1() {
+        @DisplayName("여러 개발자 조회 시 임베딩이 없으면 빈 배열 반환")
+        void findRecommendedDevelopers_multipleDevs_noEmbedding_returnsEmpty() {
             // given
             Member dev1 = memberRepository.save(Member.builder()
                     .clerkId("clerk_dev1")
@@ -375,17 +396,13 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent()).hasSize(3);
-            assertThat(result.getContent()).allSatisfy(dev -> {
-                assertThat(dev.domains()).isNotNull();
-                assertThat(dev.techstacks()).isNotNull();
-            });
+            // then - 임베딩이 없으면 빈 배열 반환
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
-        @DisplayName("카테고리/기술스택 없는 개발자도 NPE 없이 정상 조회")
-        void findRecommendedDevelopers_noCategoryOrTechstack_noNPE() {
+        @DisplayName("임베딩 없이 카테고리/기술스택 없는 개발자 - 빈 배열 반환")
+        void findRecommendedDevelopers_noCategoryOrTechstack_noEmbedding_returnsEmpty() {
             // given - testMember는 카테고리/기술스택 없음
             // 다른 개발자만 카테고리 있음
             Member devWithCategory = memberRepository.save(Member.builder()
@@ -421,24 +438,18 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then - NPE 발생하지 않고 정상 조회
-            assertThat(result.getContent()).isNotEmpty();
-            MemberResDTO.RecommendedDeveloperDTO devWithCatResult = result.getContent().stream()
-                    .filter(d -> d.member().nickname().equals("devWithCat"))
-                    .findFirst()
-                    .orElseThrow();
-            assertThat(devWithCatResult.domains()).hasSize(1);
-            assertThat(devWithCatResult.techstacks()).isEmpty();
+            // then - 임베딩 없이는 빈 배열 반환 (NPE도 없음)
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
-        @DisplayName("프로젝트 요구 기술스택 없을 때도 정상 동작")
-        void findRecommendedDevelopers_noProjectTechstack_success() {
+        @DisplayName("프로젝트 요구 기술스택 없고 임베딩도 없으면 빈 배열 반환")
+        void findRecommendedDevelopers_noProjectTechstack_noEmbedding_returnsEmpty() {
             // given
             memberCategoryRepository.save(MemberCategory.builder().member(testMember).category(testCategory).build());
             devTechstackRepository.save(DevTechstack.builder().member(testMember).techstack(testTechstack).source(TechstackSource.MANUAL).build());
 
-            // 프로젝트에 요구 기술스택 없음
+            // 프로젝트에 요구 기술스택 없음 (임베딩도 없음)
             Project project = projectRepository.save(Project.builder()
                     .name("기술스택 없는 프로젝트")
                     .content("내용")
@@ -461,14 +472,13 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent()).isNotEmpty();
-            assertThat(result.getContent().get(0).matchedTechstacks()).isEmpty();
+            // then - 임베딩이 없으면 빈 배열 반환
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
-        @DisplayName("domainMatch 정상 계산 - 일치하는 경우")
-        void findRecommendedDevelopers_domainMatch_true() {
+        @DisplayName("domainMatch 정상 계산 - 임베딩 없으면 빈 배열 반환")
+        void findRecommendedDevelopers_domainMatch_noEmbedding_returnsEmpty() {
             // given
             memberCategoryRepository.save(MemberCategory.builder().member(testMember).category(testCategory).build());
 
@@ -494,8 +504,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent().get(0).domainMatch()).isTrue();
+            // then - 임베딩이 없으면 빈 배열 반환 (domainMatch는 벡터 검색에서만 계산됨)
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
@@ -534,8 +544,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("matchedTechstacks 정상 계산 - 일치하는 기술스택이 있는 경우")
-        void findRecommendedDevelopers_matchedTechstacks_success() {
+        @DisplayName("matchedTechstacks 정상 계산 - 임베딩 없으면 빈 배열 반환")
+        void findRecommendedDevelopers_matchedTechstacks_noEmbedding_returnsEmpty() {
             // given
             Techstack springTechstack = techstackRepository.save(Techstack.builder()
                     .name(TechName.SPRINGBOOT)
@@ -559,7 +569,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .member(testMember)
                     .build());
 
-            // 프로젝트 요구사항에 기술스택 추가
+            // 프로젝트 요구사항에 기술스택 추가 (임베딩은 없음)
             ProjectRequirementMember requirement = projectRequirementMemberRepository.save(
                     ProjectRequirementMember.builder()
                             .project(project)
@@ -588,16 +598,13 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent()).isNotEmpty();
-            MemberResDTO.RecommendedDeveloperDTO developer = result.getContent().get(0);
-            assertThat(developer.matchedTechstacks()).hasSize(2);
-            assertThat(developer.matchedTechstacks()).containsExactlyInAnyOrder("JAVA", "SPRINGBOOT");
+            // then - 임베딩이 없으면 빈 배열 반환 (matchedTechstacks는 벡터 검색에서만 계산됨)
+            assertThat(result.getContent()).isEmpty();
         }
 
         @Test
-        @DisplayName("matchedTechstacks 정상 계산 - 일부만 일치하는 경우")
-        void findRecommendedDevelopers_matchedTechstacks_partial() {
+        @DisplayName("matchedTechstacks 정상 계산 - 임베딩 없으면 빈 배열 반환 (일부 일치 시나리오)")
+        void findRecommendedDevelopers_matchedTechstacks_partial_noEmbedding_returnsEmpty() {
             // given
             Techstack springTechstack = techstackRepository.save(Techstack.builder()
                     .name(TechName.SPRINGBOOT)
@@ -633,7 +640,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                             .requirementNum(2)
                             .build());
 
-            // 프로젝트는 JAVA, SPRING, KOTLIN 요구
+            // 프로젝트는 JAVA, SPRING, KOTLIN 요구 (임베딩은 없음)
             projectRequirementTechstackRepository.save(
                     ProjectRequirementTechstack.builder()
                             .requirement(requirement)
@@ -661,11 +668,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopers(testMember, dto);
 
-            // then
-            assertThat(result.getContent()).isNotEmpty();
-            MemberResDTO.RecommendedDeveloperDTO developer = result.getContent().get(0);
-            assertThat(developer.matchedTechstacks()).hasSize(1);
-            assertThat(developer.matchedTechstacks()).containsExactly("JAVA");
+            // then - 임베딩이 없으면 빈 배열 반환
+            assertThat(result.getContent()).isEmpty();
         }
     }
 
@@ -674,8 +678,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
     class FindRecommendedDevelopersPreviewTest {
 
         @Test
-        @DisplayName("프리뷰 목록 조회 성공")
-        void findRecommendedDevelopersPreview_success() {
+        @DisplayName("프리뷰 목록 조회 - 임베딩 없으면 빈 배열 반환")
+        void findRecommendedDevelopersPreview_noEmbedding_returnsEmpty() {
             // given
             MemberCategory memberCategory = MemberCategory.builder()
                     .member(testMember)
@@ -706,9 +710,8 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when
             List<MemberResDTO.RecommendedDeveloperDTO> result = memberQueryService.findRecommendedDevelopersPreview(testMember, project.getId(), 4);
 
-            // then
-            assertThat(result).isNotEmpty();
-            assertThat(result.size()).isLessThanOrEqualTo(4);
+            // then - 임베딩이 없으면 빈 배열 반환
+            assertThat(result).isEmpty();
         }
 
         @Test
@@ -951,6 +954,294 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             // when & then
             assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname("privateuser2"))
                     .isInstanceOf(MemberException.class);
+        }
+    }
+
+    @Nested
+    @DisplayName("벡터 검색 기반 개발자 추천")
+    class VectorSearchRecommendationTest {
+
+        private Techstack backendTechstack;
+        private Techstack javaTechstack;
+        private Techstack springTechstack;
+
+        @BeforeEach
+        void setUpVectorSearchData() {
+            // 루트 포지션 (BACKEND)
+            backendTechstack = techstackRepository.save(Techstack.builder()
+                    .name(TechName.BACKEND)
+                    .genre(null)
+                    .parentStack(null)
+                    .build());
+
+            // BACKEND 하위 기술스택
+            javaTechstack = techstackRepository.save(Techstack.builder()
+                    .name(TechName.JAVA)
+                    .genre(TechGenre.LANGUAGE)
+                    .parentStack(backendTechstack)
+                    .build());
+
+            springTechstack = techstackRepository.save(Techstack.builder()
+                    .name(TechName.SPRINGBOOT)
+                    .genre(TechGenre.FRAMEWORK)
+                    .parentStack(backendTechstack)
+                    .build());
+        }
+
+        @Test
+        @DisplayName("벡터 검색 시 점수가 정상적으로 계산된다")
+        void vectorSearch_scoresCalculatedCorrectly() {
+            // given - 개발자 설정
+            Member developer = memberRepository.save(Member.builder()
+                    .clerkId("clerk_vector_dev")
+                    .name("벡터개발자")
+                    .nickname("vectorDev")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            // 개발자 카테고리 (도메인 일치용)
+            memberCategoryRepository.save(MemberCategory.builder()
+                    .member(developer)
+                    .category(testCategory)
+                    .build());
+
+            // 개발자 기술스택 (BACKEND 포지션 + JAVA, SPRINGBOOT)
+            devTechstackRepository.save(DevTechstack.builder()
+                    .member(developer)
+                    .techstack(backendTechstack)
+                    .source(TechstackSource.MANUAL)
+                    .build());
+            devTechstackRepository.save(DevTechstack.builder()
+                    .member(developer)
+                    .techstack(javaTechstack)
+                    .source(TechstackSource.MANUAL)
+                    .build());
+            devTechstackRepository.save(DevTechstack.builder()
+                    .member(developer)
+                    .techstack(springTechstack)
+                    .source(TechstackSource.MANUAL)
+                    .build());
+
+            // 개발자 리포트 및 임베딩
+            GitRepoUrl gitRepoUrl = gitRepoUrlRepository.save(GitRepoUrl.builder()
+                    .member(developer)
+                    .gitUrl("https://github.com/vectordev/repo")
+                    .gitDescription("Test repo")
+                    .build());
+
+            DevReport devReport = devReportRepository.save(DevReport.builder()
+                    .gitRepoUrl(gitRepoUrl)
+                    .content("{\"summary\": \"test\"}")
+                    .reportType(ReportType.MAIN)
+                    .build());
+
+            // 임베딩 벡터 생성 (1536 차원, 유사도 테스트용)
+            float[] devEmbedding = new float[1536];
+            for (int i = 0; i < 1536; i++) {
+                devEmbedding[i] = 0.5f;
+            }
+            ReportEmbedding reportEmbedding = reportEmbeddingRepository.save(ReportEmbedding.builder()
+                    .devReport(devReport)
+                    .embedding(devEmbedding)
+                    .status(EmbeddingStatus.SUCCESS)
+                    .build());
+
+            // 프로젝트 설정
+            Project project = projectRepository.save(Project.builder()
+                    .name("벡터테스트 프로젝트")
+                    .content("프로젝트 내용")
+                    .status(ProjectStatus.RECRUITING)
+                    .projectField(ProjectField.WEB)
+                    .mode(ProjectMode.ONLINE)
+                    .durationRange(DurationRange.ONE_TO_THREE)
+                    .location("서울")
+                    .recruitmentDeadline(LocalDate.now().plusDays(30))
+                    .category(testCategory)  // 도메인 일치
+                    .member(testMember)
+                    .build());
+
+            // 프로젝트 요구 포지션 (BACKEND, 모집 중)
+            ProjectRequirementMember prm = projectRequirementMemberRepository.save(
+                    ProjectRequirementMember.builder()
+                            .project(project)
+                            .part(ProjectPart.BACKEND)
+                            .requirementNum(2)
+                            .currentCount(0)
+                            .build());
+
+            // 프로젝트 요구 기술스택 (JAVA, SPRINGBOOT)
+            projectRequirementTechstackRepository.save(ProjectRequirementTechstack.builder()
+                    .requirement(prm)
+                    .techstack(javaTechstack)
+                    .build());
+            projectRequirementTechstackRepository.save(ProjectRequirementTechstack.builder()
+                    .requirement(prm)
+                    .techstack(springTechstack)
+                    .build());
+
+            // 프로젝트 임베딩 (개발자와 유사한 벡터)
+            float[] projectEmbedding = new float[1536];
+            for (int i = 0; i < 1536; i++) {
+                projectEmbedding[i] = 0.5f;  // 동일한 벡터 = 코사인 유사도 1.0
+            }
+            projectEmbeddingRepository.save(ProjectEmbedding.builder()
+                    .project(project)
+                    .embedding(projectEmbedding)
+                    .status(EmbeddingStatus.SUCCESS)
+                    .build());
+
+            MemberReqDTO.RecommendDeveloperDTO dto = MemberReqDTO.RecommendDeveloperDTO.builder()
+                    .projectId(project.getId())
+                    .page(1)
+                    .size(10)
+                    .build();
+
+            // when
+            PagedResponse<MemberResDTO.RecommendedDeveloperDTO> result =
+                    memberQueryService.findRecommendedDevelopers(testMember, dto);
+
+            // then
+            assertThat(result.getContent()).isNotEmpty();
+
+            MemberResDTO.RecommendedDeveloperDTO recommendedDev = result.getContent().stream()
+                    .filter(d -> d.member().nickname().equals("vectorDev"))
+                    .findFirst()
+                    .orElse(null);
+
+            assertThat(recommendedDev).isNotNull();
+
+            // 점수 필드 검증
+            assertThat(recommendedDev.totalScore()).isNotNull();
+            assertThat(recommendedDev.similarityScorePercent()).isNotNull();
+            assertThat(recommendedDev.techstackScorePercent()).isNotNull();
+            assertThat(recommendedDev.domainMatch()).isNotNull();
+            assertThat(recommendedDev.matchedTechstacks()).isNotNull();
+
+            // 점수 범위 검증 (0~100)
+            assertThat(recommendedDev.totalScore()).isBetween(0.0, 100.0);
+            assertThat(recommendedDev.similarityScorePercent()).isBetween(0.0, 100.0);
+            assertThat(recommendedDev.techstackScorePercent()).isBetween(0.0, 100.0);
+
+            // 동일한 벡터이므로 유사도는 100에 가까워야 함
+            assertThat(recommendedDev.similarityScorePercent()).isGreaterThan(90.0);
+
+            // 도메인 일치해야 함
+            assertThat(recommendedDev.domainMatch()).isTrue();
+
+            // 기술스택 매칭 (JAVA, SPRINGBOOT)
+            assertThat(recommendedDev.matchedTechstacks()).containsAnyOf("JAVA", "SPRINGBOOT");
+
+            // 기술스택 100% 매칭이므로 점수도 높아야 함
+            assertThat(recommendedDev.techstackScorePercent()).isEqualTo(100.0);
+
+            System.out.println("=== 벡터 검색 점수 결과 ===");
+            System.out.println("totalScore: " + recommendedDev.totalScore());
+            System.out.println("similarityScorePercent: " + recommendedDev.similarityScorePercent());
+            System.out.println("techstackScorePercent: " + recommendedDev.techstackScorePercent());
+            System.out.println("domainMatch: " + recommendedDev.domainMatch());
+            System.out.println("matchedTechstacks: " + recommendedDev.matchedTechstacks());
+        }
+
+        @Test
+        @DisplayName("프리뷰에서도 점수가 정상적으로 계산된다")
+        void vectorSearchPreview_scoresCalculatedCorrectly() {
+            // given - 간단한 설정
+            Member developer = memberRepository.save(Member.builder()
+                    .clerkId("clerk_preview_dev")
+                    .name("프리뷰개발자")
+                    .nickname("previewDev")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            memberCategoryRepository.save(MemberCategory.builder()
+                    .member(developer)
+                    .category(testCategory)
+                    .build());
+
+            devTechstackRepository.save(DevTechstack.builder()
+                    .member(developer)
+                    .techstack(backendTechstack)
+                    .source(TechstackSource.MANUAL)
+                    .build());
+
+            GitRepoUrl gitRepoUrl = gitRepoUrlRepository.save(GitRepoUrl.builder()
+                    .member(developer)
+                    .gitUrl("https://github.com/previewdev/repo")
+                    .gitDescription("Preview repo")
+                    .build());
+
+            DevReport devReport = devReportRepository.save(DevReport.builder()
+                    .gitRepoUrl(gitRepoUrl)
+                    .content("{\"summary\": \"preview test\"}")
+                    .reportType(ReportType.MAIN)
+                    .build());
+
+            float[] devEmbedding = new float[1536];
+            for (int i = 0; i < 1536; i++) {
+                devEmbedding[i] = 0.3f;
+            }
+            reportEmbeddingRepository.save(ReportEmbedding.builder()
+                    .devReport(devReport)
+                    .embedding(devEmbedding)
+                    .status(EmbeddingStatus.SUCCESS)
+                    .build());
+
+            Project project = projectRepository.save(Project.builder()
+                    .name("프리뷰테스트 프로젝트")
+                    .content("프리뷰 내용")
+                    .status(ProjectStatus.RECRUITING)
+                    .projectField(ProjectField.WEB)
+                    .mode(ProjectMode.ONLINE)
+                    .durationRange(DurationRange.ONE_TO_THREE)
+                    .location("서울")
+                    .recruitmentDeadline(LocalDate.now().plusDays(30))
+                    .category(testCategory)
+                    .member(testMember)
+                    .build());
+
+            projectRequirementMemberRepository.save(ProjectRequirementMember.builder()
+                    .project(project)
+                    .part(ProjectPart.BACKEND)
+                    .requirementNum(1)
+                    .currentCount(0)
+                    .build());
+
+            float[] projectEmbedding = new float[1536];
+            for (int i = 0; i < 1536; i++) {
+                projectEmbedding[i] = 0.3f;
+            }
+            projectEmbeddingRepository.save(ProjectEmbedding.builder()
+                    .project(project)
+                    .embedding(projectEmbedding)
+                    .status(EmbeddingStatus.SUCCESS)
+                    .build());
+
+            // when
+            List<MemberResDTO.RecommendedDeveloperDTO> result =
+                    memberQueryService.findRecommendedDevelopersPreview(testMember, project.getId(), 5);
+
+            // then
+            assertThat(result).isNotEmpty();
+
+            MemberResDTO.RecommendedDeveloperDTO dev = result.stream()
+                    .filter(d -> d.member().nickname().equals("previewDev"))
+                    .findFirst()
+                    .orElse(null);
+
+            assertThat(dev).isNotNull();
+            assertThat(dev.totalScore()).isNotNull();
+            assertThat(dev.similarityScorePercent()).isNotNull();
+            assertThat(dev.domainMatch()).isTrue();
+
+            System.out.println("=== 프리뷰 벡터 검색 점수 결과 ===");
+            System.out.println("totalScore: " + dev.totalScore());
+            System.out.println("similarityScorePercent: " + dev.similarityScorePercent());
+            System.out.println("techstackScorePercent: " + dev.techstackScorePercent());
+            System.out.println("domainMatch: " + dev.domainMatch());
         }
     }
 

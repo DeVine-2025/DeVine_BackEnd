@@ -13,5 +13,7 @@ public interface ProjectEmbeddingRepository extends JpaRepository<ProjectEmbeddi
 
     boolean existsByProjectId(Long projectId);
 
+    boolean existsByProjectIdAndStatusAndEmbeddingIsNotNull(Long projectId, EmbeddingStatus status);
+
     List<ProjectEmbedding> findByStatusAndRetryCountLessThan(EmbeddingStatus status, Integer maxRetryCount);
 }

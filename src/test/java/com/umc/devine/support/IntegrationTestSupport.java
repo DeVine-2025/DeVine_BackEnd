@@ -28,7 +28,8 @@ public abstract class IntegrationTestSupport {
                 .withUsername("test")
                 .withPassword("test")
                 .withReuse(true)
-                .waitingFor(Wait.forListeningPort());
+                .waitingFor(Wait.forListeningPort())
+                .withInitScript("init-pgvector.sql");
         POSTGRES_CONTAINER.start();
 
         VALKEY_CONTAINER = new GenericContainer<>("valkey/valkey:9-alpine")

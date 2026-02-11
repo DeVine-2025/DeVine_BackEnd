@@ -12,25 +12,27 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
+import com.umc.devine.domain.member.repository.MemberRecommendRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.member.entity.Terms;
-import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
+import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
-import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
+import com.umc.devine.global.enums.EmbeddingStatus;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.PageRequest;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,7 +40,6 @@ import java.time.LocalDate;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -53,7 +54,8 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final ContactRepository contactRepository;
     private final TermsRepository termsRepository;
     private final GitHubService gitHubService;
-    private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
+    private final MemberRecommendRepository memberRecommendRepository;
+    private final ProjectEmbeddingRepository projectEmbeddingRepository;
 
     @Override
     public MemberResDTO.TermsListDTO findAllTerms() {
@@ -171,66 +173,19 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return PagedResponse.empty(dto.toPageable());
         }
 
-        Project project = projectRepository.findByIdWithCategory(dto.projectId())
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
-
-        if (project.getCategory() == null) {
-            return PagedResponse.empty(dto.toPageable());
-        }
-        CategoryGenre category = project.getCategory().getGenre();
-
-        // 프로젝트 요구 기술스택 조회
-        List<ProjectRequirementTechstack> projectTechstacks =
-                projectRequirementTechstackRepository.findAllByProjectIdWithTechstack(dto.projectId());
-        Set<TechName> requiredTechstackNames = projectTechstacks.stream()
-                .map(prt -> prt.getTechstack().getName())
-                .collect(Collectors.toSet());
-
-        // 해당 카테고리의 개발자 페이지네이션 조회
-        Page<Member> developerPage = memberRepository.findDevelopersByFilters(
-                List.of(category),
-                null,
-                dto.toPageable()
-        );
-
-        List<Member> developers = developerPage.getContent();
-        if (developers.isEmpty()) {
-            return PagedResponse.of(developerPage, Collections.emptyList());
+        // 프로젝트 존재 확인
+        if (!projectRepository.existsById(dto.projectId())) {
+            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
         }
 
-        // N+1 방지: 개발자들의 카테고리, 기술스택 한 번에 조회
-        List<MemberCategory> allMemberCategories = memberCategoryRepository.findAllByMemberInWithCategory(developers);
-        Map<Long, List<MemberCategory>> categoriesByMemberId = allMemberCategories.stream()
-                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
+        // 벡터 검색 가능한 경우에만 추천 결과 반환
+        if (isVectorSearchAvailable(dto.projectId())) {
+            return executeVectorSearch(
+                    dto.projectId(), dto.toPageable().getPageNumber(), dto.toPageable().getPageSize());
+        }
 
-        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberInWithTechstack(developers);
-        Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
-                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
-
-        List<MemberResDTO.RecommendedDeveloperDTO> developerDTOs = developers.stream()
-                .map(developer -> {
-                    List<MemberCategory> memberCategories = categoriesByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
-                    List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
-
-                    // 매칭된 기술스택 계산
-                    List<String> matchedTechstacks = devTechstacks.stream()
-                            .map(dt -> dt.getTechstack().getName())
-                            .filter(requiredTechstackNames::contains)
-                            .map(TechName::toString)
-                            .collect(Collectors.toList());
-
-                    // 도메인 일치 여부
-                    boolean domainMatch = memberCategories.stream()
-                            .anyMatch(mc -> mc.getCategory().getGenre() == category);
-
-                    return MemberConverter.toRecommendedDeveloperDTO(
-                            developer, memberCategories, devTechstacks,
-                            null, null, null, domainMatch, matchedTechstacks
-                    );
-                })
-                .collect(Collectors.toList());
-
-        return PagedResponse.of(developerPage, developerDTOs);
+        // 임베딩이 없으면 빈 배열 반환
+        return PagedResponse.empty(dto.toPageable());
     }
 
     @Override
@@ -240,63 +195,167 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return Collections.emptyList();
         }
 
-        Project project = projectRepository.findByIdWithCategory(projectId)
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
-
-        if (project.getCategory() == null) {
-            return Collections.emptyList();
-        }
-        CategoryGenre category = project.getCategory().getGenre();
-
-        // 프로젝트 요구 기술스택 조회
-        List<ProjectRequirementTechstack> projectTechstacks =
-                projectRequirementTechstackRepository.findAllByProjectIdWithTechstack(projectId);
-        Set<TechName> requiredTechstackNames = projectTechstacks.stream()
-                .map(prt -> prt.getTechstack().getName())
-                .collect(Collectors.toSet());
-
-        // 해당 카테고리의 개발자 조회 (limit 개수만큼)
-        List<Member> developers = memberRepository.findDevelopersByFilters(
-                List.of(category),
-                null,
-                org.springframework.data.domain.PageRequest.of(0, limit)
-        ).getContent();
-
-        if (developers.isEmpty()) {
-            return Collections.emptyList();
+        // 프로젝트 존재 확인
+        if (!projectRepository.existsById(projectId)) {
+            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
         }
 
-        // N+1 방지: 개발자들의 카테고리, 기술스택 한 번에 조회
-        List<MemberCategory> allMemberCategories = memberCategoryRepository.findAllByMemberInWithCategory(developers);
+        // 벡터 검색 가능한 경우에만 추천 결과 반환
+        if (isVectorSearchAvailable(projectId)) {
+            return executeVectorSearchPreview(projectId, limit);
+        }
+
+        // 임베딩이 없으면 빈 배열 반환
+        return Collections.emptyList();
+    }
+
+    /**
+     * 벡터 검색 가능 여부 확인
+     * embedding 컬럼을 직접 조회하지 않고 존재 여부만 확인
+     */
+    private boolean isVectorSearchAvailable(Long projectId) {
+        try {
+            return projectEmbeddingRepository.existsByProjectIdAndStatusAndEmbeddingIsNotNull(
+                    projectId, EmbeddingStatus.SUCCESS);
+        } catch (Exception e) {
+            return false;
+        }
+    }
+
+    /**
+     * 벡터 검색을 실행하여 추천 개발자 목록 반환 (페이지네이션 포함)
+     */
+    private PagedResponse<MemberResDTO.RecommendedDeveloperDTO> executeVectorSearch(
+            Long projectId, int page, int size) {
+
+        int offset = page * size;
+        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopers(projectId, size, offset);
+
+        if (results.isEmpty()) {
+            long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId);
+            Page<MemberResDTO.RecommendedDeveloperDTO> emptyPage = new PageImpl<>(
+                    Collections.emptyList(), PageRequest.of(page, size), totalCount);
+            return PagedResponse.of(emptyPage, Collections.emptyList());
+        }
+
+        // 조회된 member ID 목록
+        List<Long> memberIds = results.stream()
+                .map(row -> ((Number) row[0]).longValue())
+                .toList();
+
+        // Member 엔티티 조회
+        List<Member> members = memberRepository.findAllById(memberIds);
+        Map<Long, Member> memberMap = members.stream()
+                .collect(Collectors.toMap(Member::getId, m -> m));
+
+        // N+1 방지: 카테고리, 기술스택 한 번에 조회
+        List<MemberCategory> allMemberCategories = memberCategoryRepository.findAllByMemberInWithCategory(members);
         Map<Long, List<MemberCategory>> categoriesByMemberId = allMemberCategories.stream()
                 .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
 
-        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberInWithTechstack(developers);
+        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberInWithTechstack(members);
         Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
                 .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
 
-        return developers.stream()
-                .map(developer -> {
-                    List<MemberCategory> memberCategories = categoriesByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
-                    List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(developer.getId(), Collections.emptyList());
+        // 결과 변환 (순서 유지)
+        List<MemberResDTO.RecommendedDeveloperDTO> developerDTOs = results.stream()
+                .map(row -> {
+                    Long memberId = ((Number) row[0]).longValue();
+                    Double totalScore = row[4] != null ? ((Number) row[4]).doubleValue() : null;
+                    Double similarityPercent = row[5] != null ? ((Number) row[5]).doubleValue() : null;
+                    Double techstackPercent = row[6] != null ? ((Number) row[6]).doubleValue() : null;
+                    Boolean domainMatch = row[7] != null ? (Boolean) row[7] : false;
 
-                    // 매칭된 기술스택 계산
-                    List<String> matchedTechstacks = devTechstacks.stream()
-                            .map(dt -> dt.getTechstack().getName())
-                            .filter(requiredTechstackNames::contains)
-                            .map(TechName::toString)
-                            .collect(Collectors.toList());
+                    Member developer = memberMap.get(memberId);
+                    if (developer == null) {
+                        return null;
+                    }
 
-                    // 도메인 일치 여부
-                    boolean domainMatch = memberCategories.stream()
-                            .anyMatch(mc -> mc.getCategory().getGenre() == category);
+                    List<MemberCategory> memberCategories = categoriesByMemberId
+                            .getOrDefault(memberId, Collections.emptyList());
+                    List<DevTechstack> devTechstacks = techstacksByMemberId
+                            .getOrDefault(memberId, Collections.emptyList());
+
+                    // 매칭된 기술스택 조회
+                    List<String> matchedTechstacks = memberRecommendRepository
+                            .findMatchedTechstacks(memberId, projectId);
 
                     return MemberConverter.toRecommendedDeveloperDTO(
                             developer, memberCategories, devTechstacks,
-                            null, null, null, domainMatch, matchedTechstacks
+                            totalScore, similarityPercent, techstackPercent,
+                            domainMatch, matchedTechstacks
                     );
                 })
-                .collect(Collectors.toList());
+                .filter(dto -> dto != null)
+                .toList();
+
+        long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId);
+        Page<MemberResDTO.RecommendedDeveloperDTO> resultPage = new PageImpl<>(
+                developerDTOs, PageRequest.of(page, size), totalCount);
+
+        return PagedResponse.of(resultPage, developerDTOs);
+    }
+
+    /**
+     * 벡터 검색을 실행하여 프리뷰용 추천 개발자 목록 반환
+     */
+    private List<MemberResDTO.RecommendedDeveloperDTO> executeVectorSearchPreview(Long projectId, int limit) {
+        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopersPreview(projectId, limit);
+
+        if (results.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        // 조회된 member ID 목록
+        List<Long> memberIds = results.stream()
+                .map(row -> ((Number) row[0]).longValue())
+                .toList();
+
+        // Member 엔티티 조회
+        List<Member> members = memberRepository.findAllById(memberIds);
+        Map<Long, Member> memberMap = members.stream()
+                .collect(Collectors.toMap(Member::getId, m -> m));
+
+        // N+1 방지: 카테고리, 기술스택 한 번에 조회
+        List<MemberCategory> allMemberCategories = memberCategoryRepository.findAllByMemberInWithCategory(members);
+        Map<Long, List<MemberCategory>> categoriesByMemberId = allMemberCategories.stream()
+                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
+
+        List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberInWithTechstack(members);
+        Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
+        // 결과 변환 (순서 유지)
+        return results.stream()
+                .map(row -> {
+                    Long memberId = ((Number) row[0]).longValue();
+                    Double totalScore = row[4] != null ? ((Number) row[4]).doubleValue() : null;
+                    Double similarityPercent = row[5] != null ? ((Number) row[5]).doubleValue() : null;
+                    Double techstackPercent = row[6] != null ? ((Number) row[6]).doubleValue() : null;
+                    Boolean domainMatch = row[7] != null ? (Boolean) row[7] : false;
+
+                    Member developer = memberMap.get(memberId);
+                    if (developer == null) {
+                        return null;
+                    }
+
+                    List<MemberCategory> memberCategories = categoriesByMemberId
+                            .getOrDefault(memberId, Collections.emptyList());
+                    List<DevTechstack> devTechstacks = techstacksByMemberId
+                            .getOrDefault(memberId, Collections.emptyList());
+
+                    // 매칭된 기술스택 조회
+                    List<String> matchedTechstacks = memberRecommendRepository
+                            .findMatchedTechstacks(memberId, projectId);
+
+                    return MemberConverter.toRecommendedDeveloperDTO(
+                            developer, memberCategories, devTechstacks,
+                            totalScore, similarityPercent, techstackPercent,
+                            domainMatch, matchedTechstacks
+                    );
+                })
+                .filter(dto -> dto != null)
+                .toList();
     }
 
     @Override
