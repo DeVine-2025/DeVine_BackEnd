@@ -213,7 +213,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                     Double totalScore = ((Number) row[4]).doubleValue();
                     Double similarityScorePercent = ((Number) row[5]).doubleValue();
                     Double techstackScorePercent = ((Number) row[6]).doubleValue();
-                    Boolean domainMatch = (Boolean) row[7];
+                    Boolean domainMatch = row[7] == null ? null : Boolean.parseBoolean(row[7].toString());
 
                     Project project = projectMap.get(projectId);
                     if (project == null) {
