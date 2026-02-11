@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import io.swagger.v3.oas.annotations.media.Schema;
 import com.umc.devine.domain.member.enums.ContactType;
 import jakarta.validation.Valid;
@@ -31,8 +32,8 @@ public class MemberReqDTO {
             List<AgreementDTO> agreements,
 
             @Schema(description = "닉네임", requiredMode = Schema.RequiredMode.REQUIRED, example = "devine")
-            @NotBlank(message = "닉네임은 필수입니다.")
-            @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하여야 합니다.")
+            @NotNull(message = "닉네임은 필수입니다.")
+            @ValidNickname
             String nickname,
 
             @Schema(description = "프로필 이미지 URL", example = "https://example.com/image.jpg")
@@ -96,7 +97,7 @@ public class MemberReqDTO {
     @Builder
     public record UpdateMemberDTO(
             @Schema(description = "닉네임", nullable = true, example = "devine")
-            @Size(min = 2, max = 20, message = "닉네임은 2자 이상 20자 이하여야 합니다.")
+            @ValidNickname
             String nickname,
 
             @Schema(description = "이미지 url", nullable = true, example = "https://devine.com/image.jpg")
