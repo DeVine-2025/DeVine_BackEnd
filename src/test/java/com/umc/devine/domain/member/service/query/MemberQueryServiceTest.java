@@ -186,10 +186,10 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("닉네임으로 공개 프로필 회원을 조회한다")
         void findMemberByNickname_success() {
             // when
-            MemberResDTO.UserProfileDTO result = memberQueryService.findMemberByNickname("testuser");
+            MemberResDTO.MemberProfileDTO result = memberQueryService.findMemberByNickname("testuser");
 
             // then
-            assertThat(result.nickname()).isEqualTo("testuser");
+            assertThat(result.member().nickname()).isEqualTo("testuser");
         }
 
         @Test
@@ -346,7 +346,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            PagedResponse<MemberResDTO.UserProfileDTO> result = memberQueryService.searchDevelopers(dto);
+            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(dto);
 
             // then
             assertThat(result.getContent()).isNotEmpty();
@@ -383,6 +383,55 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.techstacks()).isEmpty();
+        }
+    }
+
+    @Nested
+    @DisplayName("닉네임으로 기술 스택 조회")
+    class FindTechstacksByNicknameTest {
+
+        @Test
+        @DisplayName("닉네임으로 공개 프로필 회원의 기술 스택을 조회한다")
+        void findTechstacksByNickname_success() {
+            // given
+            DevTechstack devTechstack = DevTechstack.builder()
+                    .member(testMember)
+                    .techstack(testTechstack)
+                    .source(TechstackSource.MANUAL)
+                    .build();
+            devTechstackRepository.save(devTechstack);
+
+            // when
+            TechstackResDTO.DevTechstackListDTO result = memberQueryService.findTechstacksByNickname("testuser");
+
+            // then
+            assertThat(result.techstacks()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 닉네임 조회 시 예외 발생")
+        void findTechstacksByNickname_notFound() {
+            // when & then
+            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname("nonexistent"))
+                    .isInstanceOf(MemberException.class);
+        }
+
+        @Test
+        @DisplayName("비공개 프로필 회원의 기술 스택 조회 시 예외 발생")
+        void findTechstacksByNickname_notPublic() {
+            // given
+            memberRepository.save(Member.builder()
+                    .clerkId("clerk_private_456")
+                    .name("비공개")
+                    .nickname("privateuser2")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(false)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            // when & then
+            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname("privateuser2"))
+                    .isInstanceOf(MemberException.class);
         }
     }
 

@@ -48,6 +48,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     TECHSTACK_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_4",
             "해당 기술 스택을 찾을 수 없습니다."),
+    GITHUB_USERNAME_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "MEMBER404_5",
+            "GitHub 사용자명이 등록되지 않았습니다."),
     ;
 
     private final HttpStatus status;

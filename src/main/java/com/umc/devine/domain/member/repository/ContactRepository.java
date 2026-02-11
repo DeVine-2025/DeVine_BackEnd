@@ -8,5 +8,6 @@ import java.util.List;
 
 public interface ContactRepository extends JpaRepository<Contact, Long> {
     List<Contact> findAllByMember(Member member);
+    List<Contact> findAllByMemberIn(List<Member> members);
     void deleteAllByMember(Member member);
 }

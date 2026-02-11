@@ -71,7 +71,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public MemberResDTO.UserProfileDTO findMemberByNickname(String nickname) {
+    public TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
@@ -80,8 +80,22 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         }
 
         List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMemberWithTechstack(member);
+        return TechstackConverter.toDevTechstackListDTO(devTechstacks);
+    }
 
-        return MemberConverter.toUserProfileDTO(member, devTechstacks);
+    @Override
+    public MemberResDTO.MemberProfileDTO findMemberByNickname(String nickname) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
+        List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMemberWithCategory(member);
+        List<Contact> contacts = contactRepository.findAllByMember(member);
+
+        return MemberConverter.toMemberProfileDTO(member, memberCategories, contacts);
     }
 
     @Override
@@ -116,6 +130,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
+        if (member.getGithubUsername() == null || member.getGithubUsername().isBlank()) {
+            throw new MemberException(MemberErrorCode.GITHUB_USERNAME_NOT_FOUND);
         }
 
         List<GitHubContributionDTO> githubContributions = gitHubService.getContributionsByUsername(member.getGithubUsername(), from, to);
@@ -188,7 +206,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public PagedResponse<MemberResDTO.UserProfileDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO request) {
+    public PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO request) {
         List<CategoryGenre> categories = request.categories() != null && !request.categories().isEmpty()
                 ? request.categories() : null;
         List<TechName> techstackNames = request.techstackNames() != null && !request.techstackNames().isEmpty()
@@ -205,14 +223,21 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return PagedResponse.of(developerPage, Collections.emptyList());
         }
 
+        List<MemberCategory> allMemberCategories = memberCategoryRepository.findAllByMemberInWithCategory(members);
+        Map<Long, List<MemberCategory>> categoriesByMemberId = allMemberCategories.stream()
+                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
+
         List<DevTechstack> allDevTechstacks = devTechstackRepository.findAllByMemberInWithTechstack(members);
         Map<Long, List<DevTechstack>> techstacksByMemberId = allDevTechstacks.stream()
                 .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
 
-        List<MemberResDTO.UserProfileDTO> developerDTOs = members.stream().map(member -> {
-            List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(member.getId(), Collections.emptyList());
-            return MemberConverter.toUserProfileDTO(member, devTechstacks);
-        }).collect(Collectors.toList());
+        List<MemberResDTO.MemberListItemDTO> developerDTOs = members.stream()
+                .map(member -> {
+                    List<MemberCategory> memberCategories = categoriesByMemberId.getOrDefault(member.getId(), Collections.emptyList());
+                    List<DevTechstack> devTechstacks = techstacksByMemberId.getOrDefault(member.getId(), Collections.emptyList());
+                    return MemberConverter.toMemberListItemDTO(member, memberCategories, devTechstacks);
+                })
+                .collect(Collectors.toList());
 
         return PagedResponse.of(developerPage, developerDTOs);
     }

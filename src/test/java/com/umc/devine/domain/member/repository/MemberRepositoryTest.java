@@ -222,6 +222,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
                     .clerkId("clerk_private_123")
                     .name("비공개")
                     .nickname("privateuser")
+                    .mainType(MemberMainType.DEVELOPER)
                     .disclosure(false)
                     .used(MemberStatus.ACTIVE)
                     .build());
@@ -266,6 +267,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
                         .clerkId("clerk_" + i)
                         .name("테스트" + i)
                         .nickname("user" + i)
+                        .mainType(MemberMainType.DEVELOPER)
                         .disclosure(true)
                         .used(MemberStatus.ACTIVE)
                         .build());

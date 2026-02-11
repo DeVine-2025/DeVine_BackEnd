@@ -148,7 +148,6 @@ public class MemberConverter {
             List<Contact> contacts
     ) {
         MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
-                .name(member.getName())
                 .nickname(member.getNickname())
                 .address(member.getAddress())
                 .imageUrl(member.getImage())
@@ -178,9 +177,44 @@ public class MemberConverter {
                 .build();
     }
 
+    public static MemberResDTO.MemberListItemDTO toMemberListItemDTO(
+            Member member,
+            List<MemberCategory> memberCategories,
+            List<DevTechstack> devTechstacks
+    ) {
+        MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
+                .nickname(member.getNickname())
+                .address(member.getAddress())
+                .imageUrl(member.getImage())
+                .disclosure(member.getDisclosure())
+                .mainType(member.getMainType())
+                .body(member.getBody())
+                .used(member.getUsed())
+                .createdAt(member.getCreatedAt())
+                .build();
+
+        List<CategoryGenre> domains = memberCategories.stream()
+                .map(mc -> mc.getCategory().getGenre())
+                .collect(Collectors.toList());
+
+        List<MemberResDTO.TechstackItemDTO> techstacks = devTechstacks.stream()
+                .map(dt -> MemberResDTO.TechstackItemDTO.builder()
+                        .techstackId(dt.getTechstack().getId())
+                        .name(dt.getTechstack().getName().toString())
+                        .genre(dt.getTechstack().getGenre())
+                        .source(dt.getSource())
+                        .build())
+                .collect(Collectors.toList());
+
+        return MemberResDTO.MemberListItemDTO.builder()
+                .member(memberDTO)
+                .domains(domains)
+                .techstacks(techstacks)
+                .build();
+    }
+
     public static MemberResDTO.MemberDetailDTO toMemberDetailDTO(Member member) {
         return MemberResDTO.MemberDetailDTO.builder()
-                .name(member.getName())
                 .nickname(member.getNickname())
                 .address(member.getAddress())
                 .disclosure(member.getDisclosure())
@@ -189,28 +223,6 @@ public class MemberConverter {
                 .body(member.getBody())
                 .used(member.getUsed())
                 .createdAt(member.getCreatedAt())
-                .build();
-    }
-
-    public static MemberResDTO.UserProfileDTO toUserProfileDTO(Member member, java.util.List<DevTechstack> devTechstacks) {
-        List<String> techstackNames = devTechstacks.stream()
-                .map(devTechstack -> devTechstack.getTechstack().getName().toString())
-                .collect(java.util.stream.Collectors.toList());
-
-        List<String> techGenres = devTechstacks.stream()
-                .map(devTechstack -> devTechstack.getTechstack().getGenre())
-                .filter(genre -> genre != null)
-                .map(genre -> genre.toString())
-                .distinct()
-                .collect(java.util.stream.Collectors.toList());
-
-        return MemberResDTO.UserProfileDTO.builder()
-                .nickname(member.getNickname())
-                .address(member.getAddress())
-                .image(member.getImage())
-                .body(member.getBody())
-                .techstacks(techstackNames)
-                .techGenres(techGenres)
                 .build();
     }
 

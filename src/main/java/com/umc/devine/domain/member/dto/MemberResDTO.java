@@ -4,6 +4,8 @@ import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.techstack.enums.TechGenre;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -51,7 +53,6 @@ public class MemberResDTO {
 
     @Builder
     public record MemberDetailDTO(
-            String name,
             String nickname,
             String address,
             Boolean disclosure,
@@ -76,15 +77,21 @@ public class MemberResDTO {
             List<ContactDTO> contacts
     ){}
 
+    @Builder
+    @Schema(description = "회원 목록 아이템 (목록 조회용)")
+    public record MemberListItemDTO(
+            MemberDetailDTO member,
+            List<CategoryGenre> domains,
+            List<TechstackItemDTO> techstacks
+    ){}
 
     @Builder
-    public record UserProfileDTO(
-        String nickname,
-        String address,
-        String image,
-        String body,
-        List<String> techstacks,
-        List<String> techGenres
+    @Schema(description = "기술스택 아이템")
+    public record TechstackItemDTO(
+            Long techstackId,
+            String name,
+            TechGenre genre,
+            TechstackSource source
     ){}
 
     @Builder
@@ -114,11 +121,6 @@ public class MemberResDTO {
     @Builder
     public record DeveloperListDTO(
             List<DeveloperDTO> developers
-    ){}
-
-    @Builder
-    public record UserProfileListDTO(
-            List<UserProfileDTO> developers
     ){}
 
     @Builder
