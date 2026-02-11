@@ -1,7 +1,7 @@
 package com.umc.devine.global.config;
 
-import com.umc.devine.global.auth.ClerkJwtAuthenticationConverter;
-import com.umc.devine.global.auth.CustomAuthenticationEntryPoint;
+import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
+import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
@@ -62,6 +62,7 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/weekly-best").permitAll()
                         // AI 서버 콜백 (내부 통신) // TODO 마스터키 인증으로 변경 필요
                         .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
+                        .requestMatchers(HttpMethod.POST, "/api/v1/embeddings/callback/**").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
                         // 그 외 모든 요청은 인증 필요

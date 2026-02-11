@@ -22,7 +22,7 @@ import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 
 public class MemberConverter {
 

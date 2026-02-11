@@ -5,7 +5,7 @@ import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;

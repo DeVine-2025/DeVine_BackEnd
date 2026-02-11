@@ -8,7 +8,7 @@ import com.umc.devine.domain.project.exception.code.ProjectSuccessCode;
 import com.umc.devine.domain.project.service.command.ProjectCommandService;
 import com.umc.devine.domain.project.service.query.ProjectQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;

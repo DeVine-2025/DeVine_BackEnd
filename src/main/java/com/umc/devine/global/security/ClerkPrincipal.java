@@ -1,4 +1,4 @@
-package com.umc.devine.global.auth;
+package com.umc.devine.global.security;
 
 import lombok.AllArgsConstructor;
 import lombok.Builder;

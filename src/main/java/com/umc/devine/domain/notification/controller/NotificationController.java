@@ -7,7 +7,7 @@ import com.umc.devine.domain.notification.exception.code.NotificationSuccessCode
 import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.notification.service.query.NotificationQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.validation.annotation.Validated;

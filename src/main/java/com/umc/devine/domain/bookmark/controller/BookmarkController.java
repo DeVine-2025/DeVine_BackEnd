@@ -7,7 +7,7 @@ import com.umc.devine.domain.bookmark.service.command.BookmarkCommandService;
 import com.umc.devine.domain.bookmark.service.query.BookmarkQueryService;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;

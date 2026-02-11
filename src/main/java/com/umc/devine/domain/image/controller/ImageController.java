@@ -5,7 +5,7 @@ import com.umc.devine.domain.image.dto.ImageResDTO;
 import com.umc.devine.domain.image.exception.code.ImageSuccessCode;
 import com.umc.devine.domain.image.service.command.ImageCommandService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;

@@ -1,4 +1,4 @@
-package com.umc.devine.global.auth;
+package com.umc.devine.global.security;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.global.apiPayload.ApiResponse;

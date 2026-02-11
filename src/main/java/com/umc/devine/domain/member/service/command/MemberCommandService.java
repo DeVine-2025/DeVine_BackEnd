@@ -4,7 +4,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 
 public interface MemberCommandService {
     MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto);

@@ -30,4 +30,8 @@ public class DevTechstack {
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private TechstackSource source;
+
+    public void updateSourceToAuto() {
+        this.source = TechstackSource.AUTO;
+    }
 }

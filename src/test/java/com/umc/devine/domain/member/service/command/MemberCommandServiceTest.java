@@ -25,7 +25,7 @@ import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.repository.ImageRepository;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.support.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
