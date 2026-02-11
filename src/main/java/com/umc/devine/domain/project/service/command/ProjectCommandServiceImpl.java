@@ -1,7 +1,6 @@
 package com.umc.devine.domain.project.service.command;
 
 import com.umc.devine.domain.category.entity.Category;
-import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.exception.CategoryException;
 import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.image.entity.Image;
@@ -17,8 +16,6 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
-import com.umc.devine.domain.project.enums.ProjectField;
-import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
@@ -68,8 +65,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             throw new ProjectException(INVALID_PERMISSION);
         }
 
-        validateNotAllValues(request.projectField(), request.category(), request.recruitments());
-
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
@@ -104,7 +99,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         validateOwner(project, member.getId());
-        validateNotAllValues(request.projectField(), request.category(), request.recruitments());
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
@@ -276,18 +270,4 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
     }
 
-    private void validateNotAllValues(ProjectField projectField,
-                                       CategoryGenre category,
-                                       List<ProjectReqDTO.RecruitmentDTO> recruitments) {
-        if (projectField == ProjectField.ALL) {
-            throw new ProjectException(INVALID_PROJECT_FIELD);
-        }
-        if (recruitments != null) {
-            boolean hasAllPosition = recruitments.stream()
-                    .anyMatch(r -> r.position() == ProjectPart.ALL);
-            if (hasAllPosition) {
-                throw new ProjectException(INVALID_POSITION);
-            }
-        }
-    }
 }

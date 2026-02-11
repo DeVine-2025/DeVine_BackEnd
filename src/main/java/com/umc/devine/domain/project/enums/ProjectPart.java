@@ -5,7 +5,6 @@ import lombok.Getter;
 @Getter
 public enum ProjectPart {
 
-    ALL("전체"),
     PM("PM"),
     FRONTEND("프론트엔드"),
     BACKEND("백엔드"),

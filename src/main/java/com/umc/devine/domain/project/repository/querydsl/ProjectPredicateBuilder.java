@@ -4,8 +4,6 @@ import com.querydsl.core.BooleanBuilder;
 import com.querydsl.core.types.Predicate;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.entity.QProject;
-import com.umc.devine.domain.project.enums.ProjectField;
-import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.mapping.QProjectRequirementTechstack;
 
@@ -21,9 +19,8 @@ public class ProjectPredicateBuilder {
         // 삭제되지 않은 프로젝트만
         builder.and(project.status.ne(ProjectStatus.DELETED));
 
-        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
-        if (req.projectFields() != null && !req.projectFields().isEmpty()
-                && !req.projectFields().contains(ProjectField.ALL)) {
+        // 프로젝트 분야 필터 (비어있으면 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()) {
             builder.and(project.projectField.in(req.projectFields()));
         }
 
@@ -37,9 +34,8 @@ public class ProjectPredicateBuilder {
             builder.and(project.durationRange.in(req.durationRanges()));
         }
 
-        // 포지션 필터 (비어있거나 ALL 포함 시 전체 조회)
-        if (req.positions() != null && !req.positions().isEmpty()
-                && !req.positions().contains(ProjectPart.ALL)) {
+        // 포지션 필터 (비어있으면 전체 조회)
+        if (req.positions() != null && !req.positions().isEmpty()) {
             builder.and(project.requirements.any().part.in(req.positions()));
         }
 
@@ -66,9 +62,8 @@ public class ProjectPredicateBuilder {
         // 모집 중인 프로젝트만
         builder.and(project.status.eq(ProjectStatus.RECRUITING));
 
-        // 프로젝트 분야 필터 (비어있거나 ALL 포함 시 전체 조회)
-        if (req.projectFields() != null && !req.projectFields().isEmpty()
-                && !req.projectFields().contains(ProjectField.ALL)) {
+        // 프로젝트 분야 필터 (비어있으면 전체 조회)
+        if (req.projectFields() != null && !req.projectFields().isEmpty()) {
             builder.and(project.projectField.in(req.projectFields()));
         }
 
