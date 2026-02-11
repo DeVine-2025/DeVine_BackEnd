@@ -172,11 +172,11 @@ public class MemberReqDTO {
 
     @Builder
     public record SearchDeveloperDTO(
-            @Schema(description = "카테고리 (HEALTH, ECOMMERCE, FINANCE, EDUCATION, ENTERTAINMENT, ETC)", nullable = true)
-            CategoryGenre category,
+            @Schema(description = "카테고리 목록 (HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC), 복수 선택 가능", nullable = true)
+            List<CategoryGenre> categories,
 
-            @Schema(description = "기술 스택 이름 (JAVA, JAVASCRIPT, REACT, SPRING 등)", nullable = true)
-            TechName techstackName,
+            @Schema(description = "기술 스택 이름 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등), 복수 선택 가능", nullable = true)
+            List<TechName> techstackNames,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
             @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")

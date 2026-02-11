@@ -25,12 +25,12 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
            "WHERE m.mainType = :mainType " +
            "AND m.disclosure = true " +
            "AND m.used = 'ACTIVE' " +
-           "AND (:category IS NULL OR EXISTS (SELECT 1 FROM MemberCategory mc WHERE mc.member = m AND mc.category.genre = :category)) " +
-           "AND (:techstackName IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.name = :techstackName))")
+           "AND (:categories IS NULL OR EXISTS (SELECT 1 FROM MemberCategory mc WHERE mc.member = m AND mc.category.genre IN :categories)) " +
+           "AND (:techstackNames IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.name IN :techstackNames))")
     Page<Member> findDevelopersByFilters(
             @Param("mainType") MemberMainType mainType,
-            @Param("category") CategoryGenre category,
-            @Param("techstackName") TechName techstackName,
+            @Param("categories") List<CategoryGenre> categories,
+            @Param("techstackNames") List<TechName> techstackNames,
             Pageable pageable);
 
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")

@@ -4,7 +4,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
@@ -51,7 +51,7 @@ public interface MemberControllerDocs {
             int limit
     );
 
-    @Operation(summary = "개발자 검색 API (페이지네이션 포함)", description = "조건에 따라 개발자를 검색하는 API입니다. category(도메인), techstackName(기술스택) 파라미터로 필터링할 수 있습니다. 모든 파라미터는 선택적이며, 지정하지 않으면 해당 조건은 무시됩니다.")
+    @Operation(summary = "개발자 검색 API (페이지네이션 포함)", description = "조건에 따라 개발자를 검색하는 API입니다. categories(도메인 목록), techstackNames(기술스택 목록) 파라미터로 필터링할 수 있습니다. 복수 선택 가능하며, 모든 파라미터는 선택적이고 지정하지 않으면 해당 조건은 무시됩니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")

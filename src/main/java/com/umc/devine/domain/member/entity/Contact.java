@@ -19,7 +19,7 @@ public class Contact extends BaseEntity {
     private Long id;
 
     @Enumerated(EnumType.STRING)
-    @Column(name = "type", nullable = false)
+    @Column(name = "type", nullable = false, length = 20)
     private ContactType contactType;
 
     @Column(nullable = false, length = 255)

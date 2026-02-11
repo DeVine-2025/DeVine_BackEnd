@@ -22,7 +22,7 @@ import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 
 public class MemberConverter {
 
@@ -198,7 +198,9 @@ public class MemberConverter {
                 .collect(java.util.stream.Collectors.toList());
 
         List<String> techGenres = devTechstacks.stream()
-                .map(devTechstack -> devTechstack.getTechstack().getGenre().toString())
+                .map(devTechstack -> devTechstack.getTechstack().getGenre())
+                .filter(genre -> genre != null)
+                .map(genre -> genre.toString())
                 .distinct()
                 .collect(java.util.stream.Collectors.toList());
 

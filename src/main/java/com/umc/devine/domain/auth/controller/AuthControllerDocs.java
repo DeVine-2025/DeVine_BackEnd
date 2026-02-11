@@ -2,7 +2,7 @@ package com.umc.devine.domain.auth.controller;
 
 import com.umc.devine.domain.auth.dto.AuthResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;

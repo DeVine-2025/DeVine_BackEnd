@@ -6,6 +6,8 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
 
+import java.util.List;
+
 public class ReportReqDTO {
     @Builder
     public record UpdateVisibilityReq(
@@ -39,7 +41,10 @@ public class ReportReqDTO {
             JsonNode content,
 
             @Schema(description = "에러 메시지 (FAILED 시)")
-            String errorMessage
+            String errorMessage,
+
+            @Schema(description = "분석된 기술 스택 목록")
+            List<String> techstacks
     ) {}
 
     public enum CallbackStatus {

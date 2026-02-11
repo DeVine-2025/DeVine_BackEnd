@@ -37,12 +37,6 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     @Query("SELECT COUNT(r) > 0 FROM DevReport r WHERE r.gitRepoUrl.id = :gitRepoId AND r.errorMessage IS NULL")
     boolean existsActiveReportByGitRepoUrlId(@Param("gitRepoId") Long gitRepoId);
 
-    /**
-     * 실패한 리포트 삭제 (재시도 전 정리용)
-     */
-    @Query("DELETE FROM DevReport r WHERE r.gitRepoUrl.id = :gitRepoId AND r.errorMessage IS NOT NULL")
-    @org.springframework.data.jpa.repository.Modifying
-    void deleteFailedReportsByGitRepoUrlId(@Param("gitRepoId") Long gitRepoId);
     boolean existsByGitRepoUrlId(Long gitRepoId);
 
     @Query("SELECT r FROM DevReport r " +

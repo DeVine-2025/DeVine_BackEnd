@@ -21,7 +21,8 @@ public class FastApiResDto {
             Long detailReportId,
             String status,
             JsonNode content,
-            String errorMessage
+            String errorMessage,
+            List<String> techstacks
     ) {}
 
     @Builder

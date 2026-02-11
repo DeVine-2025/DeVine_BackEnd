@@ -28,6 +28,10 @@ public class DevTechstack {
     private Techstack techstack;
 
     @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
+    @Column(nullable = false, length = 20)
     private TechstackSource source;
+
+    public void updateSourceToAuto() {
+        this.source = TechstackSource.AUTO;
+    }
 }

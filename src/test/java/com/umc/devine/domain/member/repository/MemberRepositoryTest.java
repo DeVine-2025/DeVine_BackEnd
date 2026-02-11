@@ -184,7 +184,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
             // when
             Page<Member> result = memberRepository.findDevelopersByFilters(
                     MemberMainType.DEVELOPER,
-                    CategoryGenre.HEALTHCARE,
+                    List.of(CategoryGenre.HEALTHCARE),
                     null,
                     PageRequest.of(0, 10)
             );
@@ -209,7 +209,7 @@ class MemberRepositoryTest extends IntegrationTestSupport {
             Page<Member> result = memberRepository.findDevelopersByFilters(
                     MemberMainType.DEVELOPER,
                     null,
-                    TechName.JAVA,
+                    List.of(TechName.JAVA),
                     PageRequest.of(0, 10)
             );
 

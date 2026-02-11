@@ -68,6 +68,7 @@ public class ReportConverter {
         GitRepoUrl gitRepoUrl = report.getGitRepoUrl();
         return ReportResDTO.ReportSummaryDTO.builder()
                 .reportId(report.getId())
+                .gitRepoId(gitRepoUrl.getId())
                 .reportType(report.getReportType())
                 .visibility(report.getVisibility())
                 .repoName(GitUrlParser.extractRepoName(gitRepoUrl.getGitUrl()))

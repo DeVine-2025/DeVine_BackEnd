@@ -1,7 +1,6 @@
 package com.umc.devine.domain.category.enums;
 
 public enum CategoryGenre {
-    ALL("전체"),
     HEALTHCARE("헬스케어"),
     FINTECH("핀테크"),
     ECOMMERCE("이커머스"),

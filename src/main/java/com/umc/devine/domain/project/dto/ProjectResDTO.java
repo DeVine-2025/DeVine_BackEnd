@@ -129,6 +129,9 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 생성자 닉네임", example = "김개발")
             String creatorNickname,
 
+            @Schema(description = "프로젝트 생성자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
+            String creatorImage,
+
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
 

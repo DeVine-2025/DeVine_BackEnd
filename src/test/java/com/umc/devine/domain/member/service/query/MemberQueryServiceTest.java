@@ -340,7 +340,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             devTechstackRepository.save(devTechstack);
 
             MemberReqDTO.SearchDeveloperDTO dto = MemberReqDTO.SearchDeveloperDTO.builder()
-                    .category(CategoryGenre.HEALTHCARE)
+                    .categories(List.of(CategoryGenre.HEALTHCARE))
                     .page(1)
                     .size(10)
                     .build();

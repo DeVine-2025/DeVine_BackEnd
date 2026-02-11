@@ -282,9 +282,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         if (projectField == ProjectField.ALL) {
             throw new ProjectException(INVALID_PROJECT_FIELD);
         }
-        if (category == CategoryGenre.ALL) {
-            throw new ProjectException(INVALID_CATEGORY);
-        }
         if (recruitments != null) {
             boolean hasAllPosition = recruitments.stream()
                     .anyMatch(r -> r.position() == ProjectPart.ALL);

@@ -5,7 +5,7 @@ import com.umc.devine.domain.auth.exception.code.AuthSuccessCode;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.ClerkPrincipal;
+import com.umc.devine.global.security.ClerkPrincipal;
 import lombok.RequiredArgsConstructor;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;

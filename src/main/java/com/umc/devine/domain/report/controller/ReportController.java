@@ -8,7 +8,7 @@ import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.auth.CurrentMember;
+import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.*;
