@@ -114,32 +114,16 @@ public class ProjectReqDTO {
                 }
         }
 
-        // 추천 프로젝트 페이지 요청 DTO (추천 프로젝트 탭용)
+        // 추천 프로젝트 요청 DTO (추천 프로젝트 탭용 - 상위 10개 고정 반환)
         @Builder
-        public record RecommendProjectsPageReq(
-                        @Schema(description = "프로젝트 유형 목록 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC), 복수 선택 가능", nullable = true, example = "[\"WEB\", \"MOBILE\"]") List<ProjectField> projectFields,
+        public record RecommendProjectsReq(
+                        @Schema(description = "프로젝트 유형 목록 (ALL, WEB, MOBILE, GAME, BLOCKCHAIN, ETC), 복수 선택 가능, 미선택 시 전체", nullable = true, example = "[\"WEB\", \"MOBILE\"]") List<ProjectField> projectFields,
 
-                        @Schema(description = "도메인 목록 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC), 복수 선택 가능", nullable = true, example = "[\"ECOMMERCE\", \"FINTECH\"]") List<CategoryGenre> categories,
+                        @Schema(description = "도메인 목록 (ALL, HEALTHCARE, FINTECH, ECOMMERCE, EDUCATION, SOCIAL, ENTERTAINMENT, AI_DATA, ETC), 복수 선택 가능, 미선택 시 전체", nullable = true, example = "[\"ECOMMERCE\", \"FINTECH\"]") List<CategoryGenre> categories,
 
-                        @Schema(description = "포지션 목록 (ALL, FRONTEND, BACKEND, INFRA), 복수 선택 가능", nullable = true, example = "[\"BACKEND\", \"FRONTEND\"]") List<ProjectPart> positions,
+                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등), 복수 선택 가능, 미선택 시 전체", nullable = true, example = "[\"JAVA\", \"SPRINGBOOT\"]") List<TechName> techstackNames,
 
-                        @Schema(description = "기술스택 목록 (JAVA, JAVASCRIPT, REACT, SPRINGBOOT 등), 복수 선택 가능", nullable = true, example = "[\"JAVA\", \"SPRINGBOOT\"]") List<TechName> techstackNames,
-
-                        @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges,
-
-                        @Schema(description = "페이지 번호 (1부터 시작)", nullable = true, defaultValue = "1", example = "1") @ValidPage Integer page,
-
-                        @Schema(description = "페이지 크기", nullable = true, defaultValue = "10", example = "10") Integer size) {
-                public RecommendProjectsPageReq {
-                        if (page == null)
-                                page = 1;
-                        if (size == null)
-                                size = 10;
-                }
-
-                public Pageable toPageable() {
-                        return PageRequest.of(page, size).toPageable();
-                }
+                        @Schema(description = "예상 기간 목록 (UNDER_ONE, ONE_TO_THREE, THREE_TO_SIX, SIX_PLUS), 복수 선택 가능, 미선택 시 전체", nullable = true, example = "[\"ONE_TO_THREE\", \"THREE_TO_SIX\"]") List<DurationRange> durationRanges) {
         }
 
         public record ChangeStatusReq(
