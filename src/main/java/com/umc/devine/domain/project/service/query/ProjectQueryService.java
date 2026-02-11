@@ -9,8 +9,8 @@ import org.springframework.data.domain.Pageable;
 import java.util.List;
 
 public interface ProjectQueryService {
-    // 프로젝트 상세 조회
-    ProjectResDTO.UpdateProjectRes getProjectDetail(Member member, Long projectId);
+    // 프로젝트 상세 조회 (비회원 허용)
+    ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId);
 
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
     ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects();

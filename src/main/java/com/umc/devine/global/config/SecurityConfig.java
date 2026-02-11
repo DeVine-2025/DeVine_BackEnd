@@ -60,6 +60,8 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/terms").permitAll()
                         // 이번 주 추천 프로젝트 조회
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/weekly-best").permitAll()
+                        // 프로젝트 상세 조회 (비회원 허용)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/projects/{projectId}").permitAll()
                         // AI 서버 콜백 (내부 통신) // TODO 마스터키 인증으로 변경 필요
                         .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
                         .requestMatchers(HttpMethod.POST, "/api/v1/embeddings/callback/**").permitAll()
