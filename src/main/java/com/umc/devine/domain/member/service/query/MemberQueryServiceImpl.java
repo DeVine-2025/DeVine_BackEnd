@@ -164,6 +164,9 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         Project project = projectRepository.findByIdWithCategory(dto.projectId())
                 .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
 
+        if (project.getCategory() == null) {
+            return PagedResponse.empty(dto.toPageable());
+        }
         CategoryGenre category = project.getCategory().getGenre();
 
         // 프로젝트 요구 기술스택 조회
@@ -230,6 +233,9 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         Project project = projectRepository.findByIdWithCategory(projectId)
                 .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
 
+        if (project.getCategory() == null) {
+            return Collections.emptyList();
+        }
         CategoryGenre category = project.getCategory().getGenre();
 
         // 프로젝트 요구 기술스택 조회

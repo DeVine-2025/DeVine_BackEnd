@@ -165,6 +165,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             memberCategoryRepository.deleteAllByMember(member);
 
             List<Category> categories = categoryRepository.findAllByGenreIn(Arrays.asList(dto.domains()));
+            if (categories.size() != dto.domains().length) {
+                throw new MemberException(MemberErrorCode.CATEGORY_NOT_FOUND);
+            }
             memberCategoryRepository.saveAll(CategoryConverter.toMemberCategories(member, categories));
         }
 

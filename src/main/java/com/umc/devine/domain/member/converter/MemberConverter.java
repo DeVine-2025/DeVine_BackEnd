@@ -41,7 +41,7 @@ public class MemberConverter {
                 .build();
     }
 
-    public static MemberAgreement toMemberAgreement(Member member, Terms terms, Boolean agreed) {
+    public static MemberAgreement toMemberAgreement(Member member, Terms terms, boolean agreed) {
         return MemberAgreement.builder()
                 .member(member)
                 .terms(terms)
@@ -60,7 +60,7 @@ public class MemberConverter {
                             .filter(t -> t.getId().equals(dto.termsId()))
                             .findFirst()
                             .orElseThrow(() -> new MemberException(MemberErrorCode.TERMS_NOT_FOUND));
-                    return toMemberAgreement(member, terms, dto.agreed());
+                    return toMemberAgreement(member, terms, Boolean.TRUE.equals(dto.agreed()));
                 })
                 .collect(Collectors.toList());
     }
