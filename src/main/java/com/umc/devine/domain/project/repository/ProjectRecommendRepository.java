@@ -40,6 +40,7 @@ public class ProjectRecommendRepository {
     @SuppressWarnings("unchecked")
     public List<Object[]> findRecommendedProjects(
             Long memberId,
+            Long embeddingId,
             int limit,
             List<ProjectField> projectFields,
             List<CategoryGenre> categories,
@@ -48,6 +49,7 @@ public class ProjectRecommendRepository {
     ) {
         Map<String, Object> params = new HashMap<>();
         params.put("memberId", memberId);
+        params.put("embeddingId", embeddingId);
         params.put("limit", limit);
 
         StringBuilder sql = new StringBuilder();
@@ -93,15 +95,7 @@ public class ProjectRecommendRepository {
                 FROM project_embedding pe
                 JOIN project p ON pe.project_id = p.project_id
                 LEFT JOIN category c ON p.domain_id = c.category_id
-                JOIN report_embedding re ON re.report_embedding_id = (
-                    SELECT re2.report_embedding_id FROM report_embedding re2
-                    JOIN dev_report dr ON re2.dev_report_id = dr.dev_report_id
-                    JOIN git_repo_url gru ON dr.git_repo_id = gru.git_repo_id
-                    WHERE gru.member_id = :memberId
-                      AND re2.status = 'SUCCESS'
-                      AND re2.embedding IS NOT NULL
-                    ORDER BY re2.created_at DESC LIMIT 1
-                )
+                JOIN report_embedding re ON re.report_embedding_id = :embeddingId
                 WHERE pe.status = 'SUCCESS'
                   AND p.project_status = 'RECRUITING'
                   AND EXISTS (

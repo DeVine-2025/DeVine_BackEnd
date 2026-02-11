@@ -111,7 +111,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
             Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
             if (embedding.isPresent()) {
                 List<ProjectResDTO.RecommendedProjectSummary> summaries =
-                        executeVectorSearch(member.getId(), limit, null, null, null, null);
+                        executeVectorSearch(member.getId(), embedding.get().getId(), limit, null, null, null, null);
 
                 if (!summaries.isEmpty()) {
                     return ProjectResDTO.RecommendedProjectsRes.builder()
@@ -138,6 +138,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 List<ProjectResDTO.RecommendedProjectSummary> summaries =
                         executeVectorSearch(
                                 member.getId(),
+                                embedding.get().getId(),
                                 RECOMMEND_LIMIT,
                                 request.projectFields(),
                                 request.categories(),
@@ -176,6 +177,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
      */
     private List<ProjectResDTO.RecommendedProjectSummary> executeVectorSearch(
             Long memberId,
+            Long embeddingId,
             int limit,
             List<ProjectField> projectFields,
             List<CategoryGenre> categories,
@@ -184,6 +186,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     ) {
         List<Object[]> results = projectRecommendRepository.findRecommendedProjects(
                 memberId,
+                embeddingId,
                 limit,
                 projectFields,
                 categories,
