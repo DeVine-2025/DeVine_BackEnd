@@ -39,6 +39,12 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
 
     boolean existsByGitRepoUrlId(Long gitRepoId);
 
+    /**
+     * 활성 리포트가 존재하는 gitRepoId 목록 반환 (배치 조회)
+     */
+    @Query("SELECT DISTINCT r.gitRepoUrl.id FROM DevReport r WHERE r.gitRepoUrl.id IN :gitRepoIds AND r.errorMessage IS NULL")
+    List<Long> findActiveReportGitRepoIds(@Param("gitRepoIds") List<Long> gitRepoIds);
+
     @Query("SELECT r FROM DevReport r " +
             "JOIN FETCH r.gitRepoUrl g " +
             "WHERE g.member = :member " +

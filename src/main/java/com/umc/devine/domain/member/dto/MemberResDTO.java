@@ -136,7 +136,10 @@ public class MemberResDTO {
             String gitUrl,
 
             @Schema(description = "레포지토리 설명", nullable = true)
-            String description
+            String description,
+
+            @Schema(description = "리포트 생성 여부", example = "false")
+            Boolean hasReport
     ) {}
 
     @Builder

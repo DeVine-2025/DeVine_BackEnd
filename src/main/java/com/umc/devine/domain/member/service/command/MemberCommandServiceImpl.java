@@ -35,6 +35,7 @@ import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
+import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
@@ -46,8 +47,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -67,6 +70,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final MemberAgreementRepository memberAgreementRepository;
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final GitHubService gitHubService;
+    private final DevReportRepository devReportRepository;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -233,6 +237,13 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
     @Override
     public PagedResponse<MemberResDTO.GitRepoDTO> syncGitHubRepositories(Member member, MemberReqDTO.GitRepoSyncDTO dto) {
+        // GitHub username이 없으면 저장
+        if (member.getGithubUsername() == null) {
+            Map<String, Object> userInfo = gitHubService.getUserInfo(member.getClerkId());
+            String githubUsername = (String) userInfo.get("login");
+            member.updateGithubUsername(githubUsername);
+        }
+
         List<GitHubRepositoryDTO> githubRepos = gitHubService.getContributedRepositories(member.getClerkId());
 
         // 기존 레포를 한 번에 조회하여 Map으로 변환 (gitUrl -> GitRepoUrl)
@@ -263,8 +274,17 @@ public class MemberCommandServiceImpl implements MemberCommandService {
 
         // 페이지네이션된 결과 조회
         Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMember(member, dto.toPageable());
+
+        // 리포트 존재 여부 배치 조회
+        List<Long> gitRepoIds = repoPage.getContent().stream()
+                .map(GitRepoUrl::getId)
+                .collect(Collectors.toList());
+        Set<Long> repoIdsWithReport = gitRepoIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(devReportRepository.findActiveReportGitRepoIds(gitRepoIds));
+
         List<MemberResDTO.GitRepoDTO> repoDTOs = repoPage.getContent().stream()
-                .map(MemberConverter::toGitRepoDTO)
+                .map(repo -> MemberConverter.toGitRepoDTO(repo, repoIdsWithReport.contains(repo.getId())))
                 .collect(Collectors.toList());
 
         return PagedResponse.of(repoPage, repoDTOs);

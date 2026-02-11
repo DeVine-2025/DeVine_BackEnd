@@ -285,18 +285,19 @@ public class MemberConverter {
                 .build();
     }
 
-    public static MemberResDTO.GitRepoDTO toGitRepoDTO(GitRepoUrl gitRepoUrl) {
+    public static MemberResDTO.GitRepoDTO toGitRepoDTO(GitRepoUrl gitRepoUrl, boolean hasReport) {
         return MemberResDTO.GitRepoDTO.builder()
                 .gitRepoId(gitRepoUrl.getId())
                 .name(GitUrlParser.extractRepoName(gitRepoUrl.getGitUrl()))
                 .gitUrl(gitRepoUrl.getGitUrl())
                 .description(gitRepoUrl.getGitDescription())
+                .hasReport(hasReport)
                 .build();
     }
 
-    public static MemberResDTO.GitRepoListDTO toGitRepoListDTO(List<GitRepoUrl> gitRepoUrls) {
+    public static MemberResDTO.GitRepoListDTO toGitRepoListDTO(List<GitRepoUrl> gitRepoUrls, List<Long> repoIdsWithReport) {
         List<MemberResDTO.GitRepoDTO> repos = gitRepoUrls.stream()
-                .map(MemberConverter::toGitRepoDTO)
+                .map(repo -> toGitRepoDTO(repo, repoIdsWithReport.contains(repo.getId())))
                 .collect(Collectors.toList());
 
         return MemberResDTO.GitRepoListDTO.builder()

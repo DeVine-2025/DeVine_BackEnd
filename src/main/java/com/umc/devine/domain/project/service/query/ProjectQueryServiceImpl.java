@@ -107,18 +107,16 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         int limit = request.limit();
 
         // 개발자이고 리포트 임베딩이 있으면 벡터 검색
-        if (member.getMainType() == MemberMainType.DEVELOPER) {
-            Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
-            if (embedding.isPresent()) {
-                List<ProjectResDTO.RecommendedProjectSummary> summaries =
-                        executeVectorSearch(member.getId(), embedding.get().getId(), limit, null, null, null, null);
+        Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
+        if (embedding.isPresent()) {
+            List<ProjectResDTO.RecommendedProjectSummary> summaries =
+                    executeVectorSearch(member.getId(), embedding.get().getId(), limit, null, null, null, null);
 
-                if (!summaries.isEmpty()) {
-                    return ProjectResDTO.RecommendedProjectsRes.builder()
-                            .projects(summaries)
-                            .count(summaries.size())
-                            .build();
-                }
+            if (!summaries.isEmpty()) {
+                return ProjectResDTO.RecommendedProjectsRes.builder()
+                        .projects(summaries)
+                        .count(summaries.size())
+                        .build();
             }
         }
 
@@ -132,25 +130,23 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
             ProjectReqDTO.RecommendProjectsReq request
     ) {
         // 개발자이고 리포트 임베딩이 있으면 벡터 검색
-        if (member.getMainType() == MemberMainType.DEVELOPER) {
-            Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
-            if (embedding.isPresent()) {
-                List<ProjectResDTO.RecommendedProjectSummary> summaries =
-                        executeVectorSearch(
-                                member.getId(),
-                                embedding.get().getId(),
-                                RECOMMEND_LIMIT,
-                                request.projectFields(),
-                                request.categories(),
-                                request.techstackNames(),
-                                request.durationRanges()
-                        );
+        Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
+        if (embedding.isPresent()) {
+            List<ProjectResDTO.RecommendedProjectSummary> summaries =
+                    executeVectorSearch(
+                            member.getId(),
+                            embedding.get().getId(),
+                            RECOMMEND_LIMIT,
+                            request.projectFields(),
+                            request.categories(),
+                            request.techstackNames(),
+                            request.durationRanges()
+                    );
 
-                return ProjectResDTO.RecommendedProjectsRes.builder()
-                        .projects(summaries)
-                        .count(summaries.size())
-                        .build();
-            }
+            return ProjectResDTO.RecommendedProjectsRes.builder()
+                    .projects(summaries)
+                    .count(summaries.size())
+                    .build();
         }
 
         // 폴백: 최신 모집 중 프로젝트
