@@ -138,14 +138,14 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @GetMapping("/projects/{projectId}/propose/{memberId}")
+    @GetMapping("/projects/{projectId}/propose/{nickname}")
     public ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
             @CurrentMember Member member,
             @PathVariable Long projectId,
-            @PathVariable Long memberId
+            @PathVariable String nickname
     ) {
         MatchingResDTO.MatchingStatusRes result =
-                matchingQueryService.getMyProposeStatus(member, projectId, memberId);
+                matchingQueryService.getMyProposeStatus(member, projectId, nickname);
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_APPLICANT_STATUS_SUCCESS, result);
     }
 }

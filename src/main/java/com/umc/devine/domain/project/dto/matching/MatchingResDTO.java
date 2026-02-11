@@ -23,7 +23,6 @@ public class MatchingResDTO {
         Long matchingId,
         Long projectId,
         String projectName,
-        Long memberId,
         String memberNickname,
         MatchingStatus status,
         MatchingType matchingType,

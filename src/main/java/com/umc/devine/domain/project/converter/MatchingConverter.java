@@ -33,7 +33,6 @@ public class MatchingConverter {
                 .matchingId(matching.getId())
                 .projectId(matching.getProject().getId())
                 .projectName(matching.getProject().getName())
-                .memberId(matching.getMember().getId())
                 .memberNickname(matching.getMember().getNickname())
                 .status(matching.getStatus())
                 .matchingType(matching.getMatchingType())
