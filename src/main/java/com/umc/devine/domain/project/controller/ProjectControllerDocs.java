@@ -58,16 +58,13 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @PathVariable("projectId") Long projectId);
 
-        @Operation(summary = "프로젝트 상세 조회 API", description = "프로젝트 ID를 기반으로 상세 내용을 조회하는 API입니다.")
+        @Operation(summary = "프로젝트 상세 조회 API", description = "프로젝트 ID를 기반으로 상세 내용을 조회하는 API입니다. 비회원도 조회 가능합니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
         })
         ApiResponse<ProjectResDTO.UpdateProjectRes> getProjectDetail(
-                        @Parameter(hidden = true) @CurrentMember Member member,
                         @PathVariable("projectId") Long projectId);
 
         @Operation(summary = "이번 주 주목 프로젝트 조회 (메인 화면 상단)", description = "이번 주(월~일)에 생성된 프로젝트 중 주간 조회수가 높은 상위 4개를 반환합니다.")

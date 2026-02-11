@@ -42,8 +42,8 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     @Transactional
-    public ProjectResDTO.UpdateProjectRes getProjectDetail(Member member, Long projectId) {
-        Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
+    public ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId) {
+        Project project = projectRepository.findByIdWithMemberAndStatusNot(projectId, ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         // 원자적 조회수 증가 (동시성 안전)
