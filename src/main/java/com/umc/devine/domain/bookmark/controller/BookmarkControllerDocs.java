@@ -26,7 +26,7 @@ public interface BookmarkControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member
     );
 
-    @Operation(summary = "북마크 저장 API", description = "프로젝트 또는 개발자를 북마크에 저장하는 API입니다. targetType은 PROJECT 또는 DEVELOPER입니다.")
+    @Operation(summary = "북마크 저장 API", description = "프로젝트 또는 개발자를 북마크에 저장하는 API입니다. targetType은 PROJECT 또는 DEVELOPER입니다. (PROJECT 타입은 targetId 필수, DEVELOPER 타입은 targetNickname 필수)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 북마크에 추가되어 있습니다."),

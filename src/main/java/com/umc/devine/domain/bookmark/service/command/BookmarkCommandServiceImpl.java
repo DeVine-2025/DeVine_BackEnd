@@ -4,6 +4,7 @@ import com.umc.devine.domain.bookmark.converter.BookmarkConverter;
 import com.umc.devine.domain.bookmark.dto.BookmarkReqDTO;
 import com.umc.devine.domain.bookmark.dto.BookmarkResDTO;
 import com.umc.devine.domain.bookmark.entity.Bookmark;
+import com.umc.devine.domain.bookmark.enums.BookmarkType;
 import com.umc.devine.domain.bookmark.exception.BookmarkException;
 import com.umc.devine.domain.bookmark.exception.code.BookmarkErrorCode;
 import com.umc.devine.domain.bookmark.repository.BookmarkRepository;
@@ -21,14 +22,32 @@ import org.springframework.transaction.annotation.Transactional;
 public class BookmarkCommandServiceImpl implements BookmarkCommandService {
 
     private final BookmarkRepository bookmarkRepository;
+    private final MemberRepository memberRepository;
 
     @Override
     public BookmarkResDTO.BookmarkIdDTO createBookmark(Member member, BookmarkReqDTO.CreateBookmarkDTO dto) {
-        if (bookmarkRepository.existsByMemberAndTargetTypeAndTargetId(member, dto.targetType(), dto.targetId())) {
+        Long targetId;
+
+        if (dto.targetType() == BookmarkType.DEVELOPER) {
+            Member targetMember = memberRepository.findByNickname(dto.targetNickname())
+                    .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+            if (targetMember.getId().equals(member.getId())) {
+                throw new BookmarkException(BookmarkErrorCode.CANNOT_BOOKMARK_SELF);
+            }
+            targetId = targetMember.getId();
+        } else {
+            targetId = dto.targetId();
+        }
+
+        if (bookmarkRepository.existsByMemberAndTargetTypeAndTargetId(member, dto.targetType(), targetId)) {
             throw new BookmarkException(BookmarkErrorCode.ALREADY_EXISTS);
         }
 
-        Bookmark bookmark = BookmarkConverter.toBookmark(member, dto);
+        Bookmark bookmark = Bookmark.builder()
+                .member(member)
+                .targetType(dto.targetType())
+                .targetId(targetId)
+                .build();
         Bookmark savedBookmark = bookmarkRepository.save(bookmark);
 
         return BookmarkConverter.toBookmarkIdDTO(savedBookmark.getId());

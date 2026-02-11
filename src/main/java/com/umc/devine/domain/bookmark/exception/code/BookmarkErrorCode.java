@@ -18,6 +18,12 @@ public enum BookmarkErrorCode implements BaseErrorCode {
     FORBIDDEN(HttpStatus.FORBIDDEN,
             "BOOKMARK403_1",
             "북마크에 대한 접근 권한이 없습니다."),
+    INVALID_REQUEST(HttpStatus.BAD_REQUEST,
+            "BOOKMARK400_2",
+            "잘못된 북마크 요청입니다. PROJECT 타입은 targetId, DEVELOPER 타입은 targetNickname이 필요합니다."),
+    CANNOT_BOOKMARK_SELF(HttpStatus.BAD_REQUEST,
+            "BOOKMARK400_3",
+            "자기 자신을 북마크할 수 없습니다."),
     ;
 
     private final HttpStatus status;
