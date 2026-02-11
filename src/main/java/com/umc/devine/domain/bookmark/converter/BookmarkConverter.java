@@ -1,36 +1,33 @@
 package com.umc.devine.domain.bookmark.converter;
 
-import com.umc.devine.domain.bookmark.dto.BookmarkReqDTO;
 import com.umc.devine.domain.bookmark.dto.BookmarkResDTO;
 import com.umc.devine.domain.bookmark.entity.Bookmark;
-import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.bookmark.enums.BookmarkType;
 
 import java.util.List;
-import java.util.stream.Collectors;
+import java.util.Map;
 
 public class BookmarkConverter {
 
-    public static Bookmark toBookmark(Member member, BookmarkReqDTO.CreateBookmarkDTO dto) {
-        return Bookmark.builder()
-                .member(member)
-                .targetType(dto.targetType())
-                .targetId(dto.targetId())
-                .build();
-    }
-
-    public static BookmarkResDTO.BookmarkDTO toBookmarkDTO(Bookmark bookmark) {
+    public static BookmarkResDTO.BookmarkDTO toBookmarkDTO(Bookmark bookmark, String resolvedNickname) {
         return BookmarkResDTO.BookmarkDTO.builder()
                 .bookmarkId(bookmark.getId())
                 .targetType(bookmark.getTargetType())
                 .targetId(bookmark.getTargetId())
+                .targetNickname(resolvedNickname)
                 .createdAt(bookmark.getCreatedAt())
                 .build();
     }
 
-    public static BookmarkResDTO.BookmarkListDTO toBookmarkListDTO(List<Bookmark> bookmarks) {
+    public static BookmarkResDTO.BookmarkListDTO toBookmarkListDTO(List<Bookmark> bookmarks, Map<Long, String> nicknameMap) {
         List<BookmarkResDTO.BookmarkDTO> bookmarkDTOs = bookmarks.stream()
-                .map(BookmarkConverter::toBookmarkDTO)
-                .collect(Collectors.toList());
+                .map(b -> {
+                    String nickname = b.getTargetType() == BookmarkType.DEVELOPER
+                            ? nicknameMap.get(b.getTargetId())
+                            : null;
+                    return toBookmarkDTO(b, nickname);
+                })
+                .toList();
 
         return BookmarkResDTO.BookmarkListDTO.builder()
                 .bookmarks(bookmarkDTOs)

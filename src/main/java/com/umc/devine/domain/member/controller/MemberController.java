@@ -11,6 +11,7 @@ import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.format.annotation.DateTimeFormat;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDate;
@@ -56,7 +57,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}")
     public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberByNickname(
-            @PathVariable("nickname") String nickname
+            @PathVariable("nickname") @ValidNickname String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
         MemberResDTO.MemberProfileDTO response = memberQueryService.findMemberByNickname(nickname);
@@ -78,7 +79,7 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
-            @PathVariable("nickname") String nickname,
+            @PathVariable("nickname") @ValidNickname String nickname,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
