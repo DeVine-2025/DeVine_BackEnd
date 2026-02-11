@@ -39,6 +39,17 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
+    @PatchMapping("/applications/projects/{projectId}")
+    public ApiResponse<MatchingResDTO.ProposeResDTO> updateApplication(
+            @CurrentMember Member member,
+            @PathVariable Long projectId,
+            @Valid @RequestBody MatchingReqDTO.ApplyReqDTO dto
+    ) {
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.updateApplicationPart(member, projectId, dto.part());
+        return ApiResponse.onSuccess(MatchingSuccessCode.UPDATE_APPLICATION_SUCCESS, result);
+    }
+
+    @Override
     @PatchMapping("/applications/projects/{projectId}/cancel")
     public ApiResponse<MatchingResDTO.ProposeResDTO> cancelApplication(
             @CurrentMember Member member,

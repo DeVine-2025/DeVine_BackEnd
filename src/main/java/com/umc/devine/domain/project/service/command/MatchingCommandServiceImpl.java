@@ -112,6 +112,19 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         return MatchingConverter.toMatchingResDTO(matching);
     }
 
+    @Override
+    public MatchingResDTO.ProposeResDTO updateApplicationPart(Member member, Long projectId, ProjectPart part) {
+        Project project = getProject(projectId);
+
+        Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
+                        project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
+                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
+
+        matching.changePart(part);
+
+        return MatchingConverter.toMatchingResDTO(matching);
+    }
+
     private Project getProject(Long projectId) {
         return projectRepository.findById(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));

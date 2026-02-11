@@ -104,4 +104,9 @@ public class Matching extends BaseEntity {
     public boolean isPending() {
         return this.status == MatchingStatus.PENDING;
     }
+
+    public void changePart(ProjectPart part) {
+        validatePendingStatus();
+        this.part = part;
+    }
 }

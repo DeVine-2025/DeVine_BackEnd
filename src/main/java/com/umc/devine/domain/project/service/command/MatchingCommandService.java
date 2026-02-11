@@ -16,4 +16,6 @@ public interface MatchingCommandService {
     MatchingResDTO.ProposeResDTO respondToApplication(Member pm, Long matchingId, MatchingDecision decision);
 
     MatchingResDTO.ProposeResDTO respondToProposal(Member developer, Long matchingId, MatchingDecision decision);
+
+    MatchingResDTO.ProposeResDTO updateApplicationPart(Member member, Long projectId, ProjectPart part);
 }
