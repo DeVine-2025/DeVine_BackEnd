@@ -35,10 +35,12 @@ import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
+import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -227,15 +229,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     @Override
-    public MemberResDTO.GitRepoListDTO syncGitHubRepositories(Member member) {
-        List<GitHubRepositoryDTO> githubRepos = gitHubService.getRepositories(member.getClerkId());
+    public PagedResponse<MemberResDTO.GitRepoDTO> syncGitHubRepositories(Member member, MemberReqDTO.GitRepoSyncDTO dto) {
+        List<GitHubRepositoryDTO> githubRepos = gitHubService.getContributedRepositories(member.getClerkId());
 
         // 기존 레포를 한 번에 조회하여 Map으로 변환 (gitUrl -> GitRepoUrl)
         Map<String, GitRepoUrl> existingRepos = gitRepoUrlRepository.findAllByMember(member).stream()
                 .collect(Collectors.toMap(GitRepoUrl::getGitUrl, Function.identity()));
 
         List<GitRepoUrl> newRepos = new ArrayList<>();
-        List<GitRepoUrl> result = new ArrayList<>();
 
         for (GitHubRepositoryDTO repo : githubRepos) {
             GitRepoUrl existing = existingRepos.get(repo.getHtmlUrl());
@@ -243,7 +244,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             if (existing != null) {
                 // 값이 같으면 dirty 표시 안됨 → UPDATE 쿼리 발생 안함
                 existing.updateDescription(repo.getDescription());
-                result.add(existing);
             } else {
                 GitRepoUrl newRepo = GitRepoUrl.builder()
                         .member(member)
@@ -251,7 +251,6 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                         .gitDescription(repo.getDescription())
                         .build();
                 newRepos.add(newRepo);
-                result.add(newRepo);
             }
         }
 
@@ -259,7 +258,13 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             gitRepoUrlRepository.saveAll(newRepos);
         }
 
-        return MemberConverter.toGitRepoListDTO(result);
+        // 페이지네이션된 결과 조회
+        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMember(member, dto.toPageable());
+        List<MemberResDTO.GitRepoDTO> repoDTOs = repoPage.getContent().stream()
+                .map(MemberConverter::toGitRepoDTO)
+                .collect(Collectors.toList());
+
+        return PagedResponse.of(repoPage, repoDTOs);
     }
 
     private void validateProfileImage(String imageUrl) {

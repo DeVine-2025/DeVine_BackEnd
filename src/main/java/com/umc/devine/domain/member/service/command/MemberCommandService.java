@@ -4,6 +4,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
+import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 
 public interface MemberCommandService {
@@ -19,8 +20,8 @@ public interface MemberCommandService {
     void withdraw(Member member);
 
     /**
-     * GitHub에서 레포지토리 목록을 가져와 DB에 저장합니다.
+     * GitHub에서 레포지토리 목록을 가져와 DB에 저장하고, 페이지네이션된 결과를 반환합니다.
      * 이미 존재하는 레포는 description을 업데이트합니다.
      */
-    MemberResDTO.GitRepoListDTO syncGitHubRepositories(Member member);
+    PagedResponse<MemberResDTO.GitRepoDTO> syncGitHubRepositories(Member member, MemberReqDTO.GitRepoSyncDTO dto);
 }
