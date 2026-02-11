@@ -8,7 +8,6 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
 import com.umc.devine.domain.member.repository.ContactRepository;
@@ -135,15 +134,12 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     @Override
     public PagedResponse<MemberResDTO.DeveloperDTO> findAllDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto) {
-        // 프로젝트 조회 (Category fetch join)
         Project project = projectRepository.findByIdWithCategory(dto.projectId())
                 .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
 
-        // 프로젝트의 카테고리로 개발자 검색
         CategoryGenre category = project.getCategory().getGenre();
 
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(
-                MemberMainType.DEVELOPER,
                 List.of(category),
                 null,
                 dto.toPageable()
@@ -171,9 +167,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     @Override
     public List<MemberResDTO.DeveloperDTO> findAllDevelopersPreview(Member member, int limit) {
-        // TODO: member를 활용한 추천 로직 구현
-        List<Member> developers = memberRepository.findAllByMainType(
-                MemberMainType.DEVELOPER,
+        List<Member> developers = memberRepository.findAllPublicMembers(
                 org.springframework.data.domain.PageRequest.of(0, limit)
         );
 
@@ -201,7 +195,6 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 ? request.techstackNames() : null;
 
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(
-                MemberMainType.DEVELOPER,
                 categories,
                 techstackNames,
                 request.toPageable()
