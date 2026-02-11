@@ -4,15 +4,19 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.apiPayload.code.BaseErrorCode;
 import com.umc.devine.global.apiPayload.code.GeneralErrorCode;
 import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
 
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Slf4j
 @RestControllerAdvice
@@ -70,6 +74,31 @@ public class GeneralExceptionAdvice {
 
         // 400 상태 코드로 반환
         return ResponseEntity.status(code.getStatus()).body(errorResponse);
+    }
+
+    // JSON 파싱 실패 또는 잘못된 enum 값 처리 (400)
+    @ExceptionHandler(HttpMessageNotReadableException.class)
+    public ResponseEntity<ApiResponse<String>> handleHttpMessageNotReadable(
+            HttpMessageNotReadableException ex
+    ) {
+        String detail;
+        Throwable cause = ex.getCause();
+
+        if (cause instanceof InvalidFormatException ife && ife.getTargetType().isEnum()) {
+            Object[] enumConstants = ife.getTargetType().getEnumConstants();
+            String validValues = Arrays.stream(enumConstants)
+                    .map(Object::toString)
+                    .collect(Collectors.joining(", "));
+            detail = String.format("'%s'은(는) 유효하지 않은 값입니다. 허용 값: [%s]", ife.getValue(), validValues);
+        } else {
+            detail = "요청 본문을 읽을 수 없습니다. JSON 형식을 확인해주세요.";
+        }
+
+        log.error("[HttpMessageNotReadable] {}", detail);
+
+        GeneralErrorCode code = GeneralErrorCode.BAD_REQUEST;
+        return ResponseEntity.status(code.getStatus())
+                .body(ApiResponse.onFailure(code, detail));
     }
 
     // 그 외의 정의되지 않은 모든 예외 처리 (500)

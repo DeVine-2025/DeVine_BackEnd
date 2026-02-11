@@ -158,6 +158,6 @@ public interface MatchingControllerDocs {
     ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
-            @Parameter(description = "대상 회원 ID", required = true) @PathVariable Long memberId
+            @Parameter(description = "대상 회원 닉네임", required = true) @PathVariable String nickname
     );
 }

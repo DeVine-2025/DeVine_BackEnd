@@ -10,8 +10,10 @@ import com.umc.devine.domain.project.service.command.MatchingCommandService;
 import com.umc.devine.domain.project.service.query.MatchingQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
 import org.springframework.web.bind.annotation.*;
@@ -19,6 +21,7 @@ import org.springframework.web.bind.annotation.*;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/matching")
+@Validated
 public class MatchingController implements MatchingControllerDocs {
 
     private final MatchingCommandService matchingCommandService;
@@ -63,7 +66,7 @@ public class MatchingController implements MatchingControllerDocs {
     @PostMapping("/proposals/members/{nickname}")
     public ApiResponse<MatchingResDTO.ProposeResDTO> proposeToMember(
             @CurrentMember Member member,
-            @PathVariable String nickname,
+            @PathVariable @ValidNickname String nickname,
             @Valid @RequestBody MatchingReqDTO.ProposeReqDTO dto
     ) {
         MatchingResDTO.ProposeResDTO result = matchingCommandService.proposeToMember(member, nickname, dto.projectId(), dto.part(), dto.content());
@@ -138,14 +141,14 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
-    @GetMapping("/projects/{projectId}/propose/{memberId}")
+    @GetMapping("/projects/{projectId}/propose/{nickname}")
     public ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
             @CurrentMember Member member,
             @PathVariable Long projectId,
-            @PathVariable Long memberId
+            @PathVariable @ValidNickname String nickname
     ) {
         MatchingResDTO.MatchingStatusRes result =
-                matchingQueryService.getMyProposeStatus(member, projectId, memberId);
+                matchingQueryService.getMyProposeStatus(member, projectId, nickname);
         return ApiResponse.onSuccess(MatchingSuccessCode.GET_APPLICANT_STATUS_SUCCESS, result);
     }
 }

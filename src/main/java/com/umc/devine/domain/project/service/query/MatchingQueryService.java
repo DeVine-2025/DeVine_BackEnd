@@ -17,5 +17,5 @@ public interface MatchingQueryService {
     MatchingResDTO.MatchingStatusRes getMyApplyStatus(Member member, Long projectId);
 
     // PM용: 특정 개발자에게 제안한 상태 조회 (PROPOSE 타입만)
-    MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, Long memberId);
+    MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, String nickname);
 }

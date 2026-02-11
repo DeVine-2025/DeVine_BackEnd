@@ -9,13 +9,16 @@ import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/reports")
+@Validated
 public class ReportController implements ReportControllerDocs {
 
     private final ReportQueryService reportQueryService;
@@ -94,7 +97,7 @@ public class ReportController implements ReportControllerDocs {
     @Override
     @GetMapping("/members/{nickname}")
     public ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
-            @PathVariable String nickname,
+            @PathVariable @ValidNickname String nickname,
             @RequestParam(required = false) ReportType type
     ) {
         ReportResDTO.ReportSummaryListDTO response = reportQueryService.getReportsByNickname(nickname, type);

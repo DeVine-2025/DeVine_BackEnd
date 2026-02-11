@@ -127,7 +127,7 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
     }
 
     @Override
-    public MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, Long memberId) {
+    public MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, String nickname) {
         // 1. 프로젝트 조회
         Project project = projectRepository.findById(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
@@ -137,15 +137,14 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
             throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
         }
 
-        // 3. 대상 회원 존재 확인
-        if (!memberRepository.existsById(memberId)) {
-            throw new MemberException(MemberErrorCode.NOT_FOUND);
-        }
+        // 3. 대상 회원 닉네임으로 조회
+        Member targetMember = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
         // 4. PROPOSE 타입, CANCELLED 제외하고 매칭 조회
         Optional<Matching> matchingOpt = matchingRepository
                 .findByProjectIdAndMemberIdAndTypeAndStatusNot(
-                        projectId, memberId, MatchingType.PROPOSE, MatchingStatus.CANCELLED);
+                        projectId, targetMember.getId(), MatchingType.PROPOSE, MatchingStatus.CANCELLED);
 
         // 5. 매칭 없으면 exists=false 응답 반환
         return matchingOpt
