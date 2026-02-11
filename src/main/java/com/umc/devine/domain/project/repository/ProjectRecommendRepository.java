@@ -62,104 +62,72 @@ public class ProjectRecommendRepository {
                 LEFT JOIN techstack root ON t.parent_stack = root.techstack_id
                 WHERE dt.member_id = :memberId
                   AND (t.parent_stack IS NULL OR root.parent_stack IS NULL)
+            ),
+            scores AS (
+                SELECT
+                    p.project_id,
+                    p.project_field,
+                    c.genre,
+                    p.duration_range,
+                    GREATEST(0, 1 - (re.embedding <=> pe.embedding)) AS cosine_sim,
+                    COALESCE(
+                        (SELECT COUNT(DISTINCT dt.techstack_id)::float
+                         FROM dev_techstack dt
+                         JOIN project_requirement_techstack prt ON dt.techstack_id = prt.techstack_id
+                         JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
+                         WHERE dt.member_id = :memberId AND prm.project_id = p.project_id
+                           AND prm.req_mem_part IN (SELECT root_position FROM dev_root_positions)
+                        ) / NULLIF(
+                            (SELECT COUNT(DISTINCT prt2.techstack_id)::float
+                             FROM project_requirement_techstack prt2
+                             JOIN project_requirement_member prm2 ON prt2.project_requirement_member_id = prm2.project_requirement_member_id
+                             WHERE prm2.project_id = p.project_id
+                               AND prm2.req_mem_part IN (SELECT root_position FROM dev_root_positions)
+                            ), 0
+                        ), 0
+                    ) AS techstack_ratio,
+                    EXISTS (
+                        SELECT 1 FROM member_category mc
+                        WHERE mc.member_id = :memberId AND mc.category_id = p.domain_id
+                    ) AS domain_match
+                FROM project_embedding pe
+                JOIN project p ON pe.project_id = p.project_id
+                LEFT JOIN category c ON p.domain_id = c.category_id
+                JOIN report_embedding re ON re.report_embedding_id = (
+                    SELECT re2.report_embedding_id FROM report_embedding re2
+                    JOIN dev_report dr ON re2.dev_report_id = dr.dev_report_id
+                    JOIN git_repo_url gru ON dr.git_repo_id = gru.git_repo_id
+                    WHERE gru.member_id = :memberId
+                      AND re2.status = 'SUCCESS'
+                      AND re2.embedding IS NOT NULL
+                    ORDER BY re2.created_at DESC LIMIT 1
+                )
+                WHERE pe.status = 'SUCCESS'
+                  AND p.project_status = 'RECRUITING'
+                  AND EXISTS (
+                    SELECT 1 FROM dev_techstack dt
+                    JOIN techstack t ON dt.techstack_id = t.techstack_id
+                    LEFT JOIN techstack root ON t.parent_stack = root.techstack_id
+                    JOIN project_requirement_member prm ON prm.project_id = p.project_id
+                    WHERE dt.member_id = :memberId
+                      AND prm.current_count < prm.req_mem_num
+                      AND (
+                        (t.parent_stack IS NULL AND t.techstack_name = prm.req_mem_part)
+                        OR (root.parent_stack IS NULL AND root.techstack_name = prm.req_mem_part)
+                      )
+                  )
             )
             SELECT
-                p.project_id,
-                GREATEST(0, 1 - (re.embedding <=> pe.embedding)) * 60 AS similarity_score,
-                COALESCE(
-                    (SELECT COUNT(DISTINCT dt.techstack_id)::float
-                     FROM dev_techstack dt
-                     JOIN project_requirement_techstack prt ON dt.techstack_id = prt.techstack_id
-                     JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
-                     WHERE dt.member_id = :memberId AND prm.project_id = p.project_id
-                       AND prm.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                    ) / NULLIF(
-                        (SELECT COUNT(DISTINCT prt2.techstack_id)::float
-                         FROM project_requirement_techstack prt2
-                         JOIN project_requirement_member prm2 ON prt2.project_requirement_member_id = prm2.project_requirement_member_id
-                         WHERE prm2.project_id = p.project_id
-                           AND prm2.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                        ), 0
-                    ) * 20, 0
-                ) AS techstack_score,
-                CASE
-                    WHEN EXISTS (
-                        SELECT 1 FROM member_category mc
-                        WHERE mc.member_id = :memberId AND mc.category_id = p.domain_id
-                    ) THEN 20
-                    ELSE 10
-                END AS domain_score,
-                GREATEST(0, 1 - (re.embedding <=> pe.embedding)) * 60 +
-                COALESCE(
-                    (SELECT COUNT(DISTINCT dt.techstack_id)::float
-                     FROM dev_techstack dt
-                     JOIN project_requirement_techstack prt ON dt.techstack_id = prt.techstack_id
-                     JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
-                     WHERE dt.member_id = :memberId AND prm.project_id = p.project_id
-                       AND prm.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                    ) / NULLIF(
-                        (SELECT COUNT(DISTINCT prt2.techstack_id)::float
-                         FROM project_requirement_techstack prt2
-                         JOIN project_requirement_member prm2 ON prt2.project_requirement_member_id = prm2.project_requirement_member_id
-                         WHERE prm2.project_id = p.project_id
-                           AND prm2.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                        ), 0
-                    ) * 20, 0
-                ) +
-                CASE
-                    WHEN EXISTS (
-                        SELECT 1 FROM member_category mc
-                        WHERE mc.member_id = :memberId AND mc.category_id = p.domain_id
-                    ) THEN 20
-                    ELSE 10
-                END AS total_score,
-                GREATEST(0, 1 - (re.embedding <=> pe.embedding)) * 100 AS similarity_score_percent,
-                COALESCE(
-                    (SELECT COUNT(DISTINCT dt.techstack_id)::float
-                     FROM dev_techstack dt
-                     JOIN project_requirement_techstack prt ON dt.techstack_id = prt.techstack_id
-                     JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
-                     WHERE dt.member_id = :memberId AND prm.project_id = p.project_id
-                       AND prm.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                    ) / NULLIF(
-                        (SELECT COUNT(DISTINCT prt2.techstack_id)::float
-                         FROM project_requirement_techstack prt2
-                         JOIN project_requirement_member prm2 ON prt2.project_requirement_member_id = prm2.project_requirement_member_id
-                         WHERE prm2.project_id = p.project_id
-                           AND prm2.req_mem_part IN (SELECT root_position FROM dev_root_positions)
-                        ), 0
-                    ) * 100, 0
-                ) AS techstack_score_percent,
-                EXISTS (
-                    SELECT 1 FROM member_category mc
-                    WHERE mc.member_id = :memberId AND mc.category_id = p.domain_id
-                ) AS domain_match
-            FROM project_embedding pe
-            JOIN project p ON pe.project_id = p.project_id
-            LEFT JOIN category c ON p.domain_id = c.category_id
-            JOIN report_embedding re ON re.report_embedding_id = (
-                SELECT re2.report_embedding_id FROM report_embedding re2
-                JOIN dev_report dr ON re2.dev_report_id = dr.dev_report_id
-                JOIN git_repo_url gru ON dr.git_repo_id = gru.git_repo_id
-                WHERE gru.member_id = :memberId
-                  AND re2.status = 'SUCCESS'
-                  AND re2.embedding IS NOT NULL
-                ORDER BY re2.created_at DESC LIMIT 1
-            )
-            WHERE pe.status = 'SUCCESS'
-              AND p.project_status = 'RECRUITING'
-              AND EXISTS (
-                SELECT 1 FROM dev_techstack dt
-                JOIN techstack t ON dt.techstack_id = t.techstack_id
-                LEFT JOIN techstack root ON t.parent_stack = root.techstack_id
-                JOIN project_requirement_member prm ON prm.project_id = p.project_id
-                WHERE dt.member_id = :memberId
-                  AND prm.current_count < prm.req_mem_num
-                  AND (
-                    (t.parent_stack IS NULL AND t.techstack_name = prm.req_mem_part)
-                    OR (root.parent_stack IS NULL AND root.techstack_name = prm.req_mem_part)
-                  )
-              )
+                project_id,
+                cosine_sim * 60                                          AS similarity_score,
+                techstack_ratio * 20                                     AS techstack_score,
+                CASE WHEN domain_match THEN 20 ELSE 10 END               AS domain_score,
+                cosine_sim * 60 + techstack_ratio * 20
+                    + CASE WHEN domain_match THEN 20 ELSE 10 END         AS total_score,
+                cosine_sim * 100                                         AS similarity_score_percent,
+                techstack_ratio * 100                                    AS techstack_score_percent,
+                domain_match
+            FROM scores
             """);
 
         // 동적 필터 조건
@@ -184,14 +152,14 @@ public class ProjectRecommendRepository {
         // 프로젝트 유형 필터
         List<String> fieldStrings = toStringList(projectFields);
         if (fieldStrings != null && !fieldStrings.contains("ALL")) {
-            sql.append(" AND p.project_field IN (:projectFields)");
+            sql.append(" AND project_field IN (:projectFields)");
             params.put("projectFields", fieldStrings);
         }
 
         // 도메인(카테고리) 필터
         List<String> categoryStrings = toStringList(categories);
         if (categoryStrings != null && !categoryStrings.contains("ALL")) {
-            sql.append(" AND c.genre IN (:categories)");
+            sql.append(" AND genre IN (:categories)");
             params.put("categories", categoryStrings);
         }
 
@@ -203,7 +171,7 @@ public class ProjectRecommendRepository {
                     SELECT 1 FROM project_requirement_techstack prt
                     JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
                     JOIN techstack t ON prt.techstack_id = t.techstack_id
-                    WHERE prm.project_id = p.project_id AND t.techstack_name IN (:techstackNames)
+                    WHERE prm.project_id = project_id AND t.techstack_name IN (:techstackNames)
                  )
                 """);
             params.put("techstackNames", techStrings);
@@ -212,7 +180,7 @@ public class ProjectRecommendRepository {
         // 예상 기간 필터
         List<String> durationStrings = toStringList(durationRanges);
         if (durationStrings != null) {
-            sql.append(" AND p.duration_range IN (:durationRanges)");
+            sql.append(" AND duration_range IN (:durationRanges)");
             params.put("durationRanges", durationStrings);
         }
     }
