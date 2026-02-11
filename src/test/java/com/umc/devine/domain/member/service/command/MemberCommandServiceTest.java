@@ -8,6 +8,7 @@ import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.Terms;
+import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
@@ -298,6 +299,60 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             // then
             assertThat(result.member().nickname()).isEqualTo("testuser");
             assertThat(result.member().body()).isEqualTo("자기소개만 수정");
+        }
+
+        @Test
+        @DisplayName("카테고리 업데이트 성공")
+        void updateMember_categoryUpdate_success() {
+            // given
+            Category newCategory = categoryRepository.save(Category.builder()
+                    .genre(CategoryGenre.FINTECH)
+                    .build());
+
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .domains(new CategoryGenre[] {CategoryGenre.FINTECH})
+                    .build();
+
+            // when
+            MemberResDTO.MemberProfileDTO result = memberCommandService.updateMember(testMember, dto);
+
+            // then
+            assertThat(result.domains()).hasSize(1);
+            assertThat(result.domains()).contains(CategoryGenre.FINTECH);
+        }
+
+        @Test
+        @DisplayName("빈 카테고리 배열로 수정 시 예외 발생")
+        void updateMember_emptyCategories_throwsException() {
+            // given
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .domains(new CategoryGenre[] {})
+                    .build();
+
+            // when & then
+            assertThatThrownBy(() -> memberCommandService.updateMember(testMember, dto))
+                    .isInstanceOf(MemberException.class);
+        }
+
+        @Test
+        @DisplayName("연락처 업데이트 성공")
+        void updateMember_contactUpdate_success() {
+            // given
+            MemberReqDTO.ContactDTO contactDTO = MemberReqDTO.ContactDTO.builder()
+                    .type(ContactType.EMAIL)
+                    .value("updated@example.com")
+                    .build();
+
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .contacts(new MemberReqDTO.ContactDTO[] {contactDTO})
+                    .build();
+
+            // when
+            MemberResDTO.MemberProfileDTO result = memberCommandService.updateMember(testMember, dto);
+
+            // then
+            assertThat(result.contacts()).hasSize(1);
+            assertThat(result.contacts().get(0).value()).isEqualTo("updated@example.com");
         }
     }
 

@@ -10,7 +10,6 @@ import java.util.List;
 
 public interface MemberCategoryRepository extends JpaRepository<MemberCategory, Long> {
     List<MemberCategory> findAllByMember(Member member);
-    void deleteAllByMember(Member member);
 
     @Query("SELECT mc FROM MemberCategory mc JOIN FETCH mc.category WHERE mc.member = :member")
     List<MemberCategory> findAllByMemberWithCategory(@Param("member") Member member);

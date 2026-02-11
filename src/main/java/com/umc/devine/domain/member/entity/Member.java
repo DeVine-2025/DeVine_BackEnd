@@ -1,5 +1,7 @@
 package com.umc.devine.domain.member.entity;
 
+import com.umc.devine.domain.category.entity.Category;
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
@@ -7,6 +9,8 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 @Entity
@@ -62,6 +66,10 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus used;
 
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<MemberCategory> memberCategories = new ArrayList<>();
+
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -97,6 +105,19 @@ public class Member extends BaseEntity {
 
     public void updateGithubUsername(String githubUsername) {
         this.githubUsername = githubUsername;
+    }
+
+    public void clearCategories() {
+        this.memberCategories.clear();
+    }
+
+    public void addCategories(List<Category> categories) {
+        categories.forEach(category ->
+            this.memberCategories.add(MemberCategory.builder()
+                    .member(this)
+                    .category(category)
+                    .build())
+        );
     }
 
     /**
