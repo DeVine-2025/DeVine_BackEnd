@@ -53,7 +53,7 @@ class MemberControllerTest extends ControllerIntegrationTestSupport {
                 .andDo(print())
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.isSuccess").value(true))
-                .andExpect(jsonPath("$.result.nickname").value("testuser"));
+                .andExpect(jsonPath("$.result.member.nickname").value("testuser"));
     }
 
     @Test

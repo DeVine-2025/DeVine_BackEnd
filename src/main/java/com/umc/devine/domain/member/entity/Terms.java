@@ -24,5 +24,9 @@ public class Terms extends BaseEntity {
     private String content;
 
     @Column(nullable = false)
-    private Boolean required;
+    private boolean required;
+
+    public boolean getRequired() {
+        return required;
+    }
 }

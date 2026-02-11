@@ -187,7 +187,10 @@ public class MatchingResDTO {
             Long projectId,
 
             @Schema(description = "매칭 상태 (존재하지 않으면 null)", example = "PENDING")
-            MatchingStatus status
+            MatchingStatus status,
+
+            @Schema(description = "매칭 파트 (존재하지 않으면 null)", example = "BACKEND")
+            ProjectPart part
     ) {
         public static MatchingStatusRes notFound(Long projectId) {
             return MatchingStatusRes.builder()
@@ -195,6 +198,7 @@ public class MatchingResDTO {
                     .matchingId(null)
                     .projectId(projectId)
                     .status(null)
+                    .part(null)
                     .build();
         }
     }

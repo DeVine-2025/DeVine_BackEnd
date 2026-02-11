@@ -148,8 +148,7 @@ public class MemberReqDTO {
 
     @Builder
     public record RecommendDeveloperDTO(
-            @Schema(description = "프로젝트 ID", requiredMode = Schema.RequiredMode.REQUIRED)
-            @NotNull(message = "프로젝트 ID는 필수입니다.")
+            @Schema(description = "프로젝트 ID (선택, 없으면 전체 공개 개발자 조회)", nullable = true)
             Long projectId,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
@@ -189,6 +188,28 @@ public class MemberReqDTO {
             Integer size
     ) {
         public SearchDeveloperDTO {
+            if (page == null) page = 1;
+            if (size == null) size = 10;
+        }
+
+        public Pageable toPageable() {
+            return PageRequest.of(page, size).toPageable();
+        }
+    }
+
+    @Builder
+    @Schema(description = "GitHub 레포지토리 동기화 요청")
+    public record GitRepoSyncDTO(
+            @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
+            Integer page,
+
+            @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+            Integer size
+    ) {
+        public GitRepoSyncDTO {
             if (page == null) page = 1;
             if (size == null) size = 10;
         }

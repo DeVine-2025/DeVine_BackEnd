@@ -3,6 +3,7 @@ package com.umc.devine.infrastructure.fastapi;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
@@ -13,6 +14,9 @@ import org.springframework.http.MediaType;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
+
+import java.util.Arrays;
+import java.util.List;
 
 @Slf4j
 @Component
@@ -47,12 +51,17 @@ public class FastApiSyncReportClient {
             throw new ReportException(ReportErrorCode.GITHUB_TOKEN_ERROR);
         }
 
+        List<String> allTechstacks = Arrays.stream(TechName.values())
+                .map(TechName::name)
+                .toList();
+
         FastApiReqDto.ReportGenerationSyncReq request = FastApiReqDto.ReportGenerationSyncReq.builder()
                 .mainReportId(mainReport.getId())
                 .detailReportId(detailReport.getId())
                 .gitUrl(gitUrl)
                 .githubToken(githubToken)
                 .embeddingCallbackUrl(callbackBaseUrl + "/api/v1/embeddings/callback")
+                .techstacks(allTechstacks)
                 .build();
 
         log.info("FastAPI 동기 리포트 생성 요청 - mainReportId: {}, detailReportId: {}, gitUrl: {}",

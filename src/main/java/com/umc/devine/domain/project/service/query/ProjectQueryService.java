@@ -24,10 +24,10 @@ public interface ProjectQueryService {
             ProjectReqDTO.RecommendProjectsPreviewReq request
     );
 
-    // 추천 프로젝트 페이지 (추천 프로젝트 탭용 - 필터링 + 페이징)
-    ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
+    // 추천 프로젝트 (추천 프로젝트 탭용 - 필터링, 상위 10개 고정 반환)
+    ProjectResDTO.RecommendedProjectsRes getRecommendedProjects(
             Member member,
-            ProjectReqDTO.RecommendProjectsPageReq request
+            ProjectReqDTO.RecommendProjectsReq request
     );
 
     // 내 프로젝트 목록 조회 (상태별)

@@ -2,7 +2,6 @@ package com.umc.devine.domain.member.repository;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -22,13 +21,11 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     boolean existsByNickname(@Param("nickname") String nickname);
 
     @Query("SELECT DISTINCT m FROM Member m " +
-           "WHERE m.mainType = :mainType " +
-           "AND m.disclosure = true " +
+           "WHERE m.disclosure = true " +
            "AND m.used = 'ACTIVE' " +
            "AND (:categories IS NULL OR EXISTS (SELECT 1 FROM MemberCategory mc WHERE mc.member = m AND mc.category.genre IN :categories)) " +
            "AND (:techstackNames IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.name IN :techstackNames))")
     Page<Member> findDevelopersByFilters(
-            @Param("mainType") MemberMainType mainType,
             @Param("categories") List<CategoryGenre> categories,
             @Param("techstackNames") List<TechName> techstackNames,
             Pageable pageable);
@@ -39,6 +36,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
     @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     boolean existsByClerkId(@Param("clerkId") String clerkId);
 
-    @Query("SELECT m FROM Member m WHERE m.mainType = :mainType AND m.used = 'ACTIVE'")
-    List<Member> findAllByMainType(@Param("mainType") MemberMainType mainType, Pageable pageable);
+    @Query("SELECT m FROM Member m WHERE m.disclosure = true AND m.used = 'ACTIVE'")
+    List<Member> findAllPublicMembers(Pageable pageable);
 }

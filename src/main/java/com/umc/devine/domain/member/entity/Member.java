@@ -7,8 +7,6 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
-import java.util.ArrayList;
-import java.util.List;
 import java.util.Optional;
 
 @Entity
@@ -38,7 +36,11 @@ public class Member extends BaseEntity {
     private String address = null;
 
     @Column(nullable = false)
-    private Boolean disclosure;
+    private boolean disclosure;
+
+    public boolean getDisclosure() {
+        return disclosure;
+    }
 
     @Enumerated(EnumType.STRING)
     @Column(name = "main_type", nullable = false)
@@ -60,10 +62,6 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus used;
 
-    @OneToMany(mappedBy = "member")
-    @Builder.Default
-    private List<Login> loginList = new ArrayList<>();
-
     public void updateNickname(String nickname) {
         this.nickname = nickname;
     }
@@ -84,7 +82,7 @@ public class Member extends BaseEntity {
         this.mainType = mainType;
     }
 
-    public void disclosure(Boolean disclosure) {
+    public void updateDisclosure(boolean disclosure) {
         this.disclosure = disclosure;
     }
 
@@ -94,7 +92,7 @@ public class Member extends BaseEntity {
         Optional.ofNullable(dto.address()).ifPresent(this::updateAddress);
         Optional.ofNullable(dto.body()).ifPresent(this::updateBody);
         Optional.ofNullable(dto.mainType()).ifPresent(this::updateMainType);
-        Optional.ofNullable(dto.disclosure()).ifPresent(this::disclosure);
+        Optional.ofNullable(dto.disclosure()).ifPresent(this::updateDisclosure);
     }
 
     public void updateGithubUsername(String githubUsername) {
