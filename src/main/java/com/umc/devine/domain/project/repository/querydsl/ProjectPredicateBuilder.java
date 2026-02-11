@@ -52,41 +52,4 @@ public class ProjectPredicateBuilder {
         return builder;
     }
 
-    // 추천 프로젝트 필터 조건 생성
-    public static Predicate buildRecommendPredicate(ProjectReqDTO.RecommendProjectsReq req) {
-        QProject project = QProject.project;
-        QProjectRequirementTechstack techstack = QProjectRequirementTechstack.projectRequirementTechstack;
-
-        BooleanBuilder builder = new BooleanBuilder();
-
-        // 모집 중인 프로젝트만
-        builder.and(project.status.eq(ProjectStatus.RECRUITING));
-
-        // 프로젝트 분야 필터 (비어있으면 전체 조회)
-        if (req.projectFields() != null && !req.projectFields().isEmpty()) {
-            builder.and(project.projectField.in(req.projectFields()));
-        }
-
-        // 카테고리 필터 (비어있으면 전체 조회)
-        if (req.categories() != null && !req.categories().isEmpty()) {
-            builder.and(project.category.genre.in(req.categories()));
-        }
-
-        // 진행 기간 필터 (복수 선택 가능)
-        if (req.durationRanges() != null && !req.durationRanges().isEmpty()) {
-            builder.and(project.durationRange.in(req.durationRanges()));
-        }
-
-        // 기술 스택 필터 (복수 선택 가능)
-        if (req.techstackNames() != null && !req.techstackNames().isEmpty()) {
-            builder.and(project.id.in(
-                    com.querydsl.jpa.JPAExpressions
-                            .select(techstack.requirement.project.id)
-                            .from(techstack)
-                            .where(techstack.techstack.name.in(req.techstackNames()))
-            ));
-        }
-
-        return builder;
-    }
 }
