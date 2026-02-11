@@ -136,6 +136,7 @@ public class MatchingConverter {
                 .matchingId(matching.getId())
                 .projectId(matching.getProject().getId())
                 .status(matching.getStatus())
+                .part(matching.getPart())
                 .build();
     }
 }
