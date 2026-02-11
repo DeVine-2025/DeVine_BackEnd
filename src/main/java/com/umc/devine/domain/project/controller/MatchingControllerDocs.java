@@ -5,10 +5,12 @@ import com.umc.devine.domain.project.dto.matching.MatchingReqDTO;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
 import org.springframework.data.domain.Pageable;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -27,7 +29,7 @@ public interface MatchingControllerDocs {
     ApiResponse<MatchingResDTO.ProposeResDTO> applyToProject(
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
-            @RequestBody MatchingReqDTO.ApplyReqDTO dto
+            @Valid @RequestBody MatchingReqDTO.ApplyReqDTO dto
     );
 
     @Operation(summary = "프로젝트 지원 취소하기", description = "개발자가 지원했던 프로젝트에 대해 지원을 취소합니다.")
@@ -51,7 +53,7 @@ public interface MatchingControllerDocs {
     ApiResponse<MatchingResDTO.ProposeResDTO> respondToApplication(
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId,
-            @RequestBody MatchingReqDTO.DecisionReqDTO dto
+            @Valid @RequestBody MatchingReqDTO.DecisionReqDTO dto
     );
 
     @Operation(summary = "프로젝트 제안하기", description = "PM이 개발자에게 프로젝트를 제안합니다. 제안할 파트를 선택해야 합니다.")
@@ -64,8 +66,8 @@ public interface MatchingControllerDocs {
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> proposeToMember(
             @Parameter(hidden = true) @CurrentMember Member member,
-            @Parameter(description = "개발자 닉네임", required = true) @PathVariable String nickname,
-            @RequestBody MatchingReqDTO.ProposeReqDTO dto
+            @Parameter(description = "개발자 닉네임", required = true) @PathVariable @ValidNickname String nickname,
+            @Valid @RequestBody MatchingReqDTO.ProposeReqDTO dto
     );
 
     @Operation(summary = "제안 수락/거절", description = "개발자가 PM으로부터 받은 프로젝트 제안을 수락하거나 거절합니다.")
@@ -78,7 +80,7 @@ public interface MatchingControllerDocs {
     ApiResponse<MatchingResDTO.ProposeResDTO> respondToProposal(
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId,
-            @RequestBody MatchingReqDTO.DecisionReqDTO dto
+            @Valid @RequestBody MatchingReqDTO.DecisionReqDTO dto
     );
 
     @Operation(summary = "PM - 제안한 개발자 목록", description = "PM이 프로젝트에 제안한 개발자 목록을 조회합니다.")
@@ -158,6 +160,6 @@ public interface MatchingControllerDocs {
     ApiResponse<MatchingResDTO.MatchingStatusRes> getMyProposeStatus(
             @Parameter(hidden = true) @CurrentMember Member member,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
-            @Parameter(description = "대상 회원 닉네임", required = true) @PathVariable String nickname
+            @Parameter(description = "대상 회원 닉네임", required = true) @PathVariable @ValidNickname String nickname
     );
 }
