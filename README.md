@@ -1,6 +1,6 @@
 <div align="center">
 
-# 🍷 DeVine Backend
+# DeVine Backend
 
 **개발자와 PM을 연결하는 IT 협업 커뮤니티 플랫폼**
 
@@ -8,7 +8,14 @@
 [![Java](https://img.shields.io/badge/Java-21-ED8B00?logo=openjdk&logoColor=white)](https://openjdk.org/)
 [![PostgreSQL](https://img.shields.io/badge/PostgreSQL-17-4169E1?logo=postgresql&logoColor=white)](https://www.postgresql.org/)
 [![Docker](https://img.shields.io/badge/Docker-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![License](https://img.shields.io/badge/License-Private-red)]()
+[![Valkey](https://img.shields.io/badge/Valkey-FF4438?logo=redis&logoColor=white)](https://valkey.io/)
+[![AWS](https://img.shields.io/badge/AWS-FF9900?logo=amazonwebservices&logoColor=white)](https://aws.amazon.com/)
+[![JPA](https://img.shields.io/badge/JPA-59666C?logo=hibernate&logoColor=white)](https://spring.io/projects/spring-data-jpa)
+[![QueryDSL](https://img.shields.io/badge/QueryDSL-0769AD?logoColor=white)](http://querydsl.com/)
+[![JUnit5](https://img.shields.io/badge/JUnit5-25A162?logo=junit5&logoColor=white)](https://junit.org/junit5/)
+[![Nginx](https://img.shields.io/badge/Nginx-009639?logo=nginx&logoColor=white)](https://nginx.org/)
+[![GitHub Actions](https://img.shields.io/badge/GitHub%20Actions-2088FF?logo=githubactions&logoColor=white)](https://github.com/features/actions)
+[![Clerk](https://img.shields.io/badge/Clerk-6C47FF?logo=clerk&logoColor=white)](https://clerk.com/)
 
 </div>
 
@@ -85,12 +92,12 @@
 | **FastAPI** | - | AI 워커 서버 (Python) |
 
 ### Database & Cache
-| 기술 | 용도 |
-|------|------|
-| **PostgreSQL** | 메인 RDBMS |
-| **pgvector** | 벡터 임베딩 저장 및 유사도 검색 |
-| **Redis** | 캐시 및 SSE Pub/Sub 메시징 |
-| **H2** | 로컬 개발/테스트 DB |
+| 기술                | 용도 |
+|-------------------|------|
+| **PostgreSQL**    | 메인 RDBMS |
+| **pgvector**      | 벡터 임베딩 저장 및 유사도 검색 |
+| **Valkey(Redis)** | 캐시 및 SSE Pub/Sub 메시징 |
+| **H2**            | 로컬 개발/테스트 DB |
 
 ### Infrastructure
 | 기술 | 용도 |
@@ -123,13 +130,13 @@
 
 ### Prerequisites
 
-| 도구 | 최소 버전 | 비고 |
-|------|-----------|------|
-| **JDK** | 21+ | [Eclipse Temurin](https://adoptium.net/) 권장 |
-| **Gradle** | 8.x | Wrapper 포함 (`./gradlew`) |
-| **Docker** | 24.x+ | 배포 환경 구성 시 필요 |
-| **PostgreSQL** | 15+ | pgvector 확장 필요 |
-| **Redis** | 7.x+ | SSE 알림용 |
+| 도구                | 최소 버전 | 비고 |
+|-------------------|-----------|------|
+| **JDK**           | 21+ | [Eclipse Temurin](https://adoptium.net/) 권장 |
+| **Gradle**        | 8.x | Wrapper 포함 (`./gradlew`) |
+| **Docker**        | 24.x+ | 배포 환경 구성 시 필요 |
+| **PostgreSQL**    | 15+ | pgvector 확장 필요 |
+| **Valkey(Redis)** | 9.0 | SSE 알림용 |
 
 ### Environment Variables
 
@@ -203,10 +210,11 @@ docker run -p 8080:8080 --env-file .env devine-backend
 
 Swagger UI를 통해 전체 API 명세를 확인할 수 있습니다.
 
-| 환경 | URL |
-|------|-----|
-| **Local** | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) |
+| 환경             | URL                                                                                        |
+|----------------|--------------------------------------------------------------------------------------------|
+| **Local**      | [http://localhost:8080/swagger-ui/index.html](http://localhost:8080/swagger-ui/index.html) |
 | **Production** | [https://api.devine.kr/swagger-ui/index.html](https://api.devine.kr/swagger-ui/index.html) |
+| **Test Login** | [https://api.devine.kr/dev](https://api.devine.kr/dev)                                     |
 
 - 모든 API는 JWT Bearer 토큰 인증이 필요합니다 (일부 공개 엔드포인트 제외)
 - Swagger UI 상단의 `Authorize` 버튼을 클릭하여 JWT 토큰을 입력할 수 있습니다
@@ -237,7 +245,6 @@ src/main/java/com/umc/devine/
 │   ├── auth/                           # 인증 (로그인, 회원가입)
 │   │   ├── controller/
 │   │   ├── dto/
-│   │   ├── service/
 │   │   └── exception/
 │   ├── member/                         # 회원 관리
 │   │   ├── controller/
