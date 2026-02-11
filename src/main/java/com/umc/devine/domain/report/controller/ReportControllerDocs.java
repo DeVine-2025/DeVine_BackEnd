@@ -11,6 +11,7 @@ import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
+import com.umc.devine.global.validation.annotation.ValidNickname;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -100,7 +101,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "회원을 찾을 수 없음")
     })
     ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
-            @Parameter(description = "조회할 회원의 닉네임", required = true) @PathVariable String nickname,
+            @Parameter(description = "조회할 회원의 닉네임", required = true) @PathVariable @ValidNickname String nickname,
             @Parameter(description = "리포트 타입 필터 (MAIN, DETAIL). 미지정 시 전체 조회") @RequestParam(required = false) ReportType type
     );
 }
