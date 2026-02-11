@@ -32,6 +32,18 @@ public interface MatchingControllerDocs {
             @Valid @RequestBody MatchingReqDTO.ApplyReqDTO dto
     );
 
+    @Operation(summary = "프로젝트 지원 파트 수정", description = "개발자가 지원한 프로젝트의 지원 파트를 수정합니다. PENDING 상태에서만 변경 가능합니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지원 파트 수정 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "PENDING 상태가 아닌 매칭"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
+    })
+    ApiResponse<MatchingResDTO.ProposeResDTO> updateApplication(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
+            @Valid @RequestBody MatchingReqDTO.ApplyReqDTO dto
+    );
+
     @Operation(summary = "프로젝트 지원 취소하기", description = "개발자가 지원했던 프로젝트에 대해 지원을 취소합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로젝트 지원 취소 성공"),
