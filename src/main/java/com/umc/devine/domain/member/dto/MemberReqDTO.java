@@ -147,8 +147,7 @@ public class MemberReqDTO {
 
     @Builder
     public record RecommendDeveloperDTO(
-            @Schema(description = "프로젝트 ID", requiredMode = Schema.RequiredMode.REQUIRED)
-            @NotNull(message = "프로젝트 ID는 필수입니다.")
+            @Schema(description = "프로젝트 ID (선택, 없으면 전체 공개 개발자 조회)", nullable = true)
             Long projectId,
 
             @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")

@@ -145,4 +145,45 @@ public class MemberResDTO {
             @Schema(description = "레포지토리 목록")
             List<GitRepoDTO> repos
     ) {}
+
+    @Builder
+    @Schema(description = "추천 개발자 아이템")
+    public record RecommendedDeveloperDTO(
+            @Schema(description = "회원 정보")
+            MemberDetailDTO member,
+
+            @Schema(description = "관심 도메인 목록")
+            List<CategoryGenre> domains,
+
+            @Schema(description = "기술스택 목록")
+            List<TechstackItemDTO> techstacks,
+
+            @Schema(description = "총 추천 점수 (100점 만점)", example = "83.0")
+            Double totalScore,
+
+            @Schema(description = "리포트 유사도 (100점 만점)", example = "80.0")
+            Double similarityScorePercent,
+
+            @Schema(description = "기술 스택 일치도 (100점 만점)", example = "75.0")
+            Double techstackScorePercent,
+
+            @Schema(description = "도메인 일치 여부", example = "true")
+            Boolean domainMatch,
+
+            @Schema(description = "프로젝트 요구사항과 일치하는 기술스택 목록", example = "[\"JAVA\", \"SPRING\"]")
+            List<String> matchedTechstacks
+    ){}
+
+    @Builder
+    @Schema(description = "추천 개발자 목록 응답")
+    public record RecommendedDevelopersDTO(
+            @Schema(description = "기준 프로젝트 ID", example = "1")
+            Long projectId,
+
+            @Schema(description = "추천 개발자 목록 (상위 10명)")
+            List<RecommendedDeveloperDTO> developers,
+
+            @Schema(description = "반환된 개발자 수", example = "10")
+            Integer count
+    ){}
 }

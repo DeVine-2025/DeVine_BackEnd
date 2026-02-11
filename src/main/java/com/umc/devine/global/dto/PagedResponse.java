@@ -4,7 +4,9 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 import lombok.Getter;
 import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 
+import java.util.Collections;
 import java.util.List;
 
 @Getter
@@ -54,6 +56,18 @@ public class PagedResponse<T> {
                 .totalPages(page.getTotalPages())
                 .isFirst(page.isFirst())
                 .isLast(page.isLast())
+                .build();
+    }
+
+    public static <T> PagedResponse<T> empty(Pageable pageable) {
+        return PagedResponse.<T>builder()
+                .content(Collections.emptyList())
+                .page(pageable.getPageNumber() + 1)
+                .size(pageable.getPageSize())
+                .totalElements(0)
+                .totalPages(0)
+                .isFirst(true)
+                .isLast(true)
                 .build();
     }
 }

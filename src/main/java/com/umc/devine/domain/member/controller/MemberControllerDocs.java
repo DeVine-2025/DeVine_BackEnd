@@ -34,19 +34,21 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
+    ApiResponse<PagedResponse<MemberResDTO.RecommendedDeveloperDTO>> getRecommendDevelopers(
             @Parameter(hidden = true) @CurrentMember Member member,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.RecommendDeveloperDTO dto
     );
 
-    @Operation(summary = "개발자 추천 프리뷰 API", description = "나에게 맞는 개발자 추천 프리뷰입니다. limit 파라미터로 조회할 개수를 지정할 수 있습니다. (기본값: 4)")
+    @Operation(summary = "개발자 추천 프리뷰 API", description = "프로젝트에 맞는 개발자 추천 프리뷰입니다. projectId가 없으면 빈 배열을 반환합니다. limit 파라미터로 조회할 개수를 지정할 수 있습니다. (기본값: 4)")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다.")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
     })
-    ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
+    ApiResponse<List<MemberResDTO.RecommendedDeveloperDTO>> getRecommendDevelopersPreview(
             @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "프로젝트 ID (없으면 빈 배열 반환)") Long projectId,
             @Min(value = 1, message = "limit은 1 이상이어야 합니다.")
             @Max(value = 20, message = "limit은 20 이하여야 합니다.")
             int limit

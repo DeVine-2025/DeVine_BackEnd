@@ -239,6 +239,52 @@ public class MemberConverter {
                 .build();
     }
 
+    public static MemberResDTO.RecommendedDeveloperDTO toRecommendedDeveloperDTO(
+            Member member,
+            List<MemberCategory> memberCategories,
+            List<DevTechstack> devTechstacks,
+            Double totalScore,
+            Double similarityScorePercent,
+            Double techstackScorePercent,
+            Boolean domainMatch,
+            List<String> matchedTechstacks
+    ) {
+        MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
+                .nickname(member.getNickname())
+                .address(member.getAddress())
+                .imageUrl(member.getImage())
+                .disclosure(member.getDisclosure())
+                .mainType(member.getMainType())
+                .body(member.getBody())
+                .used(member.getUsed())
+                .createdAt(member.getCreatedAt())
+                .build();
+
+        List<CategoryGenre> domains = memberCategories.stream()
+                .map(mc -> mc.getCategory().getGenre())
+                .collect(Collectors.toList());
+
+        List<MemberResDTO.TechstackItemDTO> techstacks = devTechstacks.stream()
+                .map(dt -> MemberResDTO.TechstackItemDTO.builder()
+                        .techstackId(dt.getTechstack().getId())
+                        .name(dt.getTechstack().getName().toString())
+                        .genre(dt.getTechstack().getGenre())
+                        .source(dt.getSource())
+                        .build())
+                .collect(Collectors.toList());
+
+        return MemberResDTO.RecommendedDeveloperDTO.builder()
+                .member(memberDTO)
+                .domains(domains)
+                .techstacks(techstacks)
+                .totalScore(totalScore)
+                .similarityScorePercent(similarityScorePercent)
+                .techstackScorePercent(techstackScorePercent)
+                .domainMatch(domainMatch)
+                .matchedTechstacks(matchedTechstacks)
+                .build();
+    }
+
     public static MemberResDTO.GitRepoDTO toGitRepoDTO(GitRepoUrl gitRepoUrl) {
         return MemberResDTO.GitRepoDTO.builder()
                 .gitRepoId(gitRepoUrl.getId())

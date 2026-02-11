@@ -30,24 +30,25 @@ public class MemberController implements MemberControllerDocs {
     // 나에게 맞는 개발자 추천
     @Override
     @GetMapping("/recommend")
-    public ApiResponse<PagedResponse<MemberResDTO.DeveloperDTO>> getRecommendDevelopers(
+    public ApiResponse<PagedResponse<MemberResDTO.RecommendedDeveloperDTO>> getRecommendDevelopers(
             @CurrentMember Member member,
             @ParameterObject @ModelAttribute MemberReqDTO.RecommendDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        PagedResponse<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopers(member, dto);
+        PagedResponse<MemberResDTO.RecommendedDeveloperDTO> response = memberQueryService.findRecommendedDevelopers(member, dto);
         return ApiResponse.onSuccess(code, response);
     }
 
     // 나에게 맞는 개발자 추천 (프리뷰)
     @Override
     @GetMapping("/recommend/preview")
-    public ApiResponse<List<MemberResDTO.DeveloperDTO>> getRecommendDevelopersPreview(
+    public ApiResponse<List<MemberResDTO.RecommendedDeveloperDTO>> getRecommendDevelopersPreview(
             @CurrentMember Member member,
+            @RequestParam(required = false) Long projectId,
             @RequestParam(defaultValue = "4") int limit
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        List<MemberResDTO.DeveloperDTO> response = memberQueryService.findAllDevelopersPreview(member, limit);
+        List<MemberResDTO.RecommendedDeveloperDTO> response = memberQueryService.findRecommendedDevelopersPreview(member, projectId, limit);
         return ApiResponse.onSuccess(code, response);
     }
 
