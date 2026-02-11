@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.service.query;
 
+import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.MemberCategoryRepository;
@@ -128,6 +129,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
+    @Transactional
     public MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname, LocalDate from, LocalDate to) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
@@ -136,8 +138,16 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
         }
 
+        // GitHub username이 없으면 Clerk API로 조회 시도
         if (member.getGithubUsername() == null || member.getGithubUsername().isBlank()) {
-            throw new MemberException(MemberErrorCode.GITHUB_USERNAME_NOT_FOUND);
+            try {
+                Map<String, Object> userInfo = gitHubService.getUserInfo(member.getClerkId());
+                String githubUsername = (String) userInfo.get("login");
+                member.updateGithubUsername(githubUsername);
+            } catch (AuthException e) {
+                // GitHub 연동이 안 되어 있으면 에러
+                throw new MemberException(MemberErrorCode.GITHUB_USERNAME_NOT_FOUND);
+            }
         }
 
         List<GitHubContributionDTO> githubContributions = gitHubService.getContributionsByUsername(member.getGithubUsername(), from, to);
