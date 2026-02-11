@@ -40,6 +40,7 @@ import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
@@ -71,6 +72,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
+    private final EntityManager entityManager;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -164,15 +166,18 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         // 멤버 업데이트
         member.updateProfile(dto);
 
-        // 카테고리 업데이트
-        if (dto.domains() != null && dto.domains().length > 0) {
-            memberCategoryRepository.deleteAllByMember(member);
-
+        // 카테고리 업데이트 (orphanRemoval + flush로 DELETE 후 INSERT 보장)
+        if (dto.domains() != null) {
+            if (dto.domains().length == 0) {
+                throw new MemberException(MemberErrorCode.CATEGORY_REQUIRED);
+            }
             List<Category> categories = categoryRepository.findAllByGenreIn(Arrays.asList(dto.domains()));
             if (categories.size() != dto.domains().length) {
                 throw new MemberException(MemberErrorCode.CATEGORY_NOT_FOUND);
             }
-            memberCategoryRepository.saveAll(CategoryConverter.toMemberCategories(member, categories));
+            member.clearCategories();
+            entityManager.flush();  // DELETE 먼저 실행
+            member.addCategories(categories);
         }
 
         // 연락처 업데이트

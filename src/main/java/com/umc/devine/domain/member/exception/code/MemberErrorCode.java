@@ -51,6 +51,9 @@ public enum MemberErrorCode implements BaseErrorCode {
     GITHUB_USERNAME_NOT_FOUND(HttpStatus.NOT_FOUND,
             "MEMBER404_5",
             "GitHub 사용자명이 등록되지 않았습니다."),
+    CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST,
+            "MEMBER400_5",
+            "관심 도메인은 최소 1개 이상 선택해야 합니다."),
     ;
 
     private final HttpStatus status;
