@@ -66,8 +66,8 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 생성자 ID", example = "1")
             Long creatorId,
 
-            @Schema(description = "프로젝트 생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "프로젝트 생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
             @Schema(description = "모집 분야 목록")
             List<RecruitmentInfo> recruitments,
@@ -126,8 +126,8 @@ public class ProjectResDTO {
             @Schema(description = "프로젝트 생성자 ID", example = "1")
             Long creatorId,
 
-            @Schema(description = "프로젝트 생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "프로젝트 생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
             @Schema(description = "프로젝트 생성자 프로필 이미지 URL", example = "https://example.com/profile.jpg")
             String creatorImage,
@@ -222,8 +222,8 @@ public class ProjectResDTO {
             @Schema(description = "모집 포지션 목록 (간략 정보)")
             List<PositionSummary> positions,
 
-            @Schema(description = "생성자 이름", example = "김개발")
-            String creatorName
+            @Schema(description = "생성자 닉네임", example = "김개발")
+            String creatorNickname
     ) {}
 
     @Builder
@@ -276,20 +276,20 @@ public class ProjectResDTO {
             @Schema(description = "모집 포지션 목록 (간략 정보)")
             List<PositionSummary> positions,
 
-            @Schema(description = "생성자 이름", example = "김개발")
-            String creatorName,
+            @Schema(description = "생성자 닉네임", example = "김개발")
+            String creatorNickname,
 
-            @Schema(description = "기술 스택 적합도 점수 (0~5)", example = "4")
-            Integer techScore,
+            @Schema(description = "총 추천 점수 (100점 만점)", example = "83.0")
+            Double totalScore,
 
-            @Schema(description = "도메인 적합도 점수 (0~5)", example = "4")
-            Integer domainScore,
+            @Schema(description = "리포트 유사도 (100점 만점)", example = "80.0")
+            Double similarityScorePercent,
 
-            @Schema(description = "기술 스택 다양성 점수 (0~5)", example = "3")
-            Integer techStackCountScore,
+            @Schema(description = "기술 스택 일치도 (100점 만점)", example = "75.0")
+            Double techstackScorePercent,
 
-            @Schema(description = "총 추천 점수 (0~100)", example = "73")
-            Integer totalScore
+            @Schema(description = "도메인 일치 여부", example = "true")
+            Boolean domainMatch
     ) {}
 
     @Builder
@@ -324,8 +324,11 @@ public class ProjectResDTO {
 
     @Builder
     public record RecommendedProjectsRes(
-            @Schema(description = "추천 프로젝트 결과")
-            PagedResponse<RecommendedProjectSummary> projects
+            @Schema(description = "추천 프로젝트 목록")
+            List<RecommendedProjectSummary> projects,
+
+            @Schema(description = "반환된 프로젝트 수")
+            Integer count
     ) {}
 
     // 내 프로젝트 정보 (PM/개발자 공통)

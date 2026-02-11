@@ -113,15 +113,15 @@ public class ProjectController implements ProjectControllerDocs {
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 추천 프로젝트 페이지 (추천 프로젝트 탭용 - 필터링 + 페이징)
+    // 추천 프로젝트 (추천 프로젝트 탭용 - 필터링, 상위 10개 고정 반환)
     @Override
     @GetMapping("/recommend")
     public ApiResponse<ProjectResDTO.RecommendedProjectsRes> getRecommendedProjects(
             @CurrentMember Member member,
-            @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsPageReq request
+            @ParameterObject @ModelAttribute @Valid ProjectReqDTO.RecommendProjectsReq request
     ) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjectsPage(member, request);
+        ProjectResDTO.RecommendedProjectsRes response = projectQueryService.getRecommendedProjects(member, request);
         return ApiResponse.onSuccess(code, response);
     }
 

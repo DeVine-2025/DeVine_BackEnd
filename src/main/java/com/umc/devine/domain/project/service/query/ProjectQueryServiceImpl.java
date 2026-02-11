@@ -6,25 +6,36 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.DurationRange;
+import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.MatchingRepository;
+import com.umc.devine.domain.project.repository.ProjectRecommendRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.querydsl.ProjectPredicateBuilder;
+import com.umc.devine.domain.report.entity.ReportEmbedding;
+import com.umc.devine.domain.report.repository.ReportEmbeddingRepository;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.data.domain.*;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
 
@@ -35,10 +46,13 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJ
 public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     private static final int WEEKLY_BEST_LIMIT = 4;
+    private static final int RECOMMEND_LIMIT = 10;
 
     private final ProjectRepository projectRepository;
     private final MatchingRepository matchingRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
+    private final ProjectRecommendRepository projectRecommendRepository;
+    private final ReportEmbeddingRepository reportEmbeddingRepository;
 
     @Override
     @Transactional
@@ -54,14 +68,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
-        // 전체 프로젝트 중 주간 조회수 높은 순으로 조회
-        // - 월요일 00:00:01에 스케줄러가 weeklyViewCount → previousWeekViewCount 이동
-        // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
-        // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
         List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
-        // 최대 N개만 반환
         List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
                 .limit(WEEKLY_BEST_LIMIT)
                 .map(project -> ProjectConverter.toProjectSummary(project, projectRequirementTechstackRepository))
@@ -95,44 +104,57 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
             Member member,
             ProjectReqDTO.RecommendProjectsPreviewReq request
     ) {
-        // TODO: 추천 알고리즘 기반 정렬 추가
         int limit = request.limit();
 
-        // Preview는 필터링 없이 추천 점수 기준 상위 프로젝트만 반환
-        List<Project> projects = projectRepository.findAllActiveProjects(limit);
+        // 개발자이고 리포트 임베딩이 있으면 벡터 검색
+        if (member.getMainType() == MemberMainType.DEVELOPER) {
+            Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
+            if (embedding.isPresent()) {
+                List<ProjectResDTO.RecommendedProjectSummary> summaries =
+                        executeVectorSearch(member.getId(), embedding.get().getId(), limit, null, null, null, null);
 
-        List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
-                .map(p -> ProjectConverter.toRecommendedProjectSummary(p, projectRequirementTechstackRepository))
-                .toList();
+                if (!summaries.isEmpty()) {
+                    return ProjectResDTO.RecommendedProjectsRes.builder()
+                            .projects(summaries)
+                            .count(summaries.size())
+                            .build();
+                }
+            }
+        }
 
-        PagedResponse<ProjectResDTO.RecommendedProjectSummary> paged =
-                previewToPagedResponse(summaries, limit);
-
-        return ProjectResDTO.RecommendedProjectsRes.builder()
-                .projects(paged)
-                .build();
+        // 폴백: 최신 모집 중 프로젝트
+        return getDefaultRecommendations(limit);
     }
 
     @Override
-    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPage(
+    public ProjectResDTO.RecommendedProjectsRes getRecommendedProjects(
             Member member,
-            ProjectReqDTO.RecommendProjectsPageReq request
+            ProjectReqDTO.RecommendProjectsReq request
     ) {
-        // TODO: 추천 알고리즘 기반 정렬 추가
-        Pageable pageable = request.toPageable();
+        // 개발자이고 리포트 임베딩이 있으면 벡터 검색
+        if (member.getMainType() == MemberMainType.DEVELOPER) {
+            Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
+            if (embedding.isPresent()) {
+                List<ProjectResDTO.RecommendedProjectSummary> summaries =
+                        executeVectorSearch(
+                                member.getId(),
+                                embedding.get().getId(),
+                                RECOMMEND_LIMIT,
+                                request.projectFields(),
+                                request.categories(),
+                                request.techstackNames(),
+                                request.durationRanges()
+                        );
 
-        Predicate predicate = ProjectPredicateBuilder.buildRecommendPagePredicate(request);
-        Page<Project> projectPage = projectRepository.searchRecommendedProjects(predicate, pageable);
+                return ProjectResDTO.RecommendedProjectsRes.builder()
+                        .projects(summaries)
+                        .count(summaries.size())
+                        .build();
+            }
+        }
 
-        List<ProjectResDTO.RecommendedProjectSummary> summaries = projectPage.getContent().stream()
-                .map(project -> ProjectConverter.toRecommendedProjectSummary(project, projectRequirementTechstackRepository))
-                .toList();
-
-        PagedResponse<ProjectResDTO.RecommendedProjectSummary> pagedData = PagedResponse.of(projectPage, summaries);
-
-        return ProjectResDTO.RecommendedProjectsRes.builder()
-                .projects(pagedData)
-                .build();
+        // 폴백: 최신 모집 중 프로젝트
+        return getDefaultRecommendations(RECOMMEND_LIMIT);
     }
 
     @Override
@@ -142,6 +164,92 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         } else {
             return getMyProjectsForDeveloper(member, statuses, pageable);
         }
+    }
+
+    // ==================== Private Methods ====================
+
+    /**
+     * 벡터 검색 기반 프로젝트 추천 실행.
+     *
+     * Object[] 구조:
+     * [0] project_id, [1] similarity_score, [2] techstack_score, [3] domain_score,
+     * [4] total_score, [5] similarity_score_percent, [6] techstack_score_percent, [7] domain_match
+     */
+    private List<ProjectResDTO.RecommendedProjectSummary> executeVectorSearch(
+            Long memberId,
+            Long embeddingId,
+            int limit,
+            List<ProjectField> projectFields,
+            List<CategoryGenre> categories,
+            List<TechName> techstackNames,
+            List<DurationRange> durationRanges
+    ) {
+        List<Object[]> results = projectRecommendRepository.findRecommendedProjects(
+                memberId,
+                embeddingId,
+                limit,
+                projectFields,
+                categories,
+                techstackNames,
+                durationRanges
+        );
+
+        if (results.isEmpty()) {
+            return List.of();
+        }
+
+        // N+1 방지: projectIds 추출 후 IN 쿼리로 한 번에 조회
+        List<Long> projectIds = results.stream()
+                .map(row -> ((Number) row[0]).longValue())
+                .toList();
+
+        List<Project> projects = projectRepository.findAllByIdIn(projectIds);
+        Map<Long, Project> projectMap = projects.stream()
+                .collect(Collectors.toMap(Project::getId, p -> p));
+
+        return results.stream()
+                .map(row -> {
+                    Long projectId = ((Number) row[0]).longValue();
+                    Double totalScore = ((Number) row[4]).doubleValue();
+                    Double similarityScorePercent = ((Number) row[5]).doubleValue();
+                    Double techstackScorePercent = ((Number) row[6]).doubleValue();
+                    Boolean domainMatch = row[7] == null ? null : Boolean.parseBoolean(row[7].toString());
+
+                    Project project = projectMap.get(projectId);
+                    if (project == null) {
+                        return null;
+                    }
+
+                    return ProjectConverter.toRecommendedProjectSummary(
+                            project,
+                            projectRequirementTechstackRepository,
+                            totalScore,
+                            similarityScorePercent,
+                            techstackScorePercent,
+                            domainMatch
+                    );
+                })
+                .filter(java.util.Objects::nonNull)
+                .toList();
+    }
+
+    // 기본 추천: 임베딩이 없는 경우 최신 모집 중 프로젝트 반환
+    private ProjectResDTO.RecommendedProjectsRes getDefaultRecommendations(int limit) {
+        List<Project> projects = projectRepository.findByStatusOrderByCreatedAtDesc(ProjectStatus.RECRUITING)
+                .stream()
+                .limit(limit)
+                .toList();
+
+        List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
+                .map(project -> ProjectConverter.toRecommendedProjectSummary(
+                        project, projectRequirementTechstackRepository,
+                        null, null, null, null))
+                .toList();
+
+        return ProjectResDTO.RecommendedProjectsRes.builder()
+                .projects(summaries)
+                .count(summaries.size())
+                .build();
     }
 
     private ProjectResDTO.MyProjectsRes getMyProjectsForPm(Member member, List<ProjectStatus> statuses, Pageable pageable) {
@@ -167,22 +275,6 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
         return ProjectResDTO.MyProjectsRes.builder()
                 .projects(PagedResponse.of(matchingPage, infos))
-                .build();
-    }
-
-    private PagedResponse<ProjectResDTO.RecommendedProjectSummary> previewToPagedResponse(
-            List<ProjectResDTO.RecommendedProjectSummary> content,
-            int size
-    ) {
-        // Page 객체를 만들기 어려워서 meta 직접 구성
-        return PagedResponse.<ProjectResDTO.RecommendedProjectSummary>builder()
-                .content(content)
-                .page(1)
-                .size(size)
-                .totalElements(content.size())
-                .totalPages(1)
-                .isFirst(true)
-                .isLast(true)
                 .build();
     }
 }
