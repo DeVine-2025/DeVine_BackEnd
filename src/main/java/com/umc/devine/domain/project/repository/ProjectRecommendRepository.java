@@ -143,25 +143,29 @@ public class ProjectRecommendRepository {
             List<TechName> techstackNames,
             List<DurationRange> durationRanges
     ) {
+        boolean hasWhere = false;
+
         // 프로젝트 유형 필터
         List<String> fieldStrings = toStringList(projectFields);
         if (fieldStrings != null && !fieldStrings.contains("ALL")) {
-            sql.append(" AND project_field IN (:projectFields)");
+            sql.append(" WHERE project_field IN (:projectFields)");
             params.put("projectFields", fieldStrings);
+            hasWhere = true;
         }
 
         // 도메인(카테고리) 필터
         List<String> categoryStrings = toStringList(categories);
         if (categoryStrings != null && !categoryStrings.contains("ALL")) {
-            sql.append(" AND genre IN (:categories)");
+            sql.append(hasWhere ? " AND" : " WHERE").append(" genre IN (:categories)");
             params.put("categories", categoryStrings);
+            hasWhere = true;
         }
 
         // 기술스택 필터: 프로젝트가 요구하는 기술스택 중 하나라도 포함
         List<String> techStrings = toStringList(techstackNames);
         if (techStrings != null) {
-            sql.append("""
-                 AND EXISTS (
+            sql.append(hasWhere ? " AND" : " WHERE").append("""
+                 EXISTS (
                     SELECT 1 FROM project_requirement_techstack prt
                     JOIN project_requirement_member prm ON prt.project_requirement_member_id = prm.project_requirement_member_id
                     JOIN techstack t ON prt.techstack_id = t.techstack_id
@@ -169,12 +173,13 @@ public class ProjectRecommendRepository {
                  )
                 """);
             params.put("techstackNames", techStrings);
+            hasWhere = true;
         }
 
         // 예상 기간 필터
         List<String> durationStrings = toStringList(durationRanges);
         if (durationStrings != null) {
-            sql.append(" AND duration_range IN (:durationRanges)");
+            sql.append(hasWhere ? " AND" : " WHERE").append(" duration_range IN (:durationRanges)");
             params.put("durationRanges", durationStrings);
         }
     }
