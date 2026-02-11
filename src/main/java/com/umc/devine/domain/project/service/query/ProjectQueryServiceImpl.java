@@ -120,8 +120,10 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
             }
         }
 
-        // 폴백: 최신 모집 중 프로젝트
-        return getDefaultRecommendations(limit);
+        return ProjectResDTO.RecommendedProjectsRes.builder()
+                .projects(List.of())
+                .count(0)
+                .build();
     }
 
     @Override
@@ -131,26 +133,29 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     ) {
         // 개발자이고 리포트 임베딩이 있으면 벡터 검색
         Optional<ReportEmbedding> embedding = reportEmbeddingRepository.findLatestByMemberId(member.getId());
-        if (embedding.isPresent()) {
-            List<ProjectResDTO.RecommendedProjectSummary> summaries =
-                    executeVectorSearch(
-                            member.getId(),
-                            embedding.get().getId(),
-                            RECOMMEND_LIMIT,
-                            request.projectFields(),
-                            request.categories(),
-                            request.techstackNames(),
-                            request.durationRanges()
-                    );
 
+        if (embedding.isEmpty()) {
             return ProjectResDTO.RecommendedProjectsRes.builder()
-                    .projects(summaries)
-                    .count(summaries.size())
+                    .projects(List.of())
+                    .count(0)
                     .build();
         }
 
-        // 폴백: 최신 모집 중 프로젝트
-        return getDefaultRecommendations(RECOMMEND_LIMIT);
+        List<ProjectResDTO.RecommendedProjectSummary> summaries =
+                executeVectorSearch(
+                        member.getId(),
+                        embedding.get().getId(),
+                        RECOMMEND_LIMIT,
+                        request.projectFields(),
+                        request.categories(),
+                        request.techstackNames(),
+                        request.durationRanges()
+                );
+
+        return ProjectResDTO.RecommendedProjectsRes.builder()
+                .projects(summaries)
+                .count(summaries.size())
+                .build();
     }
 
     @Override
