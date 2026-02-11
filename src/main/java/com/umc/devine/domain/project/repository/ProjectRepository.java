@@ -32,6 +32,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 
+    // 프로젝트 상세 조회용 (Member, Category fetch join)
+    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category WHERE p.id = :id AND p.status <> :status")
+    Optional<Project> findByIdWithMemberAndStatusNot(@Param("id") Long id, @Param("status") ProjectStatus status);
+
     @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
     Optional<Project> findByIdWithCategory(@Param("id") Long id);
 
