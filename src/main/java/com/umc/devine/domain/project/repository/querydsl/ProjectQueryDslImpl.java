@@ -40,27 +40,6 @@ public class ProjectQueryDslImpl implements ProjectQueryDsl {
     }
 
     @Override
-    public Page<Project> searchRecommendedProjects(Predicate predicate, Pageable pageable) {
-        QProject project = QProject.project;
-
-        // TODO: 추천 알고리즘 기반 정렬 추가
-        // 현재는 생성일순으로 정렬
-        JPAQuery<Project> query = queryFactory
-                .selectFrom(project)
-                .where(predicate)
-                .orderBy(project.createdAt.desc());
-
-        List<Project> content = query
-                .offset(pageable.getOffset())
-                .limit(pageable.getPageSize())
-                .fetch();
-
-        long total = query.fetchCount();
-
-        return new PageImpl<>(content, pageable, total);
-    }
-
-    @Override
     public List<Project> findAllActiveProjects(int limit) {
         QProject project = QProject.project;
 

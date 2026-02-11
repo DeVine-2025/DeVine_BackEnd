@@ -6,7 +6,6 @@ import lombok.Getter;
 @Getter
 public enum ProjectField {
 
-    ALL("전체"),
     WEB("웹"),
     MOBILE("모바일/앱"),
     GAME("게임"),
