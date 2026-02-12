@@ -8,12 +8,14 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/images")
+@Validated
 public class ImageController implements ImageControllerDocs {
 
     private final ImageCommandService imageCommandService;
