@@ -141,7 +141,7 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
     class CreateProjectTest {
 
         @Test
-        @DisplayName("PM 회원이 프로젝트 생성에 성공한다")
+        @DisplayName("회원이 프로젝트 생성에 성공한다")
         void createProject_success() {
             // given
             ProjectReqDTO.CreateProjectReq request = createValidRequest();
@@ -161,7 +161,7 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("PM 회원이 이미지를 포함하여 프로젝트를 생성한다")
+        @DisplayName("회원이 이미지를 포함하여 프로젝트를 생성한다")
         void createProject_withImages() {
             // given
             Image image = createUploadedProjectImage(pmMember);
@@ -176,14 +176,17 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("개발자 회원이 프로젝트 생성 시 예외가 발생한다")
-        void createProject_developerForbidden() {
+        @DisplayName("개발자 회원도 프로젝트 생성에 성공한다")
+        void createProject_developerSuccess() {
             // given
             ProjectReqDTO.CreateProjectReq request = createValidRequest();
 
-            // when & then
-            assertThatThrownBy(() -> projectCommandService.createProject(devMember, request))
-                    .isInstanceOf(ProjectException.class);
+            // when
+            ProjectResDTO.CreateProjectRes result = projectCommandService.createProject(devMember, request);
+
+            // then
+            assertThat(result.projectId()).isNotNull();
+            assertThat(result.title()).isEqualTo("테스트 프로젝트");
         }
 
         @Test
