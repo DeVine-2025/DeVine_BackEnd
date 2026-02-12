@@ -9,7 +9,6 @@ import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorCode;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -61,10 +60,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
-        if (member.getMainType() != MemberMainType.PM) {
-            throw new ProjectException(INVALID_PERMISSION);
-        }
-
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
