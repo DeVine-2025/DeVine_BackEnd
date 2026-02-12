@@ -1,10 +1,15 @@
 package com.umc.devine.domain.report.dto;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.enums.ReportVisibility;
+import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.constraints.Max;
+import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
 import lombok.Builder;
+import org.springframework.data.domain.Pageable;
 
 import java.util.List;
 
@@ -49,5 +54,30 @@ public class ReportReqDTO {
 
     public enum CallbackStatus {
         SUCCESS, FAILED
+    }
+
+    @Builder
+    @Schema(description = "리포트 목록 조회 요청")
+    public record ReportSearchDTO(
+            @Schema(description = "리포트 타입 필터 (MAIN, DETAIL). 미지정 시 전체 조회", nullable = true)
+            ReportType type,
+
+            @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
+            Integer page,
+
+            @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+            Integer size
+    ) {
+        public ReportSearchDTO {
+            if (page == null) page = 1;
+            if (size == null) size = 10;
+        }
+
+        public Pageable toPageable() {
+            return PageRequest.of(page, size).toPageable();
+        }
     }
 }

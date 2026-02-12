@@ -8,10 +8,12 @@ import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -96,11 +98,11 @@ public class ReportController implements ReportControllerDocs {
 
     @Override
     @GetMapping("/members/{nickname}")
-    public ApiResponse<ReportResDTO.ReportSummaryListDTO> getReportsByNickname(
+    public ApiResponse<PagedResponse<ReportResDTO.ReportSummaryDTO>> getReportsByNickname(
             @PathVariable @ValidNickname String nickname,
-            @RequestParam(required = false) ReportType type
+            @ParameterObject @ModelAttribute @Valid ReportReqDTO.ReportSearchDTO dto
     ) {
-        ReportResDTO.ReportSummaryListDTO response = reportQueryService.getReportsByNickname(nickname, type);
+        PagedResponse<ReportResDTO.ReportSummaryDTO> response = reportQueryService.getReportsByNickname(nickname, dto.type(), dto.toPageable());
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 }
