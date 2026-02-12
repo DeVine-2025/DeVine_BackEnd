@@ -311,6 +311,86 @@ src/main/java/com/umc/devine/
 
 ---
 
+## 🌿 Git Branch Strategy
+
+### 커밋 타입
+
+| 타입 | 설명 |
+|------|------|
+| `FEATURE` | 새로운 기능 추가 |
+| `FIX` | 버그 수정 |
+| `HOTFIX` | 긴급 버그 수정 |
+| `REFACTOR` | 코드 리팩토링 (기능 변경 없음) |
+| `CHORE` | 빌드, 설정, 의존성 등 기타 변경 |
+| `TEST` | 테스트 코드 추가/수정 |
+| `DOCS` | 문서 추가/수정 |
+
+### 커밋 메시지 규칙
+
+```
+[TYPE] 변경 내용 요약
+```
+
+**예시:**
+```
+[FEATURE] 매칭 상태 조회 API 구현
+[FIX] Swagger 요청 DTO enum 예시값 불일치 수정 (#106)
+[REFACTOR] 회원 도메인 API 구조 개선 및 GitHub 연동 기능 고도화 (#99)
+[HOTFIX] import 경로 업데이트
+```
+
+- 타입은 **대문자**로 작성하며 대괄호`[]`로 감쌉니다
+- 관련 이슈가 있으면 끝에 `(#이슈번호)`를 붙입니다
+- 한글로 간결하게 작성합니다
+
+### 브랜치 네이밍 규칙
+
+```
+<type>/#<issue-number>-<short-description>
+```
+
+| 브랜치 유형 | 패턴 | 예시 |
+|------------|------|------|
+| 기능 개발 | `feat/#<이슈번호>-<설명>` | `feat/#102-get-matching` |
+| 버그 수정 | `fix/#<이슈번호>-<설명>` | `fix/#125-report` |
+| 리팩토링 | `refactor/#<이슈번호>-<설명>` | `refactor/#96-sync-report-v2` |
+| 설정/기타 | `chore/#<이슈번호>-<설명>` | `chore/#22-setting-valkey` |
+| 테스트 | `test/#<이슈번호>-<설명>` | `test/#115-edit-test-project` |
+| 문서 | `docs/#<이슈번호>-<설명>` | `docs/#138-add-readme` |
+| 긴급 수정 | `hotfix/#<이슈번호>-<설명>` | `hotfix/#158-matching-valid-score` |
+
+### 브랜치 전략 (Git Flow)
+
+```
+main (프로덕션)
+ └── dev (개발 통합)
+      ├── feat/#10-project-api
+      ├── fix/#125-report
+      ├── refactor/#96-sync-report-v2
+      └── ...
+```
+
+| 브랜치 | 역할 | 보호 규칙 |
+|--------|------|----------|
+| `main` | 프로덕션 배포 브랜치 | PR 머지만 허용, 직접 푸시 금지 |
+| `dev` | 개발 통합 브랜치 (기본 브랜치) | PR 머지만 허용, 직접 푸시 금지 |
+| `feat/*`, `fix/*` 등 | 작업 브랜치 | `dev`에서 분기 → `dev`로 PR |
+
+### PR (Pull Request) 규칙
+
+- PR 제목은 커밋 메시지 규칙과 동일하게 `[TYPE] 변경 내용 요약` 형식을 따릅니다
+- 관련 이슈를 연결합니다
+- 코드 리뷰 승인 후 머지합니다
+
+### 머지 전략
+
+| 대상 | 전략 | 이유 |
+|------|------|------|
+| 작업 브랜치 → `dev` | **Squash and Merge** | 작업 브랜치의 커밋을 하나로 합쳐 깔끔한 히스토리 유지 |
+| `dev` → `main` | **Merge Commit** | 배포 단위별 히스토리 보존 |
+
+---
+
 <div align="center">
 
 **DeVine** · Built with ☕ by [DeVine Team](https://github.com/DeVine-2025)
