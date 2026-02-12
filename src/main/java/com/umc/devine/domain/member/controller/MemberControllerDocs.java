@@ -3,6 +3,8 @@ package com.umc.devine.domain.member.controller;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
@@ -18,9 +20,11 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.data.domain.Pageable;
 import com.umc.devine.global.validation.annotation.ValidNickname;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestParam;
 
 @Tag(name = "Members", description = "특정 회원, 전체 회원 조회 관련 API")
@@ -92,4 +96,27 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<TechstackResDTO.DevTechstackListDTO> getTechstacksByNickname(@ValidNickname String nickname);
+
+    @Operation(summary = "특정 회원 프로젝트 목록 조회 API", description = "특정 회원의 프로젝트 목록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. statuses 파라미터로 프로젝트 상태를 필터링할 수 있습니다. 비회원도 조회 가능합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "비공개 프로필입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
+    })
+    ApiResponse<ProjectResDTO.MyProjectsRes> getProjectsByNickname(
+            @PathVariable("nickname") @ValidNickname String nickname,
+            @RequestParam(required = false) List<ProjectStatus> statuses,
+            @Parameter(hidden = true) Pageable pageable
+    );
+
+    @Operation(summary = "특정 회원 레포지토리 목록 조회 API", description = "특정 회원의 GitHub 레포지토리 목록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. 비회원도 조회 가능합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "비공개 프로필입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
+    })
+    ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> getReposByNickname(
+            @PathVariable("nickname") @ValidNickname String nickname,
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
+    );
 }

@@ -11,15 +11,21 @@ import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.repository.ContactRepository;
+import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRecommendRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
+import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.member.entity.Terms;
+import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
 import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.project.service.query.ProjectQueryService;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
@@ -30,6 +36,7 @@ import com.umc.devine.global.enums.EmbeddingStatus;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;
 import org.springframework.data.domain.PageRequest;
@@ -38,8 +45,10 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDate;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 @Service
@@ -56,6 +65,9 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     private final GitHubService gitHubService;
     private final MemberRecommendRepository memberRecommendRepository;
     private final ProjectEmbeddingRepository projectEmbeddingRepository;
+    private final ProjectQueryService projectQueryService;
+    private final GitRepoUrlRepository gitRepoUrlRepository;
+    private final DevReportRepository devReportRepository;
 
     @Override
     public MemberResDTO.TermsListDTO findAllTerms() {
@@ -356,6 +368,43 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 })
                 .filter(dto -> dto != null)
                 .toList();
+    }
+
+    @Override
+    public ProjectResDTO.MyProjectsRes findProjectsByNickname(String nickname, List<ProjectStatus> statuses, Pageable pageable) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
+        return projectQueryService.getMyProjects(member, statuses, pageable);
+    }
+
+    @Override
+    public PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(String nickname, Pageable pageable) {
+        Member member = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+
+        if (!member.getDisclosure()) {
+            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+        }
+
+        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMember(member, pageable);
+
+        List<Long> gitRepoIds = repoPage.getContent().stream()
+                .map(GitRepoUrl::getId)
+                .collect(Collectors.toList());
+        Set<Long> repoIdsWithReport = gitRepoIds.isEmpty()
+                ? Set.of()
+                : new HashSet<>(devReportRepository.findActiveReportGitRepoIds(gitRepoIds));
+
+        List<MemberResDTO.GitRepoDTO> repoDTOs = repoPage.getContent().stream()
+                .map(repo -> MemberConverter.toGitRepoDTO(repo, repoIdsWithReport.contains(repo.getId())))
+                .collect(Collectors.toList());
+
+        return PagedResponse.of(repoPage, repoDTOs);
     }
 
     @Override
