@@ -5,13 +5,18 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
+import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import com.umc.devine.global.validation.annotation.ValidNickname;
+import jakarta.validation.Valid;
 import org.springframework.validation.annotation.Validated;
 
 import java.time.LocalDate;
@@ -96,6 +101,31 @@ public class MemberController implements MemberControllerDocs {
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
         TechstackResDTO.DevTechstackListDTO response = memberQueryService.findTechstacksByNickname(nickname);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 특정 회원 프로젝트 목록 조회 (비회원 허용)
+    @Override
+    @GetMapping("/{nickname}/projects")
+    public ApiResponse<ProjectResDTO.MyProjectsRes> getProjectsByNickname(
+            @PathVariable("nickname") @ValidNickname String nickname,
+            @RequestParam(required = false) List<ProjectStatus> statuses,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        ProjectResDTO.MyProjectsRes response = memberQueryService.findProjectsByNickname(nickname, statuses, pageable);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 특정 회원 레포지토리 목록 조회 (비회원 허용)
+    @Override
+    @GetMapping("/{nickname}/git-repos")
+    public ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> getReposByNickname(
+            @PathVariable("nickname") @ValidNickname String nickname,
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND;
+        PagedResponse<MemberResDTO.GitRepoDTO> response = memberQueryService.findReposByNickname(nickname, dto.toPageable());
         return ApiResponse.onSuccess(code, response);
     }
 
