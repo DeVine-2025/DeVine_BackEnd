@@ -35,7 +35,7 @@ public interface MatchingControllerDocs {
     @Operation(summary = "프로젝트 지원 파트 수정", description = "개발자가 지원한 프로젝트의 지원 파트를 수정합니다. PENDING 상태에서만 변경 가능합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지원 파트 수정 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "PENDING 상태가 아닌 매칭"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 매칭"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> updateApplication(
@@ -47,6 +47,7 @@ public interface MatchingControllerDocs {
     @Operation(summary = "프로젝트 지원 취소하기", description = "개발자가 지원했던 프로젝트에 대해 지원을 취소합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로젝트 지원 취소 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 매칭"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "권한 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
     })
@@ -58,9 +59,9 @@ public interface MatchingControllerDocs {
     @Operation(summary = "지원 수락/거절", description = "PM이 자신의 프로젝트에 온 지원을 수락하거나 거절합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "지원 응답 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (이미 처리된 매칭, 잘못된 매칭 타입 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 매칭"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "PM만 응답 가능 또는 본인 프로젝트가 아님"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음 / 지원 매칭 정보를 찾을 수 없음")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> respondToApplication(
             @Parameter(hidden = true) @CurrentMember Member member,
@@ -85,9 +86,9 @@ public interface MatchingControllerDocs {
     @Operation(summary = "제안 수락/거절", description = "개발자가 PM으로부터 받은 프로젝트 제안을 수락하거나 거절합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "제안 응답 성공"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청 (이미 처리된 매칭, 잘못된 매칭 타입 등)"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 매칭"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "개발자만 응답 가능 또는 본인에게 온 제안이 아님"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음 / 제안 매칭 정보를 찾을 수 없음")
     })
     ApiResponse<MatchingResDTO.ProposeResDTO> respondToProposal(
             @Parameter(hidden = true) @CurrentMember Member member,
