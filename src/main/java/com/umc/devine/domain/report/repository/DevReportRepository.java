@@ -4,6 +4,9 @@ import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
+import com.umc.devine.domain.report.enums.ReportVisibility;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -53,5 +56,23 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     List<DevReport> findAllByMemberAndReportType(
             @Param("member") Member member,
             @Param("reportType") ReportType reportType
+    );
+
+    @Query(value = "SELECT r FROM DevReport r " +
+            "JOIN FETCH r.gitRepoUrl g " +
+            "WHERE g.member = :member " +
+            "AND (:reportType IS NULL OR r.reportType = :reportType) " +
+            "AND r.visibility = :visibility " +
+            "ORDER BY r.createdAt DESC",
+            countQuery = "SELECT COUNT(r) FROM DevReport r " +
+            "JOIN r.gitRepoUrl g " +
+            "WHERE g.member = :member " +
+            "AND (:reportType IS NULL OR r.reportType = :reportType) " +
+            "AND r.visibility = :visibility")
+    Page<DevReport> findAllByMemberAndReportTypeAndVisibility(
+            @Param("member") Member member,
+            @Param("reportType") ReportType reportType,
+            @Param("visibility") ReportVisibility visibility,
+            Pageable pageable
     );
 }

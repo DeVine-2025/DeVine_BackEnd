@@ -3,6 +3,7 @@ package com.umc.devine.domain.member.dto;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.techstack.enums.TechName;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.global.dto.PageRequest;
 import com.umc.devine.global.validation.annotation.ValidNickname;
@@ -188,6 +189,31 @@ public class MemberReqDTO {
             Integer size
     ) {
         public SearchDeveloperDTO {
+            if (page == null) page = 1;
+            if (size == null) size = 10;
+        }
+
+        public Pageable toPageable() {
+            return PageRequest.of(page, size).toPageable();
+        }
+    }
+
+    @Builder
+    @Schema(description = "특정 회원 프로젝트 목록 조회 요청")
+    public record MemberProjectSearchDTO(
+            @Schema(description = "프로젝트 상태 필터 (RECRUITING, IN_PROGRESS, COMPLETED 등), 복수 선택 가능", nullable = true)
+            List<ProjectStatus> statuses,
+
+            @Schema(description = "페이지 번호 (1부터 시작)", example = "1", defaultValue = "1")
+            @Min(value = 1, message = "페이지 번호는 1 이상이어야 합니다.")
+            Integer page,
+
+            @Schema(description = "페이지 크기", example = "10", defaultValue = "10")
+            @Min(value = 1, message = "페이지 크기는 1 이상이어야 합니다.")
+            @Max(value = 100, message = "페이지 크기는 100 이하여야 합니다.")
+            Integer size
+    ) {
+        public MemberProjectSearchDTO {
             if (page == null) page = 1;
             if (size == null) size = 10;
         }
