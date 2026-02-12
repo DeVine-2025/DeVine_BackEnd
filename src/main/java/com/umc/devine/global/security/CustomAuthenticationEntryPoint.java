@@ -27,7 +27,7 @@ public class CustomAuthenticationEntryPoint implements AuthenticationEntryPoint 
                          HttpServletResponse response,
                          AuthenticationException authException) throws IOException {
 
-        log.error("테스트 ✅", authException);
+        log.error("🔑 로그인 Exception {}", authException);
 
         GeneralErrorCode errorCode = GeneralErrorCode.UNAUTHORIZED;
 
