@@ -14,7 +14,8 @@ public class FastApiReqDto {
             String callbackUrl,
             String embeddingCallbackUrl,
             String githubToken,
-            List<String> techstacks
+            List<String> techstacks,
+            List<String> authorEmails
     ) {}
 
     @Builder
@@ -24,7 +25,8 @@ public class FastApiReqDto {
             String gitUrl,
             String githubToken,
             String embeddingCallbackUrl,
-            List<String> techstacks
+            List<String> techstacks,
+            List<String> authorEmails
     ) {}
 
     @Builder
