@@ -73,9 +73,6 @@ public class SecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects").permitAll()
                         // 프로젝트 상세 조회 (비회원 허용)
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/{projectId}").permitAll()
-                        // AI 서버 콜백 (내부 통신) // TODO 마스터키 인증으로 변경 필요
-                        .requestMatchers(HttpMethod.POST, "/api/v1/reports/callback").permitAll()
-                        .requestMatchers(HttpMethod.POST, "/api/v1/embeddings/callback/**").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
                         // 그 외 모든 요청은 인증 필요

@@ -56,11 +56,17 @@ public interface ReportControllerDocs {
             @RequestBody @Valid ReportReqDTO.UpdateVisibilityReq request
     );
 
-    @Operation(summary = "리포트 생성 콜백", description = "FastAPI에서 리포트 생성 완료 후 호출하는 콜백 엔드포인트입니다.")
+    @Operation(
+            summary = "리포트 생성 콜백",
+            description = "AI 서버(FastAPI)에서 리포트 생성 완료 후 호출하는 내부 통신용 콜백입니다. "
+                    + "헤더에 Key를 포함해야 합니다."
+    )
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "콜백 처리 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "Internal Key가 없거나 유효하지 않음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "리포트를 찾을 수 없음")
     })
+    @io.swagger.v3.oas.annotations.security.SecurityRequirement(name = "Authorization")
     ApiResponse<Void> handleCallback(
             @RequestBody @Valid ReportReqDTO.CallbackReq request
     );
