@@ -15,8 +15,11 @@ import com.umc.devine.domain.report.enums.ReportVisibility;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -70,7 +73,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     }
 
     @Override
-    public ReportResDTO.ReportSummaryListDTO getReportsByNickname(String nickname, ReportType reportType) {
+    public PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(String nickname, ReportType reportType, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
 
@@ -78,14 +81,12 @@ public class ReportQueryServiceImpl implements ReportQueryService {
             throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
         }
 
-        List<DevReport> reports = reportRepository.findAllByMemberAndReportType(member, reportType);
+        Page<DevReport> reportPage = reportRepository.findAllByMemberAndReportTypeAndVisibility(
+                member, reportType, ReportVisibility.PUBLIC, pageable);
 
-        // 비공개 리포트 필터링 (타인 조회 시)
-        List<DevReport> publicReports = reports.stream()
-                .filter(report -> report.getVisibility() == ReportVisibility.PUBLIC)
-                .toList();
-
-        return ReportConverter.toReportSummaryListDTO(publicReports);
+        return PagedResponse.of(reportPage, reportPage.getContent().stream()
+                .map(ReportConverter::toReportSummaryDTO)
+                .toList());
     }
 
     private JsonNode parseJsonContent(String content, Long reportId) {

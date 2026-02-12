@@ -60,6 +60,7 @@ public class Matching extends BaseEntity {
     private Member member;
 
     public void cancel() {
+        validatePendingStatus();
         this.status = MatchingStatus.CANCELLED;
     }
 

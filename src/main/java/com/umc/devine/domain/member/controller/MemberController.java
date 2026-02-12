@@ -6,14 +6,11 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
-import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
-import org.springframework.data.domain.Pageable;
-import org.springframework.data.web.PageableDefault;
 import org.springframework.format.annotation.DateTimeFormat;
 import com.umc.devine.global.validation.annotation.ValidNickname;
 import jakarta.validation.Valid;
@@ -109,11 +106,10 @@ public class MemberController implements MemberControllerDocs {
     @GetMapping("/{nickname}/projects")
     public ApiResponse<ProjectResDTO.MyProjectsRes> getProjectsByNickname(
             @PathVariable("nickname") @ValidNickname String nickname,
-            @RequestParam(required = false) List<ProjectStatus> statuses,
-            @PageableDefault(size = 10) Pageable pageable
+            @ParameterObject @ModelAttribute @Valid MemberReqDTO.MemberProjectSearchDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        ProjectResDTO.MyProjectsRes response = memberQueryService.findProjectsByNickname(nickname, statuses, pageable);
+        ProjectResDTO.MyProjectsRes response = memberQueryService.findProjectsByNickname(nickname, dto.statuses(), dto.toPageable());
         return ApiResponse.onSuccess(code, response);
     }
 
