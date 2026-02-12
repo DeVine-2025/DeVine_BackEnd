@@ -47,7 +47,7 @@ public class MatchingValidator {
             throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
         }
         if (!matching.isApplyType()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MATCHING_TYPE);
+            throw new MatchingException(MatchingErrorCode.APPLY_MATCHING_NOT_FOUND);
         }
         if (!matching.getProject().isOwnedBy(pm)) {
             throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
@@ -59,7 +59,7 @@ public class MatchingValidator {
             throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
         }
         if (!matching.isProposeType()) {
-            throw new MatchingException(MatchingErrorCode.INVALID_MATCHING_TYPE);
+            throw new MatchingException(MatchingErrorCode.PROPOSE_MATCHING_NOT_FOUND);
         }
         if (!matching.isTargetMember(developer)) {
             throw new MatchingException(MatchingErrorCode.NOT_TARGET_MEMBER);
