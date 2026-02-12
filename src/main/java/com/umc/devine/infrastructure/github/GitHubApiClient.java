@@ -60,6 +60,89 @@ public class GitHubApiClient {
     }
 
     /**
+     * GitHub 사용자의 모든 이메일 조회
+     *
+     * @param accessToken GitHub OAuth Access Token
+     * @return 이메일 목록 (primary 이메일이 첫 번째)
+     */
+    @SuppressWarnings("unchecked")
+    public List<String> getUserEmails(String accessToken) {
+        String url = GITHUB_API_BASE_URL + "/user/emails";
+
+        try {
+            List<Map<String, Object>> emails = restClient.get()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + accessToken)
+                    .header("Accept", "application/vnd.github+json")
+                    .header("X-GitHub-Api-Version", "2022-11-28")
+                    .retrieve()
+                    .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
+                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                    })
+                    .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
+                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                    })
+                    .body(new ParameterizedTypeReference<>() {});
+
+            if (emails == null || emails.isEmpty()) {
+                return List.of();
+            }
+
+            // primary 이메일을 첫 번째로 배치
+            List<String> result = new ArrayList<>();
+            String primaryEmail = null;
+
+            for (Map<String, Object> emailInfo : emails) {
+                String email = (String) emailInfo.get("email");
+                if (email == null) continue;
+                if (Boolean.TRUE.equals(emailInfo.get("primary"))) {
+                    primaryEmail = email;
+                } else {
+                    result.add(email);
+                }
+            }
+
+            if (primaryEmail != null) {
+                result.add(0, primaryEmail);
+            }
+
+            return result;
+        } catch (AuthException e) {
+            throw e;
+        } catch (Exception e) {
+            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+        }
+    }
+
+    /**
+     * GitHub 사용자의 모든 이메일 조회 (noreply 이메일 포함)
+     *
+     * @param accessToken GitHub OAuth Access Token
+     * @return 중복 제거된 이메일 리스트 (primary 이메일이 첫 번째, noreply 포함)
+     */
+    public List<String> getAllAuthorEmails(String accessToken) {
+        Map<String, Object> userInfo = getUserInfo(accessToken);
+        String login = (String) userInfo.get("login");
+        Object idObj = userInfo.get("id");
+        String noreplyEmail = idObj + "+" + login + "@users.noreply.github.com";
+
+        List<String> emails = getUserEmails(accessToken);
+
+        Set<String> seen = new HashSet<>();
+        List<String> result = new ArrayList<>();
+        for (String email : emails) {
+            if (seen.add(email.toLowerCase())) {
+                result.add(email);
+            }
+        }
+        if (seen.add(noreplyEmail.toLowerCase())) {
+            result.add(noreplyEmail);
+        }
+
+        return result;
+    }
+
+    /**
      * GitHub 레포지토리 목록 조회 (페이지네이션 처리)
      *
      * @param accessToken GitHub OAuth Access Token
