@@ -11,6 +11,7 @@ public class EmbeddingCallbackDto {
     }
 
     public record ReportEmbeddingCallback(
+            @NotNull(message = "detailReportId는 필수입니다")
             Long detailReportId,
             @NotNull(message = "mainReportId는 필수입니다")
             Long mainReportId,

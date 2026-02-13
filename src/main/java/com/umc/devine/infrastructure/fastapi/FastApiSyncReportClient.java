@@ -7,6 +7,7 @@ import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
+import com.umc.devine.infrastructure.github.GitHubApiClient;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
@@ -16,6 +17,7 @@ import org.springframework.web.client.RestClient;
 import org.springframework.web.client.RestClientException;
 
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 @Slf4j
@@ -24,16 +26,19 @@ public class FastApiSyncReportClient {
 
     private final RestClient fastApiSyncRestClient;
     private final ClerkApiClient clerkApiClient;
+    private final GitHubApiClient gitHubApiClient;
 
     @Value("${fastapi.callback.base-url:http://localhost:8080}")
     private String callbackBaseUrl;
 
     public FastApiSyncReportClient(
             @Qualifier("fastApiSyncRestClient") RestClient fastApiSyncRestClient,
-            ClerkApiClient clerkApiClient
+            ClerkApiClient clerkApiClient,
+            GitHubApiClient gitHubApiClient
     ) {
         this.fastApiSyncRestClient = fastApiSyncRestClient;
         this.clerkApiClient = clerkApiClient;
+        this.gitHubApiClient = gitHubApiClient;
     }
 
     public FastApiResDto.ReportGenerationSyncRes requestReportGenerationSync(
@@ -55,6 +60,15 @@ public class FastApiSyncReportClient {
                 .map(TechName::name)
                 .toList();
 
+        List<String> authorEmails;
+        try {
+            authorEmails = gitHubApiClient.getAllAuthorEmails(githubToken);
+            log.info("GitHub 이메일 조회 성공 - mainReportId: {}, emails: {}", mainReport.getId(), authorEmails);
+        } catch (Exception e) {
+            log.warn("GitHub 이메일 조회 실패, 빈 리스트로 진행 - error: {}", e.getMessage());
+            authorEmails = Collections.emptyList();
+        }
+
         FastApiReqDto.ReportGenerationSyncReq request = FastApiReqDto.ReportGenerationSyncReq.builder()
                 .mainReportId(mainReport.getId())
                 .detailReportId(detailReport.getId())
@@ -62,6 +76,7 @@ public class FastApiSyncReportClient {
                 .githubToken(githubToken)
                 .embeddingCallbackUrl(callbackBaseUrl + "/api/v1/embeddings/callback")
                 .techstacks(allTechstacks)
+                .authorEmails(authorEmails)
                 .build();
 
         log.info("FastAPI 동기 리포트 생성 요청 - mainReportId: {}, detailReportId: {}, gitUrl: {}",

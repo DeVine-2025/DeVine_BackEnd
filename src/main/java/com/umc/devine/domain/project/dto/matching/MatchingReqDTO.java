@@ -4,6 +4,7 @@ import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 
 public class MatchingReqDTO {
 
@@ -23,6 +24,7 @@ public class MatchingReqDTO {
             ProjectPart part,
 
             @Schema(description = "제안 내용", example = "저희 프로젝트에 백엔드 개발자로 함께하시면 좋겠습니다.")
+            @Size(max = 500, message = "제안 내용은 500자를 초과할 수 없습니다.")
             String content
     ) {}
 

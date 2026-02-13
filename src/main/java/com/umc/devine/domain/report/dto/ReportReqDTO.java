@@ -8,6 +8,7 @@ import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
@@ -49,6 +50,7 @@ public class ReportReqDTO {
             String errorMessage,
 
             @Schema(description = "분석된 기술 스택 목록")
+            @Size(max = 50, message = "기술 스택은 최대 50개까지 가능합니다.")
             List<String> techstacks
     ) {}
 

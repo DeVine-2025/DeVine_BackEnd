@@ -11,6 +11,7 @@ import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
+import org.springframework.validation.annotation.Validated;
 import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.web.PageableDefault;
@@ -21,6 +22,7 @@ import java.util.List;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/projects")
+@Validated
 public class ProjectController implements ProjectControllerDocs {
 
     private final ProjectCommandService projectCommandService;
