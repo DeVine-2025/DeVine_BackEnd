@@ -9,6 +9,13 @@ spring:
   jpa:
     hibernate:
       ddl-auto: update
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2000ms}
+      client-name: ${REDIS_DATABASE:1}
 
 # Logging - 개발 환경 상세 로깅
 logging:
