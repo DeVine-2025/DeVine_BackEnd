@@ -2,7 +2,6 @@ package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
@@ -32,9 +31,11 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.DayOfWeek;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import java.util.stream.Collectors;
 
 import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
@@ -160,11 +161,52 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
-        if (member.getMainType().equals(MemberMainType.PM)) {
-            return getMyProjectsForPm(member, statuses, pageable);
-        } else {
-            return getMyProjectsForDeveloper(member, statuses, pageable);
-        }
+        // 내가 등록한 프로젝트
+        List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
+                .findAllByMemberAndStatusIn(member, statuses)
+                .stream()
+                .map(ProjectConverter::toMyProjectInfo)
+                .toList();
+
+        // 매칭 수락된 프로젝트
+        List<ProjectResDTO.MyProjectInfo> matchedInfos = matchingRepository
+                .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
+                .stream()
+                .map(ProjectConverter::toMyProjectInfo)
+                .toList();
+
+        // 중복 제거: 내가 등록한 프로젝트 우선, 매칭 프로젝트 중 중복 제외
+        Set<Long> createdProjectIds = createdInfos.stream()
+                .map(ProjectResDTO.MyProjectInfo::projectId)
+                .collect(Collectors.toSet());
+
+        List<ProjectResDTO.MyProjectInfo> combined = new ArrayList<>(createdInfos);
+        matchedInfos.stream()
+                .filter(info -> !createdProjectIds.contains(info.projectId()))
+                .forEach(combined::add);
+
+        // 수동 페이지네이션
+        int total = combined.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+        List<ProjectResDTO.MyProjectInfo> pageContent = start >= total ? List.of() : combined.subList(start, end);
+
+        int pageSize = pageable.getPageSize();
+        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
+
+        PagedResponse<ProjectResDTO.MyProjectInfo> pagedResponse = PagedResponse.<ProjectResDTO.MyProjectInfo>builder()
+                .content(pageContent)
+                .page(pageable.getPageNumber() + 1)
+                .size(pageSize)
+                .totalElements(total)
+                .totalPages(totalPages)
+                .isFirst(pageable.getPageNumber() == 0)
+                .isLast(end >= total)
+                .build();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(pagedResponse)
+                .build();
     }
 
     // ==================== Private Methods ====================
@@ -253,29 +295,4 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .build();
     }
 
-    private ProjectResDTO.MyProjectsRes getMyProjectsForPm(Member member, List<ProjectStatus> statuses, Pageable pageable) {
-        Page<Project> projectPage = projectRepository.findByMemberAndStatusIn(member, statuses, pageable);
-
-        List<ProjectResDTO.MyProjectInfo> infos = projectPage.getContent().stream()
-                .map(ProjectConverter::toMyProjectInfo)
-                .toList();
-
-        return ProjectResDTO.MyProjectsRes.builder()
-                .projects(PagedResponse.of(projectPage, infos))
-                .build();
-    }
-
-    private ProjectResDTO.MyProjectsRes getMyProjectsForDeveloper(Member member, List<ProjectStatus> statuses, Pageable pageable) {
-        Page<Matching> matchingPage = matchingRepository.findByMemberAndDecisionAndProjectStatusIn(
-                member, MatchingDecision.ACCEPT, statuses, pageable
-        );
-
-        List<ProjectResDTO.MyProjectInfo> infos = matchingPage.getContent().stream()
-                .map(ProjectConverter::toMyProjectInfo)
-                .toList();
-
-        return ProjectResDTO.MyProjectsRes.builder()
-                .projects(PagedResponse.of(matchingPage, infos))
-                .build();
-    }
 }
