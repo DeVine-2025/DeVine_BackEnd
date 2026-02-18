@@ -20,6 +20,7 @@ import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
@@ -185,9 +186,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return PagedResponse.empty(dto.toPageable());
         }
 
-        // 프로젝트 존재 확인
-        if (!projectRepository.existsById(dto.projectId())) {
-            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        // 프로젝트 존재 및 소유자 확인
+        Project project = projectRepository.findById(dto.projectId())
+                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        if (!project.isOwnedBy(member)) {
+            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
@@ -207,9 +210,11 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return Collections.emptyList();
         }
 
-        // 프로젝트 존재 확인
-        if (!projectRepository.existsById(projectId)) {
-            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        // 프로젝트 존재 및 소유자 확인
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        if (!project.isOwnedBy(member)) {
+            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
