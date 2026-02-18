@@ -78,7 +78,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("excludeStatus") MatchingStatus excludeStatus,
             Pageable pageable);
 
-    // 내 프로젝트 조회 - 개발자 분기: 수락된 매칭 기반 프로젝트 상태별 조회
+    // 내 프로젝트 조회 - 개발자 분기: 수락된 매칭 기반 프로젝트 상태별 조회 (페이징)
     @Query(value = "SELECT m FROM Matching m " +
             "JOIN FETCH m.project p " +
             "JOIN FETCH p.member pm " +
@@ -97,6 +97,20 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("decision") MatchingDecision decision,
             @Param("projectStatuses") List<ProjectStatus> projectStatuses,
             Pageable pageable);
+
+    // 내 프로젝트 조회 - 수락된 매칭 기반 전체 조회 (비페이징, 내 프로젝트 통합 조회용)
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH p.member pm " +
+            "JOIN FETCH p.category " +
+            "WHERE m.member = :developer " +
+            "AND m.decision = :decision " +
+            "AND p.status IN :projectStatuses " +
+            "ORDER BY m.createdAt DESC")
+    List<Matching> findAllByMemberAndDecisionAndProjectStatusIn(
+            @Param("developer") Member developer,
+            @Param("decision") MatchingDecision decision,
+            @Param("projectStatuses") List<ProjectStatus> projectStatuses);
 
     // 특정 프로젝트-회원-타입 매칭 조회 (CANCELLED 제외)
     @Query("SELECT m FROM Matching m " +

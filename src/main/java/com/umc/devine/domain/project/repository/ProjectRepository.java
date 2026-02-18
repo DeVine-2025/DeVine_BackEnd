@@ -16,7 +16,7 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
-    // PM용: 본인 프로젝트를 상태별로 조회
+    // PM용: 본인 프로젝트를 상태별로 조회 (페이징)
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.category " +
             "WHERE p.member = :member " +
@@ -29,6 +29,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses,
             Pageable pageable);
+
+    // 내가 등록한 프로젝트를 상태별로 전체 조회 (비페이징, 내 프로젝트 통합 조회용)
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses ORDER BY p.createdAt DESC")
+    List<Project> findAllByMemberAndStatusIn(
+            @Param("member") Member member,
+            @Param("statuses") List<ProjectStatus> statuses);
 
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 
