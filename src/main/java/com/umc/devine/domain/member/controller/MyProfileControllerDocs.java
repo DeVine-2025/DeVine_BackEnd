@@ -64,7 +64,7 @@ public interface MyProfileControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member
     );
 
-    @Operation(summary = "내 프로필 수정 API", description = "내 프로필 정보를 수정하는 API입니다. 닉네임, 프로필 이미지 URL, 주소, 자기소개, 도메인들, 연락처들, 메인타입, 공개여부를 수정할 수 있습니다.")
+    @Operation(summary = "내 프로필 수정 API", description = "내 프로필 정보를 수정하는 API입니다. 닉네임, 프로필 이미지 URL, 주소, 자기소개, 도메인들, 연락처들, 메인타입, 공개여부, 제안 알림 설정을 수정할 수 있습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),

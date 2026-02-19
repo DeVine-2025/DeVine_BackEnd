@@ -126,7 +126,10 @@ public class MemberReqDTO {
             MemberMainType mainType,
 
             @Schema(description = "개발자 검색 노출 공개", nullable = true)
-            Boolean disclosure
+            Boolean disclosure,
+
+            @Schema(description = "프로젝트 제안 알림받기", nullable = true)
+            Boolean proposalAlarm
     ) {}
 
     @Builder

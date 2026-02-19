@@ -52,14 +52,33 @@ public class MemberResDTO {
     ) {}
 
     @Builder
+    @Schema(description = "회원 상세 정보")
     public record MemberDetailDTO(
+            @Schema(description = "닉네임", example = "devine")
             String nickname,
+
+            @Schema(description = "주소", example = "서울특별시 강남구")
             String address,
+
+            @Schema(description = "프로필 공개 여부", example = "true")
             Boolean disclosure,
+
+            @Schema(description = "제안 알림 설정 (본인 조회 시에만 반환, 타인 조회 시 null)", example = "true", nullable = true)
+            Boolean proposalAlarm,
+
+            @Schema(description = "메인 역할", example = "DEVELOPER")
             MemberMainType mainType,
+
+            @Schema(description = "프로필 이미지 URL")
             String imageUrl,
+
+            @Schema(description = "자기소개")
             String body,
+
+            @Schema(description = "회원 상태", example = "ACTIVE")
             MemberStatus used,
+
+            @Schema(description = "가입일")
             LocalDateTime createdAt
     ){}
 

@@ -37,6 +37,7 @@ public class MemberConverter {
                 .body(dto.body())
                 .mainType(dto.mainType())
                 .disclosure(true)
+                .proposalAlarm(true)
                 .used(MemberStatus.ACTIVE)
                 .build();
     }
@@ -142,21 +143,27 @@ public class MemberConverter {
                 .collect(Collectors.toList());
     }
 
-    public static MemberResDTO.MemberProfileDTO toMemberProfileDTO(
+    public static MemberResDTO.MemberProfileDTO toOwnerProfileDTO(
             Member member,
             List<MemberCategory> memberCategories,
             List<Contact> contacts
     ) {
-        MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
-                .nickname(member.getNickname())
-                .address(member.getAddress())
-                .imageUrl(member.getImage())
-                .disclosure(member.getDisclosure())
-                .mainType(member.getMainType())
-                .body(member.getBody())
-                .used(member.getUsed())
-                .createdAt(member.getCreatedAt())
-                .build();
+        return toMemberProfileDTO(toOwnerDetailDTO(member), memberCategories, contacts);
+    }
+
+    public static MemberResDTO.MemberProfileDTO toOtherProfileDTO(
+            Member member,
+            List<MemberCategory> memberCategories,
+            List<Contact> contacts
+    ) {
+        return toMemberProfileDTO(toOtherDetailDTO(member), memberCategories, contacts);
+    }
+
+    private static MemberResDTO.MemberProfileDTO toMemberProfileDTO(
+            MemberResDTO.MemberDetailDTO memberDTO,
+            List<MemberCategory> memberCategories,
+            List<Contact> contacts
+    ) {
 
         List<CategoryGenre> domains = memberCategories.stream()
                 .map(mc -> mc.getCategory().getGenre())
@@ -182,16 +189,7 @@ public class MemberConverter {
             List<MemberCategory> memberCategories,
             List<DevTechstack> devTechstacks
     ) {
-        MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
-                .nickname(member.getNickname())
-                .address(member.getAddress())
-                .imageUrl(member.getImage())
-                .disclosure(member.getDisclosure())
-                .mainType(member.getMainType())
-                .body(member.getBody())
-                .used(member.getUsed())
-                .createdAt(member.getCreatedAt())
-                .build();
+        MemberResDTO.MemberDetailDTO memberDTO = toOtherDetailDTO(member);
 
         List<CategoryGenre> domains = memberCategories.stream()
                 .map(mc -> mc.getCategory().getGenre())
@@ -213,7 +211,18 @@ public class MemberConverter {
                 .build();
     }
 
-    public static MemberResDTO.MemberDetailDTO toMemberDetailDTO(Member member) {
+    public static MemberResDTO.MemberDetailDTO toOwnerDetailDTO(Member member) {
+        return toBaseDetailDTO(member)
+                .proposalAlarm(member.getProposalAlarm())
+                .build();
+    }
+
+    public static MemberResDTO.MemberDetailDTO toOtherDetailDTO(Member member) {
+        return toBaseDetailDTO(member)
+                .build();
+    }
+
+    private static MemberResDTO.MemberDetailDTO.MemberDetailDTOBuilder toBaseDetailDTO(Member member) {
         return MemberResDTO.MemberDetailDTO.builder()
                 .nickname(member.getNickname())
                 .address(member.getAddress())
@@ -222,8 +231,7 @@ public class MemberConverter {
                 .imageUrl(member.getImage())
                 .body(member.getBody())
                 .used(member.getUsed())
-                .createdAt(member.getCreatedAt())
-                .build();
+                .createdAt(member.getCreatedAt());
     }
 
     public static MemberResDTO.DeveloperDTO toDeveloperDTO(Member member, List<DevTechstack> devTechstacks) {
@@ -249,16 +257,7 @@ public class MemberConverter {
             Boolean domainMatch,
             List<String> matchedTechstacks
     ) {
-        MemberResDTO.MemberDetailDTO memberDTO = MemberResDTO.MemberDetailDTO.builder()
-                .nickname(member.getNickname())
-                .address(member.getAddress())
-                .imageUrl(member.getImage())
-                .disclosure(member.getDisclosure())
-                .mainType(member.getMainType())
-                .body(member.getBody())
-                .used(member.getUsed())
-                .createdAt(member.getCreatedAt())
-                .build();
+        MemberResDTO.MemberDetailDTO memberDTO = toOtherDetailDTO(member);
 
         List<CategoryGenre> domains = memberCategories.stream()
                 .map(mc -> mc.getCategory().getGenre())

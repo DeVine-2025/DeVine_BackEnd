@@ -81,7 +81,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMemberWithCategory(member);
         List<Contact> contacts = contactRepository.findAllByMember(member);
 
-        return MemberConverter.toMemberProfileDTO(member, memberCategories, contacts);
+        return MemberConverter.toOwnerProfileDTO(member, memberCategories, contacts);
     }
 
     @Override
@@ -115,7 +115,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
         List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMemberWithCategory(member);
         List<Contact> contacts = contactRepository.findAllByMember(member);
 
-        return MemberConverter.toMemberProfileDTO(member, memberCategories, contacts);
+        return MemberConverter.toOtherProfileDTO(member, memberCategories, contacts);
     }
 
     @Override
