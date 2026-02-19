@@ -168,12 +168,14 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
-        // 매칭 수락된 프로젝트
-        List<ProjectResDTO.MyProjectInfo> matchedInfos = matchingRepository
-                .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
-                .stream()
-                .map(ProjectConverter::toMyProjectInfo)
-                .toList();
+        // 매칭 수락된 프로젝트 (모집 중 탭은 내가 생성한 프로젝트만 표시)
+        List<ProjectResDTO.MyProjectInfo> matchedInfos = statuses.contains(ProjectStatus.RECRUITING)
+                ? List.of()
+                : matchingRepository
+                        .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
+                        .stream()
+                        .map(ProjectConverter::toMyProjectInfo)
+                        .toList();
 
         // 중복 제거: 내가 등록한 프로젝트 우선, 매칭 프로젝트 중 중복 제외
         Set<Long> createdProjectIds = createdInfos.stream()

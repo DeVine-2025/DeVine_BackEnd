@@ -98,6 +98,7 @@ public class ProjectRecommendRepository {
                 JOIN report_embedding re ON re.report_embedding_id = :embeddingId
                 WHERE pe.status = 'SUCCESS'
                   AND p.project_status = 'RECRUITING'
+                  AND p.member_id != :memberId
                   AND EXISTS (
                     SELECT 1 FROM dev_techstack dt
                     JOIN techstack t ON dt.techstack_id = t.techstack_id
