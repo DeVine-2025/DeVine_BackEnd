@@ -148,5 +148,11 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
                 .findByProjectAndPart(matching.getProject(), matching.getPart())
                 .orElseThrow(() -> new MatchingException(MatchingErrorCode.INVALID_PART));
         requirement.incrementCurrentCount();
+
+        // 모든 파트 모집 완료 시 자동으로 진행중으로 변경
+        Project project = matching.getProject();
+        if (project.isRecruiting() && project.isAllRequirementsFulfilled()) {
+            project.startProgress();
+        }
     }
 }

@@ -186,7 +186,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             contactRepository.saveAll(MemberConverter.toContacts(member, dto.contacts()));
         }
 
-        return MemberConverter.toMemberProfileDTO(
+        return MemberConverter.toOwnerProfileDTO(
                 member,
                 memberCategoryRepository.findAllByMemberWithCategory(member),
                 contactRepository.findAllByMember(member)

@@ -31,6 +31,9 @@ public class MatchingNotificationHelper {
 
     public void notifyPropose(Member pm, Matching matching) {
         Member targetMember = matching.getMember();
+        if (!targetMember.getProposalAlarm()) {
+            return;
+        }
         Project project = matching.getProject();
 
         send(
