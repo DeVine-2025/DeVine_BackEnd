@@ -57,6 +57,9 @@ public enum MatchingErrorCode implements BaseErrorCode {
     INVALID_PART(HttpStatus.BAD_REQUEST,
             "MATCHING400_8",
             "해당 프로젝트에서 모집하지 않는 파트입니다."),
+    PART_ALREADY_FULFILLED(HttpStatus.CONFLICT,
+            "MATCHING409_3",
+            "해당 파트의 모집이 이미 완료되었습니다."),
     ;
 
     private final HttpStatus status;
