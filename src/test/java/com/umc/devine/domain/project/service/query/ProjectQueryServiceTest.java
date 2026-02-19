@@ -144,10 +144,14 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     ecommerceCategory, ProjectStatus.RECRUITING);
             createProject("삭제된 프로젝트", ProjectField.WEB,
                     ecommerceCategory, ProjectStatus.DELETED);
+            createProject("진행 중 프로젝트", ProjectField.WEB,
+                    ecommerceCategory, ProjectStatus.IN_PROGRESS);
+            createProject("완료된 프로젝트", ProjectField.WEB,
+                    ecommerceCategory, ProjectStatus.COMPLETED);
         }
 
         @Test
-        @DisplayName("필터 없이 전체 프로젝트를 검색한다 (삭제 프로젝트 제외)")
+        @DisplayName("필터 없이 모집 중인 프로젝트만 반환한다")
         void searchProjects_noFilter() {
             // given
             ProjectReqDTO.SearchProjectReq request = ProjectReqDTO.SearchProjectReq.builder()
@@ -235,6 +239,24 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.projects().getContent()).hasSize(2);
+            assertThat(result.projects().getTotalElements()).isEqualTo(3);
+        }
+
+        @Test
+        @DisplayName("모집 중이 아닌 프로젝트(진행 중, 완료, 삭제)는 검색 결과에 포함되지 않는다")
+        void searchProjects_excludeNonRecruiting() {
+            // given
+            ProjectReqDTO.SearchProjectReq request = ProjectReqDTO.SearchProjectReq.builder()
+                    .page(1)
+                    .size(20)
+                    .build();
+
+            // when
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+
+            // then
+            assertThat(result.projects().getContent())
+                    .allMatch(p -> p.status() == ProjectStatus.RECRUITING);
             assertThat(result.projects().getTotalElements()).isEqualTo(3);
         }
     }
