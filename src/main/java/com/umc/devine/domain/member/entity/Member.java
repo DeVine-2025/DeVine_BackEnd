@@ -42,8 +42,15 @@ public class Member extends BaseEntity {
     @Column(nullable = false)
     private boolean disclosure;
 
+    @Column(name = "proposal_alarm", nullable = false)
+    private boolean proposalAlarm;
+
     public boolean getDisclosure() {
         return disclosure;
+    }
+
+    public boolean getProposalAlarm() {
+        return proposalAlarm;
     }
 
     @Enumerated(EnumType.STRING)
@@ -94,6 +101,10 @@ public class Member extends BaseEntity {
         this.disclosure = disclosure;
     }
 
+    public void updateProposalAlarm(boolean proposalAlarm) {
+        this.proposalAlarm = proposalAlarm;
+    }
+
     public void updateProfile(MemberReqDTO.UpdateMemberDTO dto) {
         Optional.ofNullable(dto.nickname()).ifPresent(this::updateNickname);
         Optional.ofNullable(dto.imageUrl()).ifPresent(this::updateImage);
@@ -101,6 +112,7 @@ public class Member extends BaseEntity {
         Optional.ofNullable(dto.body()).ifPresent(this::updateBody);
         Optional.ofNullable(dto.mainType()).ifPresent(this::updateMainType);
         Optional.ofNullable(dto.disclosure()).ifPresent(this::updateDisclosure);
+        Optional.ofNullable(dto.proposalAlarm()).ifPresent(this::updateProposalAlarm);
     }
 
     public void updateGithubUsername(String githubUsername) {

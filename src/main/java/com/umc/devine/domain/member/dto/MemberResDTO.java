@@ -56,6 +56,7 @@ public class MemberResDTO {
             String nickname,
             String address,
             Boolean disclosure,
+            Boolean proposalAlarm,
             MemberMainType mainType,
             String imageUrl,
             String body,
