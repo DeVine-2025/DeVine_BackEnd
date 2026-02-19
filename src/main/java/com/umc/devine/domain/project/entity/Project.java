@@ -139,6 +139,10 @@ public class Project extends BaseEntity {
 
     // ==================== 상태 전환 메서드 ====================
 
+    public void startRecruiting() {
+        this.status = ProjectStatus.RECRUITING;
+    }
+
     public void startProgress() {
         this.status = ProjectStatus.IN_PROGRESS;
     }

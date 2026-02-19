@@ -237,18 +237,9 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         validateOwner(project, member.getId());
 
         switch (status) {
-            case IN_PROGRESS -> {
-                if (!project.isRecruiting()) {
-                    throw new ProjectException(INVALID_STATUS_TRANSITION);
-                }
-                project.startProgress();
-            }
-            case COMPLETED -> {
-                if (!project.isInProgress()) {
-                    throw new ProjectException(INVALID_STATUS_TRANSITION);
-                }
-                project.complete();
-            }
+            case RECRUITING -> project.startRecruiting();
+            case IN_PROGRESS -> project.startProgress();
+            case COMPLETED -> project.complete();
             default -> throw new ProjectException(INVALID_STATUS_TRANSITION);
         }
     }

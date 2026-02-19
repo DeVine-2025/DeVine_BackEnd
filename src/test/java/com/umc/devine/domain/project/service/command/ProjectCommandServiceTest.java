@@ -492,26 +492,32 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("모집 중에서 완료로 직접 변경하면 예외가 발생한다")
-        void changeStatus_invalidTransition_recruitingToCompleted() {
-            // when & then
-            assertThatThrownBy(() -> projectCommandService.changeProjectStatus(
-                    pmMember, recruitingProject.getId(), ProjectStatus.COMPLETED))
-                    .isInstanceOf(ProjectException.class);
+        @DisplayName("모집 중에서 완료로 직접 변경에 성공한다")
+        void changeStatus_recruitingToCompleted() {
+            // when
+            projectCommandService.changeProjectStatus(
+                    pmMember, recruitingProject.getId(), ProjectStatus.COMPLETED);
+
+            // then
+            Project updated = projectRepository.findById(recruitingProject.getId()).orElseThrow();
+            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.COMPLETED);
         }
 
         @Test
-        @DisplayName("완료 상태에서 진행 중으로 변경하면 예외가 발생한다")
-        void changeStatus_invalidTransition_completedToInProgress() {
+        @DisplayName("완료 상태에서 진행 중으로 변경에 성공한다")
+        void changeStatus_completedToInProgress() {
             // given
             recruitingProject.startProgress();
             recruitingProject.complete();
             projectRepository.saveAndFlush(recruitingProject);
 
-            // when & then
-            assertThatThrownBy(() -> projectCommandService.changeProjectStatus(
-                    pmMember, recruitingProject.getId(), ProjectStatus.IN_PROGRESS))
-                    .isInstanceOf(ProjectException.class);
+            // when
+            projectCommandService.changeProjectStatus(
+                    pmMember, recruitingProject.getId(), ProjectStatus.IN_PROGRESS);
+
+            // then
+            Project updated = projectRepository.findById(recruitingProject.getId()).orElseThrow();
+            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.IN_PROGRESS);
         }
 
         @Test
