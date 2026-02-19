@@ -242,48 +242,6 @@ class MemberRepositoryTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findAllPublicMembers")
-    class FindAllPublicMembersTest {
-
-        @Test
-        @DisplayName("공개된 활성 회원을 조회한다")
-        void findAllPublicMembers_success() {
-            // when
-            List<Member> result = memberRepository.findAllPublicMembers(
-                    PageRequest.of(0, 10)
-            );
-
-            // then
-            assertThat(result).isNotEmpty();
-            assertThat(result).allMatch(Member::getDisclosure);
-        }
-
-        @Test
-        @DisplayName("limit 만큼만 조회한다")
-        void findAllPublicMembers_limit() {
-            // given
-            for (int i = 0; i < 5; i++) {
-                memberRepository.save(Member.builder()
-                        .clerkId("clerk_" + i)
-                        .name("테스트" + i)
-                        .nickname("user" + i)
-                        .mainType(MemberMainType.DEVELOPER)
-                        .disclosure(true)
-                        .used(MemberStatus.ACTIVE)
-                        .build());
-            }
-
-            // when
-            List<Member> result = memberRepository.findAllPublicMembers(
-                    PageRequest.of(0, 3)
-            );
-
-            // then
-            assertThat(result).hasSize(3);
-        }
-    }
-
-    @Nested
     @DisplayName("existsByClerkId")
     class ExistsByClerkIdTest {
 

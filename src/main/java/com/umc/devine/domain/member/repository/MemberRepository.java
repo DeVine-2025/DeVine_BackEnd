@@ -36,7 +36,4 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     boolean existsByClerkId(@Param("clerkId") String clerkId);
-
-    @Query("SELECT m FROM Member m WHERE m.disclosure = true AND m.used = 'ACTIVE'")
-    List<Member> findAllPublicMembers(Pageable pageable);
 }
