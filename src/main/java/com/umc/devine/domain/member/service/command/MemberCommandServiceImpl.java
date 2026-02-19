@@ -278,7 +278,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         }
 
         // 페이지네이션된 결과 조회
-        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMember(member, dto.toPageable());
+        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMemberOrderByCreatedAtDesc(member, dto.toPageable());
 
         // 리포트 존재 여부 배치 조회
         List<Long> gitRepoIds = repoPage.getContent().stream()
