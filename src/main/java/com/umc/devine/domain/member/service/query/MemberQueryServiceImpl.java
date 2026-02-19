@@ -396,7 +396,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
         }
 
-        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMember(member, pageable);
+        Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMemberOrderByCreatedAtDesc(member, pageable);
 
         List<Long> gitRepoIds = repoPage.getContent().stream()
                 .map(GitRepoUrl::getId)

@@ -156,7 +156,7 @@ public class GitHubApiClient {
 
         try {
             while (true) {
-                String url = GITHUB_API_BASE_URL + "/user/repos?per_page=" + perPage + "&page=" + page;
+                String url = GITHUB_API_BASE_URL + "/user/repos?per_page=" + perPage + "&page=" + page + "&sort=created&direction=desc";
 
                 List<GitHubRepositoryDTO> repositories = restClient.get()
                         .uri(url)
@@ -351,7 +351,7 @@ public class GitHubApiClient {
             String query = """
                     query {
                       viewer {
-                        repositories(first: 100, ownerAffiliations: [OWNER]%s) {
+                        repositories(first: 100, ownerAffiliations: [OWNER], orderBy: {field: CREATED_AT, direction: DESC}%s) {
                           pageInfo {
                             hasNextPage
                             endCursor
@@ -377,7 +377,7 @@ public class GitHubApiClient {
             String query = """
                     query {
                       viewer {
-                        repositoriesContributedTo(first: 100, contributionTypes: [COMMIT, PULL_REQUEST]%s) {
+                        repositoriesContributedTo(first: 100, contributionTypes: [COMMIT, PULL_REQUEST], orderBy: {field: CREATED_AT, direction: DESC}%s) {
                           pageInfo {
                             hasNextPage
                             endCursor
