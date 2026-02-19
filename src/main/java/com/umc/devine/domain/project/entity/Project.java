@@ -153,6 +153,13 @@ public class Project extends BaseEntity {
         return this.status == ProjectStatus.RECRUITING;
     }
 
+    public boolean isAllRequirementsFulfilled() {
+        if (this.requirements.isEmpty()) {
+            return false;
+        }
+        return this.requirements.stream().allMatch(ProjectRequirementMember::isFulfilled);
+    }
+
     public boolean isInProgress() {
         return this.status == ProjectStatus.IN_PROGRESS;
     }
