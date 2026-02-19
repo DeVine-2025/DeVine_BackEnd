@@ -36,4 +36,8 @@ public class ProjectRequirementMember extends BaseEntity {
     public void incrementCurrentCount() {
         this.currentCount++;
     }
+
+    public boolean isFulfilled() {
+        return this.currentCount >= this.requirementNum;
+    }
 }
