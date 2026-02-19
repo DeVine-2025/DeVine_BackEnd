@@ -40,10 +40,12 @@ public class Member extends BaseEntity {
     private String address = null;
 
     @Column(nullable = false)
-    private boolean disclosure;
+    @Builder.Default
+    private boolean disclosure = true;
 
     @Column(name = "proposal_alarm", nullable = false)
-    private boolean proposalAlarm;
+    @Builder.Default
+    private boolean proposalAlarm = true;
 
     public boolean getDisclosure() {
         return disclosure;
