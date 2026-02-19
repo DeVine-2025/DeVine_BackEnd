@@ -134,6 +134,15 @@ public interface ProjectControllerDocs {
                         @PathVariable("projectId") Long projectId,
                         @Valid @RequestBody ProjectReqDTO.ChangeStatusReq request);
 
+        @Operation(summary = "내가 생성한 모집 중인 프로젝트 목록 조회 (개발자 추천 필터용)", description = "내가 생성한 모집 중인 프로젝트만 반환합니다. 수락된 매칭 프로젝트는 포함되지 않습니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+        })
+        ApiResponse<ProjectResDTO.MyProjectsRes> getMyCreatedRecruitingProjects(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @Parameter(hidden = true) Pageable pageable);
+
         @Operation(summary = "내 프로젝트 - 모집 중", description = "내 프로젝트 중 모집 중인 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),

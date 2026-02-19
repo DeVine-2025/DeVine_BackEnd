@@ -16,8 +16,8 @@ public class ProjectPredicateBuilder {
 
         BooleanBuilder builder = new BooleanBuilder();
 
-        // 삭제되지 않은 프로젝트만
-        builder.and(project.status.ne(ProjectStatus.DELETED));
+        // 모집 중인 프로젝트만
+        builder.and(project.status.eq(ProjectStatus.RECRUITING));
 
         // 프로젝트 분야 필터 (비어있으면 전체 조회)
         if (req.projectFields() != null && !req.projectFields().isEmpty()) {

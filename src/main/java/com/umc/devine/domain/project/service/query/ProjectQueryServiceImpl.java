@@ -209,6 +209,37 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .build();
     }
 
+    @Override
+    public ProjectResDTO.MyProjectsRes getMyCreatedRecruitingProjects(Member member, Pageable pageable) {
+        List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
+                .findAllByMemberAndStatusIn(member, List.of(ProjectStatus.RECRUITING))
+                .stream()
+                .map(ProjectConverter::toMyProjectInfo)
+                .toList();
+
+        int total = createdInfos.size();
+        int start = (int) pageable.getOffset();
+        int end = Math.min(start + pageable.getPageSize(), total);
+        List<ProjectResDTO.MyProjectInfo> pageContent = start >= total ? List.of() : createdInfos.subList(start, end);
+
+        int pageSize = pageable.getPageSize();
+        int totalPages = pageSize == 0 ? 0 : (int) Math.ceil((double) total / pageSize);
+
+        PagedResponse<ProjectResDTO.MyProjectInfo> pagedResponse = PagedResponse.<ProjectResDTO.MyProjectInfo>builder()
+                .content(pageContent)
+                .page(pageable.getPageNumber() + 1)
+                .size(pageSize)
+                .totalElements(total)
+                .totalPages(totalPages)
+                .isFirst(pageable.getPageNumber() == 0)
+                .isLast(end >= total)
+                .build();
+
+        return ProjectResDTO.MyProjectsRes.builder()
+                .projects(pagedResponse)
+                .build();
+    }
+
     // ==================== Private Methods ====================
 
     /**
