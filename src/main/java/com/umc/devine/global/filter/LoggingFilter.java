@@ -118,6 +118,7 @@ public class LoggingFilter extends OncePerRequestFilter {
 
     @Override
     protected boolean shouldNotFilter(HttpServletRequest request) {
-        return request.getRequestURI().contains("dev");
+        String uri = request.getRequestURI();
+        return uri.contains("dev") || uri.startsWith("/sse/");
     }
 }
