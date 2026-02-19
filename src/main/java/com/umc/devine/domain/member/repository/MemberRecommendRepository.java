@@ -39,9 +39,10 @@ public class MemberRecommendRepository {
      * @return 추천 개발자 목록 (점수 정보 포함)
      */
     @SuppressWarnings("unchecked")
-    public List<Object[]> findRecommendedDevelopers(Long projectId, int limit, int offset) {
+    public List<Object[]> findRecommendedDevelopers(Long projectId, Long currentMemberId, int limit, int offset) {
         Map<String, Object> params = new HashMap<>();
         params.put("projectId", projectId);
+        params.put("currentMemberId", currentMemberId);
         params.put("limit", limit);
         params.put("offset", offset);
 
@@ -103,6 +104,7 @@ public class MemberRecommendRepository {
                   AND pe.status = 'SUCCESS'
                   AND m.disclosure = true
                   AND m.used = 'ACTIVE'
+                  AND m.member_id != :currentMemberId
                   -- 개발자의 루트 포지션이 프로젝트 모집 포지션과 일치
                   AND EXISTS (
                     SELECT 1 FROM dev_techstack dt
@@ -140,16 +142,17 @@ public class MemberRecommendRepository {
      * 프리뷰용 추천 개발자 조회 (offset 없음)
      */
     @SuppressWarnings("unchecked")
-    public List<Object[]> findRecommendedDevelopersPreview(Long projectId, int limit) {
-        return findRecommendedDevelopers(projectId, limit, 0);
+    public List<Object[]> findRecommendedDevelopersPreview(Long projectId, Long currentMemberId, int limit) {
+        return findRecommendedDevelopers(projectId, currentMemberId, limit, 0);
     }
 
     /**
      * 벡터 검색으로 추천 가능한 개발자 총 수 조회
      */
-    public long countRecommendedDevelopers(Long projectId) {
+    public long countRecommendedDevelopers(Long projectId, Long currentMemberId) {
         Map<String, Object> params = new HashMap<>();
         params.put("projectId", projectId);
+        params.put("currentMemberId", currentMemberId);
 
         String sql = """
             WITH project_open_positions AS (
@@ -178,6 +181,7 @@ public class MemberRecommendRepository {
               AND pe.status = 'SUCCESS'
               AND m.disclosure = true
               AND m.used = 'ACTIVE'
+              AND m.member_id != :currentMemberId
               AND EXISTS (
                 SELECT 1 FROM dev_techstack dt
                 JOIN techstack t ON dt.techstack_id = t.techstack_id
@@ -201,6 +205,10 @@ public class MemberRecommendRepository {
      */
     @SuppressWarnings("unchecked")
     public List<String> findMatchedTechstacks(Long memberId, Long projectId) {
+        Map<String, Object> params = new HashMap<>();
+        params.put("memberId", memberId);
+        params.put("projectId", projectId);
+
         String sql = """
             SELECT t.techstack_name
             FROM dev_techstack dt
@@ -215,8 +223,7 @@ public class MemberRecommendRepository {
             """;
 
         Query query = entityManager.createNativeQuery(sql);
-        query.setParameter("memberId", memberId);
-        query.setParameter("projectId", projectId);
+        params.forEach(query::setParameter);
 
         return query.getResultList();
     }

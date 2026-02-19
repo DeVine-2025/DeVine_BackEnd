@@ -20,6 +20,7 @@ import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.project.dto.ProjectResDTO;
+import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
@@ -185,15 +186,17 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return PagedResponse.empty(dto.toPageable());
         }
 
-        // 프로젝트 존재 확인
-        if (!projectRepository.existsById(dto.projectId())) {
-            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        // 프로젝트 존재 및 소유자 확인
+        Project project = projectRepository.findById(dto.projectId())
+                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        if (!project.isOwnedBy(member)) {
+            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
         if (isVectorSearchAvailable(dto.projectId())) {
             return executeVectorSearch(
-                    dto.projectId(), dto.toPageable().getPageNumber(), dto.toPageable().getPageSize());
+                    dto.projectId(), member.getId(), dto.toPageable().getPageNumber(), dto.toPageable().getPageSize());
         }
 
         // 임베딩이 없으면 빈 배열 반환
@@ -207,14 +210,16 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             return Collections.emptyList();
         }
 
-        // 프로젝트 존재 확인
-        if (!projectRepository.existsById(projectId)) {
-            throw new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
+        // 프로젝트 존재 및 소유자 확인
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+        if (!project.isOwnedBy(member)) {
+            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
         if (isVectorSearchAvailable(projectId)) {
-            return executeVectorSearchPreview(projectId, limit);
+            return executeVectorSearchPreview(projectId, member.getId(), limit);
         }
 
         // 임베딩이 없으면 빈 배열 반환
@@ -238,13 +243,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
      * 벡터 검색을 실행하여 추천 개발자 목록 반환 (페이지네이션 포함)
      */
     private PagedResponse<MemberResDTO.RecommendedDeveloperDTO> executeVectorSearch(
-            Long projectId, int page, int size) {
+            Long projectId, Long currentMemberId, int page, int size) {
 
         int offset = page * size;
-        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopers(projectId, size, offset);
+        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopers(projectId, currentMemberId, size, offset);
 
         if (results.isEmpty()) {
-            long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId);
+            long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId, currentMemberId);
             Page<MemberResDTO.RecommendedDeveloperDTO> emptyPage = new PageImpl<>(
                     Collections.emptyList(), PageRequest.of(page, size), totalCount);
             return PagedResponse.of(emptyPage, Collections.emptyList());
@@ -301,7 +306,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 .filter(dto -> dto != null)
                 .toList();
 
-        long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId);
+        long totalCount = memberRecommendRepository.countRecommendedDevelopers(projectId, currentMemberId);
         Page<MemberResDTO.RecommendedDeveloperDTO> resultPage = new PageImpl<>(
                 developerDTOs, PageRequest.of(page, size), totalCount);
 
@@ -311,8 +316,8 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     /**
      * 벡터 검색을 실행하여 프리뷰용 추천 개발자 목록 반환
      */
-    private List<MemberResDTO.RecommendedDeveloperDTO> executeVectorSearchPreview(Long projectId, int limit) {
-        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopersPreview(projectId, limit);
+    private List<MemberResDTO.RecommendedDeveloperDTO> executeVectorSearchPreview(Long projectId, Long currentMemberId, int limit) {
+        List<Object[]> results = memberRecommendRepository.findRecommendedDevelopersPreview(projectId, currentMemberId, limit);
 
         if (results.isEmpty()) {
             return Collections.emptyList();
