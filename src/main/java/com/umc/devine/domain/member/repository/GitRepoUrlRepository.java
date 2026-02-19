@@ -14,7 +14,7 @@ import java.util.Optional;
 public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
     List<GitRepoUrl> findAllByMember(Member member);
 
-    Page<GitRepoUrl> findAllByMember(Member member, Pageable pageable);
+    Page<GitRepoUrl> findAllByMemberOrderByCreatedAtDesc(Member member, Pageable pageable);
 
     @Query("SELECT g FROM GitRepoUrl g JOIN FETCH g.member WHERE g.id = :id")
     Optional<GitRepoUrl> findByIdWithMember(@Param("id") Long id);

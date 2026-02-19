@@ -19,6 +19,16 @@ spring:
     username: ${POSTGRES_USER:postgres}
     password: ${POSTGRES_PASSWORD:}
     driver-class-name: org.postgresql.Driver
+    hikari:
+      maximum-pool-size: ${HIKARI_POOL_SIZE:25}
+      # n ms(n초) 이상 커넥션을 점유하면 누수로 판단하고 경고 로그를 찍음
+      leak-detection-threshold: ${HIKARI_LEAK_DETECTION_THRESHOLD:2000}
+      # 커넥션 최대 수명을 4분~5분(네트워크 타임아웃 350초보다 짧게)으로 설정
+      max-lifetime: ${HIKARI_MAX_LIFETIME:240000}
+      # 유휴 커넥션이 풀에 남아있을 수 있는 최대 시간 (max-lifetime보다 작아야 함)
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:120000}
+      # 풀에 유지할 최소 유휴 커넥션 수
+      minimum-idle: ${HIKARI_MIN_IDLE:3}
 
   # Redis
   data:
