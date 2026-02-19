@@ -32,4 +32,7 @@ public interface ProjectQueryService {
 
     // 내 프로젝트 목록 조회 (상태별)
     ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable);
+
+    // 내가 생성한 모집 중인 프로젝트 목록 조회 (매칭 수락된 프로젝트 제외, 개발자 추천 필터용)
+    ProjectResDTO.MyProjectsRes getMyCreatedRecruitingProjects(Member member, Pageable pageable);
 }

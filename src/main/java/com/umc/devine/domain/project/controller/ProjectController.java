@@ -139,6 +139,17 @@ public class ProjectController implements ProjectControllerDocs {
         return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }
 
+    // 내가 생성한 모집 중인 프로젝트 목록 조회 (개발자 추천 필터용)
+    @Override
+    @GetMapping("/my/recruiting/created")
+    public ApiResponse<ProjectResDTO.MyProjectsRes> getMyCreatedRecruitingProjects(
+            @CurrentMember Member member,
+            @PageableDefault(size = 10) Pageable pageable
+    ) {
+        ProjectResDTO.MyProjectsRes response = projectQueryService.getMyCreatedRecruitingProjects(member, pageable);
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
+    }
+
     // 내 프로젝트: 진행 중
     @Override
     @GetMapping("/my/in-progress")
