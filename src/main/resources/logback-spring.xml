@@ -6,8 +6,7 @@
     <include resource="org/springframework/boot/logging/logback/console-appender.xml"/>
 
     <!-- 로그 파일 경로 -->
-<!--    <property name="LOG_PATH" value="/app/logs"/>-->
-    <property name="LOG_PATH" value="/Users/heo/async/project/devine/DeVine_BackEnd/logs"/>
+    <property name="LOG_PATH" value="/app/logs"/>
     <property name="LOG_FILE_NAME" value="devine"/>
     <property name="FILE_LOG_PATTERN" value="%d{yyyy-MM-dd HH:mm:ss.SSS} [%thread] %-5level %logger{50} - %msg%n"/>
 
@@ -48,7 +47,7 @@
     <appender name="HTTP_FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>${LOG_PATH}/http-access.log</file>
         <encoder>
-            <pattern>%msg%n</pattern>
+            <pattern>%msg%n%ex{short}</pattern>
             <charset>UTF-8</charset>
         </encoder>
         <rollingPolicy class="ch.qos.logback.core.rolling.SizeAndTimeBasedRollingPolicy">

@@ -44,10 +44,6 @@ public class LoggingFilter extends OncePerRequestFilter {
             "authorization", "cookie", "set-cookie"
     );
 
-    private static final Set<String> SENSITIVE_BODY_FIELDS = Set.of(
-            "password", "token", "secret", "accessToken", "refreshToken"
-    );
-
     private final ObjectMapper objectMapper;
 
     public LoggingFilter() {
@@ -88,7 +84,7 @@ public class LoggingFilter extends OncePerRequestFilter {
                     ));
 
             String bodyString = new String(request.getContentAsByteArray(), StandardCharsets.UTF_8);
-            Object body = bodyString.isEmpty() ? null : maskSensitiveFields(parseJson(bodyString));
+            Object body = truncateBody(bodyString);
 
             Map<String, Object> logMap = new LinkedHashMap<>();
             logMap.put("type", "REQUEST");
@@ -142,27 +138,14 @@ public class LoggingFilter extends OncePerRequestFilter {
         return parseJson(bodyString);
     }
 
-    @SuppressWarnings("unchecked")
-    private Object maskSensitiveFields(Object parsed) {
-        if (!(parsed instanceof Map)) {
-            return parsed;
-        }
-        Map<String, Object> map = new LinkedHashMap<>((Map<String, Object>) parsed);
-        for (String key : map.keySet()) {
-            if (SENSITIVE_BODY_FIELDS.contains(key)) {
-                map.put(key, "***");
-            }
-        }
-        return map;
-    }
-
     private String resolveUserId() {
         try {
             Authentication auth = SecurityContextHolder.getContext().getAuthentication();
             if (auth != null && auth.isAuthenticated() && auth.getPrincipal() instanceof ClerkPrincipal principal) {
                 return principal.getClerkId();
             }
-        } catch (Exception ignored) {
+        } catch (Exception e) {
+            log.trace("Failed to resolve userId from SecurityContext", e);
         }
         return "anonymous";
     }
@@ -182,7 +165,10 @@ public class LoggingFilter extends OncePerRequestFilter {
                 || uri.startsWith("/actuator")
                 || uri.startsWith("/swagger-ui")
                 || uri.startsWith("/v3/api-docs")
+                || uri.startsWith("/swagger-resources")
+                || uri.startsWith("/webjars")
+                || uri.startsWith("/api-docs")
                 || uri.equals("/favicon.ico")
-                || uri.contains("dev");
+                || uri.startsWith("/dev");
     }
 }
