@@ -13,24 +13,31 @@ concurrency:
 
 jobs:
   deploy:
+    name: Deploy to EC2 (Blue/Green)
     runs-on: ubuntu-latest
     if: ${{ github.event.workflow_run.conclusion == 'success' }}
 
     steps:
-      - name: Deploy to EC2 (Blue/Green)
-        uses: appleboy/ssh-action@v1.0.0
-        with:
-          host: ${{ secrets.EC2_HOST }}
-          username: ${{ secrets.EC2_USERNAME }}
-          key: ${{ secrets.EC2_SSH_KEY }}
-          port: 22
-          timeout: 300s
-          script: |
-            cd ~/Devine_Deploy/service
+    - uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ secrets.EC2_HOST }}
+        username: ${{ secrets.EC2_USERNAME }}
+        key: ${{ secrets.EC2_SSH_KEY }}
+        port: ${{ secrets.EC2_SSH_PORT }}
+        timeout: 300s
+        script: |
+          # 최신 배포 스크립트 동기화
+          cd ~/Devine_Deploy || { echo "ERROR: Devine_Deploy not found"; exit 1; }
+          git pull origin main || { echo "ERROR: git pull failed"; exit 1; }
 
-            # S3에서 .env 파일 다운로드
-            aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env .env
+          # S3에서 환경변수 다운로드
+          cd ~/Devine_Deploy/service
+          aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env .env
+          if [ ! -f .env ]; then
+            echo "ERROR: .env download failed"
+            exit 1
+          fi
 
-            # Blue/Green 배포 실행
-            chmod +x deploy.sh
-            ./deploy.sh backend ${{ github.event.workflow_run.head_sha }}
+          # Blue/Green 배포 실행
+          chmod +x deploy.sh
+          ./deploy.sh backend sha-${{ github.event.workflow_run.head_sha }}
