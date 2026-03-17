@@ -1,4 +1,4 @@
-package com.umc.devine.infrastructure.fastapi;
+package com.umc.devine.domain.embedding.controller;
 
 import com.umc.devine.domain.embedding.dto.EmbeddingCallbackDto.ProjectEmbeddingCallback;
 import com.umc.devine.domain.embedding.dto.EmbeddingCallbackDto.ReportEmbeddingCallback;
@@ -17,10 +17,11 @@ import org.springframework.web.bind.annotation.RestController;
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/api/v1/embeddings")
-public class EmbeddingCallbackController {
+public class EmbeddingCallbackController implements EmbeddingCallbackDocs {
 
     private final EmbeddingCommandService embeddingCommandService;
 
+    @Override
     @PostMapping("/callback")
     public ApiResponse<Void> handleReportEmbeddingCallback(
             @RequestBody @Valid ReportEmbeddingCallback request
@@ -30,6 +31,7 @@ public class EmbeddingCallbackController {
         return ApiResponse.onSuccess(GeneralSuccessCode.OK, null);
     }
 
+    @Override
     @PostMapping("/callback/project")
     public ApiResponse<Void> handleProjectEmbeddingCallback(
             @RequestBody @Valid ProjectEmbeddingCallback request
