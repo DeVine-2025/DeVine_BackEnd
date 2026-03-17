@@ -50,6 +50,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
     @Query("SELECT p FROM Project p " +
             "WHERE p.status <> :status " +
+            "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY CASE WHEN :isMonday = true THEN p.previousWeekViewCount ELSE p.weeklyViewCount END DESC, " +
             "p.createdAt DESC")
     List<Project> findWeeklyBestProjects(@Param("status") ProjectStatus status, @Param("isMonday") boolean isMonday);
@@ -87,6 +88,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "LEFT JOIN FETCH p.category " +
             "LEFT JOIN FETCH p.member " +
             "WHERE p.status = :status " +
+            "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY p.createdAt DESC")
     List<Project> findByStatusOrderByCreatedAtDesc(@Param("status") ProjectStatus status);
 }

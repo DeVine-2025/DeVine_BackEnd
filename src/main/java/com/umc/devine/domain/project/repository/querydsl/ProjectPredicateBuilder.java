@@ -7,6 +7,11 @@ import com.umc.devine.domain.project.entity.QProject;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.mapping.QProjectRequirementTechstack;
 
+import com.querydsl.core.types.dsl.DateExpression;
+import com.querydsl.core.types.dsl.Expressions;
+
+import java.time.LocalDate;
+
 public class ProjectPredicateBuilder {
 
     // 프로젝트 검색 조건 생성
@@ -18,6 +23,9 @@ public class ProjectPredicateBuilder {
 
         // 모집 중인 프로젝트만
         builder.and(project.status.eq(ProjectStatus.RECRUITING));
+
+        // 모집마감일이 지나지 않은 프로젝트만
+        builder.and(project.recruitmentDeadline.goe(DateExpression.currentDate(LocalDate.class)));
 
         // 프로젝트 분야 필터 (비어있으면 전체 조회)
         if (req.projectFields() != null && !req.projectFields().isEmpty()) {
