@@ -8,7 +8,9 @@ server:
 spring:
   jpa:
     hibernate:
-      ddl-auto: create-drop
+      ddl-auto: none
+  flyway:
+    clean-disabled: false
   security:
     oauth2:
       resourceserver:
