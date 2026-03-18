@@ -7,9 +7,7 @@ import lombok.*;
 import org.hibernate.annotations.Array;
 import org.hibernate.annotations.JdbcTypeCode;
 import org.hibernate.type.SqlTypes;
-import org.springframework.data.annotation.LastModifiedDate;
 
-import java.time.LocalDateTime;
 
 @Entity
 @Builder
@@ -44,10 +42,6 @@ public class ProjectEmbedding extends BaseEntity {
     @Column(name = "retry_count", nullable = false)
     @Builder.Default
     private Integer retryCount = 0;
-
-    @LastModifiedDate
-    @Column(name = "updated_at")
-    private LocalDateTime updatedAt;
 
     public void updateSuccess(float[] embedding) {
         this.embedding = embedding;
