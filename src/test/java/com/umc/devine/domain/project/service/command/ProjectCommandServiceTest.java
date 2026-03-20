@@ -18,7 +18,6 @@ import com.umc.devine.domain.project.enums.*;
 import com.umc.devine.domain.project.exception.ProjectException;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.techstack.entity.Techstack;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
@@ -84,20 +83,11 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        testCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.ECOMMERCE)
-                .build());
+        testCategory = categoryRepository.findByGenre(CategoryGenre.ECOMMERCE).orElseThrow();
 
-        backendParent = techstackRepository.save(Techstack.builder()
-                .name(TechName.BACKEND)
-                .genre(null)
-                .build());
+        backendParent = techstackRepository.findByName(TechName.BACKEND).orElseThrow();
 
-        javaTechstack = techstackRepository.save(Techstack.builder()
-                .name(TechName.JAVA)
-                .genre(TechGenre.LANGUAGE)
-                .parentStack(backendParent)
-                .build());
+        javaTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
     }
 
     private ProjectReqDTO.CreateProjectReq createValidRequest() {

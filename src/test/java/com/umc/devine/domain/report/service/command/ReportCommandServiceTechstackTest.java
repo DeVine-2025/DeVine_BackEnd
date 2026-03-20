@@ -104,21 +104,10 @@ class ReportCommandServiceTechstackTest extends IntegrationTestSupport {
                 .gitUrl("https://github.com/test/techstack-test-repo")
                 .build());
 
-        // 테스트용 Techstack 생성 (BACKEND - parent, JAVA/SPRINGBOOT - children)
-        backendStack = techstackRepository.saveAndFlush(Techstack.builder()
-                .name(TechName.BACKEND)
-                .parentStack(null)
-                .build());
-
-        javaStack = techstackRepository.saveAndFlush(Techstack.builder()
-                .name(TechName.JAVA)
-                .parentStack(backendStack)
-                .build());
-
-        springbootStack = techstackRepository.saveAndFlush(Techstack.builder()
-                .name(TechName.SPRINGBOOT)
-                .parentStack(backendStack)
-                .build());
+        // Flyway V3 시드 데이터 조회
+        backendStack = techstackRepository.findByName(TechName.BACKEND).orElseThrow();
+        javaStack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
+        springbootStack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
     }
 
     @AfterEach
@@ -127,7 +116,6 @@ class ReportCommandServiceTechstackTest extends IntegrationTestSupport {
         devReportRepository.deleteAll();
         gitRepoUrlRepository.deleteById(testGitRepoUrl.getId());
         memberRepository.deleteById(testMember.getId());
-        techstackRepository.deleteAll();
     }
 
     private ReportReqDTO.CreateReportReq createRequest() {
