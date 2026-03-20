@@ -9,6 +9,8 @@ import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
+import com.umc.devine.domain.notification.service.command.NotificationCommandService;
+import com.umc.devine.domain.notification.enums.NotificationType;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
@@ -47,6 +49,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final PlatformTransactionManager transactionManager;
     private final TechstackRepository techstackRepository;
     private final DevTechstackRepository devTechstackRepository;
+    private final NotificationCommandService notificationCommandService;
     private TransactionTemplate requiresNewTxTemplate;
 
     @PostConstruct
@@ -173,10 +176,30 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
                     savedMainReport.getId(), savedDetailReport.getId());
 
+            // 7. 리포트 생성 완료 알림
+            notificationCommandService.create(
+                    NotificationType.REPORT_COMPLETED,
+                    memberId,
+                    null,
+                    gitRepoUrl.getGitUrl(),
+                    savedMainReport.getId()
+            );
+
             return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
 
         } catch (ReportException e) {
-            // ReportException은 그대로 전파 (실패 상태는 이미 저장됨)
+            // 실패 알림 전송
+            try {
+                notificationCommandService.create(
+                        NotificationType.REPORT_FAILED,
+                        memberId,
+                        null,
+                        gitRepoUrl.getGitUrl(),
+                        savedMainReport.getId()
+                );
+            } catch (Exception notifEx) {
+                log.warn("리포트 실패 알림 전송 실패 - mainReportId: {}", savedMainReport.getId(), notifEx);
+            }
             throw e;
         } catch (Exception e) {
             // 예상치 못한 예외: 실패 상태 저장 후 ReportException으로 래핑
@@ -184,6 +207,18 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                     savedMainReport.getId(), savedDetailReport.getId(), e);
             savedMainReport.failReport(e.getMessage());
             savedDetailReport.failReport(e.getMessage());
+            // 실패 알림 전송
+            try {
+                notificationCommandService.create(
+                        NotificationType.REPORT_FAILED,
+                        memberId,
+                        null,
+                        gitRepoUrl.getGitUrl(),
+                        savedMainReport.getId()
+                );
+            } catch (Exception notifEx) {
+                log.warn("리포트 실패 알림 전송 실패 - mainReportId: {}", savedMainReport.getId(), notifEx);
+            }
             throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
         }
     }
@@ -223,12 +258,30 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 saveAutoTechstacks(member, request.techstacks());
 
                 log.info("리포트 생성 완료 - mainReportId: {}, detailReportId: {}", request.mainReportId(), request.detailReportId());
+
+                // 리포트 생성 완료 알림
+                notificationCommandService.create(
+                        NotificationType.REPORT_COMPLETED,
+                        member.getId(),
+                        null,
+                        mainReport.getGitRepoUrl().getGitUrl(),
+                        mainReport.getId()
+                );
             }
             case FAILED -> {
                 mainReport.failReport(request.errorMessage());
                 detailReport.failReport(request.errorMessage());
                 log.warn("리포트 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                         request.mainReportId(), request.detailReportId(), request.errorMessage());
+
+                // 리포트 생성 실패 알림
+                notificationCommandService.create(
+                        NotificationType.REPORT_FAILED,
+                        mainReport.getGitRepoUrl().getMember().getId(),
+                        null,
+                        mainReport.getGitRepoUrl().getGitUrl(),
+                        mainReport.getId()
+                );
             }
         }
     }
