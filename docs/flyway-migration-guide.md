@@ -18,16 +18,17 @@ src/main/resources/db/migration/
 ### 네이밍 규칙
 
 ```
-V{버전}__{설명}.sql
+V{타임스탬프}__{이슈번호}_{설명}.sql
 ```
 
-- 버전: 순차 정수 (V1, V2, V3, ...)
+- 타임스탬프: `YYYYMMDDHHmmSS` (커밋 시점 기준, 14자리)
 - 언더스코어 **2개** (`__`)
+- 이슈번호: GitHub 이슈 번호 (없으면 생략)
 - 설명: snake_case
 
 ```
-V3__add_project_deadline_column.sql
-V4__create_chat_table.sql
+V20260320170000__123_add_project_deadline_column.sql
+V20260321100000__create_chat_table.sql
 ```
 
 ### 작성 예시
@@ -69,11 +70,12 @@ ALTER TABLE chat_message ADD CONSTRAINT chat_message_status_check
 
 ## 기존 마이그레이션 구조
 
-| 버전 | 설명 |
-|------|------|
-| V1 | 초기 스키마 (baseline) |
-| V2 | dev_report partial unique index 수정 + 누락 CHECK 제약조건 추가 |
-| V3 | 기본 데이터 삽입 (techstack, position 등) |
+| 버전 | 파일명 | 설명 |
+|------|--------|------|
+| V20260318145900 | `V20260318145900__242_init.sql` | 초기 스키마 (baseline) |
+| V20260320144800 | `V20260320144800__242_insert_managed_data.sql` | dev_report partial unique index 수정 + 누락 CHECK 제약조건 추가 |
+| V20260320160200 | `V20260320160200__242_insert_default_data.sql` | 기본 데이터 삽입 (techstack, position 등) |
+| V20260320165400 | `V20260320165400__241_add_audit_columns.sql` | #241 BaseEntity audit 컬럼 추가 |
 
 ## 신규 로컬 환경 세팅
 
