@@ -44,16 +44,4 @@ public class ProjectQueryDslImpl implements ProjectQueryDsl {
 
         return new PageImpl<>(content, pageable, total);
     }
-
-    @Override
-    public List<Project> findAllActiveProjects(int limit) {
-        QProject project = QProject.project;
-
-        return queryFactory
-                .selectFrom(project)
-                .where(project.status.ne(ProjectStatus.DELETED))
-                .orderBy(project.createdAt.desc())
-                .limit(limit)
-                .fetch();
-    }
 }
