@@ -23,19 +23,8 @@ class TermsRepositoryTest extends IntegrationTestSupport {
         @Test
         @DisplayName("필수 약관만 조회한다")
         void findAllByRequired_required() {
-            // given
-            termsRepository.save(Terms.builder()
-                    .title("서비스 이용약관")
-                    .content("필수 약관 내용")
-                    .required(true)
-                    .build());
-
-            termsRepository.save(Terms.builder()
-                    .title("개인정보 처리방침")
-                    .content("필수 약관 내용2")
-                    .required(true)
-                    .build());
-
+            // given - V3 시드 데이터로 필수 약관 2건이 이미 존재
+            // 선택 약관 추가
             termsRepository.save(Terms.builder()
                     .title("마케팅 수신 동의")
                     .content("선택 약관 내용")
@@ -55,12 +44,6 @@ class TermsRepositoryTest extends IntegrationTestSupport {
         void findAllByRequired_optional() {
             // given
             termsRepository.save(Terms.builder()
-                    .title("서비스 이용약관")
-                    .content("필수 약관 내용")
-                    .required(true)
-                    .build());
-
-            termsRepository.save(Terms.builder()
                     .title("마케팅 수신 동의")
                     .content("선택 약관 내용")
                     .required(false)
@@ -77,8 +60,8 @@ class TermsRepositoryTest extends IntegrationTestSupport {
         @Test
         @DisplayName("해당 조건의 약관이 없으면 빈 리스트를 반환한다")
         void findAllByRequired_empty() {
-            // when
-            List<Terms> result = termsRepository.findAllByRequired(true);
+            // when - V3 시드 데이터에 선택 약관은 없음
+            List<Terms> result = termsRepository.findAllByRequired(false);
 
             // then
             assertThat(result).isEmpty();

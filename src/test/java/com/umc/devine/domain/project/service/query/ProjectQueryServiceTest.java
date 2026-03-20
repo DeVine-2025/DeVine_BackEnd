@@ -63,13 +63,9 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        ecommerceCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.ECOMMERCE)
-                .build());
+        ecommerceCategory = categoryRepository.findByGenre(CategoryGenre.ECOMMERCE).orElseThrow();
 
-        healthcareCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.HEALTHCARE)
-                .build());
+        healthcareCategory = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
     }
 
     private Project createProject(String name, ProjectField field, Category category, ProjectStatus status) {

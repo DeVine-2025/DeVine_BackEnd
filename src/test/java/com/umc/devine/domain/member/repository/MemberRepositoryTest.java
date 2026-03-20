@@ -10,7 +10,6 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
@@ -52,14 +51,9 @@ class MemberRepositoryTest extends IntegrationTestSupport {
 
     @BeforeEach
     void setUp() {
-        testCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.HEALTHCARE)
-                .build());
+        testCategory = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
 
-        testTechstack = techstackRepository.save(Techstack.builder()
-                .name(TechName.JAVA)
-                .genre(TechGenre.LANGUAGE)
-                .build());
+        testTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
 
         testMember = memberRepository.save(Member.builder()
                 .clerkId("clerk_test_123")

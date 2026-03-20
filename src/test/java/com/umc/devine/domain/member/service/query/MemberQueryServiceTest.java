@@ -40,7 +40,6 @@ import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRep
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
@@ -113,14 +112,9 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
 
     @BeforeEach
     void setUp() {
-        testCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.HEALTHCARE)
-                .build());
+        testCategory = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
 
-        testTechstack = techstackRepository.save(Techstack.builder()
-                .name(TechName.JAVA)
-                .genre(TechGenre.LANGUAGE)
-                .build());
+        testTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
 
         testMember = memberRepository.save(Member.builder()
                 .clerkId("clerk_test_123")
@@ -139,34 +133,13 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @Test
         @DisplayName("모든 이용약관을 조회한다")
         void findAllTerms_success() {
-            // given
-            termsRepository.save(Terms.builder()
-                    .title("서비스 이용약관")
-                    .content("서비스 약관 내용")
-                    .required(true)
-                    .build());
-
-            termsRepository.save(Terms.builder()
-                    .title("개인정보 처리방침")
-                    .content("개인정보 약관 내용")
-                    .required(true)
-                    .build());
+            // given - V3 시드 데이터로 이미 약관이 존재함
 
             // when
             MemberResDTO.TermsListDTO result = memberQueryService.findAllTerms();
 
             // then
             assertThat(result.terms()).hasSize(2);
-        }
-
-        @Test
-        @DisplayName("약관이 없으면 빈 리스트를 반환한다")
-        void findAllTerms_empty() {
-            // when
-            MemberResDTO.TermsListDTO result = memberQueryService.findAllTerms();
-
-            // then
-            assertThat(result.terms()).isEmpty();
         }
     }
 
@@ -512,9 +485,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("domainMatch 정상 계산 - 일치하지 않는 경우")
         void findRecommendedDevelopers_domainMatch_false() {
             // given
-            Category otherCategory = categoryRepository.save(Category.builder()
-                    .genre(CategoryGenre.EDUCATION)
-                    .build());
+            Category otherCategory = categoryRepository.findByGenre(CategoryGenre.EDUCATION).orElseThrow();
             memberCategoryRepository.save(MemberCategory.builder().member(testMember).category(otherCategory).build());
 
             Project project = projectRepository.save(Project.builder()
@@ -547,10 +518,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("matchedTechstacks 정상 계산 - 임베딩 없으면 빈 배열 반환")
         void findRecommendedDevelopers_matchedTechstacks_noEmbedding_returnsEmpty() {
             // given
-            Techstack springTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.SPRINGBOOT)
-                    .genre(TechGenre.FRAMEWORK)
-                    .build());
+            Techstack springTechstack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
 
             memberCategoryRepository.save(MemberCategory.builder().member(testMember).category(testCategory).build());
             devTechstackRepository.save(DevTechstack.builder().member(testMember).techstack(testTechstack).source(TechstackSource.MANUAL).build());
@@ -606,15 +574,9 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("matchedTechstacks 정상 계산 - 임베딩 없으면 빈 배열 반환 (일부 일치 시나리오)")
         void findRecommendedDevelopers_matchedTechstacks_partial_noEmbedding_returnsEmpty() {
             // given
-            Techstack springTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.SPRINGBOOT)
-                    .genre(TechGenre.FRAMEWORK)
-                    .build());
+            Techstack springTechstack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
 
-            Techstack kotlinTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.KOTLIN)
-                    .genre(TechGenre.LANGUAGE)
-                    .build());
+            Techstack kotlinTechstack = techstackRepository.findByNameAndParentStackName(TechName.KOTLIN, TechName.BACKEND).orElseThrow();
 
             memberCategoryRepository.save(MemberCategory.builder().member(testMember).category(testCategory).build());
             // 개발자는 JAVA만 보유
@@ -786,10 +748,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             memberCategoryRepository.save(MemberCategory.builder().member(dev1).category(testCategory).build());
             memberCategoryRepository.save(MemberCategory.builder().member(dev2).category(testCategory).build());
 
-            Techstack springTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.SPRINGBOOT)
-                    .genre(TechGenre.FRAMEWORK)
-                    .build());
+            Techstack springTechstack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
 
             devTechstackRepository.save(DevTechstack.builder().member(testMember).techstack(testTechstack).source(TechstackSource.MANUAL).build());
             devTechstackRepository.save(DevTechstack.builder().member(testMember).techstack(springTechstack).source(TechstackSource.MANUAL).build());
@@ -968,24 +927,12 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @BeforeEach
         void setUpVectorSearchData() {
             // 루트 포지션 (BACKEND)
-            backendTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.BACKEND)
-                    .genre(null)
-                    .parentStack(null)
-                    .build());
+            backendTechstack = techstackRepository.findByName(TechName.BACKEND).orElseThrow();
 
             // BACKEND 하위 기술스택
-            javaTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.JAVA)
-                    .genre(TechGenre.LANGUAGE)
-                    .parentStack(backendTechstack)
-                    .build());
+            javaTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
 
-            springTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.SPRINGBOOT)
-                    .genre(TechGenre.FRAMEWORK)
-                    .parentStack(backendTechstack)
-                    .build());
+            springTechstack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
         }
 
         @Test
