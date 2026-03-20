@@ -11,6 +11,7 @@ import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.exception.ProjectException;
@@ -64,7 +65,8 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         // 원자적 조회수 증가 (동시성 안전)
         projectRepository.incrementViewCount(projectId);
 
-        return ProjectConverter.toUpdateProjectRes(project, projectRequirementTechstackRepository);
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(List.of(projectId));
+        return ProjectConverter.toUpdateProjectRes(project, techstackMap);
     }
 
     @Override
@@ -72,9 +74,12 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
         List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
 
-        List<ProjectResDTO.ProjectSummary> weeklyBestProjects = projects.stream()
-                .limit(WEEKLY_BEST_LIMIT)
-                .map(project -> ProjectConverter.toProjectSummary(project, projectRequirementTechstackRepository))
+        List<Project> limitedProjects = projects.stream().limit(WEEKLY_BEST_LIMIT).toList();
+        List<Long> projectIds = limitedProjects.stream().map(Project::getId).toList();
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(projectIds);
+
+        List<ProjectResDTO.ProjectSummary> weeklyBestProjects = limitedProjects.stream()
+                .map(project -> ProjectConverter.toProjectSummary(project, techstackMap))
                 .toList();
 
         return ProjectResDTO.WeeklyBestProjectsRes.builder()
@@ -89,8 +94,11 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(request);
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
 
+        List<Long> projectIds = projectPage.getContent().stream().map(Project::getId).toList();
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(projectIds);
+
         List<ProjectResDTO.ProjectSummary> summaries = projectPage.getContent().stream()
-                .map(project -> ProjectConverter.toProjectSummary(project, projectRequirementTechstackRepository))
+                .map(project -> ProjectConverter.toProjectSummary(project, techstackMap))
                 .toList();
 
         PagedResponse<ProjectResDTO.ProjectSummary> pagedData = PagedResponse.of(projectPage, summaries);
@@ -243,6 +251,19 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     // ==================== Private Methods ====================
 
     /**
+     * 프로젝트 ID 목록으로 기술스택을 배치 조회하여 requirementId 기준 Map으로 반환.
+     * N+1 방지: 모든 프로젝트의 기술스택을 단 1번의 쿼리로 조회.
+     */
+    private Map<Long, List<ProjectRequirementTechstack>> buildTechstackMap(List<Long> projectIds) {
+        if (projectIds.isEmpty()) {
+            return Map.of();
+        }
+        return projectRequirementTechstackRepository.findAllByProjectIdsWithTechstack(projectIds)
+                .stream()
+                .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
+    }
+
+    /**
      * 벡터 검색 기반 프로젝트 추천 실행.
      *
      * Object[] 구조:
@@ -281,6 +302,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Map<Long, Project> projectMap = projects.stream()
                 .collect(Collectors.toMap(Project::getId, p -> p));
 
+        // 기술스택도 배치 조회
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(projectIds);
+
         return results.stream()
                 .map(row -> {
                     Long projectId = ((Number) row[0]).longValue();
@@ -296,7 +320,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
                     return ProjectConverter.toRecommendedProjectSummary(
                             project,
-                            projectRequirementTechstackRepository,
+                            techstackMap,
                             totalScore,
                             similarityScorePercent,
                             techstackScorePercent,
@@ -314,9 +338,12 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .limit(limit)
                 .toList();
 
+        List<Long> projectIds = projects.stream().map(Project::getId).toList();
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(projectIds);
+
         List<ProjectResDTO.RecommendedProjectSummary> summaries = projects.stream()
                 .map(project -> ProjectConverter.toRecommendedProjectSummary(
-                        project, projectRequirementTechstackRepository,
+                        project, techstackMap,
                         null, null, null, null))
                 .toList();
 

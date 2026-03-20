@@ -9,6 +9,7 @@ import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
+import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
 import java.util.ArrayList;
@@ -83,10 +84,12 @@ public class Project extends BaseEntity {
     private LocalDate lastViewResetDate;
 
     @Builder.Default
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectImage> images = new ArrayList<>();
 
     @Builder.Default
+    @BatchSize(size = 100)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProjectRequirementMember> requirements = new ArrayList<>();
 

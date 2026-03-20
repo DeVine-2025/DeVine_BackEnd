@@ -90,17 +90,20 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 developer, type, MatchingStatus.CANCELLED, pageable
         );
 
+        // 배치 조회: 모든 프로젝트의 기술스택을 1번의 쿼리로 조회
+        List<Long> projectIds = matchingPage.getContent().stream()
+                .map(matching -> matching.getProject().getId())
+                .distinct()
+                .toList();
+
+        Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement = projectIds.isEmpty()
+                ? Map.of()
+                : projectRequirementTechstackRepository.findAllByProjectIdsWithTechstack(projectIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
+
         List<MatchingResDTO.ProjectMatchingInfo> projectInfos = matchingPage.getContent().stream()
-                .map(matching -> {
-                    // 요구사항별 기술스택 그룹핑 조회
-                    Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement =
-                            matching.getProject().getRequirements().stream()
-                                    .collect(Collectors.toMap(
-                                            req -> req.getId(),
-                                            req -> projectRequirementTechstackRepository.findByRequirement(req)
-                                    ));
-                    return MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement);
-                })
+                .map(matching -> MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement))
                 .toList();
 
         return MatchingResDTO.ProjectsRes.builder()

@@ -24,17 +24,23 @@ public class ProjectQueryDslImpl implements ProjectQueryDsl {
     public Page<Project> searchProjects(Predicate predicate, Pageable pageable) {
         QProject project = QProject.project;
 
-        JPAQuery<Project> query = queryFactory
-                .selectFrom(project)
+        // count 쿼리 (FETCH JOIN 없이)
+        long total = queryFactory
+                .select(project.count())
+                .from(project)
                 .where(predicate)
-                .orderBy(project.createdAt.desc());
+                .fetchOne();
 
-        List<Project> content = query
+        // content 쿼리 (FETCH JOIN으로 N+1 방지)
+        List<Project> content = queryFactory
+                .selectFrom(project)
+                .leftJoin(project.category).fetchJoin()
+                .leftJoin(project.member).fetchJoin()
+                .where(predicate)
+                .orderBy(project.createdAt.desc())
                 .offset(pageable.getOffset())
                 .limit(pageable.getPageSize())
                 .fetch();
-
-        long total = query.fetchCount();
 
         return new PageImpl<>(content, pageable, total);
     }

@@ -49,6 +49,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
     // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
     @Query("SELECT p FROM Project p " +
+            "JOIN FETCH p.category " +
+            "JOIN FETCH p.member " +
             "WHERE p.status <> :status " +
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY CASE WHEN :isMonday = true THEN p.previousWeekViewCount ELSE p.weeklyViewCount END DESC, " +

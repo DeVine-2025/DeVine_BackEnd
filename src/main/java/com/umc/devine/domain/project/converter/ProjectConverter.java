@@ -13,12 +13,12 @@ import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
-import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 public class ProjectConverter {
@@ -65,7 +65,7 @@ public class ProjectConverter {
     // Project → CreateProjectRes 변환 (프로젝트 생성 응답)
     public static ProjectResDTO.CreateProjectRes toCreateProjectRes(
             Project project,
-            ProjectRequirementTechstackRepository projectRequirementTechstackRepository
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap
     ) {
         return ProjectResDTO.CreateProjectRes.builder()
                 .projectId(project.getId())
@@ -85,7 +85,7 @@ public class ProjectConverter {
                 .status(project.getStatus())
                 .creatorId(project.getMember().getId())
                 .creatorNickname(project.getMember().getNickname())
-                .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
+                .recruitments(toRecruitmentInfoList(project.getRequirements(), techstackMap))
                 .images(toImageInfoList(project.getImages()))
                 .build();
     }
@@ -93,7 +93,7 @@ public class ProjectConverter {
     // Project → UpdateProjectRes 변환 (프로젝트 수정/조회 응답)
     public static ProjectResDTO.UpdateProjectRes toUpdateProjectRes(
             Project project,
-            ProjectRequirementTechstackRepository projectRequirementTechstackRepository
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap
     ) {
         return ProjectResDTO.UpdateProjectRes.builder()
                 .projectId(project.getId())
@@ -114,7 +114,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorNickname(project.getMember().getNickname())
                 .creatorImage(project.getMember().getImage())
-                .recruitments(toRecruitmentInfoList(project.getRequirements(), projectRequirementTechstackRepository))
+                .recruitments(toRecruitmentInfoList(project.getRequirements(), techstackMap))
                 .images(toImageInfoList(project.getImages()))
                 .build();
     }
@@ -122,25 +122,9 @@ public class ProjectConverter {
     // Project → ProjectSummary 변환 (검색 결과 요약 - 포지션별 모집 정보 포함)
     public static ProjectResDTO.ProjectSummary toProjectSummary(
             Project project,
-            ProjectRequirementTechstackRepository techstackRepository
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap
     ) {
-        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
-                .map(req -> {
-                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
-                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
-                                    .techStack(reqTechstack.getTechstack().getName())
-                                    .build())
-                            .toList();
-
-                    return ProjectResDTO.PositionSummary.builder()
-                            .position(req.getPart())
-                            .positionName(req.getPart().getDisplayName())
-                            .count(req.getRequirementNum())
-                            .currentCount(req.getCurrentCount())
-                            .techStacks(techStacks)
-                            .build();
-                })
-                .toList();
+        List<ProjectResDTO.PositionSummary> positions = toPositionSummaries(project.getRequirements(), techstackMap);
 
         return ProjectResDTO.ProjectSummary.builder()
                 .projectId(project.getId())
@@ -166,29 +150,13 @@ public class ProjectConverter {
     // Project → RecommendedProjectSummary 변환 (추천 프로젝트 요약 - 벡터 검색 점수 포함)
     public static ProjectResDTO.RecommendedProjectSummary toRecommendedProjectSummary(
             Project project,
-            ProjectRequirementTechstackRepository techstackRepository,
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap,
             Double totalScore,
             Double similarityScorePercent,
             Double techstackScorePercent,
             Boolean domainMatch
     ) {
-        List<ProjectResDTO.PositionSummary> positions = project.getRequirements().stream()
-                .map(req -> {
-                    List<ProjectResDTO.TechStackInfo> techStacks = techstackRepository.findByRequirement(req).stream()
-                            .map(reqTechstack -> ProjectResDTO.TechStackInfo.builder()
-                                    .techStack(reqTechstack.getTechstack().getName())
-                                    .build())
-                            .toList();
-
-                    return ProjectResDTO.PositionSummary.builder()
-                            .position(req.getPart())
-                            .positionName(req.getPart().getDisplayName())
-                            .count(req.getRequirementNum())
-                            .currentCount(req.getCurrentCount())
-                            .techStacks(techStacks)
-                            .build();
-                })
-                .toList();
+        List<ProjectResDTO.PositionSummary> positions = toPositionSummaries(project.getRequirements(), techstackMap);
 
         return ProjectResDTO.RecommendedProjectSummary.builder()
                 .projectId(project.getId())
@@ -215,14 +183,42 @@ public class ProjectConverter {
                 .build();
     }
 
-    // ProjectRequirementMember 리스트 → RecruitmentInfo 리스트 변환 (기술 스택 포함)
-    private static List<ProjectResDTO.RecruitmentInfo> toRecruitmentInfoList(
+    // 포지션 요약 리스트 생성 (배치 로딩된 techstackMap 사용)
+    private static List<ProjectResDTO.PositionSummary> toPositionSummaries(
             List<ProjectRequirementMember> requirements,
-            ProjectRequirementTechstackRepository techstackRepository
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap
     ) {
         return requirements.stream()
                 .map(req -> {
-                    List<Techstack> techstacks = techstackRepository.findByRequirement(req).stream()
+                    List<ProjectResDTO.TechStackInfo> techStacks = techstackMap
+                            .getOrDefault(req.getId(), List.of())
+                            .stream()
+                            .map(prt -> ProjectResDTO.TechStackInfo.builder()
+                                    .techStack(prt.getTechstack().getName())
+                                    .build())
+                            .toList();
+
+                    return ProjectResDTO.PositionSummary.builder()
+                            .position(req.getPart())
+                            .positionName(req.getPart().getDisplayName())
+                            .count(req.getRequirementNum())
+                            .currentCount(req.getCurrentCount())
+                            .techStacks(techStacks)
+                            .build();
+                })
+                .toList();
+    }
+
+    // ProjectRequirementMember 리스트 → RecruitmentInfo 리스트 변환 (기술 스택 포함)
+    private static List<ProjectResDTO.RecruitmentInfo> toRecruitmentInfoList(
+            List<ProjectRequirementMember> requirements,
+            Map<Long, List<ProjectRequirementTechstack>> techstackMap
+    ) {
+        return requirements.stream()
+                .map(req -> {
+                    List<Techstack> techstacks = techstackMap
+                            .getOrDefault(req.getId(), List.of())
+                            .stream()
                             .map(ProjectRequirementTechstack::getTechstack)
                             .toList();
 
