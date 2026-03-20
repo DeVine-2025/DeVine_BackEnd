@@ -18,7 +18,6 @@ import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
@@ -72,23 +71,16 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
     private Category testCategory;
     private Techstack testTechstack;
     private Terms requiredTerms;
+    private List<Terms> allRequiredTerms;
 
     @BeforeEach
     void setUp() {
-        requiredTerms = termsRepository.save(Terms.builder()
-                .title("서비스 이용약관")
-                .content("약관 내용")
-                .required(true)
-                .build());
+        allRequiredTerms = termsRepository.findAllByRequired(true);
+        requiredTerms = allRequiredTerms.get(0);
 
-        testCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.HEALTHCARE)
-                .build());
+        testCategory = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
 
-        testTechstack = techstackRepository.save(Techstack.builder()
-                .name(TechName.JAVA)
-                .genre(TechGenre.LANGUAGE)
-                .build());
+        testTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
 
         testMember = memberRepository.save(Member.builder()
                 .clerkId("clerk_test_123")
@@ -116,12 +108,12 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             );
 
             MemberReqDTO.SignupDTO dto = MemberReqDTO.SignupDTO.builder()
-                    .agreements(List.of(
-                            MemberReqDTO.AgreementDTO.builder()
-                                    .termsId(requiredTerms.getId())
+                    .agreements(allRequiredTerms.stream()
+                            .map(t -> MemberReqDTO.AgreementDTO.builder()
+                                    .termsId(t.getId())
                                     .agreed(true)
-                                    .build()
-                    ))
+                                    .build())
+                            .toList())
                     .nickname("newuser")
                     .mainType(MemberMainType.DEVELOPER)
                     .categoryIds(List.of(testCategory.getId()))
@@ -144,7 +136,9 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             // given
             ClerkPrincipal principal = new ClerkPrincipal("clerk_img_fail", "img@example.com", "이미지실패", null);
             MemberReqDTO.SignupDTO dto = MemberReqDTO.SignupDTO.builder()
-                    .agreements(List.of(MemberReqDTO.AgreementDTO.builder().termsId(requiredTerms.getId()).agreed(true).build()))
+                    .agreements(allRequiredTerms.stream()
+                            .map(t -> MemberReqDTO.AgreementDTO.builder().termsId(t.getId()).agreed(true).build())
+                            .toList())
                     .nickname("imgfail")
                     .mainType(MemberMainType.DEVELOPER)
                     .categoryIds(List.of(testCategory.getId()))
@@ -160,11 +154,9 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
         @DisplayName("필수 약관이 여러 개일 때 하나라도 미동의 시 예외 발생")
         void signup_multipleRequiredTerms() {
             // given
-            Terms requiredTerms2 = termsRepository.save(Terms.builder()
-                    .title("개인정보 처리방침")
-                    .content("내용")
-                    .required(true)
-                    .build());
+            Terms requiredTerms2 = termsRepository.findAllByRequired(true).stream()
+                    .filter(t -> !t.getId().equals(requiredTerms.getId()))
+                    .findFirst().orElseThrow();
 
             ClerkPrincipal principal = new ClerkPrincipal("clerk_terms_fail", "terms@example.com", "약관실패", null);
             MemberReqDTO.SignupDTO dto = MemberReqDTO.SignupDTO.builder()
@@ -305,9 +297,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
         @DisplayName("카테고리 업데이트 성공")
         void updateMember_categoryUpdate_success() {
             // given
-            Category newCategory = categoryRepository.save(Category.builder()
-                    .genre(CategoryGenre.FINTECH)
-                    .build());
+            Category newCategory = categoryRepository.findByGenre(CategoryGenre.FINTECH).orElseThrow();
 
             MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
                     .domains(new CategoryGenre[] {CategoryGenre.FINTECH})
@@ -364,10 +354,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
         @DisplayName("기술 스택 추가 성공")
         void addMemberTechstacks_success() {
             // given
-            Techstack newTechstack = techstackRepository.save(Techstack.builder()
-                    .name(TechName.SPRINGBOOT)
-                    .genre(TechGenre.FRAMEWORK)
-                    .build());
+            Techstack newTechstack = techstackRepository.findByName(TechName.SPRINGBOOT).orElseThrow();
 
             MemberReqDTO.AddTechstackDTO dto = MemberReqDTO.AddTechstackDTO.builder()
                     .techstackIds(new Long[] {newTechstack.getId()})

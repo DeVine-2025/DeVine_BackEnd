@@ -43,11 +43,8 @@ class MemberAgreementRepositoryTest extends IntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        requiredTerms = termsRepository.save(Terms.builder()
-                .title("서비스 이용약관")
-                .content("필수 약관 내용")
-                .required(true)
-                .build());
+        List<Terms> requiredTermsList = termsRepository.findAllByRequired(true);
+        requiredTerms = requiredTermsList.get(0);
 
         optionalTerms = termsRepository.save(Terms.builder()
                 .title("마케팅 수신 동의")

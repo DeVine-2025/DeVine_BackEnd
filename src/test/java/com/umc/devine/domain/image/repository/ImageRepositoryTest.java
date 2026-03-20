@@ -153,9 +153,7 @@ class ImageRepositoryTest extends IntegrationTestSupport {
         @DisplayName("프로젝트에 연결되지 않은 고아 이미지를 조회한다")
         void findOrphanProjectImages_success() {
             // given
-            Category category = categoryRepository.save(Category.builder()
-                    .genre(CategoryGenre.FINTECH)
-                    .build());
+            Category category = categoryRepository.findByGenre(CategoryGenre.FINTECH).orElseThrow();
 
             // 프로젝트에 연결된 이미지
             Image linkedImage = createImage(ImageType.PROJECT, true, "clerk_img_repo");
