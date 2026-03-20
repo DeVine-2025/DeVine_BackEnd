@@ -13,7 +13,6 @@ import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
-import com.umc.devine.domain.techstack.enums.TechGenre;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
@@ -59,25 +58,18 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
     private Member testMember;
     private Authentication testAuth;
     private Terms requiredTerms;
+    private List<Terms> allRequiredTerms;
     private Category testCategory;
     private Techstack testTechstack;
 
     @BeforeEach
     void setUp() {
-        requiredTerms = termsRepository.save(Terms.builder()
-                .title("서비스 이용약관")
-                .content("약관 내용")
-                .required(true)
-                .build());
+        allRequiredTerms = termsRepository.findAllByRequired(true);
+        requiredTerms = allRequiredTerms.get(0);
 
-        testCategory = categoryRepository.save(Category.builder()
-                .genre(CategoryGenre.HEALTHCARE)
-                .build());
+        testCategory = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
 
-        testTechstack = techstackRepository.save(Techstack.builder()
-                .name(TechName.JAVA)
-                .genre(TechGenre.LANGUAGE)
-                .build());
+        testTechstack = techstackRepository.findByName(TechName.JAVA).orElseThrow();
 
         testMember = memberRepository.save(Member.builder()
                 .clerkId("clerk_test_123")
@@ -220,12 +212,12 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
             Authentication newAuth = new UsernamePasswordAuthenticationToken(newPrincipal, null, java.util.Collections.emptyList());
 
             MemberReqDTO.SignupDTO dto = MemberReqDTO.SignupDTO.builder()
-                    .agreements(List.of(
-                            MemberReqDTO.AgreementDTO.builder()
-                                    .termsId(requiredTerms.getId())
+                    .agreements(allRequiredTerms.stream()
+                            .map(t -> MemberReqDTO.AgreementDTO.builder()
+                                    .termsId(t.getId())
                                     .agreed(true)
-                                    .build()
-                    ))
+                                    .build())
+                            .toList())
                     .nickname("newuser")
                     .mainType(MemberMainType.DEVELOPER)
                     .categoryIds(List.of(testCategory.getId()))
