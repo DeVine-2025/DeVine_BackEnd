@@ -9,8 +9,8 @@ import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
-import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.notification.enums.NotificationType;
+import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
@@ -176,30 +176,9 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
                     savedMainReport.getId(), savedDetailReport.getId());
 
-            // 7. 리포트 생성 완료 알림
-            notificationCommandService.create(
-                    NotificationType.REPORT_COMPLETED,
-                    memberId,
-                    null,
-                    gitRepoUrl.getGitUrl(),
-                    savedMainReport.getId()
-            );
-
             return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
 
         } catch (ReportException e) {
-            // 실패 알림 전송
-            try {
-                notificationCommandService.create(
-                        NotificationType.REPORT_FAILED,
-                        memberId,
-                        null,
-                        gitRepoUrl.getGitUrl(),
-                        savedMainReport.getId()
-                );
-            } catch (Exception notifEx) {
-                log.warn("리포트 실패 알림 전송 실패 - mainReportId: {}", savedMainReport.getId(), notifEx);
-            }
             throw e;
         } catch (Exception e) {
             // 예상치 못한 예외: 실패 상태 저장 후 ReportException으로 래핑
@@ -207,18 +186,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                     savedMainReport.getId(), savedDetailReport.getId(), e);
             savedMainReport.failReport(e.getMessage());
             savedDetailReport.failReport(e.getMessage());
-            // 실패 알림 전송
-            try {
-                notificationCommandService.create(
-                        NotificationType.REPORT_FAILED,
-                        memberId,
-                        null,
-                        gitRepoUrl.getGitUrl(),
-                        savedMainReport.getId()
-                );
-            } catch (Exception notifEx) {
-                log.warn("리포트 실패 알림 전송 실패 - mainReportId: {}", savedMainReport.getId(), notifEx);
-            }
             throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
         }
     }
