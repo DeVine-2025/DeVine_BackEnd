@@ -73,13 +73,14 @@ ALTER TABLE chat_message ADD CONSTRAINT chat_message_status_check
 |------|------|
 | V1 | 초기 스키마 (baseline) |
 | V2 | dev_report partial unique index 수정 + 누락 CHECK 제약조건 추가 |
+| V3 | 기본 데이터 삽입 (techstack, position 등) |
 
 ## 신규 로컬 환경 세팅
 
-`baseline-version: 1`이므로 기존 DB가 없는 환경에서는 V1이 자동 실행되지 않습니다.
+`baseline-version: 0`이므로 신규 환경에서 앱을 시작하면 V1부터 모든 마이그레이션이 자동 적용됩니다.
 
-1. `V1__init.sql`을 PostgreSQL 콘솔에서 직접 실행
-2. 앱 시작 → Flyway가 V1을 baseline으로 마킹 후 V2부터 자동 적용
+1. 앱 시작 → Flyway가 V1 ~ V3 순차 실행
+2. 별도의 수동 SQL 실행 불필요
 
 ## 로컬 트러블슈팅
 
