@@ -9,9 +9,8 @@ import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
-import com.umc.devine.domain.notification.enums.NotificationType;
-import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
+import com.umc.devine.domain.report.event.ReportNotificationEvent;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorCode;
 import com.umc.devine.domain.report.repository.DevReportRepository;
@@ -23,12 +22,12 @@ import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
+import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import jakarta.annotation.PostConstruct;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
@@ -49,7 +48,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final PlatformTransactionManager transactionManager;
     private final TechstackRepository techstackRepository;
     private final DevTechstackRepository devTechstackRepository;
-    private final NotificationCommandService notificationCommandService;
     private TransactionTemplate requiresNewTxTemplate;
 
     @PostConstruct
@@ -95,6 +93,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 .detailReportId(savedDetailReport.getId())
                 .gitUrl(gitUrl)
                 .clerkId(clerkUserId)
+                .memberId(memberId)
                 .build());
 
         log.info("Report 생성 요청 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
@@ -226,14 +225,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
                 log.info("리포트 생성 완료 - mainReportId: {}, detailReportId: {}", request.mainReportId(), request.detailReportId());
 
-                // 리포트 생성 완료 알림
-                notificationCommandService.create(
-                        NotificationType.REPORT_COMPLETED,
-                        member.getId(),
-                        null,
-                        mainReport.getGitRepoUrl().getGitUrl(),
-                        mainReport.getId()
-                );
+                // 리포트 생성 완료 알림 이벤트 발행
+                publishReportNotificationEvent(member.getId(), mainReport.getId(), mainReport.getGitRepoUrl().getGitUrl(), true);
             }
             case FAILED -> {
                 mainReport.failReport(request.errorMessage());
@@ -241,13 +234,12 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 log.warn("리포트 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                         request.mainReportId(), request.detailReportId(), request.errorMessage());
 
-                // 리포트 생성 실패 알림
-                notificationCommandService.create(
-                        NotificationType.REPORT_FAILED,
+                // 리포트 생성 실패 알림 이벤트 발행
+                publishReportNotificationEvent(
                         mainReport.getGitRepoUrl().getMember().getId(),
-                        null,
+                        mainReport.getId(),
                         mainReport.getGitRepoUrl().getGitUrl(),
-                        mainReport.getId()
+                        false
                 );
             }
         }
@@ -257,6 +249,15 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     public void deleteReport(Long reportId) {
         devReportRepository.deleteById(reportId);
         log.info("리포트 삭제 완료 - reportId: {}", reportId);
+    }
+
+    private void publishReportNotificationEvent(Long receiverId, Long reportId, String gitUrl, boolean success) {
+        eventPublisher.publishEvent(ReportNotificationEvent.builder()
+                .receiverId(receiverId)
+                .reportId(reportId)
+                .gitUrl(gitUrl)
+                .success(success)
+                .build());
     }
 
     private void validateOwnership(DevReport report, Long memberId) {
