@@ -1,0 +1,25 @@
+plugins {
+    id 'org.springframework.boot' version '3.5.9'
+}
+
+tasks.named('jar') {
+    enabled = false
+}
+
+tasks.named('bootRun') {
+    workingDir = rootProject.projectDir
+}
+
+dependencies {
+    implementation(project(':devine-core')) {
+        exclude group: 'org.flywaydb'
+    }
+
+    // Spring Boot Starters
+    implementation 'org.springframework.boot:spring-boot-starter-web'
+    implementation 'org.springframework.boot:spring-boot-starter-actuator'
+
+    // Test
+    testImplementation testFixtures(project(':devine-core'))
+    testImplementation 'com.h2database:h2'
+}

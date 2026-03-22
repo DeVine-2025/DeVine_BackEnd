@@ -1,0 +1,47 @@
+spring:
+  config:
+    import:
+      - "optional:file:.env[.properties]"
+      - "classpath:core-defaults.yml"
+  profiles:
+    active: ${SPRING_PROFILE_ACTIVE:dev}
+  application:
+    name: DeVine-Realtime
+
+  datasource:
+    hikari:
+      maximum-pool-size: ${HIKARI_POOL_SIZE:10}
+      leak-detection-threshold: ${HIKARI_LEAK_DETECTION_THRESHOLD:2000}
+      max-lifetime: ${HIKARI_MAX_LIFETIME:240000}
+      idle-timeout: ${HIKARI_IDLE_TIMEOUT:120000}
+      minimum-idle: ${HIKARI_MIN_IDLE:2}
+
+  jpa:
+    open-in-view: false
+
+  flyway:
+    enabled: false
+
+# Server
+server:
+  port: ${REALTIME_PORT:8081}
+
+# CORS
+cors:
+  allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
+
+# SSE Configuration
+sse:
+  timeout: 3600000
+  heartbeat-rate: 30000
+
+# Thread Pool Configuration
+executor:
+  sse-connection:
+    core-pool-size: ${SSE_CONN_CORE:5}
+    max-pool-size: ${SSE_CONN_MAX:10}
+    queue-capacity: ${SSE_CONN_QUEUE:25}
+  sse-dispatch:
+    core-pool-size: ${SSE_DISPATCH_CORE:10}
+    max-pool-size: ${SSE_DISPATCH_MAX:50}
+    queue-capacity: ${SSE_DISPATCH_QUEUE:200}

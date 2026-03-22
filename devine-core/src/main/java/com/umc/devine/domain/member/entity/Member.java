@@ -1,0 +1,134 @@
+package com.umc.devine.domain.member.entity;
+
+import com.umc.devine.domain.category.entity.Category;
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
+import com.umc.devine.domain.member.enums.MemberMainType;
+import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.global.entity.BaseEntity;
+import jakarta.persistence.*;
+import lombok.*;
+
+import java.util.ArrayList;
+import java.util.List;
+
+
+@Entity
+@Builder
+@NoArgsConstructor(access = AccessLevel.PROTECTED)
+@AllArgsConstructor(access = AccessLevel.PRIVATE)
+@Getter
+@Table(name = "member")
+public class Member extends BaseEntity {
+
+    @Id
+    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @Column(name = "member_id")
+    private Long id;
+
+    @Column(name = "clerk_id", unique = true, length = 255)
+    private String clerkId;
+
+    @Column(nullable = true, length = 10)
+    private String name;
+
+    @Column(nullable = false, length = 20)
+    private String nickname;
+
+    @Column(nullable = true, length = 255)
+    @Builder.Default
+    private String address = null;
+
+    @Column(nullable = false)
+    @Builder.Default
+    private boolean disclosure = true;
+
+    @Column(name = "proposal_alarm", nullable = false)
+    @Builder.Default
+    private boolean proposalAlarm = true;
+
+    public boolean getDisclosure() {
+        return disclosure;
+    }
+
+    public boolean getProposalAlarm() {
+        return proposalAlarm;
+    }
+
+    @Enumerated(EnumType.STRING)
+    @Column(name = "main_type", nullable = false)
+    private MemberMainType mainType;
+
+    @Column(nullable = true, length = 512)
+    @Builder.Default
+    private String image = null;
+
+    @Column(nullable = true, length = 255)
+    @Builder.Default
+    private String body = null;
+
+    @Column(name = "github_username", nullable = true, length = 39)
+    @Builder.Default
+    private String githubUsername = null;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    private MemberStatus used;
+
+    @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<MemberCategory> memberCategories = new ArrayList<>();
+
+    public void updateNickname(String nickname) {
+        this.nickname = nickname;
+    }
+
+    public void updateImage(String image) {
+        this.image = image;
+    }
+
+    public void updateAddress(String address) {
+        this.address = address;
+    }
+
+    public void updateBody(String body) {
+        this.body = body;
+    }
+
+    public void updateMainType(MemberMainType mainType) {
+        this.mainType = mainType;
+    }
+
+    public void updateDisclosure(boolean disclosure) {
+        this.disclosure = disclosure;
+    }
+
+    public void updateProposalAlarm(boolean proposalAlarm) {
+        this.proposalAlarm = proposalAlarm;
+    }
+
+    public void updateGithubUsername(String githubUsername) {
+        this.githubUsername = githubUsername;
+    }
+
+    public void clearCategories() {
+        this.memberCategories.clear();
+    }
+
+    public void addCategories(List<Category> categories) {
+        categories.forEach(category ->
+            this.memberCategories.add(MemberCategory.builder()
+                    .member(this)
+                    .category(category)
+                    .build())
+        );
+    }
+
+    /**
+     * 회원 탈퇴 처리를 위한 메서드
+     * 현재는 주로 테스트 코드에서 회원의 상태를 변경하여 필터링 로직을 검증하는 용도로 사용됩니다.
+     */
+    public void withdraw() {
+        this.used = MemberStatus.DELETED;
+    }
+
+}
