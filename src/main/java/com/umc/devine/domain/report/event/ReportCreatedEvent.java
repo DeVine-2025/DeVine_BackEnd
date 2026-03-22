@@ -11,4 +11,5 @@ public class ReportCreatedEvent {
     private final Long detailReportId;
     private final String gitUrl;
     private final String clerkId;
+    private final Long memberId;
 }

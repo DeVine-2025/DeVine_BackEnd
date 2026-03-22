@@ -15,7 +15,11 @@ public enum NotificationType {
 
     // 프로젝트 관련
     PROJECT_STATUS_CHANGED("프로젝트 상태가 변경되었습니다", "project"),
-    PROJECT_MEMBER_JOINED("새 팀원이 합류했습니다", "project");
+    PROJECT_MEMBER_JOINED("새 팀원이 합류했습니다", "project"),
+
+    // 리포트 관련
+    REPORT_COMPLETED("리포트 생성이 완료되었습니다", "report"),
+    REPORT_FAILED("리포트 생성에 실패했습니다", "report");
 
     private final String defaultTitle;
     private final String category;
