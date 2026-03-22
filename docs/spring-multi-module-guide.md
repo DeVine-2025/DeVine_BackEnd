@@ -161,7 +161,7 @@ public record ChatEventPayload(Long roomId, Long senderId, String message) {}
 
 - `.env`는 프로젝트 루트에 위치 (각 모듈 디렉토리가 아님)
 - `bootRun`은 `workingDir = rootProject.projectDir`로 설정되어 있음
-- 모듈별로 다른 값이 필요한 환경변수는 변수명을 분리 (예: `SPRING_PORT` vs `REALTIME_PORT`)
+- 모듈별로 다른 값이 필요한 환경변수는 변수명을 분리 (예: `API_PORT` vs `REALTIME_PORT`)
 
 ---
 

@@ -63,7 +63,7 @@ devine (루트)
 ### 2-2. devine-api (REST API 서버)
 
 **역할**: REST 엔드포인트, 비즈니스 로직, 외부 API 연동
-**포트**: 8080 (`${SPRING_PORT}`)
+**포트**: 8080 (`${API_PORT}`)
 
 **포함 패키지**:
 
@@ -163,7 +163,7 @@ spring:
 
 - **동일 키 우선순위**: 모듈 yml > core-defaults.yml (나중에 로드된 것이 우선)
 - **`.env` 파일 경로**: `bootRun`의 workingDir을 루트로 설정하여 `.env` 접근 보장
-- **realtime의 server.port**: `${REALTIME_PORT:8081}` 사용 (`.env`의 `SPRING_PORT`와 분리)
+- **포트 변수 분리**: `${API_PORT:8080}` / `${REALTIME_PORT:8081}`
 
 ---
 
