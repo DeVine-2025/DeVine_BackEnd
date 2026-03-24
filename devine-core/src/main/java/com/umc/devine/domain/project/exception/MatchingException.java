@@ -1,11 +1,11 @@
 package com.umc.devine.domain.project.exception;
 
-import com.umc.devine.global.apiPayload.exception.GeneralException;
-import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class MatchingException extends GeneralException {
+public class MatchingException extends DomainException {
 
-    public MatchingException(MatchingErrorCode code) {
-        super(code);
+    public MatchingException(DomainErrorReason reason) {
+        super(reason);
     }
 }

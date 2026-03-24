@@ -7,7 +7,7 @@ import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
-import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -86,7 +86,7 @@ public class Matching extends BaseEntity {
 
     private void validatePendingStatus() {
         if (this.status != MatchingStatus.PENDING) {
-            throw new MatchingException(MatchingErrorCode.INVALID_STATUS_TRANSITION);
+            throw new MatchingException(MatchingErrorReason.INVALID_STATUS_TRANSITION);
         }
     }
 

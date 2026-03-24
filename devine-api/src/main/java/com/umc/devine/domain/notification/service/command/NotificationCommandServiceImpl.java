@@ -8,7 +8,7 @@ import com.umc.devine.domain.notification.dto.NotificationResDTO;
 import com.umc.devine.domain.notification.entity.Notification;
 import com.umc.devine.domain.notification.enums.NotificationType;
 import com.umc.devine.domain.notification.exception.NotificationException;
-import com.umc.devine.domain.notification.exception.code.NotificationErrorCode;
+import com.umc.devine.domain.notification.exception.code.NotificationErrorReason;
 import com.umc.devine.domain.notification.repository.NotificationRepository;
 import com.umc.devine.infrastructure.redis.RedisEventConstants;
 import com.umc.devine.infrastructure.redis.dto.SseEventPayload;
@@ -46,7 +46,7 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
             Long referenceId
     ) {
         Member receiver = memberRepository.findById(receiverId)
-                .orElseThrow(() -> new NotificationException(NotificationErrorCode.RECEIVER_NOT_FOUND));
+                .orElseThrow(() -> new NotificationException(NotificationErrorReason.RECEIVER_NOT_FOUND));
 
         Member sender = senderId != null
                 ? memberRepository.findById(senderId).orElse(null)
@@ -94,11 +94,11 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
     @Override
     public void markAsRead(Long notificationId, Long memberId) {
         Notification notification = notificationRepository.findById(notificationId)
-                .orElseThrow(() -> new NotificationException(NotificationErrorCode.NOTIFICATION_NOT_FOUND));
+                .orElseThrow(() -> new NotificationException(NotificationErrorReason.NOTIFICATION_NOT_FOUND));
 
         // IDOR 방지: 본인 알림만 읽음 처리 가능
         if (!notification.getReceiver().getId().equals(memberId)) {
-            throw new NotificationException(NotificationErrorCode.FORBIDDEN);
+            throw new NotificationException(NotificationErrorReason.FORBIDDEN);
         }
 
         notification.markAsRead();

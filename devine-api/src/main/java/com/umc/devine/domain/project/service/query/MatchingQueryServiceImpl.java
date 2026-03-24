@@ -4,7 +4,7 @@ import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.MatchingConverter;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
@@ -13,7 +13,7 @@ import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
-import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
 import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.validator.MatchingValidator;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
@@ -115,7 +115,7 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
     public MatchingResDTO.MatchingStatusRes getMyApplyStatus(Member member, Long projectId) {
         // 1. 프로젝트 존재 확인
         if (!projectRepository.existsById(projectId)) {
-            throw new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND);
+            throw new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND);
         }
 
         // 2. APPLY 타입, CANCELLED 제외하고 본인의 매칭 조회
@@ -133,16 +133,16 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
     public MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, String nickname) {
         // 1. 프로젝트 조회
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
 
         // 2. PM 권한 검증: 본인 프로젝트인지 확인
         if (!project.isOwnedBy(pm)) {
-            throw new MatchingException(MatchingErrorCode.NOT_PROJECT_OWNER);
+            throw new MatchingException(MatchingErrorReason.NOT_PROJECT_OWNER);
         }
 
         // 3. 대상 회원 닉네임으로 조회
         Member targetMember = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         // 4. PROPOSE 타입, CANCELLED 제외하고 매칭 조회
         Optional<Matching> matchingOpt = matchingRepository

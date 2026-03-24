@@ -1,10 +1,11 @@
 package com.umc.devine.domain.bookmark.exception;
 
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class BookmarkException extends GeneralException {
-    public BookmarkException(BaseErrorCode code) {
-        super(code);
+public class BookmarkException extends DomainException {
+
+    public BookmarkException(DomainErrorReason reason) {
+        super(reason);
     }
 }

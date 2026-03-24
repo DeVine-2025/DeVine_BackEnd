@@ -18,7 +18,7 @@ import com.umc.devine.global.util.GitUrlParser;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
@@ -60,7 +60,7 @@ public class MemberConverter {
                     Terms terms = termsList.stream()
                             .filter(t -> t.getId().equals(dto.termsId()))
                             .findFirst()
-                            .orElseThrow(() -> new MemberException(MemberErrorCode.TERMS_NOT_FOUND));
+                            .orElseThrow(() -> new MemberException(MemberErrorReason.TERMS_NOT_FOUND));
                     return toMemberAgreement(member, terms, Boolean.TRUE.equals(dto.agreed()));
                 })
                 .collect(Collectors.toList());

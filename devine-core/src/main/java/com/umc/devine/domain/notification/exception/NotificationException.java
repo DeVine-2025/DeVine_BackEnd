@@ -1,11 +1,11 @@
 package com.umc.devine.domain.notification.exception;
 
-import com.umc.devine.domain.notification.exception.code.NotificationErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class NotificationException extends GeneralException {
+public class NotificationException extends DomainException {
 
-    public NotificationException(NotificationErrorCode code) {
-        super(code);
+    public NotificationException(DomainErrorReason reason) {
+        super(reason);
     }
 }

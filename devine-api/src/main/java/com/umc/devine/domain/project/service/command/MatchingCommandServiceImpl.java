@@ -12,7 +12,7 @@ import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
-import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
 import com.umc.devine.domain.project.helper.MatchingNotificationHelper;
 import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
@@ -55,7 +55,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
         Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
                         project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
 
         matching.cancel();
 
@@ -118,7 +118,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
         Matching matching = matchingRepository.findByProjectAndMemberAndMatchingTypeAndStatusNot(
                         project, member, MatchingType.APPLY, MatchingStatus.CANCELLED)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
 
         matching.changePart(part);
 
@@ -127,26 +127,26 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
     private Project getProject(Long projectId) {
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
     }
 
     private Member getMember(String nickname) {
         return memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MEMBER_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MEMBER_NOT_FOUND));
     }
 
     private Matching getMatching(Long matchingId) {
         return matchingRepository.findByIdWithDetails(matchingId)
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.MATCHING_NOT_FOUND));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
     }
 
     private void incrementCurrentCount(Matching matching) {
         if (matching.getPart() == null) {
-            throw new MatchingException(MatchingErrorCode.PART_REQUIRED);
+            throw new MatchingException(MatchingErrorReason.PART_REQUIRED);
         }
         ProjectRequirementMember requirement = requirementMemberRepository
                 .findByProjectAndPart(matching.getProject(), matching.getPart())
-                .orElseThrow(() -> new MatchingException(MatchingErrorCode.INVALID_PART));
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.INVALID_PART));
         requirement.incrementCurrentCount();
 
         // 모든 파트 모집 완료 시 자동으로 진행중으로 변경

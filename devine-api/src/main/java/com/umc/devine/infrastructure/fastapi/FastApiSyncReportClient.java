@@ -2,7 +2,7 @@ package com.umc.devine.infrastructure.fastapi;
 
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.exception.ReportException;
-import com.umc.devine.domain.report.exception.code.ReportErrorCode;
+import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiReqDto;
@@ -53,7 +53,7 @@ public class FastApiSyncReportClient {
         } catch (Exception e) {
             log.error("GitHub 토큰 조회 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     mainReport.getId(), detailReport.getId(), e.getMessage());
-            throw new ReportException(ReportErrorCode.GITHUB_TOKEN_ERROR);
+            throw new ReportException(ReportErrorReason.GITHUB_TOKEN_ERROR);
         }
 
         List<String> allTechstacks = Arrays.stream(TechName.values())
@@ -99,7 +99,7 @@ public class FastApiSyncReportClient {
         } catch (RestClientException e) {
             log.error("FastAPI 동기 호출 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     mainReport.getId(), detailReport.getId(), e.getMessage());
-            throw new ReportException(ReportErrorCode.FASTAPI_REQUEST_FAILED);
+            throw new ReportException(ReportErrorReason.FASTAPI_REQUEST_FAILED);
         }
     }
 }

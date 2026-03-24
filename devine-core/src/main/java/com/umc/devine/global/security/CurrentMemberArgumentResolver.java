@@ -1,7 +1,7 @@
 package com.umc.devine.global.security;
 
 import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
+import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
@@ -36,16 +36,16 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AuthException(AuthErrorCode.UNAUTHORIZED);
+            throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
         Object principal = authentication.getPrincipal();
 
         if (!(principal instanceof ClerkPrincipal clerkPrincipal)) {
-            throw new AuthException(AuthErrorCode.UNAUTHORIZED);
+            throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
         return memberRepository.findByClerkId(clerkPrincipal.getClerkId())
-                .orElseThrow(() -> new AuthException(AuthErrorCode.NOT_REGISTERED));
+                .orElseThrow(() -> new AuthException(AuthErrorReason.NOT_REGISTERED));
     }
 }

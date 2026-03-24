@@ -1,7 +1,7 @@
 package com.umc.devine.infrastructure.sse.controller;
 
 import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
+import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.sse.core.SseEmitterManager;
 import com.umc.devine.infrastructure.sse.listener.SseConnectedEvent;
@@ -67,7 +67,7 @@ public class SseController implements SseControllerDocs {
         );
 
         if (memberId == null) {
-            throw new AuthException(AuthErrorCode.NOT_REGISTERED);
+            throw new AuthException(AuthErrorReason.NOT_REGISTERED);
         }
 
         return memberId;
@@ -77,12 +77,12 @@ public class SseController implements SseControllerDocs {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
-            throw new AuthException(AuthErrorCode.UNAUTHORIZED);
+            throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
         Object principal = authentication.getPrincipal();
         if (!(principal instanceof ClerkPrincipal clerkPrincipal)) {
-            throw new AuthException(AuthErrorCode.UNAUTHORIZED);
+            throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
         return clerkPrincipal.getClerkId();

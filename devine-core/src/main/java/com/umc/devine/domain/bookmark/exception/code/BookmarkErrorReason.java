@@ -1,0 +1,20 @@
+package com.umc.devine.domain.bookmark.exception.code;
+
+import com.umc.devine.global.exception.DomainErrorReason;
+import lombok.AllArgsConstructor;
+import lombok.Getter;
+
+@Getter
+@AllArgsConstructor
+public enum BookmarkErrorReason implements DomainErrorReason {
+
+    NOT_FOUND("BOOKMARK404_1", "해당 북마크를 찾을 수 없습니다."),
+    ALREADY_EXISTS("BOOKMARK400_1", "이미 북마크에 추가되어 있습니다."),
+    FORBIDDEN("BOOKMARK403_1", "북마크에 대한 접근 권한이 없습니다."),
+    INVALID_REQUEST("BOOKMARK400_2", "잘못된 북마크 요청입니다. PROJECT 타입은 targetId, DEVELOPER 타입은 targetNickname이 필요합니다."),
+    CANNOT_BOOKMARK_SELF("BOOKMARK400_3", "자기 자신을 북마크할 수 없습니다."),
+    ;
+
+    private final String code;
+    private final String message;
+}

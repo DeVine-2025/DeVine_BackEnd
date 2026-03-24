@@ -1,10 +1,11 @@
 package com.umc.devine.domain.category.exception;
 
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class CategoryException extends GeneralException {
-    public CategoryException(BaseErrorCode code) {
-        super(code);
+public class CategoryException extends DomainException {
+
+    public CategoryException(DomainErrorReason reason) {
+        super(reason);
     }
 }

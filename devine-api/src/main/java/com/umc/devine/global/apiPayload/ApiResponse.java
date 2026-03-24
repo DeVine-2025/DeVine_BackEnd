@@ -2,6 +2,7 @@ package com.umc.devine.global.apiPayload;
 
 import com.umc.devine.global.apiPayload.code.BaseErrorCode;
 import com.umc.devine.global.apiPayload.code.BaseSuccessCode;
+import com.umc.devine.global.exception.DomainErrorReason;
 import com.fasterxml.jackson.annotation.JsonProperty;
 import com.fasterxml.jackson.annotation.JsonPropertyOrder;
 import lombok.AllArgsConstructor;
@@ -30,5 +31,9 @@ public class ApiResponse<T> {
 
     public static <T> ApiResponse<T> onFailure(BaseErrorCode code, T result) {
         return new ApiResponse<>(false, code.getCode(), code.getMessage(), result);
+    }
+
+    public static <T> ApiResponse<T> onFailure(DomainErrorReason reason, T result) {
+        return new ApiResponse<>(false, reason.getCode(), reason.getMessage(), result);
     }
 }

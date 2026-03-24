@@ -39,7 +39,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.PROJECT_NOT_FOUND;
+import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.PROJECT_NOT_FOUND;
 
 @Slf4j
 @Service

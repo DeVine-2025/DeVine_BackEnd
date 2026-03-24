@@ -1,10 +1,11 @@
 package com.umc.devine.domain.techstack.exception;
 
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class TechstackException extends GeneralException {
-    public TechstackException(BaseErrorCode code) {
-        super(code);
+public class TechstackException extends DomainException {
+
+    public TechstackException(DomainErrorReason reason) {
+        super(reason);
     }
 }

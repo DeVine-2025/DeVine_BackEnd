@@ -10,7 +10,7 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
@@ -23,7 +23,7 @@ import com.umc.devine.domain.project.dto.ProjectResDTO;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
-import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
+import com.umc.devine.domain.project.exception.code.ProjectErrorReason;
 import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.service.query.ProjectQueryService;
@@ -93,10 +93,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     @Override
     public TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         List<DevTechstack> devTechstacks = devTechstackRepository.findAllByMemberWithTechstack(member);
@@ -106,10 +106,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     @Override
     public MemberResDTO.MemberProfileDTO findMemberByNickname(String nickname) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMemberWithCategory(member);
@@ -147,10 +147,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     @Transactional
     public MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname, LocalDate from, LocalDate to) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         // GitHub username이 없으면 Clerk API로 조회 시도
@@ -161,7 +161,7 @@ public class MemberQueryServiceImpl implements MemberQueryService {
                 member.updateGithubUsername(githubUsername);
             } catch (AuthException e) {
                 // GitHub 연동이 안 되어 있으면 에러
-                throw new MemberException(MemberErrorCode.GITHUB_USERNAME_NOT_FOUND);
+                throw new MemberException(MemberErrorReason.GITHUB_USERNAME_NOT_FOUND);
             }
         }
 
@@ -188,9 +188,9 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         // 프로젝트 존재 및 소유자 확인
         Project project = projectRepository.findById(dto.projectId())
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND));
         if (!project.isOwnedBy(member)) {
-            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
+            throw new ProjectException(ProjectErrorReason.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
@@ -212,9 +212,9 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
         // 프로젝트 존재 및 소유자 확인
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND));
         if (!project.isOwnedBy(member)) {
-            throw new ProjectException(ProjectErrorCode.FORBIDDEN_PROJECT_ACCESS);
+            throw new ProjectException(ProjectErrorReason.FORBIDDEN_PROJECT_ACCESS);
         }
 
         // 벡터 검색 가능한 경우에만 추천 결과 반환
@@ -378,10 +378,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     @Override
     public ProjectResDTO.MyProjectsRes findProjectsByNickname(String nickname, List<ProjectStatus> statuses, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         return projectQueryService.getMyProjects(member, statuses, pageable);
@@ -390,10 +390,10 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     @Override
     public PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(String nickname, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         Page<GitRepoUrl> repoPage = gitRepoUrlRepository.findAllByMemberOrderByCreatedAtDesc(member, pageable);

@@ -12,7 +12,7 @@ import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.event.ReportNotificationEvent;
 import com.umc.devine.domain.report.exception.ReportException;
-import com.umc.devine.domain.report.exception.code.ReportErrorCode;
+import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
@@ -59,7 +59,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
         DevReport report = devReportRepository.findByIdWithMember(reportId)
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
 
         validateOwnership(report, memberId);
 
@@ -73,7 +73,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     @Override
     public ReportResDTO.CreateReportRes createReport(Long memberId, ReportReqDTO.CreateReportReq request) {
         GitRepoUrl gitRepoUrl = gitRepoUrlRepository.findByIdWithMember(request.gitRepoId())
-                .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.GIT_REPO_NOT_FOUND));
 
         validateGitRepoOwnership(gitRepoUrl, memberId);
         validateReportNotExists(request.gitRepoId());
@@ -107,7 +107,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     public ReportResDTO.CreateReportSyncRes createReportSync(Long memberId, ReportReqDTO.CreateReportReq request) {
         // 1. Git 저장소 조회 및 권한 검증
         GitRepoUrl gitRepoUrl = gitRepoUrlRepository.findByIdWithMember(request.gitRepoId())
-                .orElseThrow(() -> new ReportException(ReportErrorCode.GIT_REPO_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.GIT_REPO_NOT_FOUND));
 
         validateGitRepoOwnership(gitRepoUrl, memberId);
 
@@ -140,7 +140,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                         savedMainReport.getId(), savedDetailReport.getId(), errorMessage);
                 savedMainReport.failReport(errorMessage);
                 savedDetailReport.failReport(errorMessage);
-                throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+                throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
             }
 
             // 4-2. content 존재 여부 검증
@@ -150,7 +150,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                         savedMainReport.getId(), savedDetailReport.getId());
                 savedMainReport.failReport("리포트 content가 null입니다.");
                 savedDetailReport.failReport("리포트 content가 null입니다.");
-                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
             }
 
             // 4-3. main/detail 필드 검증
@@ -162,7 +162,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                         savedMainReport.getId(), savedDetailReport.getId());
                 savedMainReport.failReport("리포트 content가 비어있습니다.");
                 savedDetailReport.failReport("리포트 content가 비어있습니다.");
-                throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
             }
 
             // 5. 리포트 완료 처리
@@ -185,23 +185,23 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                     savedMainReport.getId(), savedDetailReport.getId(), e);
             savedMainReport.failReport(e.getMessage());
             savedDetailReport.failReport(e.getMessage());
-            throw new ReportException(ReportErrorCode.REPORT_GENERATION_FAILED);
+            throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
         }
     }
 
     @Override
     public void processCallback(ReportReqDTO.CallbackReq request) {
         DevReport mainReport = devReportRepository.findByIdWithMember(request.mainReportId())
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
         DevReport detailReport = devReportRepository.findById(request.detailReportId())
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
 
         switch (request.status()) {
             case SUCCESS -> {
                 if (request.content() == null || request.content().isNull()) {
                     log.warn("리포트 content가 비어있음 - mainReportId: {}, detailReportId: {}",
                             request.mainReportId(), request.detailReportId());
-                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                    throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
                 }
 
                 var mainContent = request.content().get("main");
@@ -209,11 +209,11 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
                 if (mainContent == null || mainContent.isNull()) {
                     log.warn("메인 리포트 content가 비어있음 - mainReportId: {}", request.mainReportId());
-                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                    throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
                 }
                 if (detailContent == null || detailContent.isNull()) {
                     log.warn("상세 리포트 content가 비어있음 - detailReportId: {}", request.detailReportId());
-                    throw new ReportException(ReportErrorCode.INVALID_JSON_FORMAT);
+                    throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
                 }
 
                 mainReport.completeReport(mainContent.toString());
@@ -264,7 +264,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         Long ownerId = report.getGitRepoUrl().getMember().getId();
         if (!ownerId.equals(memberId)) {
             log.warn("리포트 권한 없음 - memberId: {}, reportId: {}, ownerId: {}", memberId, report.getId(), ownerId);
-            throw new ReportException(ReportErrorCode.UNAUTHORIZED_ACCESS);
+            throw new ReportException(ReportErrorReason.UNAUTHORIZED_ACCESS);
         }
     }
 
@@ -272,14 +272,14 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         Long ownerId = gitRepoUrl.getMember().getId();
         if (!ownerId.equals(memberId)) {
             log.warn("Git 저장소 권한 없음 - memberId: {}, gitRepoId: {}, ownerId: {}", memberId, gitRepoUrl.getId(), ownerId);
-            throw new ReportException(ReportErrorCode.UNAUTHORIZED_ACCESS);
+            throw new ReportException(ReportErrorReason.UNAUTHORIZED_ACCESS);
         }
     }
 
     private void validateReportNotExists(Long gitRepoId) {
         if (devReportRepository.existsActiveReportByGitRepoUrlId(gitRepoId)) {
             log.warn("리포트 중복 생성 시도 - gitRepoId: {}", gitRepoId);
-            throw new ReportException(ReportErrorCode.REPORT_ALREADY_EXISTS);
+            throw new ReportException(ReportErrorReason.REPORT_ALREADY_EXISTS);
         }
     }
 
@@ -290,7 +290,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         } catch (DataIntegrityViolationException e) {
             log.warn("리포트 중복 저장 시도 (동시 요청) - gitRepoId: {}, reportType: {}",
                     report.getGitRepoUrl().getId(), report.getReportType());
-            throw new ReportException(ReportErrorCode.REPORT_ALREADY_EXISTS);
+            throw new ReportException(ReportErrorReason.REPORT_ALREADY_EXISTS);
         }
     }
 
@@ -302,7 +302,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             } catch (DataIntegrityViolationException e) {
                 log.warn("리포트 중복 저장 시도 (동시 요청) - gitRepoId: {}, reportType: {}",
                         report.getGitRepoUrl().getId(), report.getReportType());
-                throw new ReportException(ReportErrorCode.REPORT_ALREADY_EXISTS);
+                throw new ReportException(ReportErrorReason.REPORT_ALREADY_EXISTS);
             }
         });
         // 현재 영속성 컨텍스트에 merge하여 이후 변경사항이 자동 저장되도록 함

@@ -6,13 +6,13 @@ import com.umc.devine.domain.embedding.dto.EmbeddingCallbackDto.ReportEmbeddingC
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.ProjectEmbedding;
 import com.umc.devine.domain.project.exception.ProjectException;
-import com.umc.devine.domain.project.exception.code.ProjectErrorCode;
+import com.umc.devine.domain.project.exception.code.ProjectErrorReason;
 import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.entity.ReportEmbedding;
 import com.umc.devine.domain.report.exception.ReportException;
-import com.umc.devine.domain.report.exception.code.ReportErrorCode;
+import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.report.repository.ReportEmbeddingRepository;
 import lombok.RequiredArgsConstructor;
@@ -43,7 +43,7 @@ public class EmbeddingCommandServiceImpl implements EmbeddingCommandService {
         DevReport devReport = devReportRepository.findById(callback.mainReportId())
                 .orElseThrow(() -> {
                     log.warn("리포트를 찾을 수 없음 (삭제되었을 수 있음) - mainReportId: {}", callback.mainReportId());
-                    return new ReportException(ReportErrorCode.REPORT_NOT_FOUND);
+                    return new ReportException(ReportErrorReason.REPORT_NOT_FOUND);
                 });
 
         ReportEmbedding embedding = reportEmbeddingRepository.findByDevReportId(callback.mainReportId())
@@ -74,7 +74,7 @@ public class EmbeddingCommandServiceImpl implements EmbeddingCommandService {
         Project project = projectRepository.findById(callback.projectId())
                 .orElseThrow(() -> {
                     log.warn("프로젝트를 찾을 수 없음 (삭제되었을 수 있음) - projectId: {}", callback.projectId());
-                    return new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND);
+                    return new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND);
                 });
 
         ProjectEmbedding embedding = projectEmbeddingRepository.findByProjectId(callback.projectId())
@@ -100,7 +100,7 @@ public class EmbeddingCommandServiceImpl implements EmbeddingCommandService {
     @Override
     public void saveProjectEmbedding(Long projectId, float[] vector) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND));
 
         ProjectEmbedding embedding = projectEmbeddingRepository.findByProjectId(projectId)
                 .orElseGet(() -> ProjectEmbedding.builder()
@@ -115,7 +115,7 @@ public class EmbeddingCommandServiceImpl implements EmbeddingCommandService {
     @Override
     public void saveProjectEmbeddingFailure(Long projectId, String errorMessage) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ProjectException(ProjectErrorCode.PROJECT_NOT_FOUND));
+                .orElseThrow(() -> new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND));
 
         ProjectEmbedding embedding = projectEmbeddingRepository.findByProjectId(projectId)
                 .orElseGet(() -> ProjectEmbedding.builder()
@@ -136,27 +136,27 @@ public class EmbeddingCommandServiceImpl implements EmbeddingCommandService {
 
     private void validateReportVector(List<Double> vector, Integer dimension) {
         if (vector == null || vector.isEmpty()) {
-            throw new ReportException(ReportErrorCode.EMBEDDING_VECTOR_EMPTY);
+            throw new ReportException(ReportErrorReason.EMBEDDING_VECTOR_EMPTY);
         }
         if (dimension != null && dimension != EXPECTED_DIMENSION) {
             log.error("응답 dimension 불일치: expected={}, actual={}", EXPECTED_DIMENSION, dimension);
         }
         if (vector.size() != EXPECTED_DIMENSION) {
             log.error("벡터 차원 불일치: expected={}, actual={}", EXPECTED_DIMENSION, vector.size());
-            throw new ReportException(ReportErrorCode.EMBEDDING_INVALID_DIMENSION);
+            throw new ReportException(ReportErrorReason.EMBEDDING_INVALID_DIMENSION);
         }
     }
 
     private void validateProjectVector(List<Double> vector, Integer dimension) {
         if (vector == null || vector.isEmpty()) {
-            throw new ProjectException(ProjectErrorCode.EMBEDDING_VECTOR_EMPTY);
+            throw new ProjectException(ProjectErrorReason.EMBEDDING_VECTOR_EMPTY);
         }
         if (dimension != null && dimension != EXPECTED_DIMENSION) {
             log.error("응답 dimension 불일치: expected={}, actual={}", EXPECTED_DIMENSION, dimension);
         }
         if (vector.size() != EXPECTED_DIMENSION) {
             log.error("벡터 차원 불일치: expected={}, actual={}", EXPECTED_DIMENSION, vector.size());
-            throw new ProjectException(ProjectErrorCode.EMBEDDING_INVALID_DIMENSION);
+            throw new ProjectException(ProjectErrorReason.EMBEDDING_INVALID_DIMENSION);
         }
     }
 

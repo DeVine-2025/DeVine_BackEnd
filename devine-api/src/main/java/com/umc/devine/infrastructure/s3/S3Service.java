@@ -1,7 +1,7 @@
 package com.umc.devine.infrastructure.s3;
 
 import com.umc.devine.domain.image.exception.ImageException;
-import com.umc.devine.domain.image.exception.code.ImageErrorCode;
+import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -41,7 +41,7 @@ public class S3Service {
     public void validateExtension(String fileName) {
         String ext = extractExtension(fileName);
         if (!ALLOWED_EXTENSIONS.contains(ext)) {
-            throw new ImageException(ImageErrorCode.UNSUPPORTED_FILE_EXTENSION);
+            throw new ImageException(ImageErrorReason.UNSUPPORTED_FILE_EXTENSION);
         }
     }
 
@@ -66,7 +66,7 @@ public class S3Service {
             return presigned;
         } catch (Exception e) {
             log.error("[S3Service] Presigned URL 생성 실패 - key: {}", key, e);
-            throw new ImageException(ImageErrorCode.S3_PRESIGN_FAILED);
+            throw new ImageException(ImageErrorReason.S3_PRESIGN_FAILED);
         }
     }
 
@@ -83,7 +83,7 @@ public class S3Service {
             log.debug("[S3Service] S3 오브젝트 삭제 완료 - key: {}", s3Key);
         } catch (Exception e) {
             log.error("[S3Service] S3 오브젝트 삭제 실패 - key: {}", s3Key, e);
-            throw new ImageException(ImageErrorCode.S3_DELETE_FAILED);
+            throw new ImageException(ImageErrorReason.S3_DELETE_FAILED);
         }
     }
 

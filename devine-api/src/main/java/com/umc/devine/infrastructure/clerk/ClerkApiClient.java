@@ -1,7 +1,7 @@
 package com.umc.devine.infrastructure.clerk;
 
 import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
+import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.clerk.dto.ClerkOAuthTokenResponse;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
@@ -38,21 +38,21 @@ public class ClerkApiClient {
                     .header("Authorization", "Bearer " + clerkSecretKey)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_TOKEN_NOT_FOUND);
+                        throw new AuthException(AuthErrorReason.GITHUB_TOKEN_NOT_FOUND);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.CLERK_API_ERROR);
+                        throw new AuthException(AuthErrorReason.CLERK_API_ERROR);
                     })
                     .body(new ParameterizedTypeReference<>() {});
 
             if (tokens == null || tokens.isEmpty()) {
-                throw new AuthException(AuthErrorCode.GITHUB_TOKEN_NOT_FOUND);
+                throw new AuthException(AuthErrorReason.GITHUB_TOKEN_NOT_FOUND);
             }
 
             String accessToken = tokens.get(0).getToken();
 
             if (accessToken == null || accessToken.isEmpty()) {
-                throw new AuthException(AuthErrorCode.GITHUB_TOKEN_NOT_FOUND);
+                throw new AuthException(AuthErrorReason.GITHUB_TOKEN_NOT_FOUND);
             }
 
             return accessToken;
@@ -60,7 +60,7 @@ public class ClerkApiClient {
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_TOKEN_FETCH_FAILED);
+            throw new AuthException(AuthErrorReason.GITHUB_TOKEN_FETCH_FAILED);
         }
     }
 }

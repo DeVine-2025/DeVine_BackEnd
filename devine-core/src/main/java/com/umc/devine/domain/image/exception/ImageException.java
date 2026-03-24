@@ -1,10 +1,11 @@
 package com.umc.devine.domain.image.exception;
 
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class ImageException extends GeneralException {
-    public ImageException(BaseErrorCode code) {
-        super(code);
+public class ImageException extends DomainException {
+
+    public ImageException(DomainErrorReason reason) {
+        super(reason);
     }
 }

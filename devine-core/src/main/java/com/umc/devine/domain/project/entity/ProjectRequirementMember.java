@@ -2,7 +2,7 @@ package com.umc.devine.domain.project.entity;
 
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.exception.MatchingException;
-import com.umc.devine.domain.project.exception.code.MatchingErrorCode;
+import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -37,7 +37,7 @@ public class ProjectRequirementMember extends BaseEntity {
 
     public void incrementCurrentCount() {
         if (isFulfilled()) {
-            throw new MatchingException(MatchingErrorCode.PART_ALREADY_FULFILLED);
+            throw new MatchingException(MatchingErrorReason.PART_ALREADY_FULFILLED);
         }
         this.currentCount++;
     }

@@ -8,7 +8,7 @@ import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.image.entity.Image;
 import com.umc.devine.domain.image.enums.ImageType;
 import com.umc.devine.domain.image.exception.ImageException;
-import com.umc.devine.domain.image.exception.code.ImageErrorCode;
+import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
@@ -20,7 +20,7 @@ import com.umc.devine.domain.member.entity.MemberAgreement;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
@@ -32,7 +32,7 @@ import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.exception.TechstackException;
-import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
+import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
@@ -78,7 +78,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
         // 1. 이미 가입된 회원인지 확인
         if (memberRepository.existsByClerkId(principal.getClerkId())) {
-            throw new MemberException(MemberErrorCode.ALREADY_REGISTERED);
+            throw new MemberException(MemberErrorReason.ALREADY_REGISTERED);
         }
 
         // 2. 프로필 이미지 검증 (선택사항)
@@ -98,14 +98,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
                     .orElse(false);
 
             if (!agreed) {
-                throw new MemberException(MemberErrorCode.REQUIRED_TERMS_NOT_AGREED);
+                throw new MemberException(MemberErrorReason.REQUIRED_TERMS_NOT_AGREED);
             }
         }
 
         // 4. 관심 도메인 검증
         List<Category> categories = categoryRepository.findAllById(dto.categoryIds());
         if (categories.size() != dto.categoryIds().size()) {
-            throw new MemberException(MemberErrorCode.CATEGORY_NOT_FOUND);
+            throw new MemberException(MemberErrorReason.CATEGORY_NOT_FOUND);
         }
 
         // 5. 기술 스택 검증 (선택사항)
@@ -113,7 +113,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (dto.techstackIds() != null && !dto.techstackIds().isEmpty()) {
             techstacks = techstackRepository.findAllById(dto.techstackIds());
             if (techstacks.size() != dto.techstackIds().size()) {
-                throw new MemberException(MemberErrorCode.TECHSTACK_NOT_FOUND);
+                throw new MemberException(MemberErrorReason.TECHSTACK_NOT_FOUND);
             }
         }
 
@@ -156,7 +156,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         // 닉네임 중복 검증
         if (dto.nickname() != null && !dto.nickname().equals(member.getNickname())) {
             if (memberRepository.existsByNickname(dto.nickname())) {
-                throw new MemberException(MemberErrorCode.NICKNAME_DUPLICATED);
+                throw new MemberException(MemberErrorReason.NICKNAME_DUPLICATED);
             }
         }
 
@@ -175,11 +175,11 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         // 카테고리 업데이트 (orphanRemoval + flush로 DELETE 후 INSERT 보장)
         if (dto.domains() != null) {
             if (dto.domains().length == 0) {
-                throw new MemberException(MemberErrorCode.CATEGORY_REQUIRED);
+                throw new MemberException(MemberErrorReason.CATEGORY_REQUIRED);
             }
             List<Category> categories = categoryRepository.findAllByGenreIn(Arrays.asList(dto.domains()));
             if (categories.size() != dto.domains().length) {
-                throw new MemberException(MemberErrorCode.CATEGORY_NOT_FOUND);
+                throw new MemberException(MemberErrorReason.CATEGORY_NOT_FOUND);
             }
             member.clearCategories();
             entityManager.flush();  // DELETE 먼저 실행
@@ -204,12 +204,12 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
 
         if (techstacks.size() != dto.techstackIds().length) {
-            throw new TechstackException(TechstackErrorCode.NOT_FOUND);
+            throw new TechstackException(TechstackErrorReason.NOT_FOUND);
         }
 
         List<DevTechstack> existingTechstacks = devTechstackRepository.findAllByMemberAndTechstackIn(member, techstacks);
         if (!existingTechstacks.isEmpty()) {
-            throw new MemberException(MemberErrorCode.TECHSTACK_ALREADY_EXISTS);
+            throw new MemberException(MemberErrorReason.TECHSTACK_ALREADY_EXISTS);
         }
 
         devTechstackRepository.saveAll(
@@ -224,7 +224,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         List<Techstack> techstacks = techstackRepository.findAllById(Arrays.asList(dto.techstackIds()));
 
         if (techstacks.size() != dto.techstackIds().length) {
-            throw new TechstackException(TechstackErrorCode.NOT_FOUND);
+            throw new TechstackException(TechstackErrorReason.NOT_FOUND);
         }
 
         List<DevTechstack> targetTechstacks = devTechstackRepository.findAllByMemberAndTechstackInWithTechstack(member, techstacks);
@@ -305,12 +305,12 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (imageUrl == null) return;
 
         Image image = imageRepository.findByImageUrl(imageUrl)
-                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+                .orElseThrow(() -> new ImageException(ImageErrorReason.IMAGE_NOT_FOUND));
         if (image.getImageType() != ImageType.PROFILE) {
-            throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
+            throw new ImageException(ImageErrorReason.IMAGE_TYPE_MISMATCH);
         }
         if (!image.isUploaded()) {
-            throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
+            throw new ImageException(ImageErrorReason.IMAGE_NOT_UPLOADED);
         }
     }
 }

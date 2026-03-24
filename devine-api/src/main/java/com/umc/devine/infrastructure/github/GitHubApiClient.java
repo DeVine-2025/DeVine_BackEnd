@@ -1,7 +1,7 @@
 package com.umc.devine.infrastructure.github;
 
 import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
+import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;
@@ -46,16 +46,16 @@ public class GitHubApiClient {
                     .header("X-GitHub-Api-Version", "2022-11-28")
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .body(new ParameterizedTypeReference<>() {});
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
     }
 
@@ -77,10 +77,10 @@ public class GitHubApiClient {
                     .header("X-GitHub-Api-Version", "2022-11-28")
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .body(new ParameterizedTypeReference<>() {});
 
@@ -110,7 +110,7 @@ public class GitHubApiClient {
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
     }
 
@@ -165,10 +165,10 @@ public class GitHubApiClient {
                         .header("X-GitHub-Api-Version", "2022-11-28")
                         .retrieve()
                         .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                         })
                         .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                         })
                         .body(new ParameterizedTypeReference<>() {});
 
@@ -189,7 +189,7 @@ public class GitHubApiClient {
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
     }
 
@@ -206,7 +206,7 @@ public class GitHubApiClient {
      */
     public List<GitHubContributionDTO> getContributions(String accessToken, String username, LocalDate from, LocalDate to) {
         if (username == null || username.isBlank()) {
-            throw new AuthException(AuthErrorCode.GITHUB_USER_NOT_FOUND);
+            throw new AuthException(AuthErrorReason.GITHUB_USER_NOT_FOUND);
         }
 
         String url = GITHUB_API_BASE_URL + "/graphql";
@@ -255,10 +255,10 @@ public class GitHubApiClient {
                     .body(requestBody)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (request, response1) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (request, response1) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .body(new ParameterizedTypeReference<>() {});
 
@@ -266,7 +266,7 @@ public class GitHubApiClient {
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
     }
 
@@ -282,13 +282,13 @@ public class GitHubApiClient {
         Map<String, Object> user = Optional.ofNullable(response)
                 .map(r -> (Map<String, Object>) r.get("data"))
                 .map(data -> (Map<String, Object>) data.get("user"))
-                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_USER_NOT_FOUND));
+                .orElseThrow(() -> new AuthException(AuthErrorReason.GITHUB_USER_NOT_FOUND));
 
         List<Map<String, Object>> weeks = Optional.of(user)
                 .map(u -> (Map<String, Object>) u.get("contributionsCollection"))
                 .map(collection -> (Map<String, Object>) collection.get("contributionCalendar"))
                 .map(calendar -> (List<Map<String, Object>>) calendar.get("weeks"))
-                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_API_ERROR));
+                .orElseThrow(() -> new AuthException(AuthErrorReason.GITHUB_API_ERROR));
 
         return parseWeeks(weeks);
     }
@@ -414,16 +414,16 @@ public class GitHubApiClient {
                     .body(requestBody)
                     .retrieve()
                     .onStatus(HttpStatusCode::is4xxClientError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .onStatus(HttpStatusCode::is5xxServerError, (request, response) -> {
-                        throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+                        throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
                     })
                     .body(new ParameterizedTypeReference<>() {});
         } catch (AuthException e) {
             throw e;
         } catch (Exception e) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
     }
 
@@ -442,7 +442,7 @@ public class GitHubApiClient {
         Map<String, Object> viewer = Optional.ofNullable(response)
                 .map(r -> (Map<String, Object>) r.get("data"))
                 .map(data -> (Map<String, Object>) data.get("viewer"))
-                .orElseThrow(() -> new AuthException(AuthErrorCode.GITHUB_API_ERROR));
+                .orElseThrow(() -> new AuthException(AuthErrorReason.GITHUB_API_ERROR));
 
         Map<String, Object> reposData = (Map<String, Object>) viewer.get(fieldName);
         if (reposData == null) {

@@ -1,10 +1,11 @@
 package com.umc.devine.domain.report.exception;
 
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.exception.GeneralException;
+import com.umc.devine.global.exception.DomainErrorReason;
+import com.umc.devine.global.exception.DomainException;
 
-public class ReportException extends GeneralException {
-    public ReportException(BaseErrorCode code) {
-        super(code);
+public class ReportException extends DomainException {
+
+    public ReportException(DomainErrorReason reason) {
+        super(reason);
     }
 }

@@ -1,7 +1,7 @@
 package com.umc.devine.infrastructure.github;
 
 import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorCode;
+import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
@@ -75,7 +75,7 @@ public class GitHubService {
         String username = (String) userInfo.get("login");
 
         if (username == null || username.isEmpty()) {
-            throw new AuthException(AuthErrorCode.GITHUB_API_ERROR);
+            throw new AuthException(AuthErrorReason.GITHUB_API_ERROR);
         }
 
         return githubApiClient.getContributions(accessToken, username, from, to);

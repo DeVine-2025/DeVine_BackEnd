@@ -5,7 +5,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
 import com.umc.devine.domain.report.dto.ReportResDTO;
@@ -13,7 +13,7 @@ import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.enums.ReportVisibility;
 import com.umc.devine.domain.report.exception.ReportException;
-import com.umc.devine.domain.report.exception.code.ReportErrorCode;
+import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import lombok.RequiredArgsConstructor;
@@ -38,7 +38,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     @Override
     public ReportResDTO.ReportRes getMainReport(Long memberId, Long gitRepoId) {
         DevReport report = reportRepository.findByGitRepoIdAndReportTypeWithMember(gitRepoId, ReportType.MAIN)
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
 
         validateVisibility(report, memberId);
 
@@ -49,7 +49,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     @Override
     public ReportResDTO.ReportRes getDetailReport(Long memberId, Long gitRepoId) {
         DevReport report = reportRepository.findByGitRepoIdAndReportTypeWithMember(gitRepoId, ReportType.DETAIL)
-                .orElseThrow(() -> new ReportException(ReportErrorCode.REPORT_NOT_FOUND));
+                .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
 
         validateVisibility(report, memberId);
 
@@ -61,7 +61,7 @@ public class ReportQueryServiceImpl implements ReportQueryService {
         if (report.getVisibility() == ReportVisibility.PRIVATE) {
             Long ownerId = report.getGitRepoUrl().getMember().getId();
             if (!ownerId.equals(memberId)) {
-                throw new ReportException(ReportErrorCode.UNAUTHORIZED_ACCESS);
+                throw new ReportException(ReportErrorReason.UNAUTHORIZED_ACCESS);
             }
         }
     }
@@ -75,10 +75,10 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     @Override
     public PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(String nickname, ReportType reportType, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
-                .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
         if (!member.getDisclosure()) {
-            throw new MemberException(MemberErrorCode.PROFILE_NOT_PUBLIC);
+            throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         Page<DevReport> reportPage = reportRepository.findAllByMemberAndReportTypeAndVisibility(

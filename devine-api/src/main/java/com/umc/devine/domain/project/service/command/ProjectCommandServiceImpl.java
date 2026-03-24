@@ -6,7 +6,7 @@ import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.image.entity.Image;
 import com.umc.devine.domain.image.enums.ImageType;
 import com.umc.devine.domain.image.exception.ImageException;
-import com.umc.devine.domain.image.exception.code.ImageErrorCode;
+import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
@@ -24,7 +24,7 @@ import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.exception.TechstackException;
-import com.umc.devine.domain.techstack.exception.code.TechstackErrorCode;
+import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.project.event.ProjectEmbeddingEvent;
@@ -41,8 +41,8 @@ import java.util.stream.Collectors;
 
 import java.time.LocalDate;
 
-import static com.umc.devine.domain.category.exception.code.CategoryErrorCode.CATEGORY_NOT_FOUND;
-import static com.umc.devine.domain.project.exception.code.ProjectErrorCode.*;
+import static com.umc.devine.domain.category.exception.code.CategoryErrorReason.CATEGORY_NOT_FOUND;
+import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.*;
 
 @Slf4j
 @Service
@@ -188,7 +188,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
             TechName parentName = TechName.valueOf(dto.position().name());
             for (TechName techName : dto.techStacks()) {
                 Techstack techstack = techstackRepository.findByNameAndParentStackName(techName, parentName)
-                        .orElseThrow(() -> new TechstackException(TechstackErrorCode.NOT_FOUND));
+                        .orElseThrow(() -> new TechstackException(TechstackErrorReason.NOT_FOUND));
 
                 ProjectRequirementTechstack mapping = ProjectRequirementTechstack.builder()
                         .requirement(requirement)
@@ -211,24 +211,24 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
         List<Image> images = imageRepository.findAllById(imageIds);
         if (images.size() != imageIds.size()) {
-            throw new ImageException(ImageErrorCode.IMAGE_NOT_FOUND);
+            throw new ImageException(ImageErrorReason.IMAGE_NOT_FOUND);
         }
 
         boolean hasUnauthorized = images.stream()
                 .anyMatch(image -> image.getUploader() == null || !image.getUploader().getId().equals(memberId));
         if (hasUnauthorized) {
-            throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
+            throw new ImageException(ImageErrorReason.IMAGE_ACCESS_DENIED);
         }
 
         boolean hasNonProjectType = images.stream()
                 .anyMatch(image -> image.getImageType() != ImageType.PROJECT);
         if (hasNonProjectType) {
-            throw new ImageException(ImageErrorCode.IMAGE_TYPE_MISMATCH);
+            throw new ImageException(ImageErrorReason.IMAGE_TYPE_MISMATCH);
         }
 
         boolean hasUnuploaded = images.stream().anyMatch(image -> !image.isUploaded());
         if (hasUnuploaded) {
-            throw new ImageException(ImageErrorCode.IMAGE_NOT_UPLOADED);
+            throw new ImageException(ImageErrorReason.IMAGE_NOT_UPLOADED);
         }
 
         List<ProjectImage> projectImages = images.stream()

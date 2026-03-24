@@ -6,11 +6,11 @@ import com.umc.devine.domain.bookmark.dto.BookmarkResDTO;
 import com.umc.devine.domain.bookmark.entity.Bookmark;
 import com.umc.devine.domain.bookmark.enums.BookmarkType;
 import com.umc.devine.domain.bookmark.exception.BookmarkException;
-import com.umc.devine.domain.bookmark.exception.code.BookmarkErrorCode;
+import com.umc.devine.domain.bookmark.exception.code.BookmarkErrorReason;
 import com.umc.devine.domain.bookmark.repository.BookmarkRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.MemberException;
-import com.umc.devine.domain.member.exception.code.MemberErrorCode;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -30,9 +30,9 @@ public class BookmarkCommandServiceImpl implements BookmarkCommandService {
 
         if (dto.targetType() == BookmarkType.DEVELOPER) {
             Member targetMember = memberRepository.findByNickname(dto.targetNickname())
-                    .orElseThrow(() -> new MemberException(MemberErrorCode.NOT_FOUND));
+                    .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
             if (targetMember.getId().equals(member.getId())) {
-                throw new BookmarkException(BookmarkErrorCode.CANNOT_BOOKMARK_SELF);
+                throw new BookmarkException(BookmarkErrorReason.CANNOT_BOOKMARK_SELF);
             }
             targetId = targetMember.getId();
         } else {
@@ -40,7 +40,7 @@ public class BookmarkCommandServiceImpl implements BookmarkCommandService {
         }
 
         if (bookmarkRepository.existsByMemberAndTargetTypeAndTargetId(member, dto.targetType(), targetId)) {
-            throw new BookmarkException(BookmarkErrorCode.ALREADY_EXISTS);
+            throw new BookmarkException(BookmarkErrorReason.ALREADY_EXISTS);
         }
 
         Bookmark bookmark = Bookmark.builder()
@@ -56,10 +56,10 @@ public class BookmarkCommandServiceImpl implements BookmarkCommandService {
     @Override
     public BookmarkResDTO.BookmarkIdDTO deleteBookmark(Member member, Long bookmarkId) {
         Bookmark bookmark = bookmarkRepository.findById(bookmarkId)
-                .orElseThrow(() -> new BookmarkException(BookmarkErrorCode.NOT_FOUND));
+                .orElseThrow(() -> new BookmarkException(BookmarkErrorReason.NOT_FOUND));
 
         if (!bookmark.getMember().getId().equals(member.getId())) {
-            throw new BookmarkException(BookmarkErrorCode.FORBIDDEN);
+            throw new BookmarkException(BookmarkErrorReason.FORBIDDEN);
         }
 
         bookmarkRepository.delete(bookmark);

@@ -5,7 +5,7 @@ import com.umc.devine.domain.image.dto.ImageReqDTO;
 import com.umc.devine.domain.image.dto.ImageResDTO;
 import com.umc.devine.domain.image.entity.Image;
 import com.umc.devine.domain.image.exception.ImageException;
-import com.umc.devine.domain.image.exception.code.ImageErrorCode;
+import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
@@ -58,7 +58,7 @@ public class ImageCommandServiceImpl implements ImageCommandService {
         log.debug("[ImageService] 업로드 확인 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
-                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+                .orElseThrow(() -> new ImageException(ImageErrorReason.IMAGE_NOT_FOUND));
 
         validateImageOwner(image, principal.getClerkId());
 
@@ -72,7 +72,7 @@ public class ImageCommandServiceImpl implements ImageCommandService {
         log.debug("[ImageService] 이미지 삭제 요청 - imageId: {}", imageId);
 
         Image image = imageRepository.findById(imageId)
-                .orElseThrow(() -> new ImageException(ImageErrorCode.IMAGE_NOT_FOUND));
+                .orElseThrow(() -> new ImageException(ImageErrorReason.IMAGE_NOT_FOUND));
 
         validateImageOwner(image, principal.getClerkId());
 
@@ -91,7 +91,7 @@ public class ImageCommandServiceImpl implements ImageCommandService {
         if (image.getUploader() != null && clerkId.equals(image.getUploader().getClerkId())) {
             return;
         }
-        throw new ImageException(ImageErrorCode.IMAGE_ACCESS_DENIED);
+        throw new ImageException(ImageErrorReason.IMAGE_ACCESS_DENIED);
     }
 
     private String buildS3Key(ImageReqDTO.PresignedUrlReq request, String identifier) {
