@@ -147,7 +147,7 @@ class ImageCommandServiceTest extends IntegrationTestSupport {
                     .fileName("test.bmp")
                     .build();
 
-            org.mockito.BDDMockito.willThrow(new ImageException(com.umc.devine.domain.image.exception.code.ImageErrorCode.UNSUPPORTED_FILE_EXTENSION))
+            org.mockito.BDDMockito.willThrow(new ImageException(com.umc.devine.domain.image.exception.code.ImageErrorReason.UNSUPPORTED_FILE_EXTENSION))
                     .given(s3Service).validateExtension("test.bmp");
 
             // when & then
