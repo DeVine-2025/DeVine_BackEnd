@@ -17,7 +17,8 @@
 |------|------|-----|----------|
 | Entity | O | X | X |
 | Repository | O | X | X |
-| Enum / ErrorCode | O | X | X |
+| Enum / ErrorReason | O | X | X |
+| ErrorCode (HTTP 매핑) | X | O | X |
 | Service | X | O | O |
 | Controller | X | O | O |
 | DTO (요청/응답) | X | O | O |
@@ -81,10 +82,25 @@ devine-core/.../domain/chat/
 ├── enums/
 │   └── ChatRoomStatus.java
 ├── exception/
-│   └── code/ChatErrorCode.java
+│   ├── ChatException.java
+│   └── code/ChatErrorReason.java
 └── repository/
     ├── ChatRoomRepository.java
     └── ChatMessageRepository.java
+```
+
+### API에 추가
+
+```
+devine-api/.../domain/chat/
+├── controller/
+│   └── ChatRestController.java
+├── dto/
+│   └── ChatListResDTO.java
+├── exception/
+│   └── code/ChatErrorCode.java
+└── service/
+    └── query/ChatQueryService.java
 ```
 
 ### Realtime에 추가
@@ -103,25 +119,105 @@ devine-realtime/.../domain/chat/
     └── query/ChatQueryService.java
 ```
 
-### API에는?
-
-채팅 목록 조회 같은 REST API가 필요하면 api에도 추가:
-
-```
-devine-api/.../domain/chat/
-├── controller/
-│   └── ChatRestController.java
-├── dto/
-│   └── ChatListResDTO.java
-└── service/
-    └── query/ChatQueryService.java
-```
-
 API와 Realtime의 Service는 **같은 인터페이스를 공유하지 않는다**. 각 모듈의 요구사항이 다르므로 독립적으로 구현한다.
 
 ---
 
-## 4. 모듈 간 통신
+## 4. 에러 코드 작성 가이드
+
+### 구조: ErrorReason(core) → ErrorCode(api) 위임
+
+에러의 `code`와 `message`는 core의 `ErrorReason`에서만 정의한다. api의 `ErrorCode`는 `HttpStatus`만 추가하고 나머지는 `reason`에 위임한다.
+
+```
+ErrorReason (core, SSOT)     ErrorCode (api, HTTP 매핑)        ExceptionAdvice
+┌─────────────────────┐     ┌──────────────────────────┐     ┌─────────────────────┐
+│ code: "CHAT400_1"   │◄────│ getCode() → reason       │◄────│ GeneralException     │
+│ message: "메시지"    │◄────│ getMessage() → reason    │     │  Advice (api)        │
+└─────────────────────┘     │ status: HttpStatus.BAD.. │     ├─────────────────────┤
+         ▲                  └──────────────────────────┘     │ RealtimeException   │
+         │                                                    │  Advice (realtime)  │
+         └────────────────────────────────────────────────────┘
+```
+
+### 새 에러 추가 순서
+
+**1단계: core에 ErrorReason 추가**
+
+```java
+// devine-core/.../domain/chat/exception/code/ChatErrorReason.java
+@Getter
+@AllArgsConstructor
+public enum ChatErrorReason implements DomainErrorReason {
+
+    ROOM_NOT_FOUND("CHAT404_1", "채팅방을 찾을 수 없습니다."),
+    MESSAGE_TOO_LONG("CHAT400_1", "메시지는 1000자를 초과할 수 없습니다."),
+    ;
+
+    private final String code;
+    private final String message;
+}
+```
+
+**2단계: core에 Exception 추가**
+
+```java
+// devine-core/.../domain/chat/exception/ChatException.java
+public class ChatException extends DomainException {
+    public ChatException(DomainErrorReason reason) {
+        super(reason);
+    }
+}
+```
+
+**3단계: api에 ErrorCode 추가 (HttpStatus 매핑만)**
+
+```java
+// devine-api/.../domain/chat/exception/code/ChatErrorCode.java
+@AllArgsConstructor
+public enum ChatErrorCode implements BaseErrorCode {
+
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, ChatErrorReason.ROOM_NOT_FOUND),
+    MESSAGE_TOO_LONG(HttpStatus.BAD_REQUEST, ChatErrorReason.MESSAGE_TOO_LONG),
+    ;
+
+    private final HttpStatus status;
+    private final DomainErrorReason reason;
+
+    @Override public HttpStatus getStatus() { return status; }
+    @Override public String getCode() { return reason.getCode(); }
+    @Override public String getMessage() { return reason.getMessage(); }
+    @Override public DomainErrorReason getReason() { return reason; }
+}
+```
+
+`code`, `message` 필드를 ErrorCode에 직접 선언하지 않는다. 반드시 `reason`에 위임한다.
+
+**4단계: ErrorCodeRegistry에 등록**
+
+```java
+// devine-api/.../global/apiPayload/handler/ErrorCodeRegistry.java
+static {
+    // ... 기존 등록
+    register(ChatErrorCode.values());
+}
+```
+
+### 사용법
+
+서비스에서 예외를 던질 때는 항상 `ErrorReason`을 사용한다:
+
+```java
+throw new ChatException(ChatErrorReason.ROOM_NOT_FOUND);
+```
+
+### Realtime 모듈에서의 에러 처리
+
+Realtime은 `ErrorCode`에 의존하지 않는다. `DomainErrorReason`의 `code`/`message`를 직접 사용하고, `HttpStatus`는 `RealtimeExceptionAdvice`의 `STATUS_MAP`에서 관리한다. Realtime에서 새로운 에러를 처리해야 하면 `STATUS_MAP`에 매핑을 추가한다.
+
+---
+
+## 5. 모듈 간 통신
 
 ### 원칙: 모듈 간 직접 의존 금지
 
@@ -145,7 +241,7 @@ public record ChatEventPayload(Long roomId, Long senderId, String message) {}
 
 ---
 
-## 5. 설정(YAML) 추가 가이드
+## 6. 설정(YAML) 추가 가이드
 
 ### 새 환경변수 추가 시
 
@@ -165,7 +261,7 @@ public record ChatEventPayload(Long roomId, Long senderId, String message) {}
 
 ---
 
-## 6. 의존성 추가 가이드
+## 7. 의존성 추가 가이드
 
 ### build.gradle에 의존성 추가 시
 
@@ -185,7 +281,7 @@ Q-클래스는 core에서 생성되고, QueryDSL 구현체도 core에 있다. ap
 
 ---
 
-## 7. 테스트 작성 가이드
+## 8. 테스트 작성 가이드
 
 ### 어느 모듈에 테스트를 작성할까?
 
@@ -219,7 +315,7 @@ void cleanup() throws InterruptedException {
 
 ---
 
-## 8. Flyway 마이그레이션
+## 9. Flyway 마이그레이션
 
 - 마이그레이션 파일 위치: `devine-core/src/main/resources/db/migration/`
 - **API만 실행**: `devine-api`의 `flyway.enabled=true`
@@ -228,7 +324,7 @@ void cleanup() throws InterruptedException {
 
 ---
 
-## 9. 자주 묻는 질문
+## 10. 자주 묻는 질문
 
 ### Q: core에 있는 엔티티에 필드를 추가하면?
 core만 수정하면 된다. api/realtime은 core JAR을 참조하므로 자동 반영. Flyway 마이그레이션 파일도 core에 추가.
@@ -236,8 +332,8 @@ core만 수정하면 된다. api/realtime은 core JAR을 참조하므로 자동 
 ### Q: api에서만 쓰는 엔티티도 core에?
 YES. 엔티티는 항상 core에 배치한다. 리포지토리, Flyway 마이그레이션과의 일관성을 위해.
 
-### Q: 공통 예외 처리(GeneralExceptionAdvice)는 어디에?
-core에 있다. `@RestControllerAdvice`로 선언되어 있어 각 모듈에서 컴포넌트 스캔 시 자동 적용.
+### Q: 예외 처리(ExceptionAdvice)는 어디에?
+각 모듈에 있다. api는 `GeneralExceptionAdvice`에서 `ErrorCodeRegistry`를 통해 `ErrorReason` → `ErrorCode`(HttpStatus) 변환 후 응답한다. realtime은 `RealtimeExceptionAdvice`에서 `DomainErrorReason`을 직접 사용하고 `STATUS_MAP`으로 HttpStatus를 결정한다.
 
 ### Q: 새 모듈을 추가하려면?
 1. `settings.gradle`에 `include 'devine-{name}'`

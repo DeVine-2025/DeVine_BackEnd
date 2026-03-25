@@ -41,10 +41,10 @@ devine (루트)
 | `domain/*/entity/` | 모든 도메인 엔티티 (Member, Project, Notification 등) |
 | `domain/*/repository/` | JPA 리포지토리 + QueryDSL 구현체 |
 | `domain/*/enums/` | 도메인 열거형 |
-| `domain/*/exception/` | 도메인 예외 + 에러코드 |
+| `domain/*/exception/` | 도메인 예외 + ErrorReason (code, message의 단일 소스) |
 | `domain/notification/converter/`, `dto/` | Realtime에서 참조하므로 core에 배치 |
 | `domain/category/converter/` | 다른 도메인 converter에서 참조 |
-| `global/apiPayload/` | ApiResponse, ErrorCode, SuccessCode, GeneralException |
+| `global/apiPayload/` | ApiResponse, SuccessCode |
 | `global/entity/` | BaseEntity (audit 컬럼) |
 | `global/security/` | ClerkJwtAuthenticationConverter, CurrentMember, CurrentMemberArgumentResolver |
 | `global/config/` | RedisConfig, AsyncConfig, QueryDslConfig, JpaAuditingConfig, CoreExecutorConfig |
@@ -73,8 +73,10 @@ devine (루트)
 | `domain/*/service/` | 비즈니스 서비스 (command/query) |
 | `domain/*/converter/` | DTO ↔ 엔티티 변환 |
 | `domain/*/dto/` | 요청/응답 DTO |
+| `domain/*/exception/code/` | ErrorCode (HttpStatus 매핑, code/message는 core의 ErrorReason에 위임) |
 | `domain/*/event/` | 도메인 이벤트 (ReportCreatedEvent 등) |
 | `domain/project/helper/`, `validator/` | 프로젝트 도메인 헬퍼 |
+| `global/apiPayload/` | BaseErrorCode, ErrorCodeRegistry, GeneralExceptionAdvice |
 | `global/config/` | ApiSecurityConfig, SwaggerConfig, WebMvcConfig, RestClientConfig |
 | `global/filter/` | LoggingFilter |
 | `global/scheduler/` | EmbeddingRetryScheduler, WeeklyViewCountResetScheduler, ImageCleanupScheduler |
