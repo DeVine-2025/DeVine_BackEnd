@@ -18,7 +18,7 @@ import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.test.mock.mockito.MockBean;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import software.amazon.awssdk.services.s3.presigner.model.PresignedPutObjectRequest;
 
 import java.net.URL;
@@ -45,7 +45,7 @@ class ImageCommandServiceTest extends IntegrationTestSupport {
     @Autowired
     private MemberRepository memberRepository;
 
-    @MockBean
+    @MockitoBean
     private S3Service s3Service;
 
     private Member testMember;

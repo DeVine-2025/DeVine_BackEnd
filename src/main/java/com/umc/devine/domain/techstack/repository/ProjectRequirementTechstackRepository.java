@@ -9,7 +9,6 @@ import org.springframework.data.repository.query.Param;
 import java.util.List;
 
 public interface ProjectRequirementTechstackRepository extends JpaRepository<ProjectRequirementTechstack, Long> {
-    List<ProjectRequirementTechstack> findByRequirement(ProjectRequirementMember requirement);
     void deleteAllByRequirementIn(List<ProjectRequirementMember> requirements);
 
     @Query("SELECT prt FROM ProjectRequirementTechstack prt " +
@@ -17,4 +16,10 @@ public interface ProjectRequirementTechstackRepository extends JpaRepository<Pro
            "JOIN prt.requirement prm " +
            "WHERE prm.project.id = :projectId")
     List<ProjectRequirementTechstack> findAllByProjectIdWithTechstack(@Param("projectId") Long projectId);
+
+    @Query("SELECT prt FROM ProjectRequirementTechstack prt " +
+           "JOIN FETCH prt.techstack " +
+           "JOIN FETCH prt.requirement prm " +
+           "WHERE prm.project.id IN :projectIds")
+    List<ProjectRequirementTechstack> findAllByProjectIdsWithTechstack(@Param("projectIds") List<Long> projectIds);
 }

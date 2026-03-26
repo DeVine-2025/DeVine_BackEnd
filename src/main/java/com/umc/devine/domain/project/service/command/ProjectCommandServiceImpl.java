@@ -36,6 +36,7 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 import java.util.stream.Collectors;
 
 import java.time.LocalDate;
@@ -85,7 +86,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .content(savedProject.getContent())
                 .build());
 
-        return ProjectConverter.toCreateProjectRes(savedProject, projectRequirementTechstackRepository);
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap =
+                projectRequirementTechstackRepository.findAllByProjectIdsWithTechstack(List.of(savedProject.getId()))
+                        .stream()
+                        .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
+        return ProjectConverter.toCreateProjectRes(savedProject, techstackMap);
     }
 
     @Override
@@ -151,7 +156,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .content(project.getContent())
                 .build());
 
-        return ProjectConverter.toUpdateProjectRes(project, projectRequirementTechstackRepository);
+        Map<Long, List<ProjectRequirementTechstack>> techstackMap =
+                projectRequirementTechstackRepository.findAllByProjectIdsWithTechstack(List.of(project.getId()))
+                        .stream()
+                        .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
+        return ProjectConverter.toUpdateProjectRes(project, techstackMap);
     }
 
     @Override

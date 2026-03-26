@@ -2,42 +2,31 @@
 # Development Profile
 # ===========================================
 
-server:
-  port: ${SPRING_PORT:8080}
-
 spring:
   jpa:
     hibernate:
-      ddl-auto: update
+      ddl-auto: validate
 
-# Logging - 개발 환경 상세 로깅
+# Logging
 logging:
   level:
     root: INFO
     com.umc.devine: DEBUG
     org.hibernate.SQL: DEBUG
     org.hibernate.type.descriptor.sql: TRACE
+    org.hibernate.orm.jdbc.bind: TRACE
     org.springframework.web: DEBUG
-    org.hibernate.orm.jdbc.bind: trace
 
-# SSE Configuration
-sse:
-  timeout: 3600000 # 60분
-  heartbeat-rate: 30000 # 30초
-
-# Thread Pool Configuration (ExecutorConfig에서 사용)
+# Thread Pool Configuration
 executor:
-  # @Async 메서드 실행용
   async:
     core-pool-size: 5
     max-pool-size: 10
     queue-capacity: 100
-  # SSE 연결 유지용 (Spring MVC Async)
   sse-connection:
     core-pool-size: 5
     max-pool-size: 10
     queue-capacity: 25
-  # SSE 메시지 전송용 (Redis -> Client)
   sse-dispatch:
     core-pool-size: 10
     max-pool-size: 50
