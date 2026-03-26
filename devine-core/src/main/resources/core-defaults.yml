@@ -1,0 +1,41 @@
+spring:
+  # OAuth2 (Clerk JWT)
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: ${CLERK_ISSUER_URI:}
+
+  # PostgreSQL
+  datasource:
+    url: jdbc:postgresql://${POSTGRES_HOST:}:${POSTGRES_PORT:}/${POSTGRES_DATABASE:}
+    username: ${POSTGRES_USER:postgres}
+    password: ${POSTGRES_PASSWORD:}
+    driver-class-name: org.postgresql.Driver
+
+  # Redis
+  data:
+    redis:
+      host: ${REDIS_HOST:localhost}
+      port: ${REDIS_PORT:6379}
+      password: ${REDIS_PASSWORD:}
+      timeout: ${REDIS_TIMEOUT:2000ms}
+
+  # Flyway
+  flyway:
+    enabled: true
+    baseline-on-migrate: true
+    baseline-version: 0
+
+  # JPA
+  jpa:
+    show-sql: false
+    properties:
+      hibernate:
+        format_sql: true
+
+# Redis Channel
+redis:
+  channel:
+    notification-prefix: "notification:user:"
+    notification-pattern: "notification:user:*"

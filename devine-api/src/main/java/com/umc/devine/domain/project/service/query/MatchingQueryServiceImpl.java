@@ -1,0 +1,157 @@
+package com.umc.devine.domain.project.service.query;
+
+import com.umc.devine.domain.category.entity.mapping.MemberCategory;
+import com.umc.devine.domain.category.repository.MemberCategoryRepository;
+import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.exception.code.MemberErrorReason;
+import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.project.converter.MatchingConverter;
+import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
+import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingType;
+import com.umc.devine.domain.project.exception.MatchingException;
+import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
+import com.umc.devine.domain.project.repository.MatchingRepository;
+import com.umc.devine.domain.project.validator.MatchingValidator;
+import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
+import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
+import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
+import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.global.dto.PagedResponse;
+import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.Pageable;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
+import java.util.List;
+import java.util.Map;
+import java.util.stream.Collectors;
+import java.util.Optional;
+
+@Service
+@RequiredArgsConstructor
+@Transactional(readOnly = true)
+public class MatchingQueryServiceImpl implements MatchingQueryService {
+
+    private final MatchingRepository matchingRepository;
+    private final ProjectRepository projectRepository;
+    private final MemberRepository memberRepository;
+    private final MatchingValidator matchingValidator;
+    private final MemberCategoryRepository memberCategoryRepository;
+    private final DevTechstackRepository devTechstackRepository;
+    private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
+
+    @Override
+    public MatchingResDTO.DevelopersRes getDevelopers(Member pm, MatchingType type, Pageable pageable) {
+        Page<Matching> matchingPage = matchingRepository.findByProjectOwnerAndMatchingType(
+                pm, type, MatchingStatus.CANCELLED, pageable
+        );
+
+        // 개발자 목록 추출
+        List<Member> developers = matchingPage.getContent().stream()
+                .map(Matching::getMember)
+                .distinct()
+                .toList();
+
+        // 개발자별 카테고리 일괄 조회
+        Map<Long, List<MemberCategory>> categoryMap = memberCategoryRepository
+                .findAllByMemberInWithCategory(developers)
+                .stream()
+                .collect(Collectors.groupingBy(mc -> mc.getMember().getId()));
+
+        // 개발자별 기술스택 일괄 조회
+        Map<Long, List<DevTechstack>> techstackMap = devTechstackRepository
+                .findAllByMemberInWithTechstack(developers)
+                .stream()
+                .collect(Collectors.groupingBy(dt -> dt.getMember().getId()));
+
+        List<MatchingResDTO.DeveloperMatchingInfo> developerInfos = matchingPage.getContent().stream()
+                .map(matching -> {
+                    Long devId = matching.getMember().getId();
+                    List<MemberCategory> categories = categoryMap.getOrDefault(devId, List.of());
+                    List<DevTechstack> techstacks = techstackMap.getOrDefault(devId, List.of());
+                    return MatchingConverter.toDeveloperMatchingInfo(matching, categories, techstacks);
+                })
+                .toList();
+
+        return MatchingResDTO.DevelopersRes.builder()
+                .developers(PagedResponse.of(matchingPage, developerInfos))
+                .build();
+    }
+
+    @Override
+    public MatchingResDTO.ProjectsRes getProjects(Member developer, MatchingType type, Pageable pageable) {
+        Page<Matching> matchingPage = matchingRepository.findByMemberAndMatchingType(
+                developer, type, MatchingStatus.CANCELLED, pageable
+        );
+
+        // 배치 조회: 모든 프로젝트의 기술스택을 1번의 쿼리로 조회
+        List<Long> projectIds = matchingPage.getContent().stream()
+                .map(matching -> matching.getProject().getId())
+                .distinct()
+                .toList();
+
+        Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement = projectIds.isEmpty()
+                ? Map.of()
+                : projectRequirementTechstackRepository.findAllByProjectIdsWithTechstack(projectIds)
+                        .stream()
+                        .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
+
+        List<MatchingResDTO.ProjectMatchingInfo> projectInfos = matchingPage.getContent().stream()
+                .map(matching -> MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement))
+                .toList();
+
+        return MatchingResDTO.ProjectsRes.builder()
+                .projects(PagedResponse.of(matchingPage, projectInfos))
+                .build();
+    }
+
+    @Override
+    public MatchingResDTO.MatchingStatusRes getMyApplyStatus(Member member, Long projectId) {
+        // 1. 프로젝트 존재 확인
+        if (!projectRepository.existsById(projectId)) {
+            throw new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND);
+        }
+
+        // 2. APPLY 타입, CANCELLED 제외하고 본인의 매칭 조회
+        Optional<Matching> matchingOpt = matchingRepository
+                .findByProjectIdAndMemberIdAndTypeAndStatusNot(
+                        projectId, member.getId(), MatchingType.APPLY, MatchingStatus.CANCELLED);
+
+        // 3. 매칭 없으면 exists=false 응답 반환
+        return matchingOpt
+                .map(MatchingConverter::toMatchingStatusRes)
+                .orElse(MatchingResDTO.MatchingStatusRes.notFound(projectId));
+    }
+
+    @Override
+    public MatchingResDTO.MatchingStatusRes getMyProposeStatus(Member pm, Long projectId, String nickname) {
+        // 1. 프로젝트 조회
+        Project project = projectRepository.findById(projectId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
+
+        // 2. PM 권한 검증: 본인 프로젝트인지 확인
+        if (!project.isOwnedBy(pm)) {
+            throw new MatchingException(MatchingErrorReason.NOT_PROJECT_OWNER);
+        }
+
+        // 3. 대상 회원 닉네임으로 조회
+        Member targetMember = memberRepository.findByNickname(nickname)
+                .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
+
+        // 4. PROPOSE 타입, CANCELLED 제외하고 매칭 조회
+        Optional<Matching> matchingOpt = matchingRepository
+                .findByProjectIdAndMemberIdAndTypeAndStatusNot(
+                        projectId, targetMember.getId(), MatchingType.PROPOSE, MatchingStatus.CANCELLED);
+
+        // 5. 매칭 없으면 exists=false 응답 반환
+        return matchingOpt
+                .map(MatchingConverter::toMatchingStatusRes)
+                .orElse(MatchingResDTO.MatchingStatusRes.notFound(projectId));
+    }
+}

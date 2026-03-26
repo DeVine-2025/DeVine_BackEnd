@@ -1,0 +1,16 @@
+# ===========================================
+# Development Profile (Realtime)
+# ===========================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.umc.devine: DEBUG
+    org.hibernate.SQL: DEBUG
+    org.hibernate.orm.jdbc.bind: TRACE
