@@ -1,14 +1,12 @@
 package com.umc.devine.global.apiPayload.handler;
 
 import com.umc.devine.global.apiPayload.ApiResponse;
-import com.umc.devine.global.apiPayload.code.BaseErrorCode;
-import com.umc.devine.global.apiPayload.code.GeneralErrorCode;
 import com.umc.devine.global.exception.DomainErrorReason;
 import com.umc.devine.global.exception.DomainException;
+import com.umc.devine.global.exception.GeneralErrorReason;
 import com.fasterxml.jackson.databind.exc.InvalidFormatException;
 import jakarta.validation.ConstraintViolationException;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
@@ -24,21 +22,13 @@ import java.util.stream.Collectors;
 @RestControllerAdvice
 public class GeneralExceptionAdvice {
 
-    // 도메인 예외를 처리 — ErrorCodeRegistry를 통해 HTTP 매핑
+    // 도메인 예외를 처리
     @ExceptionHandler(DomainException.class)
     public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex) {
         DomainErrorReason reason = ex.getReason();
-        BaseErrorCode errorCode = ErrorCodeRegistry.resolve(reason).orElse(null);
+        log.error("DomainException 발생 - code: {}, message: {}", reason.getCode(), reason.getMessage(), ex);
 
-        if (errorCode != null) {
-            log.error("DomainException 발생 - code: {}, message: {}", errorCode.getCode(), errorCode.getMessage(), ex);
-            return ResponseEntity.status(errorCode.getStatus())
-                    .body(ApiResponse.onFailure(errorCode, null));
-        }
-
-        // 매핑되지 않은 도메인 예외 — fallback 500
-        log.warn("매핑되지 않은 DomainErrorReason: {}", reason.getCode(), ex);
-        return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+        return ResponseEntity.status(reason.getStatus())
                 .body(ApiResponse.onFailure(reason, null));
     }
 
@@ -52,10 +42,9 @@ public class GeneralExceptionAdvice {
                 errors.put(error.getField(), error.getDefaultMessage())
         );
 
-        GeneralErrorCode code = GeneralErrorCode.VALID_FAIL;
-        ApiResponse<Map<String, String>> errorResponse = ApiResponse.onFailure(code, errors);
-
-        return ResponseEntity.status(code.getStatus()).body(errorResponse);
+        GeneralErrorReason reason = GeneralErrorReason.VALID_FAIL;
+        return ResponseEntity.status(reason.getStatus())
+                .body(ApiResponse.onFailure(reason, errors));
     }
 
     // @RequestParam, @PathVariable의 유효성 검사 실패(ConstraintViolationException) 처리 (400)
@@ -72,10 +61,9 @@ public class GeneralExceptionAdvice {
             errors.put(fieldName, violation.getMessage());
         });
 
-        GeneralErrorCode code = GeneralErrorCode.VALID_FAIL;
-        ApiResponse<Map<String, String>> errorResponse = ApiResponse.onFailure(code, errors);
-
-        return ResponseEntity.status(code.getStatus()).body(errorResponse);
+        GeneralErrorReason reason = GeneralErrorReason.VALID_FAIL;
+        return ResponseEntity.status(reason.getStatus())
+                .body(ApiResponse.onFailure(reason, errors));
     }
 
     // JSON 파싱 실패 또는 잘못된 enum 값 처리 (400)
@@ -98,9 +86,9 @@ public class GeneralExceptionAdvice {
 
         log.error("[HttpMessageNotReadable] {}", detail);
 
-        GeneralErrorCode code = GeneralErrorCode.BAD_REQUEST;
-        return ResponseEntity.status(code.getStatus())
-                .body(ApiResponse.onFailure(code, detail));
+        GeneralErrorReason reason = GeneralErrorReason.BAD_REQUEST;
+        return ResponseEntity.status(reason.getStatus())
+                .body(ApiResponse.onFailure(reason, detail));
     }
 
     // 그 외의 정의되지 않은 모든 예외 처리 (500)
@@ -108,9 +96,8 @@ public class GeneralExceptionAdvice {
     public ResponseEntity<ApiResponse<String>> handleException(Exception ex) {
         log.error("Unhandled Exception 발생 - type: {}, message: {}", ex.getClass().getName(), ex.getMessage(), ex);
 
-        GeneralErrorCode code = GeneralErrorCode.INTERNAL_SERVER_ERROR;
-
-        return ResponseEntity.status(code.getStatus())
-                .body(ApiResponse.onFailure(code, ex.getMessage()));
+        GeneralErrorReason reason = GeneralErrorReason.INTERNAL_SERVER_ERROR;
+        return ResponseEntity.status(reason.getStatus())
+                .body(ApiResponse.onFailure(reason, ex.getMessage()));
     }
 }
