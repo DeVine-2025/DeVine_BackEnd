@@ -17,8 +17,7 @@
 |------|------|-----|----------|
 | Entity | O | X | X |
 | Repository | O | X | X |
-| Enum / ErrorReason | O | X | X |
-| ErrorCode (HTTP 매핑) | X | O | X |
+| Enum / ErrorReason (HttpStatus 포함) | O | X | X |
 | Service | X | O | O |
 | Controller | X | O | O |
 | DTO (요청/응답) | X | O | O |
@@ -97,8 +96,6 @@ devine-api/.../domain/chat/
 │   └── ChatRestController.java
 ├── dto/
 │   └── ChatListResDTO.java
-├── exception/
-│   └── code/ChatErrorCode.java
 └── service/
     └── query/ChatQueryService.java
 ```
@@ -125,19 +122,19 @@ API와 Realtime의 Service는 **같은 인터페이스를 공유하지 않는다
 
 ## 4. 에러 코드 작성 가이드
 
-### 구조: ErrorReason(core) → ErrorCode(api) 위임
+### 구조: ErrorReason 단일 계층
 
-에러의 `code`와 `message`는 core의 `ErrorReason`에서만 정의한다. api의 `ErrorCode`는 `HttpStatus`만 추가하고 나머지는 `reason`에 위임한다.
+`HttpStatus`, `code`, `message`를 모두 core의 `ErrorReason`에서 정의한다. api와 realtime 모두 동일한 `ErrorReason`을 직접 참조한다.
 
 ```
-ErrorReason (core, SSOT)     ErrorCode (api, HTTP 매핑)        ExceptionAdvice
-┌─────────────────────┐     ┌──────────────────────────┐     ┌─────────────────────┐
-│ code: "CHAT400_1"   │◄────│ getCode() → reason       │◄────│ GeneralException     │
-│ message: "메시지"    │◄────│ getMessage() → reason    │     │  Advice (api)        │
-└─────────────────────┘     │ status: HttpStatus.BAD.. │     ├─────────────────────┤
-         ▲                  └──────────────────────────┘     │ RealtimeException   │
-         │                                                    │  Advice (realtime)  │
-         └────────────────────────────────────────────────────┘
+ErrorReason (core, SSOT)                ExceptionAdvice
+┌───────────────────────────┐     ┌─────────────────────┐
+│ status: HttpStatus.NOT_.. │◄────│ GeneralException     │
+│ code: "CHAT404_1"         │     │  Advice (api)        │
+│ message: "메시지"          │     ├─────────────────────┤
+└───────────────────────────┘     │ RealtimeException   │
+                                  │  Advice (realtime)  │
+                                  └─────────────────────┘
 ```
 
 ### 새 에러 추가 순서
@@ -150,10 +147,11 @@ ErrorReason (core, SSOT)     ErrorCode (api, HTTP 매핑)        ExceptionAdvice
 @AllArgsConstructor
 public enum ChatErrorReason implements DomainErrorReason {
 
-    ROOM_NOT_FOUND("CHAT404_1", "채팅방을 찾을 수 없습니다."),
-    MESSAGE_TOO_LONG("CHAT400_1", "메시지는 1000자를 초과할 수 없습니다."),
+    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, "CHAT404_1", "채팅방을 찾을 수 없습니다."),
+    MESSAGE_TOO_LONG(HttpStatus.BAD_REQUEST, "CHAT400_1", "메시지는 1000자를 초과할 수 없습니다."),
     ;
 
+    private final HttpStatus status;
     private final String code;
     private final String message;
 }
@@ -170,39 +168,6 @@ public class ChatException extends DomainException {
 }
 ```
 
-**3단계: api에 ErrorCode 추가 (HttpStatus 매핑만)**
-
-```java
-// devine-api/.../domain/chat/exception/code/ChatErrorCode.java
-@AllArgsConstructor
-public enum ChatErrorCode implements BaseErrorCode {
-
-    ROOM_NOT_FOUND(HttpStatus.NOT_FOUND, ChatErrorReason.ROOM_NOT_FOUND),
-    MESSAGE_TOO_LONG(HttpStatus.BAD_REQUEST, ChatErrorReason.MESSAGE_TOO_LONG),
-    ;
-
-    private final HttpStatus status;
-    private final DomainErrorReason reason;
-
-    @Override public HttpStatus getStatus() { return status; }
-    @Override public String getCode() { return reason.getCode(); }
-    @Override public String getMessage() { return reason.getMessage(); }
-    @Override public DomainErrorReason getReason() { return reason; }
-}
-```
-
-`code`, `message` 필드를 ErrorCode에 직접 선언하지 않는다. 반드시 `reason`에 위임한다.
-
-**4단계: ErrorCodeRegistry에 등록**
-
-```java
-// devine-api/.../global/apiPayload/handler/ErrorCodeRegistry.java
-static {
-    // ... 기존 등록
-    register(ChatErrorCode.values());
-}
-```
-
 ### 사용법
 
 서비스에서 예외를 던질 때는 항상 `ErrorReason`을 사용한다:
@@ -211,9 +176,7 @@ static {
 throw new ChatException(ChatErrorReason.ROOM_NOT_FOUND);
 ```
 
-### Realtime 모듈에서의 에러 처리
-
-Realtime은 `ErrorCode`에 의존하지 않는다. `DomainErrorReason`의 `code`/`message`를 직접 사용하고, `HttpStatus`는 `RealtimeExceptionAdvice`의 `STATUS_MAP`에서 관리한다. Realtime에서 새로운 에러를 처리해야 하면 `STATUS_MAP`에 매핑을 추가한다.
+api와 realtime 모두 `ExceptionAdvice`에서 `reason.getStatus()`로 `HttpStatus`를 직접 꺼내 응답한다. 별도의 ErrorCode 매핑이나 Registry 등록은 필요 없다.
 
 ---
 
@@ -333,7 +296,7 @@ core만 수정하면 된다. api/realtime은 core JAR을 참조하므로 자동 
 YES. 엔티티는 항상 core에 배치한다. 리포지토리, Flyway 마이그레이션과의 일관성을 위해.
 
 ### Q: 예외 처리(ExceptionAdvice)는 어디에?
-각 모듈에 있다. api는 `GeneralExceptionAdvice`에서 `ErrorCodeRegistry`를 통해 `ErrorReason` → `ErrorCode`(HttpStatus) 변환 후 응답한다. realtime은 `RealtimeExceptionAdvice`에서 `DomainErrorReason`을 직접 사용하고 `STATUS_MAP`으로 HttpStatus를 결정한다.
+각 모듈에 있다. api는 `GeneralExceptionAdvice`, realtime은 `RealtimeExceptionAdvice`에서 `DomainException`을 잡고, `reason.getStatus()`로 HttpStatus를 꺼내 응답한다.
 
 ### Q: 새 모듈을 추가하려면?
 1. `settings.gradle`에 `include 'devine-{name}'`
