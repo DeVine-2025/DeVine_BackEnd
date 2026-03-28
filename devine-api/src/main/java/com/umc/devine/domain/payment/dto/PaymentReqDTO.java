@@ -1,9 +1,13 @@
 package com.umc.devine.domain.payment.dto;
 
 import io.swagger.v3.oas.annotations.media.Schema;
+import jakarta.validation.Valid;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+
+import java.util.List;
 
 public class PaymentReqDTO {
 
@@ -14,12 +18,29 @@ public class PaymentReqDTO {
             String paymentId,
 
             @NotBlank(message = "주문명은 필수입니다.")
-            @Schema(description = "주문명", example = "테스트 상품")
+            @Schema(description = "주문명", example = "리포트 생성권 1개 x1")
             String orderName,
 
             @NotNull(message = "결제 금액은 필수입니다.")
             @Positive(message = "결제 금액은 양수여야 합니다.")
-            @Schema(description = "결제 금액 (KRW)", example = "10000")
-            Long amount
+            @Schema(description = "결제 금액 (KRW)", example = "4900")
+            Long amount,
+
+            @NotEmpty(message = "구매 항목은 1개 이상이어야 합니다.")
+            @Valid
+            @Schema(description = "구매 항목 목록")
+            List<TicketPurchaseItem> items
+    ) {}
+
+    @Schema(description = "구매 항목")
+    public record TicketPurchaseItem(
+            @NotNull(message = "티켓 상품 ID는 필수입니다.")
+            @Schema(description = "티켓 상품 ID", example = "1")
+            Long ticketProductId,
+
+            @NotNull(message = "수량은 필수입니다.")
+            @Positive(message = "수량은 1개 이상이어야 합니다.")
+            @Schema(description = "구매 수량", example = "5")
+            Integer quantity
     ) {}
 }

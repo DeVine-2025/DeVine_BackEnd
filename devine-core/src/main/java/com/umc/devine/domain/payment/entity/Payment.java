@@ -1,6 +1,7 @@
 package com.umc.devine.domain.payment.entity;
 
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.ticket.entity.PaymentTicket;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -41,7 +42,15 @@ public class Payment extends BaseEntity {
     @Builder.Default
     private List<Transaction> transactions = new ArrayList<>();
 
+    @OneToMany(mappedBy = "payment", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<PaymentTicket> paymentTickets = new ArrayList<>();
+
     public void addTransaction(Transaction transaction) {
         this.transactions.add(transaction);
+    }
+
+    public void addPaymentTicket(PaymentTicket paymentTicket) {
+        this.paymentTickets.add(paymentTicket);
     }
 }

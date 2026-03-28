@@ -17,10 +17,10 @@ import org.springframework.web.bind.annotation.RequestParam;
 @Tag(name = "Payment", description = "결제 관련 API")
 public interface PaymentControllerDocs {
 
-    @Operation(summary = "결제 완료 API", description = "PortOne 결제 완료 후 서버에서 검증하고 저장하는 API입니다.")
+    @Operation(summary = "결제 완료 API", description = "PortOne 결제 완료 후 서버에서 검증하고 저장하는 API입니다. 구매 항목(items)에 티켓 상품 ID와 수량을 포함해야 합니다.")
     @ApiResponses({
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created, 결제 완료"),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 결제이거나 금액/상태 불일치"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created, 결제 완료 및 리포트 생성권 지급"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 결제, 금액/상태 불일치, 존재하지 않는 상품"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "502", description = "PortOne API 오류")
     })
