@@ -73,6 +73,8 @@ public class ApiSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects").permitAll()
                         // 프로젝트 상세 조회 (비회원 허용)
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/{projectId}").permitAll()
+                        // PortOne 웹훅 (서명 검증으로 인증)
+                        .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
                         // 그 외 모든 요청은 인증 필요

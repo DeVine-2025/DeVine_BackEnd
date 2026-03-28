@@ -2,5 +2,7 @@ package com.umc.devine.domain.payment.enums;
 
 public enum TransactionStatus {
     PAID,
-    FAILED
+    FAILED,
+    REFUNDED,
+    CANCELLED
 }

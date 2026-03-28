@@ -7,7 +7,8 @@ public record PortOnePaymentResponse(
         String currency,
         String paidAt,
         MethodDetail method,
-        String pgProvider
+        String pgProvider,
+        String customData
 ) {
 
     public record AmountDetail(Long total) {}

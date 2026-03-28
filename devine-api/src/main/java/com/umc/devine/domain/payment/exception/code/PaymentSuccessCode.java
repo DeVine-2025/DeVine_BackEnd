@@ -18,6 +18,9 @@ public enum PaymentSuccessCode implements BaseSuccessCode {
     CHANNEL_KEY_FOUND(HttpStatus.OK,
             "PAYMENT200_2",
             "채널키를 성공적으로 조회했습니다."),
+    WEBHOOK_PROCESSED(HttpStatus.OK,
+            "PAYMENT200_3",
+            "웹훅이 성공적으로 처리되었습니다."),
     ;
 
     private final HttpStatus status;

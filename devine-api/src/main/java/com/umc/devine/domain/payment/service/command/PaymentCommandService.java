@@ -6,4 +6,6 @@ import com.umc.devine.domain.payment.dto.PaymentResDTO;
 
 public interface PaymentCommandService {
     PaymentResDTO.PaymentDTO completePayment(PaymentReqDTO.CompletePaymentDTO request, Member member);
+
+    void handleWebhookPayment(String portonePaymentId);
 }

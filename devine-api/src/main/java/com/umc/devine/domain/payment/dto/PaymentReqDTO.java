@@ -7,9 +7,21 @@ import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
 
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+
 import java.util.List;
 
 public class PaymentReqDTO {
+
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record WebhookDTO(
+            String type,
+            Data data
+    ) {
+        @JsonIgnoreProperties(ignoreUnknown = true)
+        public record Data(String paymentId) {}
+    }
+
 
     @Schema(description = "결제 완료 요청")
     public record CompletePaymentDTO(

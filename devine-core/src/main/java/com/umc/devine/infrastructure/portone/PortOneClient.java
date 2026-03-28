@@ -15,10 +15,14 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 
 import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 @Slf4j
 @Component
 public class PortOneClient {
+
+    private static final long API_TIMEOUT_SECONDS = 5;
 
     private final PaymentClient paymentClient;
 
@@ -33,13 +37,16 @@ public class PortOneClient {
     public PortOnePaymentResponse getPayment(String paymentId) {
         try {
             io.portone.sdk.server.payment.Payment payment =
-                    paymentClient.getPayment(paymentId).get();
+                    paymentClient.getPayment(paymentId).get(API_TIMEOUT_SECONDS, TimeUnit.SECONDS);
             return mapToResponse(payment);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
             throw new PaymentException(PaymentErrorReason.PORTONE_API_ERROR);
         } catch (PaymentException e) {
             throw e;
+        } catch (TimeoutException e) {
+            log.error("PortOne API 타임아웃 - paymentId: {}", paymentId);
+            throw new PaymentException(PaymentErrorReason.PORTONE_API_ERROR);
         } catch (ExecutionException | RuntimeException e) {
             log.error("PortOne API 결제 조회 실패 - paymentId: {}, error: {}", paymentId, e.getMessage());
             throw new PaymentException(PaymentErrorReason.PORTONE_API_ERROR);
@@ -48,7 +55,7 @@ public class PortOneClient {
 
     private PortOnePaymentResponse mapToResponse(io.portone.sdk.server.payment.Payment payment) {
         if (!(payment instanceof PaidPayment paidPayment)) {
-            return new PortOnePaymentResponse(null, "NOT_PAID", null, null, null, null, null);
+            return new PortOnePaymentResponse(null, "NOT_PAID", null, null, null, null, null, null);
         }
 
         if (paidPayment.getAmount() == null) {
@@ -77,6 +84,8 @@ public class PortOneClient {
             pgProvider = paidPayment.getChannel().getPgProvider().getValue();
         }
 
+        String customData = paidPayment.getCustomData();
+
         return new PortOnePaymentResponse(
                 paidPayment.getTransactionId(),
                 "PAID",
@@ -84,7 +93,8 @@ public class PortOneClient {
                 currency,
                 paidAt,
                 methodDetail,
-                pgProvider
+                pgProvider,
+                customData
         );
     }
 
