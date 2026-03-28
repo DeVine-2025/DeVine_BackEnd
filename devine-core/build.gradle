@@ -60,6 +60,9 @@ dependencies {
     runtimeOnly 'io.jsonwebtoken:jjwt-impl:0.12.3'
     runtimeOnly 'io.jsonwebtoken:jjwt-jackson:0.12.3'
 
+    // PortOne server SDK
+    implementation 'io.portone:server-sdk:0.23.0'
+
     // Database drivers
     runtimeOnly 'org.postgresql:postgresql'
     runtimeOnly 'com.h2database:h2'
