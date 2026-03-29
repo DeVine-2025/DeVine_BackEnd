@@ -208,8 +208,8 @@ portone:
 
 ## DB 마이그레이션
 
-| 파일 | 내용 |
-|------|------|
-| `V20260323000000__246_add_payment_tables.sql` | payment, transaction, card_detail, easy_pay_detail 테이블 |
-| `V20260329000000__253_add_ticket_tables.sql` | ticket_product, payment_ticket, member_report_credit 테이블 + 기본 상품 |
+| 파일                                                              | 내용 |
+|-----------------------------------------------------------------|------|
+| `V20260323000000__253_add_payment_tables.sql`                    | payment, transaction, card_detail, easy_pay_detail 테이블 |
+| `V20260329000000__253_add_ticket_tables.sql`                    | ticket_product, payment_ticket, member_report_credit 테이블 + 기본 상품 |
 | `V20260329100000__253_extend_transaction_check_constraints.sql` | transaction type/status CHECK 제약 확장 (REFUND, CANCELLED 추가) |
