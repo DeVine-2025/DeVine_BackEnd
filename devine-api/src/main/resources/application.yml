@@ -48,13 +48,3 @@ github:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
-# PortOne
-portone:
-  store-id: ${PORTONE_STORE_ID:}
-  api-secret: ${PORTONE_API_SECRET:}
-  base-url: https://api.portone.io
-  webhook-secret: ${PORTONE_WEBHOOK_SECRET:}
-  channel-key:
-    nhn-kcp: ${PORTONE_CHANNEL_KEY_NHN_KCP:}
-    kg-inicis: ${PORTONE_CHANNEL_KEY_KG_INICIS:}
-    kakaopay: ${PORTONE_CHANNEL_KEY_KAKAOPAY:}
