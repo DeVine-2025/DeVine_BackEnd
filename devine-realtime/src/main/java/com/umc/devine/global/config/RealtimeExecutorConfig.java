@@ -6,6 +6,9 @@ import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.core.task.AsyncTaskExecutor;
 import org.springframework.scheduling.concurrent.ThreadPoolTaskExecutor;
+import org.springframework.scheduling.concurrent.ThreadPoolTaskScheduler;
+
+import org.springframework.scheduling.annotation.EnableScheduling;
 
 import java.util.concurrent.Executor;
 import java.util.concurrent.ThreadPoolExecutor;
@@ -14,6 +17,7 @@ import java.util.concurrent.ThreadPoolExecutor;
  * SSE 전용 스레드풀 (Realtime 모듈)
  */
 @Configuration
+@EnableScheduling
 @Slf4j
 public class RealtimeExecutorConfig {
 
@@ -34,6 +38,15 @@ public class RealtimeExecutorConfig {
 
     @Value("${executor.sse-dispatch.queue-capacity:200}")
     private int sseDispatchQueueCapacity;
+
+    @Value("${executor.chat-dispatch.core-pool-size:10}")
+    private int chatDispatchCorePoolSize;
+
+    @Value("${executor.chat-dispatch.max-pool-size:50}")
+    private int chatDispatchMaxPoolSize;
+
+    @Value("${executor.chat-dispatch.queue-capacity:200}")
+    private int chatDispatchQueueCapacity;
 
     @Bean("sseConnectionExecutor")
     public AsyncTaskExecutor sseConnectionExecutor() {
@@ -65,6 +78,32 @@ public class RealtimeExecutorConfig {
 
         log.info("sseDispatchExecutor 초기화 - core: {}, max: {}, queue: {}",
                 sseDispatchCorePoolSize, sseDispatchMaxPoolSize, sseDispatchQueueCapacity);
+        return executor;
+    }
+
+    @Bean("webSocketTaskScheduler")
+    public ThreadPoolTaskScheduler webSocketTaskScheduler() {
+        ThreadPoolTaskScheduler scheduler = new ThreadPoolTaskScheduler();
+        scheduler.setPoolSize(1);
+        scheduler.setThreadNamePrefix("ws-heartbeat-");
+        scheduler.initialize();
+        return scheduler;
+    }
+
+    @Bean("chatDispatchExecutor")
+    public Executor chatDispatchExecutor() {
+        ThreadPoolTaskExecutor executor = new ThreadPoolTaskExecutor();
+        executor.setCorePoolSize(chatDispatchCorePoolSize);
+        executor.setMaxPoolSize(chatDispatchMaxPoolSize);
+        executor.setQueueCapacity(chatDispatchQueueCapacity);
+        executor.setThreadNamePrefix("chat-dispatch-");
+        executor.setRejectedExecutionHandler(new ThreadPoolExecutor.CallerRunsPolicy());
+        executor.setWaitForTasksToCompleteOnShutdown(true);
+        executor.setAwaitTerminationSeconds(30);
+        executor.initialize();
+
+        log.info("chatDispatchExecutor 초기화 - core: {}, max: {}, queue: {}",
+                chatDispatchCorePoolSize, chatDispatchMaxPoolSize, chatDispatchQueueCapacity);
         return executor;
     }
 }

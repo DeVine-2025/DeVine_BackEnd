@@ -45,3 +45,7 @@ executor:
     core-pool-size: ${SSE_DISPATCH_CORE:10}
     max-pool-size: ${SSE_DISPATCH_MAX:50}
     queue-capacity: ${SSE_DISPATCH_QUEUE:200}
+  chat-dispatch:
+    core-pool-size: ${CHAT_DISPATCH_CORE:10}
+    max-pool-size: ${CHAT_DISPATCH_MAX:50}
+    queue-capacity: ${CHAT_DISPATCH_QUEUE:200}

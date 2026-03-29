@@ -39,6 +39,7 @@ public class RealtimeSecurityConfig {
                 )
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/actuator/**").permitAll()
+                        .requestMatchers("/ws/**").permitAll()
                         .requestMatchers("/sse/**").authenticated()
                         .anyRequest().authenticated()
                 )

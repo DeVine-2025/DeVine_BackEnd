@@ -39,3 +39,9 @@ redis:
   channel:
     notification-prefix: "notification:user:"
     notification-pattern: "notification:user:*"
+    chat-prefix: "chat:user:"
+    chat-pattern: "chat:user:*"
+  presence:
+    key-prefix: "chat:presence:"
+    active-rooms-key: "chat:active-rooms"
+    timeout-seconds: 30

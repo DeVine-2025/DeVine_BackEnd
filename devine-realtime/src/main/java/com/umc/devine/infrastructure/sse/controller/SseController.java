@@ -41,15 +41,16 @@ public class SseController implements SseControllerDocs {
 
         SseEmitter emitter = sseEmitterManager.create(memberId);
 
-        // 재연결 시 놓친 메시지 처리를 위한 이벤트 발행
+        // SSE 연결 이벤트 발행 (재연결 시 놓친 메시지 처리 + 채팅 뱃지 초기화)
+        Long parsedLastEventId = null;
         if (lastEventId != null && !lastEventId.isEmpty()) {
             try {
-                Long parsedLastEventId = Long.parseLong(lastEventId);
-                eventPublisher.publishEvent(new SseConnectedEvent(this, memberId, parsedLastEventId));
+                parsedLastEventId = Long.parseLong(lastEventId);
             } catch (NumberFormatException e) {
-                log.warn("Invalid Last-Event-ID format: {}", lastEventId);
+                log.warn("잘못된 Last-Event-ID: {}", lastEventId);
             }
         }
+        eventPublisher.publishEvent(new SseConnectedEvent(this, memberId, parsedLastEventId));
 
         return emitter;
     }
