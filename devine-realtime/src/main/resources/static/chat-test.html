@@ -1,0 +1,821 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <title>DeVine 채팅 테스트</title>
+  <script src="https://cdn.jsdelivr.net/npm/@stomp/stompjs@7/bundles/stomp.umd.min.js"></script>
+  <style>
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+    body { font-family: 'Segoe UI', sans-serif; background: #f5f5f5; font-size: 13px; }
+
+    .header {
+      background: #1a1a2e; color: white; padding: 14px 20px;
+      display: flex; align-items: center; gap: 12px;
+    }
+    .header h1 { font-size: 16px; font-weight: 600; }
+    .header .badge { background: #e94560; padding: 2px 8px; border-radius: 10px; font-size: 11px; }
+
+    .setup-bar {
+      background: #16213e; color: #ccc; padding: 10px 20px;
+      display: flex; align-items: center; gap: 10px; flex-wrap: wrap;
+    }
+    .setup-bar label { font-size: 11px; color: #888; }
+    .setup-bar input {
+      background: #0f3460; border: 1px solid #333; color: white;
+      padding: 4px 8px; border-radius: 4px; font-size: 12px;
+    }
+    .setup-bar input[placeholder="Base URL"] { width: 180px; }
+    .setup-bar .sep { color: #444; margin: 0 4px; }
+
+    .main { display: flex; gap: 0; height: calc(100vh - 90px); }
+
+    /* 사이드바 - 시나리오 목록 */
+    .sidebar {
+      width: 220px; background: #1e1e2e; color: #ccc;
+      overflow-y: auto; flex-shrink: 0;
+    }
+    .sidebar-section { padding: 10px 12px 4px; font-size: 10px; color: #666; text-transform: uppercase; letter-spacing: 1px; }
+    .scenario-btn {
+      display: block; width: 100%; text-align: left;
+      background: none; border: none; color: #aaa; padding: 7px 16px;
+      cursor: pointer; font-size: 12px; border-left: 3px solid transparent;
+      transition: all 0.15s;
+    }
+    .scenario-btn:hover { background: #2a2a3e; color: white; border-left-color: #e94560; }
+    .scenario-btn.active { background: #2a2a3e; color: white; border-left-color: #4ade80; }
+    .scenario-num { color: #555; margin-right: 6px; font-size: 11px; }
+
+    /* 메인 컨텐츠 */
+    .content { flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+
+    /* 유저 패널 영역 */
+    .users { display: flex; flex: 1; overflow: hidden; }
+
+    .user-panel {
+      flex: 1; display: flex; flex-direction: column;
+      border-right: 1px solid #ddd; overflow: hidden;
+    }
+    .user-panel:last-child { border-right: none; }
+
+    .user-header {
+      padding: 10px 14px; display: flex; align-items: center; gap: 8px;
+      border-bottom: 1px solid #e0e0e0; flex-shrink: 0;
+    }
+    .user-a .user-header { background: #e8f4fd; }
+    .user-b .user-header { background: #fdf0e8; }
+    .user-label { font-weight: 700; font-size: 14px; }
+    .user-a .user-label { color: #1976d2; }
+    .user-b .user-label { color: #e65100; }
+    .conn-status {
+      padding: 2px 8px; border-radius: 10px; font-size: 10px; font-weight: 600;
+      background: #eee; color: #999;
+    }
+    .conn-status.connected { background: #d4edda; color: #155724; }
+    .conn-status.disconnected { background: #f8d7da; color: #721c24; }
+
+    .user-controls { padding: 10px 14px; background: #fafafa; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; }
+    .ctrl-row { display: flex; gap: 6px; margin-bottom: 6px; align-items: center; }
+    .ctrl-row:last-child { margin-bottom: 0; }
+    .ctrl-row label { font-size: 11px; color: #666; width: 60px; flex-shrink: 0; }
+    .ctrl-row input {
+      flex: 1; border: 1px solid #ddd; padding: 4px 8px;
+      border-radius: 4px; font-size: 12px; background: white;
+    }
+    .ctrl-row input:focus { outline: none; border-color: #90b8e8; }
+
+    .btn {
+      padding: 5px 12px; border: none; border-radius: 4px;
+      cursor: pointer; font-size: 12px; font-weight: 500; white-space: nowrap;
+      transition: opacity 0.15s;
+    }
+    .btn:hover { opacity: 0.85; }
+    .btn:disabled { opacity: 0.4; cursor: not-allowed; }
+    .btn-blue { background: #1976d2; color: white; }
+    .btn-red { background: #d32f2f; color: white; }
+    .btn-green { background: #388e3c; color: white; }
+    .btn-orange { background: #f57c00; color: white; }
+    .btn-gray { background: #757575; color: white; }
+    .btn-purple { background: #7b1fa2; color: white; }
+    .btn-sm { padding: 3px 8px; font-size: 11px; }
+
+    .send-row { display: flex; gap: 6px; padding: 8px 14px; background: #fafafa; border-bottom: 1px solid #e8e8e8; flex-shrink: 0; }
+    .send-row input { flex: 1; border: 1px solid #ddd; padding: 5px 8px; border-radius: 4px; font-size: 12px; }
+    .send-row input:focus { outline: none; border-color: #90b8e8; }
+
+    /* 로그 */
+    .log {
+      flex: 1; overflow-y: auto; padding: 8px;
+      background: #0d1117; font-family: 'Courier New', monospace; font-size: 11px;
+    }
+    .log-entry { margin-bottom: 3px; padding: 3px 6px; border-radius: 3px; line-height: 1.5; }
+    .log-time { color: #444; margin-right: 6px; }
+    .log-recv { color: #4ade80; }
+    .log-send { color: #60a5fa; }
+    .log-read { color: #f59e0b; }
+    .log-error { color: #f87171; background: #1f0a0a; }
+    .log-info { color: #94a3b8; }
+    .log-sse { color: #c084fc; }
+    .log-rest { color: #34d399; }
+    .log-warn { color: #fbbf24; }
+
+    /* REST 패널 */
+    .rest-panel {
+      background: #1a1a2e; color: #ccc; padding: 10px 14px;
+      border-top: 2px solid #333; flex-shrink: 0;
+    }
+    .rest-panel h3 { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .rest-buttons { display: flex; gap: 6px; flex-wrap: wrap; }
+
+    /* 하단 공통 REST 영역 */
+    .bottom-bar {
+      background: #1a1a2e; border-top: 2px solid #2a2a3e;
+      padding: 10px 16px; flex-shrink: 0;
+    }
+    .bottom-bar h3 { font-size: 11px; color: #666; text-transform: uppercase; letter-spacing: 1px; margin-bottom: 8px; }
+    .bottom-row { display: flex; gap: 8px; flex-wrap: wrap; align-items: center; }
+    .bottom-row label { color: #888; font-size: 11px; }
+    .bottom-row input {
+      background: #0f3460; border: 1px solid #333; color: white;
+      padding: 4px 8px; border-radius: 4px; font-size: 12px; width: 80px;
+    }
+
+    /* 결과 토스트 */
+    #toast {
+      position: fixed; bottom: 20px; left: 50%; transform: translateX(-50%);
+      background: #333; color: white; padding: 8px 16px; border-radius: 6px;
+      font-size: 12px; opacity: 0; transition: opacity 0.3s; z-index: 999;
+      pointer-events: none;
+    }
+    #toast.show { opacity: 1; }
+
+    /* 구분선 */
+    .divider { height: 1px; background: #2a2a3e; margin: 6px 0; }
+  </style>
+</head>
+<body>
+
+<div class="header">
+  <h1>DeVine 채팅 테스트</h1>
+  <span class="badge">WebSocket · REST · SSE</span>
+</div>
+
+<div class="setup-bar">
+  <label>BASE URL</label>
+  <input id="baseUrl" placeholder="Base URL" value="http://localhost:8081">
+  <span class="sep">|</span>
+  <label>WS URL</label>
+  <input id="wsUrl" placeholder="WS URL" value="ws://localhost:8081/ws/chat" style="width:220px">
+</div>
+
+<div class="main">
+  <!-- 시나리오 사이드바 -->
+  <div class="sidebar">
+    <div class="sidebar-section">Phase 2 · WebSocket</div>
+    <button class="scenario-btn" onclick="runScenario('ws_connect_a')"><span class="scenario-num">2-1</span>A 연결</button>
+    <button class="scenario-btn" onclick="runScenario('ws_connect_b')"><span class="scenario-num">2-2</span>B 연결</button>
+    <button class="scenario-btn" onclick="runScenario('subscribe_a')"><span class="scenario-num">2-3</span>A 전체 구독</button>
+    <button class="scenario-btn" onclick="runScenario('send_a_to_b')"><span class="scenario-num">2-4</span>A→B 전송 (B 미구독→미읽음)</button>
+    <button class="scenario-btn" onclick="runScenario('msg_history')"><span class="scenario-num">2-5</span>메시지 히스토리 조회</button>
+    <button class="scenario-btn" onclick="runScenario('subscribe_b')"><span class="scenario-num">2-6</span>B 메시지 구독</button>
+
+    <div class="sidebar-section">Phase 3 · 읽음 처리</div>
+    <button class="scenario-btn" onclick="runScenario('read_stomp_b')"><span class="scenario-num">3-1</span>B 읽음 처리 (STOMP)</button>
+    <button class="scenario-btn" onclick="runScenario('read_rest_b')"><span class="scenario-num">3-2</span>B 읽음 처리 (REST)</button>
+    <button class="scenario-btn" onclick="runScenario('unread_count_b')"><span class="scenario-num">3-3</span>B 미읽음 수 확인</button>
+
+    <div class="sidebar-section">Phase 4 · Presence</div>
+    <button class="scenario-btn" onclick="runScenario('presence_send')"><span class="scenario-num">4-1</span>B 구독 중 A→B 전송</button>
+
+    <div class="sidebar-section">Phase 5 · SSE 뱃지</div>
+    <button class="scenario-btn" onclick="runScenario('sse_connect_b')"><span class="scenario-num">5-1</span>B SSE 연결 (초기 뱃지)</button>
+    <button class="scenario-btn" onclick="runScenario('sse_badge_trigger')"><span class="scenario-num">5-2</span>A→B 전송 (뱃지 업데이트)</button>
+
+    <div class="sidebar-section">Phase 6 · 나가기/재입장</div>
+    <button class="scenario-btn" onclick="runScenario('leave_a')"><span class="scenario-num">6-1</span>A 나가기</button>
+    <button class="scenario-btn" onclick="runScenario('rooms_after_leave')"><span class="scenario-num">6-2</span>A 방 목록 (사라짐 확인)</button>
+    <button class="scenario-btn" onclick="runScenario('b_sends_after_leave')"><span class="scenario-num">6-3</span>B 메시지 전송 (A 재입장)</button>
+    <button class="scenario-btn" onclick="runScenario('rooms_after_rejoin')"><span class="scenario-num">6-4</span>A 방 목록 (재등장 확인)</button>
+    <button class="scenario-btn" onclick="runScenario('msg_after_rejoin')"><span class="scenario-num">6-5</span>A 히스토리 (나간 이후만)</button>
+    <button class="scenario-btn" onclick="runScenario('both_leave')"><span class="scenario-num">6-6</span>B도 나가기</button>
+    <button class="scenario-btn" onclick="runScenario('send_both_left')"><span class="scenario-num">6-7</span>둘 다 나간 후 전송</button>
+
+    <div class="sidebar-section">Phase 7 · 에러</div>
+    <button class="scenario-btn" onclick="runScenario('err_no_token')"><span class="scenario-num">7-1</span>토큰 없이 연결</button>
+    <button class="scenario-btn" onclick="runScenario('err_bad_token')"><span class="scenario-num">7-2</span>잘못된 토큰 연결</button>
+    <button class="scenario-btn" onclick="runScenario('err_not_member')"><span class="scenario-num">7-3</span>방 멤버 아닌 유저</button>
+    <button class="scenario-btn" onclick="runScenario('err_empty_content')"><span class="scenario-num">7-4</span>빈 content 전송</button>
+  </div>
+
+  <!-- 메인 컨텐츠 -->
+  <div class="content">
+    <div class="users">
+      <!-- 사용자 A 패널 -->
+      <div class="user-panel user-a">
+        <div class="user-header">
+          <span class="user-label">User A</span>
+          <span class="conn-status disconnected" id="statusA">disconnected</span>
+          <span id="sseBadgeA" style="display:none; background:#c084fc; color:white; padding:2px 7px; border-radius:10px; font-size:10px;">SSE</span>
+        </div>
+        <div class="user-controls">
+          <div class="ctrl-row">
+            <label>Token</label>
+            <input id="tokenA" placeholder="JWT Token (eyJ...)" type="password">
+            <button class="btn btn-sm btn-gray" onclick="togglePw('tokenA')">show</button>
+          </div>
+          <div class="ctrl-row">
+            <label>Room ID</label>
+            <input id="roomIdA" placeholder="채팅방 ID" style="width:80px; flex:none">
+            <button class="btn btn-sm btn-blue" onclick="connectUser('A')">Connect WS</button>
+            <button class="btn btn-sm btn-red" onclick="disconnectUser('A')">Disconnect</button>
+            <button class="btn btn-sm btn-purple" onclick="connectSse('A')">SSE</button>
+          </div>
+        </div>
+        <div class="send-row">
+          <input id="msgA" placeholder="보낼 메시지..." onkeydown="if(event.key==='Enter') sendMsg('A')">
+          <button class="btn btn-blue" onclick="sendMsg('A')">Send</button>
+          <button class="btn btn-green" onclick="sendRead('A')">Read</button>
+        </div>
+        <div class="log" id="logA"></div>
+        <div class="rest-panel">
+          <h3>REST (A 토큰)</h3>
+          <div class="rest-buttons">
+            <input id="targetIdA" placeholder="상대 ID" style="width:70px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
+            <button class="btn btn-sm btn-green" onclick="restCreateRoom('A')">방 생성</button>
+            <button class="btn btn-sm btn-gray" onclick="restGetRooms('A')">방 목록</button>
+            <button class="btn btn-sm btn-gray" onclick="restGetMessages('A')">메시지 히스토리</button>
+            <button class="btn btn-sm btn-orange" onclick="restReadRoom('A')">읽음처리</button>
+            <button class="btn btn-sm btn-gray" onclick="restUnreadCount('A')">미읽음 수</button>
+            <button class="btn btn-sm btn-red" onclick="restLeaveRoom('A')">나가기</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- 사용자 B 패널 -->
+      <div class="user-panel user-b">
+        <div class="user-header">
+          <span class="user-label">User B</span>
+          <span class="conn-status disconnected" id="statusB">disconnected</span>
+          <span id="sseBadgeB" style="display:none; background:#c084fc; color:white; padding:2px 7px; border-radius:10px; font-size:10px;">SSE</span>
+          <span id="unreadBadge" style="display:none; background:#e94560; color:white; padding:2px 7px; border-radius:10px; font-size:10px;"></span>
+        </div>
+        <div class="user-controls">
+          <div class="ctrl-row">
+            <label>Token</label>
+            <input id="tokenB" placeholder="JWT Token (eyJ...)" type="password">
+            <button class="btn btn-sm btn-gray" onclick="togglePw('tokenB')">show</button>
+          </div>
+          <div class="ctrl-row">
+            <label>Room ID</label>
+            <input id="roomIdB" placeholder="채팅방 ID" style="width:80px; flex:none">
+            <button class="btn btn-sm btn-orange" onclick="connectUser('B')">Connect WS</button>
+            <button class="btn btn-sm btn-red" onclick="disconnectUser('B')">Disconnect</button>
+            <button class="btn btn-sm btn-purple" onclick="connectSse('B')">SSE</button>
+          </div>
+        </div>
+        <div class="send-row">
+          <input id="msgB" placeholder="보낼 메시지..." onkeydown="if(event.key==='Enter') sendMsg('B')">
+          <button class="btn btn-orange" onclick="sendMsg('B')">Send</button>
+          <button class="btn btn-green" onclick="sendRead('B')">Read</button>
+        </div>
+        <div class="log" id="logB"></div>
+        <div class="rest-panel">
+          <h3>REST (B 토큰)</h3>
+          <div class="rest-buttons">
+            <input id="targetIdB" placeholder="상대 ID" style="width:70px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
+            <button class="btn btn-sm btn-green" onclick="restCreateRoom('B')">방 생성</button>
+            <button class="btn btn-sm btn-gray" onclick="restGetRooms('B')">방 목록</button>
+            <button class="btn btn-sm btn-gray" onclick="restGetMessages('B')">메시지 히스토리</button>
+            <button class="btn btn-sm btn-orange" onclick="restReadRoom('B')">읽음처리</button>
+            <button class="btn btn-sm btn-gray" onclick="restUnreadCount('B')">미읽음 수</button>
+            <button class="btn btn-sm btn-red" onclick="restLeaveRoom('B')">나가기</button>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 하단 공통 -->
+    <div class="bottom-bar">
+      <div class="bottom-row">
+        <label>시나리오 로그:</label>
+        <span id="scenarioStatus" style="color:#4ade80; font-size:12px; flex:1;">왼쪽 시나리오 버튼을 클릭하면 자동으로 실행됩니다.</span>
+        <button class="btn btn-sm btn-gray" onclick="clearLogs()">전체 로그 지우기</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+  const clients = { A: null, B: null };
+  const sseClients = { A: null, B: null };
+
+  // ──────────────────────────────
+  // 유틸
+  // ──────────────────────────────
+  function getBase() { return document.getElementById('baseUrl').value.replace(/\/$/, ''); }
+  function getWs()   { return document.getElementById('wsUrl').value; }
+  function getToken(u) { return document.getElementById('token' + u).value.trim(); }
+  function getRoomId(u) { return document.getElementById('roomId' + u).value.trim(); }
+
+  function log(user, type, msg) {
+    const el = document.getElementById('log' + user);
+    const time = new Date().toLocaleTimeString('ko-KR', { hour12: false });
+    const div = document.createElement('div');
+    div.className = 'log-entry';
+    div.innerHTML = `<span class="log-time">${time}</span><span class="log-${type}">${escHtml(msg)}</span>`;
+    el.prepend(div);
+  }
+
+  function logBoth(type, msg) { log('A', type, msg); log('B', type, msg); }
+
+  function escHtml(s) {
+    return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
+  }
+
+  function setStatus(user, connected) {
+    const el = document.getElementById('status' + user);
+    el.textContent = connected ? 'connected' : 'disconnected';
+    el.className = 'conn-status ' + (connected ? 'connected' : 'disconnected');
+  }
+
+  function toast(msg, ms = 2500) {
+    const el = document.getElementById('toast');
+    el.textContent = msg;
+    el.classList.add('show');
+    setTimeout(() => el.classList.remove('show'), ms);
+  }
+
+  function togglePw(id) {
+    const el = document.getElementById(id);
+    el.type = el.type === 'password' ? 'text' : 'password';
+  }
+
+  function clearLogs() {
+    document.getElementById('logA').innerHTML = '';
+    document.getElementById('logB').innerHTML = '';
+  }
+
+  function syncRoomId(src) {
+    const other = src === 'A' ? 'B' : 'A';
+    const val = document.getElementById('roomId' + src).value;
+    if (!document.getElementById('roomId' + other).value) {
+      document.getElementById('roomId' + other).value = val;
+    }
+  }
+
+  // ──────────────────────────────
+  // WebSocket / STOMP
+  // ──────────────────────────────
+  function connectUser(user) {
+    const token = getToken(user);
+    if (!token) { toast('Token을 입력하세요 (' + user + ')'); return; }
+
+    if (clients[user]) {
+      clients[user].deactivate();
+      clients[user] = null;
+    }
+
+    const roomId = getRoomId(user);
+
+    const client = new StompJs.Client({
+      brokerURL: getWs(),
+      connectHeaders: { Authorization: 'Bearer ' + token },
+      reconnectDelay: 0,
+      onConnect: () => {
+        setStatus(user, true);
+        log(user, 'info', '[CONNECTED] WebSocket 연결 성공');
+      },
+      onDisconnect: () => {
+        setStatus(user, false);
+        log(user, 'info', '[DISCONNECTED]');
+      },
+      onStompError: (frame) => {
+        log(user, 'error', '[STOMP ERROR] ' + (frame.headers && frame.headers.message ? frame.headers.message : JSON.stringify(frame.headers)));
+        setStatus(user, false);
+      },
+      onWebSocketError: (e) => {
+        log(user, 'error', '[WS ERROR] 연결 실패 - 토큰 또는 서버 확인');
+        setStatus(user, false);
+      },
+      onWebSocketClose: (e) => {
+        setStatus(user, false);
+        log(user, 'warn', '[WS CLOSED] code=' + e.code);
+      }
+    });
+
+    client.activate();
+    clients[user] = client;
+  }
+
+  function subscribeAll(user, roomId) {
+    const client = clients[user];
+    if (!client || !client.connected) {
+      log(user, 'error', '먼저 WebSocket에 연결하세요');
+      return;
+    }
+
+    // 메시지 구독
+    client.subscribe('/user/queue/chat/' + roomId + '/messages', (msg) => {
+      const data = JSON.parse(msg.body);
+      const readMark = data.isRead ? ' [즉시읽음]' : ' [미읽음]';
+      log(user, 'recv', '[MSG] ' + data.content + readMark + ' | sender=' + data.senderId + ' | msgId=' + data.messageId);
+    });
+
+    // 읽음 알림 구독
+    client.subscribe('/user/queue/chat/read', (msg) => {
+      const data = JSON.parse(msg.body);
+      log(user, 'read', '[READ 알림] roomId=' + data.roomId + ', readerId=' + data.readerId + ' 가 내 메시지를 읽음');
+    });
+
+    // 에러 구독
+    client.subscribe('/user/queue/errors', (msg) => {
+      const data = JSON.parse(msg.body);
+      log(user, 'error', '[ERROR] ' + (data.error || JSON.stringify(data)));
+    });
+
+    log(user, 'info', '[SUBSCRIBED] roomId=' + roomId + ' 구독 완료');
+  }
+
+  function disconnectUser(user) {
+    if (clients[user]) {
+      clients[user].deactivate();
+      clients[user] = null;
+    }
+    setStatus(user, false);
+  }
+
+  function sendMsg(user) {
+    const client = clients[user];
+    const roomId = getRoomId(user);
+    const content = document.getElementById('msg' + user).value;
+
+    if (!client || !client.connected) { log(user, 'error', 'WebSocket 미연결'); return; }
+    if (!roomId) { log(user, 'error', 'Room ID를 입력하세요'); return; }
+    if (!content) { log(user, 'error', '메시지를 입력하세요'); return; }
+
+    client.publish({
+      destination: '/app/chat/' + roomId + '/send',
+      body: JSON.stringify({ content })
+    });
+    log(user, 'send', '[SEND] ' + content);
+    document.getElementById('msg' + user).value = '';
+  }
+
+  function sendRead(user) {
+    const client = clients[user];
+    const roomId = getRoomId(user);
+    if (!client || !client.connected) { log(user, 'error', 'WebSocket 미연결'); return; }
+    if (!roomId) { log(user, 'error', 'Room ID를 입력하세요'); return; }
+
+    client.publish({ destination: '/app/chat/' + roomId + '/read', body: '{}' });
+    log(user, 'read', '[READ SENT] roomId=' + roomId + ' 읽음 처리 전송');
+  }
+
+  // ──────────────────────────────
+  // SSE
+  // ──────────────────────────────
+  function connectSse(user) {
+    const token = getToken(user);
+    if (!token) { toast('Token을 입력하세요 (' + user + ')'); return; }
+    if (sseClients[user]) { sseClients[user].close(); }
+
+    const url = getBase() + '/sse/v1/subscribe';
+    // SSE는 헤더를 직접 못 붙이므로 쿼리파라미터 방식 필요 시 서버 확인
+    // 일반적으로 Authorization 헤더 필요 → fetch로 연결
+    log(user, 'sse', '[SSE] 연결 시도: ' + url);
+
+    // EventSource는 커스텀 헤더 불가 → fetch + ReadableStream 방식
+    fetch(url, {
+      headers: { 'Authorization': 'Bearer ' + token, 'Accept': 'text/event-stream' }
+    }).then(response => {
+      if (!response.ok) {
+        log(user, 'error', '[SSE] 연결 실패: HTTP ' + response.status);
+        return;
+      }
+      log(user, 'sse', '[SSE] 연결 성공');
+      document.getElementById('sseBadge' + user).style.display = 'inline';
+
+      const reader = response.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      sseClients[user] = reader;
+
+      function read() {
+        reader.read().then(({ done, value }) => {
+          if (done) { log(user, 'sse', '[SSE] 연결 종료'); document.getElementById('sseBadge' + user).style.display = 'none'; return; }
+          buffer += decoder.decode(value, { stream: true });
+          const lines = buffer.split('\n');
+          buffer = lines.pop();
+
+          let eventName = '';
+          let eventData = '';
+          for (const line of lines) {
+            if (line.startsWith('event:')) eventName = line.slice(6).trim();
+            else if (line.startsWith('data:')) eventData = line.slice(5).trim();
+            else if (line === '' && eventData) {
+              handleSseEvent(user, eventName, eventData);
+              eventName = ''; eventData = '';
+            }
+          }
+          read();
+        }).catch(e => {
+          log(user, 'error', '[SSE] 읽기 오류: ' + e.message);
+        });
+      }
+      read();
+    }).catch(e => {
+      log(user, 'error', '[SSE] 연결 오류: ' + e.message);
+    });
+  }
+
+  function handleSseEvent(user, eventName, data) {
+    if (eventName === 'chat_unread_rooms') {
+      const parsed = JSON.parse(data);
+      log(user, 'sse', '[SSE chat_unread_rooms] 미읽음 방 수: ' + parsed.unreadRoomCount);
+      if (user === 'B') {
+        const badge = document.getElementById('unreadBadge');
+        badge.style.display = 'inline';
+        badge.textContent = '미읽음 ' + parsed.unreadRoomCount;
+      }
+    } else if (eventName === 'heartbeat' || eventName === 'ping') {
+      // 무시
+    } else {
+      log(user, 'sse', '[SSE ' + (eventName || 'event') + '] ' + data);
+    }
+  }
+
+  // ──────────────────────────────
+  // REST API
+  // ──────────────────────────────
+  async function restApi(user, method, path, body) {
+    const token = getToken(user);
+    if (!token) { log(user, 'error', 'Token을 입력하세요'); return null; }
+
+    const url = getBase() + path;
+    const opts = {
+      method,
+      headers: { 'Authorization': 'Bearer ' + token, 'Content-Type': 'application/json' }
+    };
+    if (body) opts.body = JSON.stringify(body);
+
+    log(user, 'rest', '[' + method + '] ' + path);
+    try {
+      const res = await fetch(url, opts);
+      const json = await res.json();
+      log(user, res.ok ? 'rest' : 'error', '[' + res.status + '] ' + JSON.stringify(json, null, 0));
+      return { ok: res.ok, status: res.status, data: json };
+    } catch (e) {
+      log(user, 'error', '[REST ERROR] ' + e.message);
+      return null;
+    }
+  }
+
+  async function restCreateRoom(user) {
+    const targetId = document.getElementById('targetId' + user).value;
+    if (!targetId) { toast('상대방 ID를 입력하세요'); return; }
+    const result = await restApi(user, 'POST', '/api/v1/chat/rooms', { targetMemberId: Number(targetId) });
+    if (result && result.ok && result.data.result) {
+      const roomId = result.data.result.roomId;
+      document.getElementById('roomId' + user).value = roomId;
+      syncRoomId(user);
+      toast('방 생성 완료: roomId=' + roomId);
+    }
+  }
+
+  async function restGetRooms(user) {
+    await restApi(user, 'GET', '/api/v1/chat/rooms');
+  }
+
+  async function restGetMessages(user) {
+    const roomId = getRoomId(user);
+    if (!roomId) { log(user, 'error', 'Room ID를 입력하세요'); return; }
+    await restApi(user, 'GET', '/api/v1/chat/rooms/' + roomId + '/messages?page=0&size=20');
+  }
+
+  async function restReadRoom(user) {
+    const roomId = getRoomId(user);
+    if (!roomId) { log(user, 'error', 'Room ID를 입력하세요'); return; }
+    await restApi(user, 'PATCH', '/api/v1/chat/rooms/' + roomId + '/read');
+  }
+
+  async function restUnreadCount(user) {
+    await restApi(user, 'GET', '/api/v1/chat/unread-count');
+  }
+
+  async function restLeaveRoom(user) {
+    const roomId = getRoomId(user);
+    if (!roomId) { log(user, 'error', 'Room ID를 입력하세요'); return; }
+    if (!confirm(user + '가 roomId=' + roomId + ' 에서 나갑니다?')) return;
+    await restApi(user, 'DELETE', '/api/v1/chat/rooms/' + roomId);
+  }
+
+  // ──────────────────────────────
+  // 시나리오 자동 실행
+  // ──────────────────────────────
+  function setScenarioStatus(msg, color = '#4ade80') {
+    const el = document.getElementById('scenarioStatus');
+    el.style.color = color;
+    el.textContent = msg;
+  }
+
+  function highlightBtn(scenario) {
+    document.querySelectorAll('.scenario-btn').forEach(b => b.classList.remove('active'));
+    // 시나리오명으로 해당 버튼 찾기
+    document.querySelectorAll('.scenario-btn').forEach(b => {
+      if (b.getAttribute('onclick') && b.getAttribute('onclick').includes("'" + scenario + "'")) {
+        b.classList.add('active');
+      }
+    });
+  }
+
+  async function runScenario(name) {
+    highlightBtn(name);
+
+    switch(name) {
+
+      // Phase 2
+      case 'ws_connect_a':
+        setScenarioStatus('[2-1] A WebSocket 연결 중...');
+        connectUser('A');
+        setScenarioStatus('[2-1] A WebSocket 연결 요청 완료. 로그 확인하세요.');
+        break;
+
+      case 'ws_connect_b':
+        setScenarioStatus('[2-2] B WebSocket 연결 중...');
+        connectUser('B');
+        setScenarioStatus('[2-2] B WebSocket 연결 요청 완료. 로그 확인하세요.');
+        break;
+
+      case 'subscribe_a': {
+        const roomId = getRoomId('A');
+        if (!roomId) { setScenarioStatus('[2-3] Room ID를 입력하세요', '#f87171'); return; }
+        if (!clients['A'] || !clients['A'].connected) { setScenarioStatus('[2-3] A WebSocket 미연결', '#f87171'); return; }
+        subscribeAll('A', roomId);
+        setScenarioStatus('[2-3] A가 메시지 + read알림 + 에러 구독 완료');
+        break;
+      }
+
+      case 'send_a_to_b':
+        setScenarioStatus('[2-4] A→B 메시지 전송. B는 아직 미구독 → isRead: false 확인하세요.');
+        document.getElementById('msgA').value = document.getElementById('msgA').value || '안녕하세요 B님!';
+        sendMsg('A');
+        break;
+
+      case 'msg_history':
+        setScenarioStatus('[2-5] 메시지 히스토리 조회');
+        await restGetMessages('A');
+        break;
+
+      case 'subscribe_b': {
+        const roomId = getRoomId('B');
+        if (!roomId) { setScenarioStatus('[2-6] Room ID를 입력하세요', '#f87171'); return; }
+        if (!clients['B'] || !clients['B'].connected) { setScenarioStatus('[2-6] B WebSocket 미연결', '#f87171'); return; }
+        subscribeAll('B', roomId);
+        setScenarioStatus('[2-6] B가 roomId=' + roomId + ' 구독 완료 (이후 Presence 활성)');
+        break;
+      }
+
+      // Phase 3
+      case 'read_stomp_b':
+        setScenarioStatus('[3-1] B STOMP 읽음 처리 전송. A 로그에서 read 알림 확인하세요.');
+        sendRead('B');
+        break;
+
+      case 'read_rest_b':
+        setScenarioStatus('[3-2] B REST 읽음 처리. unreadRoomCount=0 확인하세요.');
+        await restReadRoom('B');
+        break;
+
+      case 'unread_count_b':
+        setScenarioStatus('[3-3] B 미읽음 방 수 조회');
+        await restUnreadCount('B');
+        break;
+
+      // Phase 4
+      case 'presence_send':
+        setScenarioStatus('[4-1] B가 방 구독 중인 상태에서 A→B 전송. isRead=true 여부 확인하세요.');
+        document.getElementById('msgA').value = 'Presence 테스트 - 즉시 읽음?';
+        sendMsg('A');
+        break;
+
+      // Phase 5
+      case 'sse_connect_b':
+        setScenarioStatus('[5-1] B SSE 연결. 연결 직후 chat_unread_rooms 이벤트 확인하세요.');
+        connectSse('B');
+        break;
+
+      case 'sse_badge_trigger':
+        setScenarioStatus('[5-2] A→B 메시지 전송. B SSE에서 chat_unread_rooms 업데이트 확인하세요.');
+        document.getElementById('msgA').value = 'SSE 뱃지 테스트';
+        sendMsg('A');
+        break;
+
+      // Phase 6
+      case 'leave_a':
+        setScenarioStatus('[6-1] A 채팅방 나가기');
+        await restLeaveRoom('A');
+        break;
+
+      case 'rooms_after_leave':
+        setScenarioStatus('[6-2] A 방 목록 조회. 방이 사라졌는지 확인하세요.');
+        await restGetRooms('A');
+        break;
+
+      case 'b_sends_after_leave':
+        setScenarioStatus('[6-3] B→A 메시지 전송 (A가 나간 상태). 전송 성공 + A가 재입장되는지 확인.');
+        document.getElementById('msgB').value = document.getElementById('msgB').value || 'A야 돌아와~';
+        sendMsg('B');
+        break;
+
+      case 'rooms_after_rejoin':
+        setScenarioStatus('[6-4] A 방 목록 재조회. 방이 다시 나타나는지 확인하세요.');
+        await restGetRooms('A');
+        break;
+
+      case 'msg_after_rejoin':
+        setScenarioStatus('[6-5] A 메시지 히스토리. 나간 이후 메시지만 나오는지 확인하세요.');
+        await restGetMessages('A');
+        break;
+
+      case 'both_leave':
+        setScenarioStatus('[6-6] B도 채팅방 나가기');
+        await restLeaveRoom('B');
+        break;
+
+      case 'send_both_left':
+        setScenarioStatus('[6-7] 둘 다 나간 방에 메시지 전송. BOTH_LEFT_ROOM 에러 확인하세요.');
+        document.getElementById('msgA').value = '둘 다 나간 방 테스트';
+        sendMsg('A');
+        break;
+
+      // Phase 7
+      case 'err_no_token': {
+        setScenarioStatus('[7-1] 토큰 없이 WebSocket 연결 시도');
+        const noTokenClient = new StompJs.Client({
+          brokerURL: getWs(),
+          connectHeaders: {},
+          reconnectDelay: 0,
+          onConnect: () => { log('A', 'warn', '[7-1 FAIL] 연결 성공 - 예상과 다름'); },
+          onStompError: (f) => { log('A', 'info', '[7-1 PASS] STOMP 에러: ' + (f.headers.message || JSON.stringify(f.headers))); },
+          onWebSocketError: () => { log('A', 'info', '[7-1 PASS] WebSocket 연결 거부됨'); },
+          onWebSocketClose: (e) => { log('A', 'info', '[7-1 PASS] 연결 거부: code=' + e.code); },
+        });
+        noTokenClient.activate();
+        setTimeout(() => noTokenClient.deactivate(), 3000);
+        break;
+      }
+
+      case 'err_bad_token': {
+        setScenarioStatus('[7-2] 잘못된 토큰으로 WebSocket 연결 시도');
+        const badTokenClient = new StompJs.Client({
+          brokerURL: getWs(),
+          connectHeaders: { Authorization: 'Bearer invalid.token.here' },
+          reconnectDelay: 0,
+          onConnect: () => { log('A', 'warn', '[7-2 FAIL] 연결 성공 - 예상과 다름'); },
+          onStompError: (f) => { log('A', 'info', '[7-2 PASS] STOMP 에러: ' + (f.headers.message || JSON.stringify(f.headers))); },
+          onWebSocketError: () => { log('A', 'info', '[7-2 PASS] WebSocket 연결 거부됨'); },
+          onWebSocketClose: (e) => { log('A', 'info', '[7-2 PASS] 연결 거부: code=' + e.code); },
+        });
+        badTokenClient.activate();
+        setTimeout(() => badTokenClient.deactivate(), 3000);
+        break;
+      }
+
+      case 'err_not_member': {
+        const roomId = getRoomId('A');
+        if (!roomId) { setScenarioStatus('[7-3] Room ID를 입력하세요', '#f87171'); return; }
+        setScenarioStatus('[7-3] 방 멤버 아닌 유저 메시지 전송 시도');
+        log('A', 'info', '[7-3] A의 /user/queue/errors 에서 NOT_CHAT_ROOM_MEMBER 에러 확인하세요');
+        log('A', 'info', '[7-3] 다른 방 ID로 전송 시도');
+        const wrongRoomId = String(Number(roomId) + 99999);
+        if (clients['A'] && clients['A'].connected) {
+          clients['A'].publish({
+            destination: '/app/chat/' + wrongRoomId + '/send',
+            body: JSON.stringify({ content: '나는 이 방 멤버가 아님' })
+          });
+          log('A', 'send', '[7-3 SEND] roomId=' + wrongRoomId + ' (존재하지 않는 방)');
+        } else {
+          log('A', 'error', '[7-3] A WebSocket 미연결');
+        }
+        break;
+      }
+
+      case 'err_empty_content': {
+        const roomId = getRoomId('A');
+        if (!roomId) { setScenarioStatus('[7-4] Room ID를 입력하세요', '#f87171'); return; }
+        if (!clients['A'] || !clients['A'].connected) { setScenarioStatus('[7-4] A WebSocket 미연결', '#f87171'); return; }
+        setScenarioStatus('[7-4] 빈 content 전송. /user/queue/errors 에서 에러 확인하세요.');
+        clients['A'].publish({
+          destination: '/app/chat/' + roomId + '/send',
+          body: JSON.stringify({ content: '' })
+        });
+        log('A', 'send', '[7-4 SEND] content="" (빈 값)');
+        break;
+      }
+    }
+  }
+</script>
+</body>
+</html>
