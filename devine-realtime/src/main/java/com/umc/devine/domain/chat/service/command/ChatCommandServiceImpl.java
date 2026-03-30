@@ -82,6 +82,13 @@ public class ChatCommandServiceImpl implements ChatCommandService {
 
     @Override
     public void sendMessage(Long memberId, Long roomId, String content) {
+        if (content == null || content.isBlank()) {
+            throw new ChatException(ChatErrorReason.INVALID_MESSAGE_CONTENT);
+        }
+        if (content.length() > 1000) {
+            throw new ChatException(ChatErrorReason.INVALID_MESSAGE_CONTENT);
+        }
+
         ChatRoom room = chatRoomRepository.findByIdWithMembers(roomId)
                 .orElseThrow(() -> new ChatException(ChatErrorReason.CHAT_ROOM_NOT_FOUND));
 
