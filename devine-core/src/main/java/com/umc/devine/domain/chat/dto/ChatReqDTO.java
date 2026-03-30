@@ -7,7 +7,7 @@ public class ChatReqDTO {
 
     public record CreateRoomReq(
             @NotNull(message = "대상 회원 ID는 필수입니다.")
-            Long targetMemberId
+            String targetClerkId
     ) {}
 
     public record SendMessageReq(

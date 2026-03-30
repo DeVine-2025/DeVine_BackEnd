@@ -18,7 +18,7 @@ public class ChatResDTO {
 
     @Builder
     public record OtherMemberInfo(
-            Long id,
+            String clerkId,
             String nickname,
             String image,
             String mainType
@@ -27,7 +27,7 @@ public class ChatResDTO {
     @Builder
     public record ChatMessageDetail(
             Long messageId,
-            Long senderId,
+            String senderClerkId,
             String senderNickname,
             String senderImage,
             String content,

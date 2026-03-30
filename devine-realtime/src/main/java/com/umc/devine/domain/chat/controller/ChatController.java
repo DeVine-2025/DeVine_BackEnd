@@ -30,7 +30,7 @@ public class ChatController {
     ) {
         return ApiResponse.onSuccess(
                 ChatSuccessCode.ROOM_CREATED,
-                chatCommandService.createOrGetRoom(member.getId(), request.targetMemberId())
+                chatCommandService.createOrGetRoom(member.getId(), request.targetClerkId())
         );
     }
 

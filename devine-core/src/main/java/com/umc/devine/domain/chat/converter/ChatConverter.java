@@ -13,7 +13,7 @@ public class ChatConverter {
 
     public static ChatResDTO.OtherMemberInfo toOtherMemberInfo(Member member) {
         return ChatResDTO.OtherMemberInfo.builder()
-                .id(member.getId())
+                .clerkId(member.getClerkId())
                 .nickname(member.getNickname())
                 .image(member.getImage())
                 .mainType(member.getMainType().name())
@@ -31,7 +31,7 @@ public class ChatConverter {
     public static ChatResDTO.ChatMessageDetail toMessageDetail(ChatMessage message) {
         return ChatResDTO.ChatMessageDetail.builder()
                 .messageId(message.getId())
-                .senderId(message.getSender().getId())
+                .senderClerkId(message.getSender().getClerkId())
                 .senderNickname(message.getSender().getNickname())
                 .senderImage(message.getSender().getImage())
                 .content(message.getContent())

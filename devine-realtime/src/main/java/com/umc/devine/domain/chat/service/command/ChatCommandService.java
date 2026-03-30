@@ -4,7 +4,7 @@ import com.umc.devine.domain.chat.dto.ChatResDTO;
 
 public interface ChatCommandService {
 
-    ChatResDTO.ChatRoomInfo createOrGetRoom(Long memberId, Long targetMemberId);
+    ChatResDTO.ChatRoomInfo createOrGetRoom(Long memberId, String targetClerkId);
 
     void sendMessage(Long memberId, Long roomId, String content);
 

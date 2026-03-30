@@ -44,18 +44,18 @@ public class ChatCommandServiceImpl implements ChatCommandService {
     private String chatChannelPrefix;
 
     @Override
-    public ChatResDTO.ChatRoomInfo createOrGetRoom(Long memberId, Long targetMemberId) {
-        if (memberId.equals(targetMemberId)) {
+    public ChatResDTO.ChatRoomInfo createOrGetRoom(Long memberId, String targetClerkId) {
+        Member sender = memberRepository.findById(memberId)
+                .orElseThrow(() -> new ChatException(ChatErrorReason.TARGET_MEMBER_NOT_FOUND));
+        Member target = memberRepository.findByClerkId(targetClerkId)
+                .orElseThrow(() -> new ChatException(ChatErrorReason.TARGET_MEMBER_NOT_FOUND));
+
+        if (memberId.equals(target.getId())) {
             throw new ChatException(ChatErrorReason.CANNOT_CHAT_SELF);
         }
 
-        Member sender = memberRepository.findById(memberId)
-                .orElseThrow(() -> new ChatException(ChatErrorReason.TARGET_MEMBER_NOT_FOUND));
-        Member target = memberRepository.findById(targetMemberId)
-                .orElseThrow(() -> new ChatException(ChatErrorReason.TARGET_MEMBER_NOT_FOUND));
-
-        Long m1Id = Math.min(memberId, targetMemberId);
-        Long m2Id = Math.max(memberId, targetMemberId);
+        Long m1Id = Math.min(memberId, target.getId());
+        Long m2Id = Math.max(memberId, target.getId());
 
         ChatRoom room = chatRoomRepository.findByMember1IdAndMember2Id(m1Id, m2Id)
                 .map(existing -> {
@@ -176,7 +176,7 @@ public class ChatCommandServiceImpl implements ChatCommandService {
             Map<String, Object> data = Map.of(
                     "messageId", message.getId(),
                     "roomId", message.getChatRoom().getId(),
-                    "senderId", sender.getId(),
+                    "senderClerkId", sender.getClerkId(),
                     "senderNickname", sender.getNickname(),
                     "senderImage", sender.getImage() != null ? sender.getImage() : "",
                     "content", message.getContent(),
@@ -205,7 +205,7 @@ public class ChatCommandServiceImpl implements ChatCommandService {
         try {
             Map<String, Object> data = Map.of(
                     "roomId", roomId,
-                    "readerId", reader.getId()
+                    "readerClerkId", reader.getClerkId()
             );
 
             ChatEventPayload payload = ChatEventPayload.builder()
