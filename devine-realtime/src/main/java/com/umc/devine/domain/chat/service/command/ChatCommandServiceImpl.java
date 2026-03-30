@@ -112,13 +112,12 @@ public class ChatCommandServiceImpl implements ChatCommandService {
 
         ChatMessage saved = chatMessageRepository.save(message);
 
-        long unreadRoomCount = receiverInRoom ? 0 :
-                chatMessageRepository.countRoomsWithUnreadMessages(receiverId);
-
         TransactionSynchronizationManager.registerSynchronization(
                 new TransactionSynchronization() {
                     @Override
                     public void afterCommit() {
+                        long unreadRoomCount = receiverInRoom ? 0 :
+                                chatMessageRepository.countRoomsWithUnreadMessages(receiverId);
                         publishChatMessage(saved, receiver, sender, receiverInRoom, unreadRoomCount);
                     }
                 }
