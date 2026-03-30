@@ -196,7 +196,7 @@
     <button class="scenario-btn" onclick="runScenario('b_sends_after_leave')"><span class="scenario-num">6-3</span>B 메시지 전송 (A 재입장)</button>
     <button class="scenario-btn" onclick="runScenario('rooms_after_rejoin')"><span class="scenario-num">6-4</span>A 방 목록 (재등장 확인)</button>
     <button class="scenario-btn" onclick="runScenario('msg_after_rejoin')"><span class="scenario-num">6-5</span>A 히스토리 (나간 이후만)</button>
-    <button class="scenario-btn" onclick="runScenario('both_leave')"><span class="scenario-num">6-6</span>B도 나가기</button>
+    <button class="scenario-btn" onclick="runScenario('both_leave')"><span class="scenario-num">6-6</span>A, B 모두 나가기</button>
     <button class="scenario-btn" onclick="runScenario('send_both_left')"><span class="scenario-num">6-7</span>둘 다 나간 후 전송</button>
 
     <div class="sidebar-section">Phase 7 · 에러</div>
@@ -419,13 +419,13 @@
     client.subscribe('/user/queue/chat/' + roomId + '/messages', (msg) => {
       const data = JSON.parse(msg.body);
       const readMark = data.isRead ? ' [즉시읽음]' : ' [미읽음]';
-      log(user, 'recv', '[MSG] ' + data.content + readMark + ' | sender=' + data.senderId + ' | msgId=' + data.messageId);
+      log(user, 'recv', '[MSG] ' + data.content + readMark + ' | sender=' + data.senderClerkId + ' | msgId=' + data.messageId);
     });
 
     // 읽음 알림 구독
     client.subscribe('/user/queue/chat/read', (msg) => {
       const data = JSON.parse(msg.body);
-      log(user, 'read', '[READ 알림] roomId=' + data.roomId + ', readerId=' + data.readerId + ' 가 내 메시지를 읽음');
+      log(user, 'read', '[READ 알림] roomId=' + data.roomId + ', readerClerkId=' + data.readerClerkId + ' 가 내 메시지를 읽음');
     });
 
     // 에러 구독
@@ -499,6 +499,8 @@
       const reader = response.body.getReader();
       const decoder = new TextDecoder();
       let buffer = '';
+      let eventName = '';
+      let eventData = '';
 
       sseClients[user] = reader;
 
@@ -509,8 +511,6 @@
           const lines = buffer.split('\n');
           buffer = lines.pop();
 
-          let eventName = '';
-          let eventData = '';
           for (const line of lines) {
             if (line.startsWith('event:')) eventName = line.slice(6).trim();
             else if (line.startsWith('data:')) eventData = line.slice(5).trim();
@@ -707,7 +707,10 @@
         break;
 
       case 'sse_badge_trigger':
-        setScenarioStatus('[5-2] A→B 메시지 전송. B SSE에서 chat_unread_rooms 업데이트 확인하세요.');
+        setScenarioStatus('[5-2] B WebSocket 끊고 A→B 전송. B SSE에서 chat_unread_rooms 확인하세요.');
+        disconnectUser('B');
+        log('B', 'info', '[5-2] B WebSocket disconnect → presence 해제');
+        await new Promise(r => setTimeout(r, 300));
         document.getElementById('msgA').value = 'SSE 뱃지 테스트';
         sendMsg('A');
         break;
@@ -725,6 +728,11 @@
 
       case 'b_sends_after_leave':
         setScenarioStatus('[6-3] B→A 메시지 전송 (A가 나간 상태). 전송 성공 + A가 재입장되는지 확인.');
+        if (!clients['B'] || !clients['B'].connected) {
+          log('B', 'info', '[6-3] B WebSocket 재연결 중... (5-2에서 끊김)');
+          connectUser('B');
+          await new Promise(r => setTimeout(r, 1000));
+        }
         document.getElementById('msgB').value = document.getElementById('msgB').value || 'A야 돌아와~';
         sendMsg('B');
         break;
@@ -740,7 +748,8 @@
         break;
 
       case 'both_leave':
-        setScenarioStatus('[6-6] B도 채팅방 나가기');
+        setScenarioStatus('[6-6] A, B 모두 채팅방 나가기');
+        await restLeaveRoom('A');
         await restLeaveRoom('B');
         break;
 
