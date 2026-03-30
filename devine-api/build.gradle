@@ -23,6 +23,9 @@ dependencies {
     // AWS S3
     implementation 'io.awspring.cloud:spring-cloud-aws-starter-s3:3.4.0'
 
+    // PortOne server SDK
+    implementation 'io.portone:server-sdk:0.23.0'
+
     // Test
     testImplementation testFixtures(project(':devine-core'))
     testImplementation 'com.h2database:h2'
