@@ -1,14 +1,22 @@
-name: DeVine Backend CI
+name: CI - Realtime
 
 on:
   push:
     branches: [ main ]
+    paths:
+      - 'devine-realtime/**'
+      - 'devine-core/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - '.github/workflows/ci-realtime.yml'
+      - '.github/workflows/cd-realtime.yml'
 
 env:
-  DOCKER_IMAGE_NAME: devine-backend
+  DOCKER_IMAGE_NAME: devine-realtime
 
 jobs:
-  build-and-push:
+  test-and-build:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -25,7 +33,7 @@ jobs:
         run: chmod +x gradlew
 
       - name: Run tests
-        run: ./gradlew test --no-daemon
+        run: ./gradlew :devine-core:test :devine-realtime:test --no-daemon
         env:
           SPRING_PROFILES_ACTIVE: test
 
@@ -42,6 +50,7 @@ jobs:
         uses: docker/build-push-action@v5
         with:
           context: .
+          file: devine-realtime/Dockerfile
           push: true
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
