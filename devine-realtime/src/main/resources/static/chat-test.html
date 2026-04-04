@@ -239,7 +239,7 @@
         <div class="rest-panel">
           <h3>REST (A 토큰)</h3>
           <div class="rest-buttons">
-            <input id="targetIdA" placeholder="상대 ID" style="width:70px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
+            <input id="targetIdA" placeholder="상대 Clerk ID" style="width:100px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
             <button class="btn btn-sm btn-green" onclick="restCreateRoom('A')">방 생성</button>
             <button class="btn btn-sm btn-gray" onclick="restGetRooms('A')">방 목록</button>
             <button class="btn btn-sm btn-gray" onclick="restGetMessages('A')">메시지 히스토리</button>
@@ -281,7 +281,7 @@
         <div class="rest-panel">
           <h3>REST (B 토큰)</h3>
           <div class="rest-buttons">
-            <input id="targetIdB" placeholder="상대 ID" style="width:70px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
+            <input id="targetIdB" placeholder="상대 Clerk ID" style="width:100px; background:#0f3460; border:1px solid #333; color:white; padding:4px 7px; border-radius:4px; font-size:12px;">
             <button class="btn btn-sm btn-green" onclick="restCreateRoom('B')">방 생성</button>
             <button class="btn btn-sm btn-gray" onclick="restGetRooms('B')">방 목록</button>
             <button class="btn btn-sm btn-gray" onclick="restGetMessages('B')">메시지 히스토리</button>
@@ -575,7 +575,7 @@
   async function restCreateRoom(user) {
     const targetId = document.getElementById('targetId' + user).value;
     if (!targetId) { toast('상대방 ID를 입력하세요'); return; }
-    const result = await restApi(user, 'POST', '/api/v1/chat/rooms', { targetMemberId: Number(targetId) });
+    const result = await restApi(user, 'POST', '/api/v1/chat/rooms', { targetClerkId: targetId });
     if (result && result.ok && result.data.result) {
       const roomId = result.data.result.roomId;
       document.getElementById('roomId' + user).value = roomId;
