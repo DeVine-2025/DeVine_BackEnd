@@ -7,6 +7,7 @@ import lombok.Getter;
 public enum SseEventType {
     CONNECT("connect"),
     NOTIFICATION(RedisEventConstants.NOTIFICATION),
+    CHAT_UNREAD_ROOMS(RedisEventConstants.CHAT_UNREAD_ROOMS),
     HEARTBEAT("heartbeat"),
     SHUTDOWN("shutdown");
 
