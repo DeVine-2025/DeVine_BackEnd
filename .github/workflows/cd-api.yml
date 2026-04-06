@@ -23,6 +23,9 @@ jobs:
           script: |
             cd ~/Devine_Deploy/service
 
+            # docker-compose.yml 최신화 (동시 배포 대비 락)
+            flock -w 30 /tmp/devine-deploy-pull.lock git pull origin main
+
             # S3에서 .env 파일 다운로드
             aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env.prod .env
             if [ ! -f .env ] || [ ! -s .env ]; then
@@ -103,6 +106,9 @@ jobs:
           port: ${{ secrets.OCI_SSH_PORT }}
           script: |
             cd ~/Devine_Deploy/service
+
+            # docker-compose.yml 최신화 (동시 배포 대비 락)
+            flock -w 30 /tmp/devine-deploy-pull.lock git pull origin main
 
             # S3에서 .env 파일 다운로드
             aws s3 cp s3://${{ secrets.S3_BUCKET_NAME }}/config/.env.qa .env
