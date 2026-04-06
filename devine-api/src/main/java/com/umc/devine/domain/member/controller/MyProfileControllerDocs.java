@@ -19,6 +19,7 @@ import org.springdoc.core.annotations.ParameterObject;
 import org.springframework.format.annotation.DateTimeFormat;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestParam;
 
@@ -27,11 +28,18 @@ import java.time.LocalDate;
 @Tag(name = "Member", description = "회원가입, 내 정보 관련 API")
 public interface MyProfileControllerDocs {
 
-    @Operation(summary = "이용약관 조회 API", description = "회원가입 시 필요한 이용약관 목록을 조회하는 API입니다.")
+    @Operation(summary = "이용약관 전체 조회 API", description = "회원가입 시 필요한 이용약관 목록을 전체 조회하는 API입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공")
     })
     ApiResponse<MemberResDTO.TermsListDTO> getTerms();
+
+    @Operation(summary = "이용약관 단건 조회 API", description = "특정 ID의 이용약관을 조회하는 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 약관을 찾을 수 없습니다.")
+    })
+    ApiResponse<MemberResDTO.TermsDTO> getTerm(@PathVariable Long id);
 
     @Operation(summary = "회원가입 API", description = "소셜 로그인 후 추가 정보를 입력하여 회원가입을 완료하는 API입니다.")
     @ApiResponses({

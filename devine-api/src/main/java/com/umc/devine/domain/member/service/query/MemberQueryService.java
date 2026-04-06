@@ -14,6 +14,7 @@ import java.util.List;
 
 public interface MemberQueryService {
     MemberResDTO.TermsListDTO findAllTerms();
+    MemberResDTO.TermsDTO findTermById(Long id);
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
     TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname);
