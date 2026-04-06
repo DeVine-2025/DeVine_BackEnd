@@ -30,7 +30,7 @@ public class MyProfileController implements MyProfileControllerDocs {
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
 
-    // 이용약관 조회
+    // 이용약관 전체 조회
     @Override
     @GetMapping("/terms")
     public ApiResponse<MemberResDTO.TermsListDTO> getTerms() {
