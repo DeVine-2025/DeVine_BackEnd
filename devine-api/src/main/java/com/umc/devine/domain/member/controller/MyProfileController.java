@@ -39,6 +39,17 @@ public class MyProfileController implements MyProfileControllerDocs {
         return ApiResponse.onSuccess(code, response);
     }
 
+    // 이용약관 단건 조회
+    @Override
+    @GetMapping("/terms/{id}")
+    public ApiResponse<MemberResDTO.TermsDTO> getTerm(
+            @PathVariable Long id
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_TERMS;
+        MemberResDTO.TermsDTO response = memberQueryService.findTermById(id);
+        return ApiResponse.onSuccess(code, response);
+    }
+
     // 회원가입
     @Override
     @PostMapping("/signup")
