@@ -2,7 +2,7 @@ name: CI - API
 
 on:
   push:
-    branches: [ main ]
+    branches: [ main, qa ]
     paths:
       - 'devine-api/**'
       - 'devine-core/**'
@@ -46,7 +46,8 @@ jobs:
           username: ${{ secrets.DOCKER_USERNAME }}
           password: ${{ secrets.DOCKER_PASSWORD }}
 
-      - name: Build and push Docker image
+      - name: Build and push Docker image (prod)
+        if: github.ref_name == 'main'
         uses: docker/build-push-action@v5
         with:
           context: .
@@ -55,5 +56,18 @@ jobs:
           tags: |
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:${{ github.sha }}
             ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:latest
+          cache-from: type=gha
+          cache-to: type=gha,mode=max
+
+      - name: Build and push Docker image (qa)
+        if: github.ref_name == 'qa'
+        uses: docker/build-push-action@v5
+        with:
+          context: .
+          file: devine-api/Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:qa-${{ github.sha }}
+            ${{ secrets.DOCKER_USERNAME }}/${{ env.DOCKER_IMAGE_NAME }}:qa-latest
           cache-from: type=gha
           cache-to: type=gha,mode=max
