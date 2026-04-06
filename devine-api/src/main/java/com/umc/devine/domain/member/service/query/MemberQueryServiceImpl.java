@@ -77,6 +77,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
+    public MemberResDTO.TermsDTO findTermById(Long id) {
+        Terms terms = termsRepository.findById(id)
+                .orElseThrow(() -> new MemberException(MemberErrorReason.TERMS_NOT_FOUND));
+        return MemberConverter.toTermsDTO(terms);
+    }
+
+    @Override
     public MemberResDTO.MemberProfileDTO findMemberProfile(Member member) {
         List<MemberCategory> memberCategories = memberCategoryRepository.findAllByMemberWithCategory(member);
         List<Contact> contacts = contactRepository.findAllByMember(member);

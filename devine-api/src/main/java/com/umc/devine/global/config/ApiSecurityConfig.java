@@ -57,7 +57,7 @@ public class ApiSecurityConfig {
                         // 닉네임 중복 체크
                         .requestMatchers(HttpMethod.GET, "/api/v1/members/nickname/**").permitAll()
                         // 이용약관 조회
-                        .requestMatchers(HttpMethod.GET, "/api/v1/members/terms").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/v1/members/terms/**").permitAll()
                         // 이번 주 추천 프로젝트 조회
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/weekly-best").permitAll()
                         // 개발자 필터링 조회 (비회원 허용)
