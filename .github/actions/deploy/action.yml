@@ -1,0 +1,124 @@
+name: Deploy Module
+description: Deploy a module via SSH with healthcheck and rollback
+
+inputs:
+  ssh-host:
+    description: 'SSH host'
+    required: true
+  ssh-username:
+    description: 'SSH username'
+    required: true
+  ssh-key:
+    description: 'SSH private key'
+    required: true
+  ssh-port:
+    description: 'SSH port'
+    required: true
+  environment:
+    description: 'Deployment environment (prod or qa)'
+    required: true
+  service-name:
+    description: 'Docker compose service name (e.g. api, realtime)'
+    required: true
+  docker-image:
+    description: 'Full docker image name (e.g. user/devine-api)'
+    required: true
+  image-tag:
+    description: 'Docker image tag to deploy'
+    required: true
+  s3-bucket:
+    description: 'S3 bucket for env file'
+    required: true
+
+runs:
+  using: composite
+  steps:
+    - name: Deploy via SSH
+      uses: appleboy/ssh-action@v1.0.0
+      with:
+        host: ${{ inputs.ssh-host }}
+        username: ${{ inputs.ssh-username }}
+        key: ${{ inputs.ssh-key }}
+        port: ${{ inputs.ssh-port }}
+        script: |
+          cd ~/Devine_Deploy/service
+
+          # docker-compose.yml 최신화 (동시 배포 대비 락)
+          flock -w 30 /tmp/devine-deploy-pull.lock git pull origin main
+
+          # S3에서 .env 파일 다운로드
+          aws s3 cp s3://${{ inputs.s3-bucket }}/config/.env.${{ inputs.environment }} .env
+          if [ ! -f .env ] || [ ! -s .env ]; then
+            echo "ERROR: .env file missing or empty after S3 download"
+            exit 1
+          fi
+
+          IMAGE="${{ inputs.docker-image }}"
+          NEW_TAG="${{ inputs.image-tag }}"
+          SERVICE="${{ inputs.service-name }}"
+          ENV="${{ inputs.environment }}"
+
+          # 태그 prefix 결정 (qa는 qa- prefix)
+          if [ "$ENV" = "qa" ]; then
+            LATEST_TAG="qa-latest"
+            PREV_TAG="qa-previous"
+          else
+            LATEST_TAG="latest"
+            PREV_TAG="previous"
+          fi
+
+          # 1. 현재 이미지 백업 (롤백용)
+          docker tag ${IMAGE}:${LATEST_TAG} ${IMAGE}:${PREV_TAG} 2>/dev/null || true
+
+          # 2. 새 이미지 pull
+          export DOCKER_IMAGE_TAG=${NEW_TAG}
+          docker compose pull ${SERVICE}
+
+          # 3. 기존 컨테이너 중지 및 삭제 후 새로 생성
+          docker compose stop ${SERVICE} || true
+          docker compose rm -f ${SERVICE} || true
+          docker compose up -d ${SERVICE}
+
+          # 4. 헬스체크 (실패 시 롤백)
+          CONTAINER_ID=$(docker compose ps -q ${SERVICE})
+          TIMEOUT=120
+          HEALTHY=false
+
+          echo "Waiting for ${SERVICE} container to be healthy..."
+          while [ $TIMEOUT -gt 0 ]; do
+            STATUS=$(docker inspect --format='{{.State.Health.Status}}' $CONTAINER_ID 2>/dev/null || echo "starting")
+            echo "Health status: $STATUS (timeout: ${TIMEOUT}s)"
+            if [ "$STATUS" = "healthy" ]; then
+              HEALTHY=true
+              break
+            fi
+            if [ "$STATUS" = "unhealthy" ]; then
+              echo "Container is unhealthy, checking logs..."
+              docker compose logs --tail=50 ${SERVICE}
+              break
+            fi
+            sleep 3
+            TIMEOUT=$((TIMEOUT - 3))
+          done
+
+          # 5. 헬스체크 실패 시 롤백
+          if [ "$HEALTHY" = "false" ]; then
+            echo "Health check failed, showing logs..."
+            docker compose logs --tail=100 ${SERVICE}
+
+            echo "Rolling back..."
+            if docker image inspect ${IMAGE}:${PREV_TAG} >/dev/null 2>&1; then
+              docker compose stop ${SERVICE} || true
+              docker compose rm -f ${SERVICE} || true
+              export DOCKER_IMAGE_TAG=${PREV_TAG}
+              docker compose up -d ${SERVICE}
+            fi
+            exit 1
+          fi
+
+          echo "${SERVICE} (${ENV}) deployment successful!"
+
+          # 6. 이미지 정리
+          docker image prune -f
+          docker images "${IMAGE}" --format "{{.Tag}}" | grep -v -E "^(${NEW_TAG}|${LATEST_TAG}|${PREV_TAG})$" | xargs -r -I {} docker rmi "${IMAGE}:{}" 2>/dev/null || true
+          echo "Image cleanup completed"

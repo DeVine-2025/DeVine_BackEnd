@@ -21,9 +21,6 @@ inputs:
 runs:
   using: composite
   steps:
-    - name: Checkout code
-      uses: actions/checkout@v4
-
     - name: Set up JDK 21
       uses: actions/setup-java@v4
       with:
@@ -61,6 +58,9 @@ runs:
           echo "tags=${IMAGE}:${SHA},${IMAGE}:latest" >> "$GITHUB_OUTPUT"
         elif [ "$REF" = "qa" ]; then
           echo "tags=${IMAGE}:qa-${SHA},${IMAGE}:qa-latest" >> "$GITHUB_OUTPUT"
+        else
+          echo "::error::Unsupported branch '${REF}' — only main and qa are allowed"
+          exit 1
         fi
 
     - name: Build and push Docker image
