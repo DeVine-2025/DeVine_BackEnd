@@ -26,4 +26,4 @@ USER spring:spring
 
 EXPOSE 8080
 
-ENTRYPOINT ["java", "-Xmx128m", "-Xms128m", "-jar", "-Dspring.profiles.active=prod", "app.jar"]
+ENTRYPOINT ["sh", "-c", "exec java $JAVA_OPTS -jar -Dspring.profiles.active=prod app.jar"]
