@@ -23,6 +23,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -271,6 +272,68 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
 
             // then
             assertThat(result).isFalse();
+        }
+    }
+
+    @Nested
+    @DisplayName("findDeletedBefore")
+    class FindDeletedBeforeTest {
+
+        @Test
+        @DisplayName("threshold 이전에 탈퇴한 회원만 조회한다")
+        void findDeletedBefore_onlyOldDeleted() {
+            // given - testMember 를 탈퇴 처리하고 deletedAt 을 과거로 강제 설정
+            testMember.withdraw();
+            memberRepository.saveAndFlush(testMember);
+
+            // 최근에 탈퇴한 회원은 threshold 이후이므로 제외 대상
+            Member recentDeleted = memberRepository.save(Member.builder()
+                    .clerkId("clerk_recent_deleted")
+                    .nickname("recent")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+            recentDeleted.withdraw();
+            memberRepository.saveAndFlush(recentDeleted);
+
+            LocalDateTime threshold = LocalDateTime.now().plusMinutes(1);
+
+            // when - 두 회원 모두 deletedAt 이 threshold 이전이므로 조회됨
+            List<Member> result = memberRepository.findDeletedBefore(threshold, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).extracting(Member::getUsed).containsOnly(MemberStatus.DELETED);
+        }
+
+        @Test
+        @DisplayName("threshold 이후에 탈퇴한 회원은 조회되지 않는다")
+        void findDeletedBefore_excludeNewlyDeleted() {
+            // given
+            testMember.withdraw();
+            memberRepository.saveAndFlush(testMember);
+
+            LocalDateTime threshold = LocalDateTime.now().minusMinutes(1);
+
+            // when
+            List<Member> result = memberRepository.findDeletedBefore(threshold, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("ACTIVE 회원은 deletedAt 이 null 이므로 조회되지 않는다")
+        void findDeletedBefore_excludeActive() {
+            // given - testMember 는 ACTIVE 상태
+            LocalDateTime threshold = LocalDateTime.now().plusYears(1);
+
+            // when
+            List<Member> result = memberRepository.findDeletedBefore(threshold, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 }

@@ -9,6 +9,7 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -39,4 +40,10 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m.id FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Long> findIdByClerkId(@Param("clerkId") String clerkId);
+
+    /**
+     * Hard delete 배치용. DELETED 상태이고 deletedAt 이 임계 시각 이전인 회원을 페이징 조회.
+     */
+    @Query("SELECT m FROM Member m WHERE m.used = 'DELETED' AND m.deletedAt IS NOT NULL AND m.deletedAt < :threshold ORDER BY m.deletedAt ASC")
+    List<Member> findDeletedBefore(@Param("threshold") LocalDateTime threshold, Pageable pageable);
 }
