@@ -238,10 +238,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
     }
 
-    // 탈퇴 기능을 위한 장치
+    // 회원 탈퇴 처리 (P0: soft delete만 수행. Clerk 호출/익명화/Hard delete 배치는 후속 커밋에서 추가)
     @Override
     public void withdraw(Member member) {
-        // 테스트 코드 등에서 회원의 상태를 DELETED로 변경하여 조회 필터링을 검증하기 위해 사용됩니다.
         member.withdraw();
         memberRepository.save(member);
     }

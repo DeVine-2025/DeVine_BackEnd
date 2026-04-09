@@ -124,8 +124,9 @@ public class Member extends BaseEntity {
     }
 
     /**
-     * 회원 탈퇴 처리를 위한 메서드
-     * 현재는 주로 테스트 코드에서 회원의 상태를 변경하여 필터링 로직을 검증하는 용도로 사용됩니다.
+     * 회원 탈퇴 처리를 위한 메서드.
+     * 상태를 DELETED로 변경합니다. 익명화/탈퇴 시각 기록 등 후속 처리는
+     * 별도 커밋(P1, P3)에서 추가됩니다.
      */
     public void withdraw() {
         this.used = MemberStatus.DELETED;
