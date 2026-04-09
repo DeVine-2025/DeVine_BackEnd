@@ -145,4 +145,14 @@ public interface MyProfileControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     );
+
+    @Operation(summary = "회원 탈퇴 API", description = "내 계정을 탈퇴(논리 삭제)합니다. 상태가 DELETED로 변경되고 개인정보는 즉시 익명화되며, Clerk 사용자 삭제는 트랜잭션 커밋 후 비동기로 처리됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
+    })
+    ApiResponse<Void> withdraw(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
 }

@@ -422,6 +422,27 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             assertThat(testMember.getDeletedAt()).isNotNull();
             assertThat(testMember.getDeletedAt()).isBetween(before, after);
         }
+
+        @Test
+        @DisplayName("회원 탈퇴 시 개인정보가 익명화된다")
+        void withdraw_anonymizesPii() {
+            // given
+            String originalClerkId = testMember.getClerkId();
+
+            // when
+            memberCommandService.withdraw(testMember);
+
+            // then
+            assertThat(testMember.getClerkId())
+                    .isNotEqualTo(originalClerkId)
+                    .startsWith("deleted-");
+            assertThat(testMember.getName()).isNull();
+            assertThat(testMember.getNickname()).isEqualTo("deleted");
+            assertThat(testMember.getAddress()).isNull();
+            assertThat(testMember.getImage()).isNull();
+            assertThat(testMember.getBody()).isNull();
+            assertThat(testMember.getGithubUsername()).isNull();
+        }
     }
 
     @Nested

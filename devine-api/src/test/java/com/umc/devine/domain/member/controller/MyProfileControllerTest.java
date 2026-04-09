@@ -18,6 +18,7 @@ import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.global.security.ClerkPrincipal;
+import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -27,6 +28,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.test.context.bean.override.mockito.MockitoBean;
 
 import java.util.List;
 
@@ -54,6 +56,10 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    // 회원 탈퇴 시 트랜잭션 커밋 후 호출되는 외부 API를 격리하기 위해 mock 처리
+    @MockitoBean
+    private ClerkApiClient clerkApiClient;
 
     private Member testMember;
     private Authentication testAuth;
@@ -197,6 +203,29 @@ class MyProfileControllerTest extends ControllerIntegrationTestSupport {
                     .andDo(print())
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.isSuccess").value(true));
+        }
+    }
+
+    @Nested
+    @DisplayName("회원 탈퇴")
+    class WithdrawTest {
+
+        @Test
+        @DisplayName("회원 탈퇴 성공 - 200 응답과 함께 상태가 DELETED로 변경된다")
+        void withdraw_success() throws Exception {
+            mockMvc.perform(delete("/api/v1/members/me")
+                            .with(authentication(testAuth))
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isSuccess").value(true))
+                    .andExpect(jsonPath("$.code").value("MEMBER200_11"));
+
+            Member reloaded = memberRepository.findById(testMember.getId()).orElseThrow();
+            org.assertj.core.api.Assertions.assertThat(reloaded.getUsed())
+                    .isEqualTo(MemberStatus.DELETED);
+            org.assertj.core.api.Assertions.assertThat(reloaded.getDeletedAt()).isNotNull();
+            org.assertj.core.api.Assertions.assertThat(reloaded.getClerkId()).startsWith("deleted-");
         }
     }
 

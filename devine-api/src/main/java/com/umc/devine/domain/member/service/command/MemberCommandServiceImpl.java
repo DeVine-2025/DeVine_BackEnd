@@ -13,6 +13,7 @@ import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.event.MemberWithdrawnEvent;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
@@ -42,6 +43,7 @@ import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -73,6 +75,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -238,11 +241,21 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
     }
 
-    // 회원 탈퇴 처리 (P0: soft delete만 수행. Clerk 호출/익명화/Hard delete 배치는 후속 커밋에서 추가)
+    // 회원 탈퇴 처리
+    // - DB 트랜잭션: 상태/시각 변경 + 개인정보 익명화
+    // - 커밋 후: MemberWithdrawnEvent 리스너가 Clerk 사용자 삭제 호출
     @Override
     public void withdraw(Member member) {
+        String originalClerkId = member.getClerkId();
+        Long memberId = member.getId();
+
         member.withdraw();
         memberRepository.save(member);
+
+        eventPublisher.publishEvent(MemberWithdrawnEvent.builder()
+                .memberId(memberId)
+                .originalClerkId(originalClerkId)
+                .build());
     }
 
     @Override
