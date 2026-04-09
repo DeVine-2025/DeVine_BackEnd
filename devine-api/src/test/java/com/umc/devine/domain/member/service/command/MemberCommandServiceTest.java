@@ -33,6 +33,8 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDateTime;
+
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -400,10 +402,25 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(testMember.getUsed()).isEqualTo(MemberStatus.DELETED);
-            
+
             // 리포지토리 조회 시에도 반영되었는지 확인
             boolean exists = memberRepository.existsByNickname("testuser");
             assertThat(exists).isFalse(); // 리포지토리 쿼리에 used='ACTIVE' 조건이 있으므로 false여야 함
+        }
+
+        @Test
+        @DisplayName("회원 탈퇴 시 탈퇴 시각(deletedAt)이 기록된다")
+        void withdraw_setsDeletedAt() {
+            // given
+            LocalDateTime before = LocalDateTime.now();
+
+            // when
+            memberCommandService.withdraw(testMember);
+
+            // then
+            LocalDateTime after = LocalDateTime.now();
+            assertThat(testMember.getDeletedAt()).isNotNull();
+            assertThat(testMember.getDeletedAt()).isBetween(before, after);
         }
     }
 

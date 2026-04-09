@@ -8,6 +8,7 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,6 +75,9 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus used;
 
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MemberCategory> memberCategories = new ArrayList<>();
@@ -125,11 +129,12 @@ public class Member extends BaseEntity {
 
     /**
      * 회원 탈퇴 처리를 위한 메서드.
-     * 상태를 DELETED로 변경합니다. 익명화/탈퇴 시각 기록 등 후속 처리는
-     * 별도 커밋(P1, P3)에서 추가됩니다.
+     * 상태를 DELETED로 변경하고 탈퇴 시각을 기록합니다.
+     * 개인정보 익명화 및 Clerk 사용자 삭제 등 후속 처리는 P3에서 추가됩니다.
      */
     public void withdraw() {
         this.used = MemberStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
     }
 
 }
