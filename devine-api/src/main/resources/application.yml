@@ -58,3 +58,8 @@ portone:
     nhn-kcp: ${PORTONE_CHANNEL_KEY_NHN_KCP:}
     kg-inicis: ${PORTONE_CHANNEL_KEY_KG_INICIS:}
     kakaopay: ${PORTONE_CHANNEL_KEY_KAKAOPAY:}
+
+# Credit
+devine:
+  credit:
+    initial-count: ${DEVINE_CREDIT_INITIAL_COUNT:1}
