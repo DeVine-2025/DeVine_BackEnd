@@ -17,6 +17,7 @@ import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.entity.MemberAgreement;
+import com.umc.devine.domain.member.entity.NicknameHistory;
 import com.umc.devine.domain.member.entity.Terms;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.exception.MemberException;
@@ -25,6 +26,7 @@ import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.NicknameHistoryRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
@@ -61,6 +63,7 @@ import java.util.stream.Collectors;
 public class MemberCommandServiceImpl implements MemberCommandService {
 
     private final MemberRepository memberRepository;
+    private final NicknameHistoryRepository nicknameHistoryRepository;
     private final MemberCategoryRepository memberCategoryRepository;
     private final CategoryRepository categoryRepository;
     private final ContactRepository contactRepository;
@@ -153,11 +156,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     @Override
     public MemberResDTO.MemberProfileDTO updateMember(Member member, MemberReqDTO.UpdateMemberDTO dto) {
 
-        // 닉네임 중복 검증
+        // 닉네임 중복 검증 및 이력 저장
         if (dto.nickname() != null && !dto.nickname().equals(member.getNickname())) {
             if (memberRepository.existsByNickname(dto.nickname())) {
                 throw new MemberException(MemberErrorReason.NICKNAME_DUPLICATED);
             }
+            nicknameHistoryRepository.save(
+                    NicknameHistory.create(member, member.getNickname())
+            );
         }
 
         // 프로필 이미지 검증
