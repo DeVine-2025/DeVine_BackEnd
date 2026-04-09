@@ -19,9 +19,11 @@ import java.util.List;
 /**
  * 탈퇴(soft delete)된 회원을 보관 기간 경과 후 hard delete 하는 배치.
  *
- * <p>FK 의존 도메인이 많아 잔여 참조가 있으면 삭제가 실패할 수 있으므로,
- * 기본은 비활성화이며 {@code member.hard-delete.enabled=true} 로 명시 활성화한다.
- * 실패한 행은 건너뛰고 로그만 남긴다 — 운영자가 사후 분석할 수 있도록.
+ * <p>기본은 비활성화이며 {@code member.hard-delete.enabled=true} 로 명시 활성화한다.
+ *
+ * <p>각 회원마다 별도 트랜잭션으로 FK 종속 테이블을 정리한 뒤 member 행을 삭제한다.
+ * payment, matching, project, chat 등 비즈니스 레코드가 남아 있으면
+ * FK 위반으로 skip 하고 로그를 남긴다.
  */
 @Slf4j
 @Component
@@ -54,19 +56,35 @@ public class MemberHardDeleteScheduler {
         int totalDeleted = 0;
         int totalSkipped = 0;
         while (true) {
-            List<Member> chunk = readTx.execute(status -> findChunk(threshold));
-            if (chunk == null || chunk.isEmpty()) {
+            List<Long> ids = readTx.execute(status -> {
+                Pageable pageable = PageRequest.of(0, chunkSize);
+                return memberRepository.findDeletedBefore(threshold, pageable)
+                        .stream().map(Member::getId).toList();
+            });
+            if (ids == null || ids.isEmpty()) {
                 break;
             }
 
             int deletedInChunk = 0;
-            for (Member m : chunk) {
-                Long id = m.getId();
+            for (Long id : ids) {
                 Boolean ok = writeTx.execute(status -> {
                     try {
-                        memberRepository.deleteById(id);
-                        memberRepository.flush();
-                        return true;
+                        // FK 체인 역순: report_embedding → dev_report → git_repo_url
+                        memberRepository.hardDeleteReportEmbeddingsOf(id);
+                        memberRepository.hardDeleteDevReportsOf(id);
+                        memberRepository.hardDeleteGitRepoUrlsOf(id);
+
+                        memberRepository.hardDeleteContactsOf(id);
+                        memberRepository.hardDeleteDevTechstacksOf(id);
+                        memberRepository.hardDeleteMemberCategoriesOf(id);
+                        memberRepository.hardDeleteMemberAgreementsOf(id);
+                        memberRepository.hardDeleteBookmarksOf(id);
+                        memberRepository.hardDeleteMemberReportCreditsOf(id);
+                        memberRepository.hardDeleteImagesOf(id);
+                        memberRepository.hardDeleteNotificationsOf(id);
+
+                        int rows = memberRepository.hardDeleteMemberById(id);
+                        return rows > 0;
                     } catch (DataIntegrityViolationException e) {
                         status.setRollbackOnly();
                         log.warn("[MemberHardDelete] FK 잔여 참조로 건너뜀 - memberId={}", id);
@@ -85,18 +103,11 @@ public class MemberHardDeleteScheduler {
             }
             totalDeleted += deletedInChunk;
 
-            // 청크가 가득 차지 않았다면 더 처리할 행이 없으므로 종료.
-            // 청크가 모두 스킵됐다면 같은 행만 다시 잡혀 무한 루프가 되므로 종료.
-            if (chunk.size() < chunkSize || deletedInChunk == 0) {
+            if (ids.size() < chunkSize || deletedInChunk == 0) {
                 break;
             }
         }
 
         log.info("[MemberHardDelete] 종료 - 삭제={}건, 스킵={}건", totalDeleted, totalSkipped);
-    }
-
-    private List<Member> findChunk(LocalDateTime threshold) {
-        Pageable pageable = PageRequest.of(0, chunkSize);
-        return memberRepository.findDeletedBefore(threshold, pageable);
     }
 }

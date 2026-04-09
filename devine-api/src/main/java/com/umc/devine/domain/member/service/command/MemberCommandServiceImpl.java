@@ -37,6 +37,7 @@ import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.report.repository.ReportEmbeddingRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
@@ -74,6 +75,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
+    private final ReportEmbeddingRepository reportEmbeddingRepository;
     private final EntityManager entityManager;
     private final ApplicationEventPublisher eventPublisher;
 
@@ -242,12 +244,21 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     }
 
     // 회원 탈퇴 처리
-    // - DB 트랜잭션: 상태/시각 변경 + 개인정보 익명화
-    // - 커밋 후: MemberWithdrawnEvent 리스너가 Clerk 사용자 삭제 호출
+    // 1. PII·식별 가능 연관 데이터 삭제 (FK 체인 역순)
+    // 2. Member 컬럼 익명화 + 상태/시각 변경
+    // 3. 커밋 후: MemberWithdrawnEvent 리스너가 Clerk 사용자 삭제 호출
     @Override
     public void withdraw(Member member) {
         String originalClerkId = member.getClerkId();
         Long memberId = member.getId();
+
+        // FK 체인: report_embedding → dev_report → git_repo_url → member
+        reportEmbeddingRepository.deleteAllByMemberId(memberId);
+        devReportRepository.deleteAllByMemberId(memberId);
+        gitRepoUrlRepository.bulkDeleteByMember(member);
+
+        contactRepository.bulkDeleteByMember(member);
+        devTechstackRepository.bulkDeleteByMember(member);
 
         member.withdraw();
         memberRepository.save(member);
