@@ -140,7 +140,7 @@ public class Member extends BaseEntity {
         this.deletedAt = LocalDateTime.now();
         this.clerkId = "deleted-" + UUID.randomUUID();
         this.name = null;
-        this.nickname = "deleted";
+        this.nickname = "deleted-" + UUID.randomUUID();
         this.address = null;
         this.image = null;
         this.body = null;

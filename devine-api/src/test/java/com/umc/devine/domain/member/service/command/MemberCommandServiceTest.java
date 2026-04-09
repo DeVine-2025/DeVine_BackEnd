@@ -437,7 +437,7 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
                     .isNotEqualTo(originalClerkId)
                     .startsWith("deleted-");
             assertThat(testMember.getName()).isNull();
-            assertThat(testMember.getNickname()).isEqualTo("deleted");
+            assertThat(testMember.getNickname()).startsWith("deleted-");
             assertThat(testMember.getAddress()).isNull();
             assertThat(testMember.getImage()).isNull();
             assertThat(testMember.getBody()).isNull();
