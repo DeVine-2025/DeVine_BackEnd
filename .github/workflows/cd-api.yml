@@ -1,0 +1,58 @@
+name: CD - API
+
+on:
+  workflow_dispatch:
+    inputs:
+      environment:
+        description: 'Deploy target environment'
+        required: true
+        type: choice
+        options:
+          - prod
+          - qa
+  workflow_run:
+    workflows: ["CI - API"]
+    types:
+      - completed
+    branches: [ main, qa ]
+
+jobs:
+  deploy-prod:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'main') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'prod')
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/deploy
+        with:
+          ssh-host: ${{ secrets.EC2_HOST }}
+          ssh-username: ${{ secrets.EC2_USERNAME }}
+          ssh-key: ${{ secrets.EC2_SSH_KEY }}
+          ssh-port: ${{ secrets.EC2_SSH_PORT }}
+          environment: prod
+          service-name: api
+          docker-image: ${{ secrets.DOCKER_USERNAME }}/devine-api
+          image-tag: ${{ github.event.workflow_run.head_sha || github.sha }}
+          s3-bucket: ${{ secrets.S3_BUCKET_NAME }}
+
+  deploy-qa:
+    runs-on: ubuntu-latest
+    if: |
+      (github.event_name == 'workflow_run' && github.event.workflow_run.conclusion == 'success' && github.event.workflow_run.head_branch == 'qa') ||
+      (github.event_name == 'workflow_dispatch' && github.event.inputs.environment == 'qa')
+
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/deploy
+        with:
+          ssh-host: ${{ secrets.OCI_HOST }}
+          ssh-username: ${{ secrets.OCI_USERNAME }}
+          ssh-key: ${{ secrets.OCI_SSH_KEY }}
+          ssh-port: ${{ secrets.OCI_SSH_PORT }}
+          environment: qa
+          service-name: api
+          docker-image: ${{ secrets.DOCKER_USERNAME }}/devine-api
+          image-tag: qa-${{ github.event.workflow_run.head_sha || github.sha }}
+          s3-bucket: ${{ secrets.S3_BUCKET_NAME }}

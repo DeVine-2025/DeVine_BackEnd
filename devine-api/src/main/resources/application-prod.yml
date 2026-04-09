@@ -1,0 +1,43 @@
+# ===========================================
+# Production Profile
+# ===========================================
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: validate
+
+# Actuator
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.umc.devine: INFO
+    org.hibernate.SQL: ERROR
+    org.springframework.web: WARN
+
+# Thread Pool Configuration
+executor:
+  async:
+    core-pool-size: 10
+    max-pool-size: 20
+    queue-capacity: 200
+
+# FastAPI
+fastapi:
+  callback:
+    base-url: ${FASTAPI_CALLBACK_URL:}
+  report:
+    base-url: ${FASTAPI_URL:}
+    connect-timeout: ${FASTAPI_CONNECT_TIMEOUT:60000}
+    read-timeout: ${FASTAPI_READ_TIMEOUT:30000}
+    sync-read-timeout: ${FASTAPI_READ_TIMEOUT_SYNC:180000}

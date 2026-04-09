@@ -1,0 +1,44 @@
+# ===========================================
+# Test Profile (Realtime)
+# ===========================================
+
+server:
+  port: 0
+
+spring:
+  jpa:
+    hibernate:
+      ddl-auto: none
+  flyway:
+    enabled: false
+  security:
+    oauth2:
+      resourceserver:
+        jwt:
+          issuer-uri: "https://test-issuer.local"
+
+# Logging
+logging:
+  level:
+    root: INFO
+    com.umc.devine: DEBUG
+
+# SSE Configuration
+sse:
+  timeout: 3600000
+  heartbeat-rate: 30000
+
+# Thread Pool Configuration
+executor:
+  async:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 100
+  sse-connection:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 25
+  sse-dispatch:
+    core-pool-size: 5
+    max-pool-size: 10
+    queue-capacity: 50

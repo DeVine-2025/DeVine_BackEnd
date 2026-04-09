@@ -1,0 +1,28 @@
+name: CI - API
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [ main, qa ]
+    paths:
+      - 'devine-api/**'
+      - 'devine-core/**'
+      - 'build.gradle'
+      - 'settings.gradle'
+      - 'gradle/**'
+      - '.github/workflows/ci-api.yml'
+      - '.github/workflows/cd-api.yml'
+      - '.github/actions/ci-build/**'
+
+jobs:
+  test-and-build:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ./.github/actions/ci-build
+        with:
+          module: devine-api
+          test-modules: ':devine-core:test :devine-api:test'
+          docker-image-name: devine-api
+          docker-username: ${{ secrets.DOCKER_USERNAME }}
+          docker-password: ${{ secrets.DOCKER_PASSWORD }}
