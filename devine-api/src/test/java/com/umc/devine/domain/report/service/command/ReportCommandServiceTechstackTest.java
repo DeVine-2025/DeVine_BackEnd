@@ -18,6 +18,8 @@ import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
+import com.umc.devine.domain.ticket.entity.MemberReportCredit;
+import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
 import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import com.umc.devine.support.IntegrationTestSupport;
@@ -70,6 +72,9 @@ class ReportCommandServiceTechstackTest extends IntegrationTestSupport {
     private DevTechstackRepository devTechstackRepository;
 
     @Autowired
+    private MemberReportCreditRepository memberReportCreditRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
@@ -99,6 +104,8 @@ class ReportCommandServiceTechstackTest extends IntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
+        memberReportCreditRepository.saveAndFlush(MemberReportCredit.of(testMember, 5));
+
         testGitRepoUrl = gitRepoUrlRepository.saveAndFlush(GitRepoUrl.builder()
                 .member(testMember)
                 .gitUrl("https://github.com/test/techstack-test-repo")
@@ -117,6 +124,7 @@ class ReportCommandServiceTechstackTest extends IntegrationTestSupport {
         jdbcTemplate.execute("DELETE FROM notification");
         devTechstackRepository.deleteAll();
         devReportRepository.deleteAll();
+        memberReportCreditRepository.findByMember(testMember).ifPresent(memberReportCreditRepository::delete);
         gitRepoUrlRepository.deleteById(testGitRepoUrl.getId());
         memberRepository.deleteById(testMember.getId());
     }

@@ -12,6 +12,8 @@ import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.ticket.entity.MemberReportCredit;
+import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
 import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import com.umc.devine.support.IntegrationTestSupport;
@@ -61,6 +63,9 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
     private MemberRepository memberRepository;
 
     @Autowired
+    private MemberReportCreditRepository memberReportCreditRepository;
+
+    @Autowired
     private JdbcTemplate jdbcTemplate;
 
     @MockitoBean
@@ -87,6 +92,8 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
+        memberReportCreditRepository.saveAndFlush(MemberReportCredit.of(testMember, 1));
+
         testGitRepoUrl = gitRepoUrlRepository.saveAndFlush(GitRepoUrl.builder()
                 .member(testMember)
                 .gitUrl("https://github.com/test/tx-test-repo")
@@ -99,6 +106,7 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
         Thread.sleep(500);
         jdbcTemplate.execute("DELETE FROM notification");
         devReportRepository.deleteAll();
+        memberReportCreditRepository.findByMember(testMember).ifPresent(memberReportCreditRepository::delete);
         gitRepoUrlRepository.deleteById(testGitRepoUrl.getId());
         memberRepository.deleteById(testMember.getId());
     }
@@ -126,9 +134,12 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
     class CreateReportSyncTransactionTest {
 
         @Test
-        @DisplayName("FastAPI 실패 응답 시 리포트가 실패 상태로 DB에 저장된다")
-        void createReportSync_FastAPI실패응답시_리포트가_실패상태로_DB에_저장된다() {
+        @DisplayName("FastAPI 실패 응답 시 리포트가 삭제되고 크레딧이 환불된다")
+        void createReportSync_FastAPI실패응답시_리포트가_삭제되고_크레딧이_환불된다() {
             // given
+            int creditBefore = memberReportCreditRepository.findByMember(testMember)
+                    .map(MemberReportCredit::getRemainingCount).orElse(0);
+
             given(fastApiSyncReportClient.requestReportGenerationSync(
                     any(DevReport.class), any(DevReport.class), anyString(), anyString()))
                     .willReturn(FastApiResDto.ReportGenerationSyncRes.builder()
@@ -141,17 +152,23 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
                     reportCommandService.createReportSync(testMember.getId(), createRequest()))
                     .isInstanceOf(ReportException.class);
 
-            // then - noRollbackFor 덕분에 failReport() 변경사항이 커밋되어야 함
+            // then - 실패 시 리포트 삭제
             List<DevReport> reports = devReportRepository.findAll();
-            assertThat(reports).hasSize(2);
-            assertThat(reports).allMatch(r -> r.getErrorMessage() != null);
-            assertThat(reports).allMatch(r -> "AI 서버 오류".equals(r.getErrorMessage()));
+            assertThat(reports).isEmpty();
+
+            // then - 크레딧 환불
+            int creditAfter = memberReportCreditRepository.findByMember(testMember)
+                    .map(MemberReportCredit::getRemainingCount).orElse(0);
+            assertThat(creditAfter).isEqualTo(creditBefore);
         }
 
         @Test
-        @DisplayName("예상치 못한 예외 발생 시에도 리포트가 실패 상태로 DB에 저장된다")
-        void createReportSync_예상치못한예외시_리포트가_실패상태로_DB에_저장된다() {
+        @DisplayName("예상치 못한 예외 발생 시 리포트가 삭제되고 크레딧이 환불된다")
+        void createReportSync_예상치못한예외시_리포트가_삭제되고_크레딧이_환불된다() {
             // given
+            int creditBefore = memberReportCreditRepository.findByMember(testMember)
+                    .map(MemberReportCredit::getRemainingCount).orElse(0);
+
             given(fastApiSyncReportClient.requestReportGenerationSync(
                     any(DevReport.class), any(DevReport.class), anyString(), anyString()))
                     .willThrow(new RuntimeException("Connection timeout"));
@@ -161,11 +178,14 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
                     reportCommandService.createReportSync(testMember.getId(), createRequest()))
                     .isInstanceOf(ReportException.class);
 
-            // then
+            // then - 실패 시 리포트 삭제
             List<DevReport> reports = devReportRepository.findAll();
-            assertThat(reports).hasSize(2);
-            assertThat(reports).allMatch(r -> r.getErrorMessage() != null);
-            assertThat(reports).allMatch(r -> "Connection timeout".equals(r.getErrorMessage()));
+            assertThat(reports).isEmpty();
+
+            // then - 크레딧 환불
+            int creditAfter = memberReportCreditRepository.findByMember(testMember)
+                    .map(MemberReportCredit::getRemainingCount).orElse(0);
+            assertThat(creditAfter).isEqualTo(creditBefore);
         }
 
         @Test
@@ -189,13 +209,13 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("실패 후 재시도 테스트 (Partial Unique Index)")
+    @DisplayName("실패 후 재시도 테스트")
     class RetryAfterFailureTest {
 
         @Test
-        @DisplayName("실패한 리포트가 있어도 재시도 시 새 리포트가 생성된다")
-        void createReportSync_실패리포트존재시_재시도하면_새리포트가_생성된다() {
-            // given - 1차 시도: 실패
+        @DisplayName("실패 후 재시도 시 새 리포트가 성공적으로 생성된다")
+        void createReportSync_실패후_재시도하면_새리포트가_생성된다() {
+            // given - 1차 시도: 실패 (리포트 삭제됨)
             given(fastApiSyncReportClient.requestReportGenerationSync(
                     any(DevReport.class), any(DevReport.class), anyString(), anyString()))
                     .willReturn(FastApiResDto.ReportGenerationSyncRes.builder()
@@ -207,32 +227,20 @@ class ReportCommandServiceTransactionTest extends IntegrationTestSupport {
                     reportCommandService.createReportSync(testMember.getId(), createRequest()))
                     .isInstanceOf(ReportException.class);
 
-            // 1차 실패 리포트 확인
-            List<DevReport> failedReports = devReportRepository.findAll();
-            assertThat(failedReports).hasSize(2);
-            assertThat(failedReports).allMatch(r -> "1차 실패".equals(r.getErrorMessage()));
+            assertThat(devReportRepository.findAll()).isEmpty();
 
             // given - 2차 시도: 성공
             given(fastApiSyncReportClient.requestReportGenerationSync(
                     any(DevReport.class), any(DevReport.class), anyString(), anyString()))
                     .willReturn(successResponse());
 
-            // when - 재시도 (실패 리포트가 있어도 partial index 덕분에 통과)
+            // when
             reportCommandService.createReportSync(testMember.getId(), createRequest());
 
-            // then - 실패 리포트 2개 + 성공 리포트 2개 = 총 4개
+            // then - 성공 리포트 2개만 존재
             List<DevReport> allReports = devReportRepository.findAll();
-            assertThat(allReports).hasSize(4);
-
-            long successCount = allReports.stream()
-                    .filter(r -> r.getCompletedAt() != null && r.getErrorMessage() == null)
-                    .count();
-            long failedCount = allReports.stream()
-                    .filter(r -> r.getErrorMessage() != null)
-                    .count();
-
-            assertThat(successCount).isEqualTo(2);
-            assertThat(failedCount).isEqualTo(2);
+            assertThat(allReports).hasSize(2);
+            assertThat(allReports).allMatch(r -> r.getCompletedAt() != null && r.getErrorMessage() == null);
         }
     }
 }
