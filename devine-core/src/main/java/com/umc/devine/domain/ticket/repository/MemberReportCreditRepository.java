@@ -15,14 +15,25 @@ public interface MemberReportCreditRepository extends JpaRepository<MemberReport
 
     Optional<MemberReportCredit> findByMember(Member member);
 
+    /** 중복 무시 삽입 — 이미 행이 있으면 아무 작업도 하지 않는다 (멱등) */
+    @Modifying
+    @Query(value = "INSERT INTO member_report_credit (member_id, remaining_count) VALUES (:memberId, :count) ON CONFLICT (member_id) DO NOTHING", nativeQuery = true)
+    void insertIfNotExists(@Param("memberId") Long memberId, @Param("count") int count);
+
     @Modifying(clearAutomatically = true)
     @Query("UPDATE MemberReportCredit c SET c.remainingCount = c.remainingCount + :amount WHERE c.member = :member")
     int addCreditsByMember(@Param("member") Member member, @Param("amount") int amount);
+
+    /** 상한 초과 방지 환불용 — remainingCount + amount > maxCount이면 0건 업데이트 */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE MemberReportCredit c SET c.remainingCount = c.remainingCount + :amount WHERE c.member = :member AND c.remainingCount + :amount <= :maxCount")
+    int addCreditsWithCap(@Param("member") Member member, @Param("amount") int amount, @Param("maxCount") int maxCount);
 
     /**
      * 비관적 락 조회 — createReportSync의 동시성 제어용.
      * SELECT FOR UPDATE로 동일 회원의 동시 요청을 직렬화한다.
      */
+    @Deprecated // TODO : 비동기 전환 후 제거 예정
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT c FROM MemberReportCredit c WHERE c.member = :member")
     Optional<MemberReportCredit> findByMemberForUpdate(@Param("member") Member member);

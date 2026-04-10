@@ -36,7 +36,7 @@ import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
-import com.umc.devine.domain.ticket.service.command.ReportCreditCommandService;
+import com.umc.devine.domain.member.event.MemberSignedUpEvent;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
@@ -74,7 +74,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
-    private final ReportCreditCommandService reportCreditCommandService;
+    private final org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -149,8 +149,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             contactRepository.saveAll(contacts);
         }
 
-        // 11. 초기 리포트 생성권 지급
-        reportCreditCommandService.initializeCredit(member);
+        // 11. 초기 리포트 생성권 지급 (트랜잭션 커밋 후 이벤트로 처리)
+        eventPublisher.publishEvent(new MemberSignedUpEvent(member));
 
         return MemberConverter.toSignupResultDTO(member);
     }
