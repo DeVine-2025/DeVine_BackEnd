@@ -12,8 +12,10 @@ import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.exception.MemberException;
+import com.umc.devine.domain.member.entity.NicknameHistory;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.NicknameHistoryRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
@@ -66,6 +68,9 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private ImageRepository imageRepository;
+
+    @Autowired
+    private NicknameHistoryRepository nicknameHistoryRepository;
 
     private Member testMember;
     private Category testCategory;
@@ -322,6 +327,62 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
             // when & then
             assertThatThrownBy(() -> memberCommandService.updateMember(testMember, dto))
                     .isInstanceOf(MemberException.class);
+        }
+
+        @Test
+        @DisplayName("닉네임 변경 시 이전 닉네임이 이력에 저장된다")
+        void updateMember_nicknameChanged_savesHistory() {
+            // given
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .nickname("changeduser")
+                    .build();
+
+            // when
+            memberCommandService.updateMember(testMember, dto);
+
+            // then
+            List<NicknameHistory> histories = nicknameHistoryRepository.findAll();
+            assertThat(histories).hasSize(1);
+            assertThat(histories.get(0).getPreviousNickname()).isEqualTo("testuser");
+        }
+
+        @Test
+        @DisplayName("동일 닉네임으로 수정 시 이력이 저장되지 않는다")
+        void updateMember_sameNickname_doesNotSaveHistory() {
+            // given
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .nickname("testuser")
+                    .build();
+
+            // when
+            memberCommandService.updateMember(testMember, dto);
+
+            // then
+            assertThat(nicknameHistoryRepository.findAll()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("중복 닉네임 예외 발생 시 이력이 저장되지 않는다")
+        void updateMember_duplicateNickname_doesNotSaveHistory() {
+            // given
+            memberRepository.save(Member.builder()
+                    .clerkId("clerk_another_456")
+                    .name("다른사용자")
+                    .nickname("anotheruser")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            MemberReqDTO.UpdateMemberDTO dto = MemberReqDTO.UpdateMemberDTO.builder()
+                    .nickname("anotheruser")
+                    .build();
+
+            // when & then
+            assertThatThrownBy(() -> memberCommandService.updateMember(testMember, dto))
+                    .isInstanceOf(MemberException.class);
+
+            assertThat(nicknameHistoryRepository.findAll()).isEmpty();
         }
 
         @Test
