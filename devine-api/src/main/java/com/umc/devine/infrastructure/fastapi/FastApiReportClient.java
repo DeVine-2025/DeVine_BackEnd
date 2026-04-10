@@ -1,7 +1,5 @@
 package com.umc.devine.infrastructure.fastapi;
 
-import com.umc.devine.domain.notification.enums.NotificationType;
-import com.umc.devine.domain.notification.service.command.NotificationCommandService;
 import com.umc.devine.domain.report.event.ReportCreatedEvent;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
 import com.umc.devine.domain.techstack.enums.TechName;
@@ -32,19 +30,16 @@ public class FastApiReportClient {
     private final ReportCommandService reportCommandService;
     private final ClerkApiClient clerkApiClient;
     private final GitHubApiClient gitHubApiClient;
-    private final NotificationCommandService notificationCommandService;
 
     public FastApiReportClient(
             @Qualifier("fastApiRestClient") RestClient fastApiRestClient,
             ReportCommandService reportCommandService,
             ClerkApiClient clerkApiClient,
-            GitHubApiClient gitHubApiClient,
-            NotificationCommandService notificationCommandService) {
+            GitHubApiClient gitHubApiClient) {
         this.fastApiRestClient = fastApiRestClient;
         this.reportCommandService = reportCommandService;
         this.clerkApiClient = clerkApiClient;
         this.gitHubApiClient = gitHubApiClient;
-        this.notificationCommandService = notificationCommandService;
     }
 
     @Value("${fastapi.callback.base-url:http://localhost:8080}")
@@ -63,9 +58,8 @@ public class FastApiReportClient {
         } catch (Exception e) {
             log.error("GitHub 토큰 조회 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     event.getMainReportId(), event.getDetailReportId(), e.getMessage());
-            reportCommandService.deleteReport(event.getMainReportId());
-            reportCommandService.deleteReport(event.getDetailReportId());
-            sendFailureNotification(event);
+            reportCommandService.handleReportFailed(event.getMainReportId(), event.getDetailReportId(),
+                    event.getMemberId(), event.getGitUrl(), "GitHub 토큰 조회 실패: " + e.getMessage());
             return;
         }
 
@@ -113,23 +107,9 @@ public class FastApiReportClient {
         } catch (RestClientException e) {
             log.error("FastAPI 호출 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     event.getMainReportId(), event.getDetailReportId(), e.getMessage());
-            reportCommandService.deleteReport(event.getMainReportId());
-            reportCommandService.deleteReport(event.getDetailReportId());
-            sendFailureNotification(event);
+            reportCommandService.handleReportFailed(event.getMainReportId(), event.getDetailReportId(),
+                    event.getMemberId(), event.getGitUrl(), "FastAPI 호출 실패: " + e.getMessage());
         }
     }
 
-    private void sendFailureNotification(ReportCreatedEvent event) {
-        try {
-            notificationCommandService.create(
-                    NotificationType.REPORT_FAILED,
-                    event.getMemberId(),
-                    null,
-                    event.getGitUrl(),
-                    event.getMainReportId()
-            );
-        } catch (Exception e) {
-            log.warn("리포트 실패 알림 전송 실패 - mainReportId: {}", event.getMainReportId(), e);
-        }
-    }
 }

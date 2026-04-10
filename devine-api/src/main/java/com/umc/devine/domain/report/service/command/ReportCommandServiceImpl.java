@@ -4,6 +4,7 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
+import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.report.converter.ReportConverter;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.dto.ReportResDTO;
@@ -19,6 +20,7 @@ import com.umc.devine.domain.ticket.service.command.ReportCreditCommandService;
 import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
 import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
 import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
@@ -37,6 +39,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
     private final DevReportRepository devReportRepository;
     private final GitRepoUrlRepository gitRepoUrlRepository;
+    private final MemberRepository memberRepository;
+    private final EntityManager entityManager;
     private final ApplicationEventPublisher eventPublisher;
     private final FastApiSyncReportClient fastApiSyncReportClient;
     private final PlatformTransactionManager transactionManager;
@@ -137,8 +141,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 String errorMessage = response != null ? response.errorMessage() : "응답이 없습니다.";
                 log.warn("Report 동기 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                         savedMainReport.getId(), savedDetailReport.getId(), errorMessage);
-                savedMainReport.failReport(errorMessage);
-                savedDetailReport.failReport(errorMessage);
+                // 실패 시 catch 블록에서 리포트 행을 삭제하고 크레딧을 환불한다.
                 throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
             }
 
@@ -147,8 +150,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             if (content == null || content.isNull()) {
                 log.warn("Report content가 null - mainReportId: {}, detailReportId: {}",
                         savedMainReport.getId(), savedDetailReport.getId());
-                savedMainReport.failReport("리포트 content가 null입니다.");
-                savedDetailReport.failReport("리포트 content가 null입니다.");
                 throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
             }
 
@@ -159,8 +160,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             if (mainContent == null || mainContent.isNull() || detailContent == null || detailContent.isNull()) {
                 log.warn("Report content가 비어있음 - mainReportId: {}, detailReportId: {}",
                         savedMainReport.getId(), savedDetailReport.getId());
-                savedMainReport.failReport("리포트 content가 비어있습니다.");
-                savedDetailReport.failReport("리포트 content가 비어있습니다.");
                 throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
             }
 
@@ -176,16 +175,26 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
             return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
 
-        } catch (ReportException e) {
-            reportCreditCommandService.refundCredit(member);
-            throw e;
         } catch (Exception e) {
             log.error("Report 동기 생성 중 예외 발생 - mainReportId: {}, detailReportId: {}",
                     savedMainReport != null ? savedMainReport.getId() : null,
                     savedDetailReport != null ? savedDetailReport.getId() : null, e);
-            if (savedMainReport != null) savedMainReport.failReport(e.getMessage());
-            if (savedDetailReport != null) savedDetailReport.failReport(e.getMessage());
+
+            // [동기 실패 경로] 리포트 행을 삭제하고 크레딧을 환불한다.
+            // 비동기 콜백 실패(handleCallbackFailed, handleCallbackSuccess catch)와 달리,
+            // 동기 경로는 FAILED 상태를 남기지 않고 행 자체를 제거한다. (재시도를 허용하기 위해)
+            if (savedMainReport != null) {
+                entityManager.detach(savedMainReport);
+                devReportRepository.deleteById(savedMainReport.getId());
+            }
+            if (savedDetailReport != null) {
+                entityManager.detach(savedDetailReport);
+                devReportRepository.deleteById(savedDetailReport.getId());
+            }
             reportCreditCommandService.refundCredit(member);
+
+            if (e instanceof ReportException re) throw re;
+
             throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
         }
     }
@@ -196,6 +205,12 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
         DevReport detailReport = devReportRepository.findById(request.detailReportId())
                 .orElseThrow(() -> new ReportException(ReportErrorReason.REPORT_NOT_FOUND));
+
+        if (mainReport.getCompletedAt() != null || mainReport.getErrorMessage() != null) {
+            log.warn("이미 처리된 리포트에 콜백 재호출 무시 - mainReportId: {}, detailReportId: {}",
+                    request.mainReportId(), request.detailReportId());
+            return;
+        }
 
         switch (request.status()) {
             case SUCCESS -> handleCallbackSuccess(mainReport, detailReport, request);
@@ -232,6 +247,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
 
             publishReportNotificationEvent(member.getId(), mainReport.getId(), mainReport.getGitRepoUrl().getGitUrl(), true);
         } catch (Exception e) {
+            // [비동기 콜백 실패 경로] 리포트 행을 FAILED 상태로 마킹하고 크레딧을 환불한다.
+            // 동기 경로(createReportSync)와 달리 행을 삭제하지 않으며, 사용자가 실패 이력을 조회할 수 있도록 FAILED 상태를 유지한다.
             mainReport.failReport(e.getMessage());
             detailReport.failReport(e.getMessage());
             reportCreditCommandService.refundCredit(member);
@@ -251,9 +268,20 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     }
 
     @Override
-    public void deleteReport(Long reportId) {
-        devReportRepository.deleteById(reportId);
-        log.info("리포트 삭제 완료 - reportId: {}", reportId);
+    public void handleReportFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason) {
+        log.error("리포트 생성 실패 처리 - mainReportId: {}, detailReportId: {}, memberId: {}, reason: {}",
+                mainReportId, detailReportId, memberId, reason);
+        devReportRepository.deleteById(mainReportId);
+        devReportRepository.deleteById(detailReportId);
+
+        Member member = memberRepository.findById(memberId).orElse(null);
+        if (member == null) {
+            log.error("크레딧 환불 실패 - 회원 없음, memberId: {}, mainReportId: {}", memberId, mainReportId);
+        } else {
+            reportCreditCommandService.refundCredit(member);
+        }
+
+        publishReportNotificationEvent(memberId, mainReportId, gitUrl, false);
     }
 
     private void publishReportNotificationEvent(Long receiverId, Long reportId, String gitUrl, boolean success) {

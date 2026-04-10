@@ -8,5 +8,5 @@ public interface ReportCommandService {
     ReportResDTO.CreateReportRes createReport(Long memberId, ReportReqDTO.CreateReportReq request);
     ReportResDTO.CreateReportSyncRes createReportSync(Long memberId, ReportReqDTO.CreateReportReq request);
     void processCallback(ReportReqDTO.CallbackReq request);
-    void deleteReport(Long reportId);
+    void handleReportFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason);
 }
