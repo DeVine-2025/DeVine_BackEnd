@@ -29,20 +29,22 @@ public class ReportController implements ReportControllerDocs {
     @Override
     @GetMapping("/{gitRepoId}/main")
     public ApiResponse<ReportResDTO.ReportRes> getMainReport(
-            @CurrentMember Member member,
+            @CurrentMember(required = false) Member member,
             @PathVariable Long gitRepoId
     ) {
-        ReportResDTO.ReportRes response = reportQueryService.getMainReport(member.getId(), gitRepoId);
+        Long memberId = member != null ? member.getId() : null;
+        ReportResDTO.ReportRes response = reportQueryService.getMainReport(memberId, gitRepoId);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 
     @Override
     @GetMapping("/{gitRepoId}/detail")
     public ApiResponse<ReportResDTO.ReportRes> getDetailReport(
-            @CurrentMember Member member,
+            @CurrentMember(required = false) Member member,
             @PathVariable Long gitRepoId
     ) {
-        ReportResDTO.ReportRes response = reportQueryService.getDetailReport(member.getId(), gitRepoId);
+        Long memberId = member != null ? member.getId() : null;
+        ReportResDTO.ReportRes response = reportQueryService.getDetailReport(memberId, gitRepoId);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 
