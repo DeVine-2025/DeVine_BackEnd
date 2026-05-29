@@ -93,7 +93,9 @@ public class MemberResDTO {
     public record MemberProfileDTO(
             MemberDetailDTO member,
             List<CategoryGenre> domains,
-            List<ContactDTO> contacts
+            List<ContactDTO> contacts,
+            @Schema(description = "Clerk ID (채팅방 생성 시 사용)", example = "user_2abc123xyz")
+            String clerkId
     ){}
 
     @Builder

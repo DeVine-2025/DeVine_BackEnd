@@ -33,15 +33,27 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
             NativeWebRequest webRequest,
             WebDataBinderFactory binderFactory
     ) {
+        CurrentMember annotation = parameter.getParameterAnnotation(CurrentMember.class);
+        boolean required = annotation == null || annotation.required();
+
+        try {
+            return resolveCurrentMember();
+        } catch (AuthException e) {
+            if (required) {
+                throw e;
+            }
+            return null;
+        }
+    }
+
+    private Member resolveCurrentMember() {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
             throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
-        Object principal = authentication.getPrincipal();
-
-        if (!(principal instanceof ClerkPrincipal clerkPrincipal)) {
+        if (!(authentication.getPrincipal() instanceof ClerkPrincipal clerkPrincipal)) {
             throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
