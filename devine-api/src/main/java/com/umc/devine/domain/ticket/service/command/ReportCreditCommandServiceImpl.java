@@ -23,15 +23,6 @@ public class ReportCreditCommandServiceImpl implements ReportCreditCommandServic
     @Value("${devine.credit.initial-count:1}")
     private int initialCreditCount;
 
-    @Deprecated // TODO : 비동기 전환 후 제거 예정
-    @Override
-    public void useCredit(Member member) {
-        MemberReportCredit credit = memberReportCreditRepository.findByMemberForUpdate(member)
-                .orElseThrow(() -> new TicketException(TicketErrorReason.INSUFFICIENT_CREDITS));
-        credit.useCredit(); // 잔여 0이면 내부에서 INSUFFICIENT_CREDITS 예외
-        log.info("크레딧 차감 (비관적 락) - memberId: {}, remaining: {}", member.getId(), credit.getRemainingCount());
-    }
-
     @Override
     public void useCreditAtomic(Member member) {
         int updated = memberReportCreditRepository.useCreditByMember(member);
@@ -44,18 +35,28 @@ public class ReportCreditCommandServiceImpl implements ReportCreditCommandServic
     @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void refundCredit(Member member) {
-        int updated = memberReportCreditRepository.addCreditsWithCap(member, 1, initialCreditCount);
+        int updated = memberReportCreditRepository.addCreditsByMember(member, 1);
         if (updated == 0) {
-            log.error("크레딧 환불 누락 (행 없음 또는 상한 초과) — 수동 복구 필요 - memberId: {}", member.getId());
+            log.error("크레딧 환불 누락 (크레딧 행 없음) — 수동 복구 필요 - memberId: {}", member.getId());
         } else {
             log.info("크레딧 환불 - memberId: {}", member.getId());
         }
     }
 
     @Override
+    @Transactional(propagation = Propagation.MANDATORY)
+    public void refundCreditInCurrentTransaction(Member member) {
+        int updated = memberReportCreditRepository.addCreditsByMember(member, 1);
+        if (updated == 0) {
+            log.error("크레딧 환불 실패 (크레딧 행 없음) - memberId: {}", member.getId());
+            throw new TicketException(TicketErrorReason.CREDIT_REFUND_FAILED);
+        }
+        log.info("크레딧 환불 - memberId: {}", member.getId());
+    }
+
+    @Override
     @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void initializeCredit(Member member) {
-        // ON CONFLICT DO NOTHING으로 중복/동시 삽입을 트랜잭션 오염 없이 멱등 처리
         memberReportCreditRepository.insertIfNotExists(member.getId(), initialCreditCount);
         log.info("초기 크레딧 지급 (멱등) - memberId: {}, count: {}", member.getId(), initialCreditCount);
     }

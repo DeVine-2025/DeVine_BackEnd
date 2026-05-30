@@ -10,6 +10,7 @@ import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
@@ -25,6 +26,7 @@ public class DevTechstackCommandServiceImpl implements DevTechstackCommandServic
     private final DevTechstackRepository devTechstackRepository;
 
     @Override
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void saveAutoTechstacks(Member member, List<String> techstackNames) {
         if (techstackNames == null || techstackNames.isEmpty()) {
             log.info("저장할 techstacks가 없습니다. memberId: {}", member.getId());
@@ -33,12 +35,11 @@ public class DevTechstackCommandServiceImpl implements DevTechstackCommandServic
 
         List<TechName> techNames = techstackNames.stream()
                 .map(name -> {
-                    try {
-                        return TechName.valueOf(name);
-                    } catch (IllegalArgumentException e) {
+                    Optional<TechName> tech = TechName.from(name);
+                    if (tech.isEmpty()) {
                         log.warn("알 수 없는 TechName: {}", name);
-                        return null;
                     }
+                    return tech.orElse(null);
                 })
                 .filter(Objects::nonNull)
                 .toList();

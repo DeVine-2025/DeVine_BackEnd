@@ -271,7 +271,6 @@ src/main/java/com/umc/devine/
 │   ├── fastapi/                        # FastAPI AI 워커 클라이언트
 │   │   ├── FastApiEmbeddingClient      # 임베딩 요청
 │   │   ├── FastApiReportClient         # 리포트 요청 (비동기)
-│   │   ├── FastApiSyncReportClient     # 리포트 요청 (동기)
 │   │   └── EmbeddingCallbackController # 콜백 수신
 │   ├── github/                         # GitHub API 연동
 │   ├── s3/                             # AWS S3 파일 업로드

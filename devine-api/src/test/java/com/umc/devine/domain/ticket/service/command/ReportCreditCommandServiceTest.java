@@ -75,15 +75,15 @@ class ReportCreditCommandServiceTest extends IntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("useCredit")
-    class UseCredit {
+    @DisplayName("useCreditAtomic")
+    class UseCreditAtomic {
 
         @Test
         @DisplayName("크레딧이 있으면 1 차감된다")
         void deductsOneCredit() {
             memberReportCreditRepository.save(MemberReportCredit.of(member, 2));
 
-            reportCreditCommandService.useCredit(member);
+            reportCreditCommandService.useCreditAtomic(member);
 
             MemberReportCredit credit = memberReportCreditRepository.findByMember(member).orElseThrow();
             assertThat(credit.getRemainingCount()).isEqualTo(1);
@@ -94,16 +94,7 @@ class ReportCreditCommandServiceTest extends IntegrationTestSupport {
         void throwsWhenNoCredits() {
             memberReportCreditRepository.save(MemberReportCredit.of(member, 0));
 
-            assertThatThrownBy(() -> reportCreditCommandService.useCredit(member))
-                    .isInstanceOf(TicketException.class)
-                    .satisfies(e -> assertThat(((TicketException) e).getReason())
-                            .isEqualTo(TicketErrorReason.INSUFFICIENT_CREDITS));
-        }
-
-        @Test
-        @DisplayName("크레딧 행이 없으면 INSUFFICIENT_CREDITS 예외가 발생한다")
-        void throwsWhenNoCreditRow() {
-            assertThatThrownBy(() -> reportCreditCommandService.useCredit(member))
+            assertThatThrownBy(() -> reportCreditCommandService.useCreditAtomic(member))
                     .isInstanceOf(TicketException.class)
                     .satisfies(e -> assertThat(((TicketException) e).getReason())
                             .isEqualTo(TicketErrorReason.INSUFFICIENT_CREDITS));
@@ -123,6 +114,30 @@ class ReportCreditCommandServiceTest extends IntegrationTestSupport {
 
             MemberReportCredit credit = memberReportCreditRepository.findByMember(member).orElseThrow();
             assertThat(credit.getRemainingCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("크레딧 행이 없으면 예외 없이 누락 처리된다")
+        void noExceptionWhenNoCreditRow() {
+            // 행 없음 — 예외가 발생하지 않아야 한다
+            reportCreditCommandService.refundCredit(member);
+
+            // 행이 생성되지 않아야 한다
+            assertThat(memberReportCreditRepository.findByMember(member)).isEmpty();
+        }
+
+        @Test
+        @DisplayName("초기 크레딧보다 많이 보유한 경우에도 환불이 막히지 않고 1 증가한다")
+        void refundsEvenWhenAboveInitialCount() {
+            // given - 결제로 5개 보유 (기본 제공 크레딧 1개보다 많음)
+            memberReportCreditRepository.save(MemberReportCredit.of(member, 5));
+
+            // when - 실패 환불
+            reportCreditCommandService.refundCredit(member);
+
+            // then - 상한(initialCount)에 막히지 않고 6으로 증가해야 한다
+            MemberReportCredit credit = memberReportCreditRepository.findByMember(member).orElseThrow();
+            assertThat(credit.getRemainingCount()).isEqualTo(6);
         }
     }
 }
