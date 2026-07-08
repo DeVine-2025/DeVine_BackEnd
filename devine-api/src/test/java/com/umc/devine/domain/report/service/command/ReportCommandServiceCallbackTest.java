@@ -8,6 +8,8 @@ import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.notification.enums.NotificationType;
+import com.umc.devine.domain.notification.repository.NotificationRepository;
 import com.umc.devine.domain.report.dto.ReportReqDTO;
 import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.enums.ReportType;
@@ -39,7 +41,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.catchThrowable;
 
 /**
- * processCallback / handleReportFailed의 크레딧 환불 및 리포트 상태 변경을 검증하는 통합 테스트.
+ * processCallback / handleReportDispatchFailed의 크레딧 환불 및 리포트 상태 변경을 검증하는 통합 테스트.
  */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
@@ -58,6 +60,9 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
 
     @Autowired
     private MemberReportCreditRepository memberReportCreditRepository;
+
+    @Autowired
+    private NotificationRepository notificationRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -173,7 +178,7 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
 
     @Test
     @DisplayName("processCallback SUCCESS - content는 있으나 main/detail이 없으면 예외가 발생하고 리포트가 FAILED로 영속되며 크레딧이 환불된다")
-    void processCallbackSuccess_withMissingMainDetail_persistsFailedAndRefundsCredit() {
+    void processCallbackSuccess_withMissingMainDetail_persistsFailedAndRefundsCredit() throws InterruptedException {
         // given
         memberReportCreditRepository.saveAndFlush(MemberReportCredit.of(testMember, 0));
         DevReport mainReport = createPendingReport(ReportType.MAIN);
@@ -203,6 +208,14 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
         // then - 크레딧 환불 (0 → 1)
         MemberReportCredit credit = memberReportCreditRepository.findByMember(testMember).orElseThrow();
         assertThat(credit.getRemainingCount()).isEqualTo(1);
+
+        Thread.sleep(500);
+        assertThat(notificationRepository.findAll())
+                .anySatisfy(notification -> {
+                    assertThat(notification.getReceiver().getId()).isEqualTo(testMember.getId());
+                    assertThat(notification.getType()).isEqualTo(NotificationType.REPORT_FAILED);
+                    assertThat(notification.getReferenceId()).isEqualTo(mainReport.getId());
+                });
     }
 
     @Test
@@ -277,8 +290,8 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("processCallback SUCCESS - 환불이 불가능하면 FAILED 마킹도 커밋하지 않는다")
-    void processCallbackSuccess_whenRefundCannotBeApplied_doesNotPersistFailedMark() {
+    @DisplayName("processCallback SUCCESS - 환불이 불가능해도 FAILED 마킹은 커밋된다")
+    void processCallbackSuccess_whenRefundCannotBeApplied_persistsFailedMark() {
         // given - 크레딧 행이 없어 환불 업데이트가 0건이 되는 비정상 상태
         DevReport mainReport = createPendingReport(ReportType.MAIN);
         DevReport detailReport = createPendingReport(ReportType.DETAIL);
@@ -294,11 +307,11 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
         assertThatThrownBy(() -> reportCommandService.processCallback(request))
                 .isInstanceOf(Exception.class);
 
-        // then - 실패 상태와 환불이 한 트랜잭션이어야 하므로, 환불 실패 시 FAILED 마킹도 남지 않아야 한다
+        // then - 리포트 상태 종결이 환불 실패에 막히면 안 된다
         DevReport savedMain = devReportRepository.findById(mainReport.getId()).orElseThrow();
         DevReport savedDetail = devReportRepository.findById(detailReport.getId()).orElseThrow();
-        assertThat(savedMain.getErrorMessage()).isNull();
-        assertThat(savedDetail.getErrorMessage()).isNull();
+        assertThat(savedMain.getErrorMessage()).isNotNull();
+        assertThat(savedDetail.getErrorMessage()).isNotNull();
     }
 
     @Test
@@ -352,12 +365,12 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("[재현] handleReportFailed - 이미 완료(SUCCESS)된 리포트는 삭제하거나 환불하지 않아야 한다")
-    void handleReportFailed_whenReportsAlreadyCompleted_shouldNotDeleteOrRefund() {
+    @DisplayName("[재현] handleReportDispatchFailed - 이미 완료(SUCCESS)된 리포트는 삭제하거나 환불하지 않아야 한다")
+    void handleReportDispatchFailed_whenReportsAlreadyCompleted_shouldNotDeleteOrRefund() {
         // given - 크레딧 1이 차감된 상태(리포트 생성 시 차감)에서, 성공 콜백이 먼저 처리되어
         //         두 리포트가 이미 완료(completedAt 설정)된 상황.
         //         이는 "FastAPI POST 읽기 타임아웃(RestClientException)이 났지만 서버는 정상 처리하여
-        //          SUCCESS 콜백이 handleReportFailed의 findById~delete 사이에 완료를 커밋한" 경쟁의 결과 상태와 동일하다.
+        //          SUCCESS 콜백이 handleReportDispatchFailed의 findById~delete 사이에 완료를 커밋한" 경쟁의 결과 상태와 동일하다.
         memberReportCreditRepository.saveAndFlush(MemberReportCredit.of(testMember, 0));
         DevReport mainReport = createPendingReport(ReportType.MAIN);
         DevReport detailReport = createPendingReport(ReportType.DETAIL);
@@ -366,8 +379,8 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
         devReportRepository.saveAndFlush(mainReport);
         devReportRepository.saveAndFlush(detailReport);
 
-        // when - 뒤늦게 handleReportFailed가 호출됨 (POST 예외 처리 경로)
-        reportCommandService.handleReportFailed(
+        // when - 뒤늦게 handleReportDispatchFailed가 호출됨 (POST 예외 처리 경로)
+        reportCommandService.handleReportDispatchFailed(
                 mainReport.getId(), detailReport.getId(),
                 testMember.getId(),
                 testGitRepoUrl.getGitUrl(),
@@ -377,10 +390,10 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
         // then - 이미 완료된 리포트는 보존되어야 한다
         //        (현재 구현은 상태 무검사로 deleteById하여 성공 리포트를 삭제 → 이 단언에서 실패하며 결함이 재현됨)
         assertThat(devReportRepository.findById(mainReport.getId()))
-                .withFailMessage("완료된 main 리포트가 handleReportFailed에 의해 삭제되었습니다 (데이터 손실)")
+                .withFailMessage("완료된 main 리포트가 handleReportDispatchFailed에 의해 삭제되었습니다 (데이터 손실)")
                 .isPresent();
         assertThat(devReportRepository.findById(detailReport.getId()))
-                .withFailMessage("완료된 detail 리포트가 handleReportFailed에 의해 삭제되었습니다 (데이터 손실)")
+                .withFailMessage("완료된 detail 리포트가 handleReportDispatchFailed에 의해 삭제되었습니다 (데이터 손실)")
                 .isPresent();
 
         // then - 사용자가 리포트를 정상 수령했으므로 크레딧은 환불되면 안 된다
@@ -392,15 +405,15 @@ class ReportCommandServiceCallbackTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("handleReportFailed - 회원이 존재하지 않으면 리포트만 삭제되고 크레딧 환불은 생략된다")
-    void handleReportFailed_whenMemberNotFound_onlyDeletesReports() {
+    @DisplayName("handleReportDispatchFailed - 회원이 존재하지 않으면 리포트만 삭제되고 크레딧 환불은 생략된다")
+    void handleReportDispatchFailed_whenMemberNotFound_onlyDeletesReports() {
         // given
         DevReport mainReport = createPendingReport(ReportType.MAIN);
         DevReport detailReport = createPendingReport(ReportType.DETAIL);
         long nonExistentMemberId = -999L;
 
         // when - 예외 없이 완료되어야 한다
-        reportCommandService.handleReportFailed(
+        reportCommandService.handleReportDispatchFailed(
                 mainReport.getId(), detailReport.getId(),
                 nonExistentMemberId,
                 "https://github.com/test/repo",

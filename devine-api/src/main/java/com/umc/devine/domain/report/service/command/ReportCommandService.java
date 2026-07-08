@@ -7,5 +7,5 @@ public interface ReportCommandService {
     ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request);
     ReportResDTO.CreateReportRes createReport(Long memberId, ReportReqDTO.CreateReportReq request);
     void processCallback(ReportReqDTO.CallbackReq request);
-    void handleReportFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason);
+    void handleReportDispatchFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason);
 }

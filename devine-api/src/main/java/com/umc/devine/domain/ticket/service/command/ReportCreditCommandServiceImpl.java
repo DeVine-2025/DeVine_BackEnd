@@ -48,14 +48,13 @@ public class ReportCreditCommandServiceImpl implements ReportCreditCommandServic
     public void refundCreditInCurrentTransaction(Member member) {
         int updated = memberReportCreditRepository.addCreditsByMember(member, 1);
         if (updated == 0) {
-            log.error("크레딧 환불 실패 (크레딧 행 없음) - memberId: {}", member.getId());
-            throw new TicketException(TicketErrorReason.CREDIT_REFUND_FAILED);
+            log.error("크레딧 환불 누락 (크레딧 행 없음) — 수동 복구 필요 - memberId: {}", member.getId());
+            return;
         }
         log.info("크레딧 환불 - memberId: {}", member.getId());
     }
 
     @Override
-    @Transactional(propagation = Propagation.REQUIRES_NEW)
     public void initializeCredit(Member member) {
         memberReportCreditRepository.insertIfNotExists(member.getId(), initialCreditCount);
         log.info("초기 크레딧 지급 (멱등) - memberId: {}, count: {}", member.getId(), initialCreditCount);

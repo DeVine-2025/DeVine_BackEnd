@@ -58,7 +58,7 @@ public class FastApiReportClient {
         } catch (Exception e) {
             log.error("GitHub 토큰 조회 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     event.getMainReportId(), event.getDetailReportId(), e.getMessage());
-            reportCommandService.handleReportFailed(event.getMainReportId(), event.getDetailReportId(),
+            reportCommandService.handleReportDispatchFailed(event.getMainReportId(), event.getDetailReportId(),
                     event.getMemberId(), event.getGitUrl(), "GitHub 토큰 조회 실패: " + e.getMessage());
             return;
         }
@@ -107,7 +107,7 @@ public class FastApiReportClient {
         } catch (RestClientException e) {
             log.error("FastAPI 호출 실패 - mainReportId: {}, detailReportId: {}, error: {}",
                     event.getMainReportId(), event.getDetailReportId(), e.getMessage());
-            reportCommandService.handleReportFailed(event.getMainReportId(), event.getDetailReportId(),
+            reportCommandService.handleReportDispatchFailed(event.getMainReportId(), event.getDetailReportId(),
                     event.getMemberId(), event.getGitUrl(), "FastAPI 호출 실패: " + e.getMessage());
         }
     }

@@ -7,7 +7,7 @@ public interface ReportCreditCommandService {
     void useCreditAtomic(Member member);
     /** 크레딧 1 환불 */
     void refundCredit(Member member);
-    /** 현재 트랜잭션 안에서 크레딧 1 환불. 환불 행이 없으면 예외 */
+    /** 현재 트랜잭션 안에서 크레딧 1 환불. 환불 행이 없으면 로그만 남긴다. */
     void refundCreditInCurrentTransaction(Member member);
     /** 회원가입 시 초기 크레딧 지급. MemberReportCredit 행이 없으면 생성 */
     void initializeCredit(Member member);

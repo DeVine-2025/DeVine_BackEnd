@@ -16,16 +16,12 @@ import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.techstack.service.command.DevTechstackCommandService;
 import com.umc.devine.domain.ticket.service.command.ReportCreditCommandService;
-import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
-import org.springframework.transaction.PlatformTransactionManager;
-import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
-import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -40,16 +36,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final MemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final PlatformTransactionManager transactionManager;
     private final DevTechstackCommandService devTechstackCommandService;
     private final ReportCreditCommandService reportCreditCommandService;
-    private TransactionTemplate requiresNewTxTemplate;
-
-    @PostConstruct
-    void initTransactionTemplate() {
-        this.requiresNewTxTemplate = new TransactionTemplate(transactionManager);
-        this.requiresNewTxTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
-    }
 
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
@@ -74,30 +62,23 @@ public class ReportCommandServiceImpl implements ReportCommandService {
         validateReportNotExists(request.gitRepoId());
 
         Member member = gitRepoUrl.getMember();
+        reportCreditCommandService.useCreditAtomic(member);
 
-        requiresNewTxTemplate.executeWithoutResult(status ->
-                reportCreditCommandService.useCreditAtomic(member));
+        DevReport savedMainReport = saveReportWithDuplicateCheck(ReportConverter.toReport(gitRepoUrl, ReportType.MAIN));
+        DevReport savedDetailReport = saveReportWithDuplicateCheck(ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL));
 
-        try {
-            DevReport savedMainReport = saveReportWithDuplicateCheck(ReportConverter.toReport(gitRepoUrl, ReportType.MAIN));
-            DevReport savedDetailReport = saveReportWithDuplicateCheck(ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL));
+        eventPublisher.publishEvent(ReportCreatedEvent.builder()
+                .mainReportId(savedMainReport.getId())
+                .detailReportId(savedDetailReport.getId())
+                .gitUrl(gitRepoUrl.getGitUrl())
+                .clerkId(gitRepoUrl.getMember().getClerkId())
+                .memberId(memberId)
+                .build());
 
-            eventPublisher.publishEvent(ReportCreatedEvent.builder()
-                    .mainReportId(savedMainReport.getId())
-                    .detailReportId(savedDetailReport.getId())
-                    .gitUrl(gitRepoUrl.getGitUrl())
-                    .clerkId(gitRepoUrl.getMember().getClerkId())
-                    .memberId(memberId)
-                    .build());
+        log.info("Report 생성 요청 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
+                memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
 
-            log.info("Report 생성 요청 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
-                    memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
-
-            return ReportConverter.toCreateReportRes(savedMainReport, savedDetailReport);
-        } catch (Exception e) {
-            reportCreditCommandService.refundCredit(member);
-            throw e;
-        }
+        return ReportConverter.toCreateReportRes(savedMainReport, savedDetailReport);
     }
 
     @Override
@@ -160,6 +141,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             mainReport.failReport(e.getMessage());
             detailReport.failReport(e.getMessage());
             reportCreditCommandService.refundCreditInCurrentTransaction(member);
+            publishReportNotificationEvent(member.getId(), mainReport.getId(), mainReport.getGitRepoUrl().getGitUrl(), false);
 
             if (e instanceof ReportException re) throw re;
             throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
@@ -178,8 +160,8 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     }
 
     @Override
-    public void handleReportFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason) {
-        log.error("리포트 생성 실패 처리 - mainReportId: {}, detailReportId: {}, memberId: {}, reason: {}",
+    public void handleReportDispatchFailed(Long mainReportId, Long detailReportId, Long memberId, String gitUrl, String reason) {
+        log.error("리포트 생성 요청 전송 실패 처리 - mainReportId: {}, detailReportId: {}, memberId: {}, reason: {}",
                 mainReportId, detailReportId, memberId, reason);
 
         // 진행 중인 리포트만 삭제한다. 동시 콜백이 이미 완료/실패로 종결한 경우 0건 삭제되고,
