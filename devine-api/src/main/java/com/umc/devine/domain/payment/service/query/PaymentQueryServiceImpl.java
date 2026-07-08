@@ -22,17 +22,20 @@ public class PaymentQueryServiceImpl implements PaymentQueryService {
     private final String nhnKcpChannelKey;
     private final String kgInicisChannelKey;
     private final String kakaopayChannelKey;
+    private final String tossPaymentsChannelKey;
 
     public PaymentQueryServiceImpl(
             PaymentRepository paymentRepository,
             @Value("${portone.channel-key.nhn-kcp}") String nhnKcpChannelKey,
             @Value("${portone.channel-key.kg-inicis}") String kgInicisChannelKey,
-            @Value("${portone.channel-key.kakaopay}") String kakaopayChannelKey
+            @Value("${portone.channel-key.kakaopay}") String kakaopayChannelKey,
+            @Value("${portone.channel-key.toss-payments}") String tossPaymentsChannelKey
     ) {
         this.paymentRepository = paymentRepository;
         this.nhnKcpChannelKey = nhnKcpChannelKey;
         this.kgInicisChannelKey = kgInicisChannelKey;
         this.kakaopayChannelKey = kakaopayChannelKey;
+        this.tossPaymentsChannelKey = tossPaymentsChannelKey;
     }
 
     @Override
@@ -47,6 +50,7 @@ public class PaymentQueryServiceImpl implements PaymentQueryService {
             case NHN_KCP -> nhnKcpChannelKey;
             case KG_INICIS -> kgInicisChannelKey;
             case KAKAOPAY -> kakaopayChannelKey;
+            case TOSS_PAYMENTS -> tossPaymentsChannelKey;
         };
         if (channelKey == null || channelKey.isBlank()) {
             throw new PaymentException(PaymentErrorReason.UNSUPPORTED_PAYMENT_METHOD);
