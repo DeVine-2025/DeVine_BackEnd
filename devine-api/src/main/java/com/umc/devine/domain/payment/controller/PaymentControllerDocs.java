@@ -44,7 +44,7 @@ public interface PaymentControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "지원하지 않는 PG사")
     })
     ApiResponse<PaymentResDTO.ChannelKeyDTO> getChannelKey(
-            @Parameter(description = "PG사 (NHN_KCP, KG_INICIS, KAKAOPAY, TOSS_PAYMENTS)", example = "NHN_KCP")
+            @Parameter(description = "PG사 (TOSS_PAYMENTS)", example = "TOSS_PAYMENTS")
             @RequestParam PgProvider pg
     );
 }
