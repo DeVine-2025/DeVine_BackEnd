@@ -19,13 +19,22 @@ import java.util.List;
 public class PaymentQueryServiceImpl implements PaymentQueryService {
 
     private final PaymentRepository paymentRepository;
+    private final String nhnKcpChannelKey;
+    private final String kgInicisChannelKey;
+    private final String kakaopayChannelKey;
     private final String tossPaymentsChannelKey;
 
     public PaymentQueryServiceImpl(
             PaymentRepository paymentRepository,
+            @Value("${portone.channel-key.nhn-kcp}") String nhnKcpChannelKey,
+            @Value("${portone.channel-key.kg-inicis}") String kgInicisChannelKey,
+            @Value("${portone.channel-key.kakaopay}") String kakaopayChannelKey,
             @Value("${portone.channel-key.toss-payments}") String tossPaymentsChannelKey
     ) {
         this.paymentRepository = paymentRepository;
+        this.nhnKcpChannelKey = nhnKcpChannelKey;
+        this.kgInicisChannelKey = kgInicisChannelKey;
+        this.kakaopayChannelKey = kakaopayChannelKey;
         this.tossPaymentsChannelKey = tossPaymentsChannelKey;
     }
 
@@ -38,6 +47,9 @@ public class PaymentQueryServiceImpl implements PaymentQueryService {
     @Override
     public PaymentResDTO.ChannelKeyDTO getChannelKey(PgProvider pgProvider) {
         String channelKey = switch (pgProvider) {
+            case NHN_KCP -> nhnKcpChannelKey;
+            case KG_INICIS -> kgInicisChannelKey;
+            case KAKAOPAY -> kakaopayChannelKey;
             case TOSS_PAYMENTS -> tossPaymentsChannelKey;
         };
         if (channelKey == null || channelKey.isBlank()) {
