@@ -1,11 +1,13 @@
 package com.umc.devine.global.config;
 
+import com.umc.devine.admin.auth.security.AdminJwtAuthenticationConverter;
 import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
 import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
@@ -25,12 +27,40 @@ import java.util.List;
 public class ApiSecurityConfig {
 
     private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
+    private final AdminJwtAuthenticationConverter adminJwtAuthenticationConverter;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    /**
+     * 관리자 전용 체인. /admin/** 경로만 담당하며 ROLE_ADMIN을 요구한다.
+     * 일반 유저와 동일한 Clerk JWT로 인증하되, 인가(관리자 판정)만 분리한다.
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/admin/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().hasRole("ADMIN")
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(adminJwtAuthenticationConverter))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
