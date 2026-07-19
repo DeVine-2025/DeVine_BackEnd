@@ -48,6 +48,11 @@ github:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
+# Admin (관리자 인증/인가)
+# bootstrap-emails: 최초 관리자 부트스트랩용 이메일 목록(콤마 구분). 이 이메일로 처음 /admin 접근 시 admin 테이블에 자동 등록된다.
+admin:
+  bootstrap-emails: ${ADMIN_BOOTSTRAP_EMAILS:}
+
 # PortOne
 portone:
   store-id: ${PORTONE_STORE_ID:}
