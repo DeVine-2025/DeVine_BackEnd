@@ -1,5 +1,8 @@
 package com.umc.devine.global.config;
 
+import com.umc.devine.admin.auth.security.AdminAccessDeniedHandler;
+import com.umc.devine.admin.auth.security.AdminAccessLogger;
+import com.umc.devine.admin.auth.security.AdminAccessLoggingFilter;
 import com.umc.devine.admin.auth.security.AdminJwtAuthenticationConverter;
 import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
 import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
@@ -14,6 +17,7 @@ import org.springframework.security.config.annotation.web.configuration.EnableWe
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -28,6 +32,8 @@ public class ApiSecurityConfig {
 
     private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
     private final AdminJwtAuthenticationConverter adminJwtAuthenticationConverter;
+    private final AdminAccessDeniedHandler adminAccessDeniedHandler;
+    private final AdminAccessLogger adminAccessLogger;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Value("${cors.allowed-origins}")
@@ -54,6 +60,9 @@ public class ApiSecurityConfig {
                         .jwt(jwt -> jwt.jwtAuthenticationConverter(adminJwtAuthenticationConverter))
                         .authenticationEntryPoint(customAuthenticationEntryPoint)
                 )
+                .exceptionHandling(ex -> ex.accessDeniedHandler(adminAccessDeniedHandler))
+                // 인가를 통과한 관리자 요청을 감사 로그로 남긴다 (거절은 AdminAccessDeniedHandler가 기록)
+                .addFilterAfter(new AdminAccessLoggingFilter(adminAccessLogger), AuthorizationFilter.class)
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .build();

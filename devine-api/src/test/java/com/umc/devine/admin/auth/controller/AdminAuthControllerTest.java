@@ -52,12 +52,14 @@ class AdminAuthControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("ROLE_ADMIN이 없는 사용자는 403으로 거절된다")
+    @DisplayName("ROLE_ADMIN이 없는 사용자는 403과 일반 오류 메시지로 거절된다 (관리자 존재 비노출)")
     void me_forbidden_for_non_admin() throws Exception {
         mockMvc.perform(get("/admin/v1/auth/me")
                         .with(authentication(nonAdminAuth()))
                         .contentType(MediaType.APPLICATION_JSON))
-                .andExpect(status().isForbidden());
+                .andExpect(status().isForbidden())
+                .andExpect(jsonPath("$.isSuccess").value(false))
+                .andExpect(jsonPath("$.code").value("AUTH403_1"));
     }
 
     @Test
