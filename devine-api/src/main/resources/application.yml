@@ -50,6 +50,8 @@ cors:
 
 # Admin (관리자 인증/인가)
 # bootstrap-emails: 최초 관리자 부트스트랩용 이메일 목록(콤마 구분). 이 이메일로 처음 /admin 접근 시 admin 테이블에 자동 등록된다.
+#   운영 주의: 관리자를 회수(is_active=false)할 때는 이 목록에서도 해당 이메일을 반드시 제거해야 한다.
+#   목록에 남아 있어도 회수 우선 정책상 재활성화되지는 않지만, 목록 정리가 부트스트랩 백도어를 최소화한다.
 admin:
   bootstrap-emails: ${ADMIN_BOOTSTRAP_EMAILS:}
 
