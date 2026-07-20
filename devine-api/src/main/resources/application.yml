@@ -39,6 +39,7 @@ server:
 # Clerk
 clerk:
   secret-key: ${CLERK_SECRET_KEY:}
+  issuer-uri: ${CLERK_ISSUER_URI:}
 
 # GitHub
 github:
