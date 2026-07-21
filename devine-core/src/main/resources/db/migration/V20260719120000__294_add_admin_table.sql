@@ -1,9 +1,11 @@
 -- admin 테이블 (관리자 인증/인가)
 -- 관리자도 Clerk로 로그인하며, 이 테이블은 "누가 관리자인가"(clerk_id)와 권한 레벨을 관리한다.
+-- 관리자 판정/부트스트랩은 clerk_id(sub, 위조 불가)만 신뢰한다. email은 표시/감사용 부가 정보라 nullable이다
+-- (Clerk 세션 토큰에 email 클레임이 없어도 관리자 등록이 되어야 하므로).
 CREATE TABLE admin (
     admin_id    BIGSERIAL    PRIMARY KEY,
     clerk_id    VARCHAR(255) NOT NULL UNIQUE,
-    email       VARCHAR(255) NOT NULL UNIQUE,
+    email       VARCHAR(255) UNIQUE,
     level       VARCHAR(30)  NOT NULL DEFAULT 'ADMIN',
     is_active   BOOLEAN      NOT NULL DEFAULT TRUE,
     granted_by  VARCHAR(255),

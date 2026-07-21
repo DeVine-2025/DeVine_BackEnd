@@ -40,16 +40,15 @@ class AdminRepositoryTest extends CoreIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findByClerkId / findByEmail (활성 여부 무관)")
+    @DisplayName("findByClerkId (활성 여부 무관)")
     class Finders {
 
         @Test
-        @DisplayName("활성 관리자를 clerkId/email로 조회한다")
+        @DisplayName("활성 관리자를 clerkId로 조회한다")
         void finds_active_admin() {
             saveAdmin("admin_clerk_2", "admin2@devine.com");
 
             assertThat(adminRepository.findByClerkId("admin_clerk_2")).isPresent();
-            assertThat(adminRepository.findByEmail("admin2@devine.com")).isPresent();
         }
 
         @Test
@@ -62,14 +61,12 @@ class AdminRepositoryTest extends CoreIntegrationTestSupport {
             Optional<Admin> byClerkId = adminRepository.findByClerkId("admin_clerk_3");
             assertThat(byClerkId).isPresent();
             assertThat(byClerkId.get().isActive()).isFalse();
-            assertThat(adminRepository.findByEmail("admin3@devine.com")).isPresent();
         }
 
         @Test
         @DisplayName("존재하지 않으면 빈 Optional을 반환한다")
         void returns_empty_when_absent() {
             assertThat(adminRepository.findByClerkId("no_such_clerk")).isEmpty();
-            assertThat(adminRepository.findByEmail("no@such.com")).isEmpty();
         }
     }
 
@@ -87,6 +84,18 @@ class AdminRepositoryTest extends CoreIntegrationTestSupport {
             assertThat(result.get().getLevel()).isEqualTo(AdminLevel.ADMIN);
             assertThat(result.get().isActive()).isTrue();
             assertThat(result.get().getGrantedBy()).isEqualTo("BOOTSTRAP");
+        }
+
+        @Test
+        @DisplayName("email이 null이어도 삽입된다 (email은 nullable)")
+        void inserts_with_null_email() {
+            assertThatCode(() ->
+                    adminRepository.insertBootstrapAdminIfAbsent("boot_clerk_null", null, "BOOTSTRAP")
+            ).doesNotThrowAnyException();
+
+            Optional<Admin> result = adminRepository.findByClerkId("boot_clerk_null");
+            assertThat(result).isPresent();
+            assertThat(result.get().getEmail()).isNull();
         }
 
         @Test
@@ -110,9 +119,9 @@ class AdminRepositoryTest extends CoreIntegrationTestSupport {
                     adminRepository.insertBootstrapAdminIfAbsent("boot_clerk_other", "shared@devine.com", "BOOTSTRAP")
             ).doesNotThrowAnyException();
 
-            // email 충돌로 두 번째는 삽입되지 않는다
+            // email 충돌로 두 번째(다른 clerk_id)는 삽입되지 않고, 첫 행은 그대로 존재한다
             assertThat(adminRepository.findByClerkId("boot_clerk_other")).isEmpty();
-            assertThat(adminRepository.findByEmail("shared@devine.com")).isPresent();
+            assertThat(adminRepository.findByClerkId("boot_clerk_3")).isPresent();
         }
     }
 }

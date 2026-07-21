@@ -32,7 +32,8 @@ public class Admin extends BaseEntity {
     @Column(name = "clerk_id", nullable = false, unique = true, length = 255)
     private String clerkId;
 
-    @Column(nullable = false, unique = true, length = 255)
+    // 판정은 clerk_id로만 한다. email은 표시/감사용 부가 정보라 nullable.
+    @Column(unique = true, length = 255)
     private String email;
 
     @Enumerated(EnumType.STRING)
