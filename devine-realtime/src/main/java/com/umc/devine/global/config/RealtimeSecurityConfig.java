@@ -4,6 +4,8 @@ import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
 import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -14,6 +16,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -51,6 +54,19 @@ public class RealtimeSecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .build();
+    }
+
+    /**
+     * CorsFilter를 Security 체인 "밖", 체인보다 앞에 등록한다.
+     * 이유와 체인 안 {@code .cors(...)}를 남겨 두는 근거는 devine-api의 ApiSecurityConfig와 동일하다.
+     * 사이의 한 자리({@code -1})는 점검 모드 필터 몫이다.
+     */
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        FilterRegistrationBean<CorsFilter> registration =
+                new FilterRegistrationBean<>(new CorsFilter(corsConfigurationSource()));
+        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 2);
+        return registration;
     }
 
     @Bean

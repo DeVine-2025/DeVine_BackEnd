@@ -4,6 +4,8 @@ import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
 import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.boot.autoconfigure.security.SecurityProperties;
+import org.springframework.boot.web.servlet.FilterRegistrationBean;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
@@ -15,6 +17,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import org.springframework.web.filter.CorsFilter;
 
 import java.util.Arrays;
 import java.util.List;
@@ -90,6 +93,29 @@ public class ApiSecurityConfig {
                 .formLogin(AbstractHttpConfigurer::disable)
                 .httpBasic(AbstractHttpConfigurer::disable)
                 .build();
+    }
+
+    /**
+     * CorsFilter를 Security 체인 "밖", 체인보다 앞에 등록한다.
+     *
+     * <p>점검 모드 필터가 Security 앞에서 503을 반환하는데, 체인 안쪽의 CorsFilter는 그 시점에
+     * 실행되지 않아 응답에 CORS 헤더가 붙지 않는다. 그러면 브라우저가 본문을 읽기 전에 차단해
+     * 사용자는 점검 안내 대신 네트워크 오류만 보게 된다. 이 등록으로 preflight는 여기서 종료되고,
+     * 실제 요청은 CORS 헤더가 붙은 채 뒤 필터로 넘어간다.
+     *
+     * <p>체인 안의 {@code .cors(...)} 설정은 일부러 남겨 둔다. {@code DefaultCorsProcessor}가
+     * Access-Control-Allow-Origin이 이미 있으면 건너뛰므로 헤더가 중복되지 않고, 이 필터가
+     * 어떤 이유로든 동작하지 않더라도 기존 CORS 동작이 그대로 유지된다.
+     *
+     * <p>순서는 Security 체인({@code DEFAULT_FILTER_ORDER}) 바로 앞 두 자리를 쓴다.
+     * 사이의 한 자리({@code -1})는 점검 모드 필터 몫이다.
+     */
+    @Bean
+    public FilterRegistrationBean<CorsFilter> corsFilterRegistration() {
+        FilterRegistrationBean<CorsFilter> registration =
+                new FilterRegistrationBean<>(new CorsFilter(corsConfigurationSource()));
+        registration.setOrder(SecurityProperties.DEFAULT_FILTER_ORDER - 2);
+        return registration;
     }
 
     @Bean
