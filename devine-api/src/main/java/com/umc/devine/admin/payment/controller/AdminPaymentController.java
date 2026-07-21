@@ -2,9 +2,12 @@ package com.umc.devine.admin.payment.controller;
 
 import com.umc.devine.admin.payment.dto.AdminPaymentReqDTO;
 import com.umc.devine.admin.payment.dto.AdminPaymentResDTO;
+import com.umc.devine.admin.payment.service.AdminPaymentQueryService;
 import com.umc.devine.admin.payment.service.AdminPaymentRefundService;
 import com.umc.devine.domain.payment.exception.code.PaymentSuccessCode;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.dto.PageRequest;
+import com.umc.devine.global.dto.PagedResponse;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springframework.validation.annotation.Validated;
@@ -22,6 +25,28 @@ import org.springframework.web.bind.annotation.*;
 public class AdminPaymentController {
 
     private final AdminPaymentRefundService adminPaymentRefundService;
+    private final AdminPaymentQueryService adminPaymentQueryService;
+
+    @GetMapping
+    public ApiResponse<PagedResponse<AdminPaymentResDTO.PaymentSummaryDTO>> searchPayments(
+            @ModelAttribute AdminPaymentReqDTO.SearchDTO condition,
+            @ModelAttribute PageRequest pageRequest
+    ) {
+        return ApiResponse.onSuccess(
+                PaymentSuccessCode.PAYMENT_LIST_FOUND,
+                adminPaymentQueryService.searchPayments(condition, pageRequest.toPageable())
+        );
+    }
+
+    @GetMapping("/{paymentId}")
+    public ApiResponse<AdminPaymentResDTO.PaymentDetailDTO> getPaymentDetail(
+            @PathVariable Long paymentId
+    ) {
+        return ApiResponse.onSuccess(
+                PaymentSuccessCode.PAYMENT_DETAIL_FOUND,
+                adminPaymentQueryService.getPaymentDetail(paymentId)
+        );
+    }
 
     @PostMapping("/{paymentId}/refund")
     public ApiResponse<AdminPaymentResDTO.RefundResultDTO> refund(

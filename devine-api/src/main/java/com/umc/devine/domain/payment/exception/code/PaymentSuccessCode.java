@@ -24,6 +24,9 @@ public enum PaymentSuccessCode implements BaseSuccessCode {
     PAYMENT_REFUNDED(HttpStatus.OK,
             "PAYMENT200_4",
             "결제가 성공적으로 환불되었습니다."),
+    PAYMENT_DETAIL_FOUND(HttpStatus.OK,
+            "PAYMENT200_5",
+            "결제 상세를 성공적으로 조회했습니다."),
     ;
 
     private final HttpStatus status;
