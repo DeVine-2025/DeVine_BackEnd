@@ -38,6 +38,7 @@ public class RefundTxService {
     public RefundClaim claim(Long paymentId, String reason) {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
+        findPaidTransaction(payment);
         try {
             PaymentRefund refund = paymentRefundRepository.saveAndFlush(PaymentRefund.claim(payment, reason));
             return new RefundClaim(refund.getId(), payment.getPortonePaymentId());
@@ -96,9 +97,9 @@ public class RefundTxService {
 
     private Transaction findPaidTransaction(Payment payment) {
         return payment.getTransactions().stream()
-                .filter(t -> t.getType() == TransactionType.PAYMENT)
+                .filter(t -> t.getType() == TransactionType.PAYMENT && t.getStatus() == TransactionStatus.PAID)
                 .findFirst()
-                .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
+                .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_PAID));
     }
 
     private int revokeCredits(Payment payment) {
@@ -108,7 +109,7 @@ public class RefundTxService {
         if (granted == 0) {
             return 0;
         }
-        return memberReportCreditRepository.findByMember(payment.getMember())
+        return memberReportCreditRepository.findByMemberForUpdate(payment.getMember())
                 .map(credit -> credit.revokeUpTo(granted))
                 .orElse(0);
     }

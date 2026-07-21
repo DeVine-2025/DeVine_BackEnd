@@ -7,6 +7,7 @@ import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.entity.PaymentRefund;
 import com.umc.devine.domain.payment.entity.Transaction;
+import com.umc.devine.domain.payment.exception.PaymentException;
 import com.umc.devine.domain.payment.enums.PaymentMethod;
 import com.umc.devine.domain.payment.enums.RefundStatus;
 import com.umc.devine.domain.payment.enums.TransactionStatus;
@@ -30,8 +31,11 @@ import java.time.LocalDateTime;
 import java.util.Optional;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
+import static org.mockito.BDDMockito.never;
+import static org.mockito.BDDMockito.then;
 
 /**
  * 트랜잭션 경계 빈의 반영 로직(REFUND 트랜잭션 생성 + 크레딧 회수)을 검증한다.
@@ -98,7 +102,7 @@ class RefundTxServiceTest {
     void complete_success() {
         given(paymentRefundRepository.findById(REFUND_ID)).willReturn(Optional.of(refund));
         MemberReportCredit credit = MemberReportCredit.of(member, 10);
-        given(memberReportCreditRepository.findByMember(member)).willReturn(Optional.of(credit));
+        given(memberReportCreditRepository.findByMemberForUpdate(member)).willReturn(Optional.of(credit));
 
         AdminPaymentResDTO.RefundResultDTO result = refundTxService.complete(
                 REFUND_ID, new CancelOutcome.Succeeded(CANCELLATION_ID, 4900L, LocalDateTime.now(), false));
@@ -121,7 +125,7 @@ class RefundTxServiceTest {
     void complete_creditClamp() {
         given(paymentRefundRepository.findById(REFUND_ID)).willReturn(Optional.of(refund));
         MemberReportCredit credit = MemberReportCredit.of(member, 2);
-        given(memberReportCreditRepository.findByMember(member)).willReturn(Optional.of(credit));
+        given(memberReportCreditRepository.findByMemberForUpdate(member)).willReturn(Optional.of(credit));
 
         AdminPaymentResDTO.RefundResultDTO result = refundTxService.complete(
                 REFUND_ID, new CancelOutcome.Succeeded(CANCELLATION_ID, 4900L, LocalDateTime.now(), false));
@@ -129,6 +133,23 @@ class RefundTxServiceTest {
         assertThat(result.revokedCredits()).isEqualTo(2);
         assertThat(credit.getRemainingCount()).isZero();
         assertThat(refund.getStatus()).isEqualTo(RefundStatus.COMPLETED);
+    }
+
+    @Test
+    @DisplayName("claim — 결제 완료 트랜잭션이 없으면 PG 호출 전에 거절")
+    void claim_rejectsNotPaid() {
+        Payment unpaid = Payment.builder()
+                .portonePaymentId("payment_unpaid")
+                .member(member)
+                .orderName("리포트 생성권 5개")
+                .amount(4900L)
+                .currency("KRW")
+                .build();
+        given(paymentRepository.findById(1L)).willReturn(Optional.of(unpaid));
+
+        assertThatThrownBy(() -> refundTxService.claim(1L, "고객 요청"))
+                .isInstanceOf(PaymentException.class);
+        then(paymentRefundRepository).should(never()).saveAndFlush(any());
     }
 
     @Test
