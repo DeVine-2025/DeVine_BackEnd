@@ -155,4 +155,14 @@ public class MyProfileController implements MyProfileControllerDocs {
         PagedResponse<MemberResDTO.GitRepoDTO> response = memberCommandService.syncGitHubRepositories(member, dto);
         return ApiResponse.onSuccess(code, response);
     }
+
+    // 회원 탈퇴
+    @Override
+    @DeleteMapping("/me")
+    public ApiResponse<Void> withdraw(
+            @CurrentMember Member member
+    ) {
+        memberCommandService.withdraw(member);
+        return ApiResponse.onSuccess(MemberSuccessCode.WITHDRAWN, null);
+    }
 }

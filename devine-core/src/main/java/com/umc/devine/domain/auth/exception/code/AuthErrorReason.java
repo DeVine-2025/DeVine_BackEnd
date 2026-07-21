@@ -18,6 +18,7 @@ public enum AuthErrorReason implements DomainErrorReason {
     GITHUB_TOKEN_FETCH_FAILED(HttpStatus.INTERNAL_SERVER_ERROR, "AUTH500_1", "GitHub 토큰 조회에 실패했습니다."),
     CLERK_API_ERROR(HttpStatus.BAD_GATEWAY, "AUTH502_1", "Clerk API 호출에 실패했습니다."),
     GITHUB_API_ERROR(HttpStatus.BAD_GATEWAY, "AUTH502_2", "GitHub API 호출에 실패했습니다."),
+    CLERK_USER_DELETE_FAILED(HttpStatus.BAD_GATEWAY, "AUTH502_3", "Clerk 사용자 삭제에 실패했습니다."),
     ;
 
     private final HttpStatus status;

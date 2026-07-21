@@ -13,6 +13,7 @@ import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.converter.MemberConverter;
 import com.umc.devine.domain.member.dto.MemberReqDTO;
 import com.umc.devine.domain.member.dto.MemberResDTO;
+import com.umc.devine.domain.member.event.MemberWithdrawnEvent;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
@@ -36,12 +37,14 @@ import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.report.repository.ReportEmbeddingRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -72,7 +75,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
+    private final ReportEmbeddingRepository reportEmbeddingRepository;
     private final EntityManager entityManager;
+    private final ApplicationEventPublisher eventPublisher;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -238,12 +243,30 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         return TechstackConverter.toDevTechstackListDTO(deletedTechstacks);
     }
 
-    // 탈퇴 기능을 위한 장치
+    // 회원 탈퇴 처리
+    // 1. PII·식별 가능 연관 데이터 삭제 (FK 체인 역순)
+    // 2. Member 컬럼 익명화 + 상태/시각 변경
+    // 3. 커밋 후: MemberWithdrawnEvent 리스너가 Clerk 사용자 삭제 호출
     @Override
     public void withdraw(Member member) {
-        // 테스트 코드 등에서 회원의 상태를 DELETED로 변경하여 조회 필터링을 검증하기 위해 사용됩니다.
+        String originalClerkId = member.getClerkId();
+        Long memberId = member.getId();
+
+        // FK 체인: report_embedding → dev_report → git_repo_url → member
+        reportEmbeddingRepository.deleteAllByMemberId(memberId);
+        devReportRepository.deleteAllByMemberId(memberId);
+        gitRepoUrlRepository.bulkDeleteByMember(member);
+
+        contactRepository.bulkDeleteByMember(member);
+        devTechstackRepository.bulkDeleteByMember(member);
+
         member.withdraw();
         memberRepository.save(member);
+
+        eventPublisher.publishEvent(MemberWithdrawnEvent.builder()
+                .memberId(memberId)
+                .originalClerkId(originalClerkId)
+                .build());
     }
 
     @Override

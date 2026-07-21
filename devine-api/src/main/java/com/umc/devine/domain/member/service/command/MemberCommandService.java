@@ -15,7 +15,8 @@ public interface MemberCommandService {
 
     /**
      * 회원 탈퇴(논리 삭제)를 처리합니다.
-     * 테스트 코드에서 활성/비활성 상태에 따른 필터링 검증을 위해 사용됩니다.
+     * 상태를 DELETED로 변경하고, 탈퇴 시각 기록 및 개인정보 익명화를 수행합니다.
+     * 트랜잭션 커밋 후 이벤트 리스너가 Clerk 사용자 삭제를 비동기로 호출합니다.
      */
     void withdraw(Member member);
 

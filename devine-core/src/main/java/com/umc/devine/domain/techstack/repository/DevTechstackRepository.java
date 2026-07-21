@@ -4,6 +4,7 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -13,7 +14,12 @@ public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long
     List<DevTechstack> findAllByMember(Member member);
     List<DevTechstack> findAllByMemberIn(List<Member> members);
     List<DevTechstack> findAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
+    void deleteAllByMember(Member member);
     void deleteAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
+
+    @Modifying
+    @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member")
+    int bulkDeleteByMember(@Param("member") Member member);
 
     @Query("SELECT dt FROM DevTechstack dt JOIN FETCH dt.techstack WHERE dt.member = :member")
     List<DevTechstack> findAllByMemberWithTechstack(@Param("member") Member member);

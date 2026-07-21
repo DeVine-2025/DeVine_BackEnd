@@ -2,6 +2,7 @@ package com.umc.devine.domain.report.repository;
 
 import com.umc.devine.domain.report.entity.ReportEmbedding;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -10,6 +11,17 @@ import java.util.Optional;
 public interface ReportEmbeddingRepository extends JpaRepository<ReportEmbedding, Long> {
 
     Optional<ReportEmbedding> findByDevReportId(Long devReportId);
+
+    @Modifying
+    @Query(value = """
+        DELETE FROM report_embedding
+        WHERE dev_report_id IN (
+            SELECT dr.dev_report_id FROM dev_report dr
+            JOIN git_repo_url gru ON dr.git_repo_id = gru.git_repo_id
+            WHERE gru.member_id = :memberId
+        )
+        """, nativeQuery = true)
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 
     boolean existsByDevReportId(Long devReportId);
 

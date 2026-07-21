@@ -8,6 +8,7 @@ import com.umc.devine.domain.report.enums.ReportVisibility;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -17,6 +18,15 @@ import java.util.Optional;
 public interface DevReportRepository extends JpaRepository<DevReport, Long> {
 
     List<DevReport> findAllByGitRepoUrlIn(List<GitRepoUrl> gitRepoUrls);
+
+    @Modifying
+    @Query(value = """
+        DELETE FROM dev_report
+        WHERE git_repo_id IN (
+            SELECT git_repo_id FROM git_repo_url WHERE member_id = :memberId
+        )
+        """, nativeQuery = true)
+    int deleteAllByMemberId(@Param("memberId") Long memberId);
 
     @Query("SELECT r FROM DevReport r " +
             "JOIN FETCH r.gitRepoUrl g " +
