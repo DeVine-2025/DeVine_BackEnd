@@ -37,6 +37,7 @@ public class AdminJwtAuthenticationConverter implements Converter<Jwt, AbstractA
         String name = jwt.getClaimAsString("name");
         String imageUrl = jwt.getClaimAsString("image_url");
 
+        // 판정은 clerk_id(sub)만 신뢰한다. email은 표시/저장용으로만 넘긴다.
         Optional<Admin> admin = adminAuthorizationService.resolveAdmin(clerkId, email);
 
         AdminPrincipal principal = AdminPrincipal.builder()
