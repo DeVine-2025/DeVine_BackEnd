@@ -21,6 +21,9 @@ public enum PaymentSuccessCode implements BaseSuccessCode {
     WEBHOOK_PROCESSED(HttpStatus.OK,
             "PAYMENT200_3",
             "웹훅이 성공적으로 처리되었습니다."),
+    PAYMENT_REFUNDED(HttpStatus.OK,
+            "PAYMENT200_4",
+            "결제가 성공적으로 환불되었습니다."),
     ;
 
     private final HttpStatus status;
