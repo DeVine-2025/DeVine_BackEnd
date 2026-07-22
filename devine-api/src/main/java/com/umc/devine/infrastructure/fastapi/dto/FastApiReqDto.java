@@ -19,6 +19,17 @@ public class FastApiReqDto {
     ) {}
 
     @Builder
+    public record ReportGenerationSyncReq(
+            Long mainReportId,
+            Long detailReportId,
+            String gitUrl,
+            String githubToken,
+            String embeddingCallbackUrl,
+            List<String> techstacks,
+            List<String> authorEmails
+    ) {}
+
+    @Builder
     public record ProjectEmbeddingReq(
             String text
     ) {}
