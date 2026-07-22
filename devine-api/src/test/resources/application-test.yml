@@ -27,6 +27,7 @@ logging:
 
 clerk:
   secret-key: "test-secret-key-for-integration-tests"
+  issuer-uri: "https://test-issuer.local"
 
 # Thread Pool Configuration
 executor:
