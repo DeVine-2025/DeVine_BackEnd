@@ -82,6 +82,18 @@ public interface ReportControllerDocs {
             @RequestBody @Valid ReportReqDTO.CreateReportReq request
     );
 
+    @Operation(summary = "리포트 동기 생성", description = "Git 저장소에 대한 메인/상세 리포트를 동기적으로 생성합니다. 생성 완료까지 대기 후 결과를 반환합니다. (1-2분 소요)")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "리포트 생성 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "Git 저장소를 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "이미 리포트가 존재함"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "500", description = "리포트 생성 실패")
+    })
+    ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    );
+
     @Operation(summary = "내 리포트 목록 조회", description = "현재 로그인한 사용자의 리포트 목록을 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "리포트 목록 조회 성공")

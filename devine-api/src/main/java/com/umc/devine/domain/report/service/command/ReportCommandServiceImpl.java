@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.service.command;
 
+import com.fasterxml.jackson.databind.JsonNode;
 import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
@@ -16,12 +17,19 @@ import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.techstack.service.command.DevTechstackCommandService;
 import com.umc.devine.domain.ticket.service.command.ReportCreditCommandService;
+import com.umc.devine.infrastructure.fastapi.FastApiSyncReportClient;
+import com.umc.devine.infrastructure.fastapi.dto.FastApiResDto;
+import jakarta.annotation.PostConstruct;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.PlatformTransactionManager;
+import org.springframework.transaction.TransactionDefinition;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Objects;
@@ -36,8 +44,18 @@ public class ReportCommandServiceImpl implements ReportCommandService {
     private final GitRepoUrlRepository gitRepoUrlRepository;
     private final MemberRepository memberRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
+    private final FastApiSyncReportClient fastApiSyncReportClient;
+    private final PlatformTransactionManager transactionManager;
     private final DevTechstackCommandService devTechstackCommandService;
     private final ReportCreditCommandService reportCreditCommandService;
+    private TransactionTemplate requiresNewTxTemplate;
+
+    @PostConstruct
+    void initTransactionTemplate() {
+        this.requiresNewTxTemplate = new TransactionTemplate(transactionManager);
+        this.requiresNewTxTemplate.setPropagationBehavior(TransactionDefinition.PROPAGATION_REQUIRES_NEW);
+    }
 
     @Override
     public ReportResDTO.UpdateVisibilityRes updateVisibility(Long memberId, Long reportId, ReportReqDTO.UpdateVisibilityReq request) {
@@ -79,6 +97,102 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                 memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
 
         return ReportConverter.toCreateReportRes(savedMainReport, savedDetailReport);
+    }
+
+    @Deprecated // TODO : 비동기 전환 후 제거 예정
+    @Override
+    @Transactional(noRollbackFor = ReportException.class)
+    public ReportResDTO.CreateReportSyncRes createReportSync(Long memberId, ReportReqDTO.CreateReportReq request) {
+        // 1. Git 저장소 조회 및 권한 검증
+        GitRepoUrl gitRepoUrl = gitRepoUrlRepository.findByIdWithMember(request.gitRepoId())
+                .orElseThrow(() -> new ReportException(ReportErrorReason.GIT_REPO_NOT_FOUND));
+
+        validateGitRepoOwnership(gitRepoUrl, memberId);
+
+        // 2. 활성 리포트 중복 체크 (실패한 리포트는 partial unique index에서 제외되어 재시도 가능)
+        validateReportNotExists(request.gitRepoId());
+
+        Member member = gitRepoUrl.getMember();
+        requiresNewTxTemplate.executeWithoutResult(status ->
+                reportCreditCommandService.useCreditAtomic(member));
+
+        // 3. MAIN/DETAIL 리포트 엔티티 생성·저장 및 FastAPI 호출
+        DevReport savedMainReport = null;
+        DevReport savedDetailReport = null;
+
+        try {
+            // saveAndFlush로 즉시 INSERT하여 리포트 ID 확정 및 중복 체크 (별도 트랜잭션으로 트랜잭션 오염 방지)
+            savedMainReport = saveReportWithDuplicateCheckInNewTransaction(ReportConverter.toReport(gitRepoUrl, ReportType.MAIN));
+            savedDetailReport = saveReportWithDuplicateCheckInNewTransaction(ReportConverter.toReport(gitRepoUrl, ReportType.DETAIL));
+
+            log.info("Report 동기 생성 시작 - memberId: {}, gitRepoId: {}, mainReportId: {}, detailReportId: {}",
+                    memberId, request.gitRepoId(), savedMainReport.getId(), savedDetailReport.getId());
+
+            // 4. FastAPI 동기 호출 및 결과 처리
+            FastApiResDto.ReportGenerationSyncRes response = fastApiSyncReportClient.requestReportGenerationSync(
+                    savedMainReport, savedDetailReport, gitRepoUrl.getGitUrl(), member.getClerkId());
+
+            // 4-1. 응답 상태 검증
+            if (response == null || !"SUCCESS".equals(response.status())) {
+                String errorMessage = response != null ? response.errorMessage() : "응답이 없습니다.";
+                log.warn("Report 동기 생성 실패 - mainReportId: {}, detailReportId: {}, error: {}",
+                        savedMainReport.getId(), savedDetailReport.getId(), errorMessage);
+                // 실패 시 catch 블록에서 리포트 행을 삭제하고 크레딧을 환불한다.
+                throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
+            }
+
+            // 4-2. content 존재 여부 검증
+            JsonNode content = response.content();
+            if (content == null || content.isNull()) {
+                log.warn("Report content가 null - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
+            }
+
+            // 4-3. main/detail 필드 검증
+            JsonNode mainContent = content.get("main");
+            JsonNode detailContent = content.get("detail");
+
+            if (mainContent == null || mainContent.isNull() || detailContent == null || detailContent.isNull()) {
+                log.warn("Report content가 비어있음 - mainReportId: {}, detailReportId: {}",
+                        savedMainReport.getId(), savedDetailReport.getId());
+                throw new ReportException(ReportErrorReason.INVALID_JSON_FORMAT);
+            }
+
+            // 5. 리포트 완료 처리
+            savedMainReport.completeReport(mainContent.toString());
+            savedDetailReport.completeReport(detailContent.toString());
+
+            // 6. 응답에서 techstacks 추출하여 DevTechstack AUTO로 저장
+            devTechstackCommandService.saveAutoTechstacks(member, response.techstacks());
+
+            log.info("Report 동기 생성 완료 - mainReportId: {}, detailReportId: {}",
+                    savedMainReport.getId(), savedDetailReport.getId());
+
+            return ReportConverter.toCreateReportSyncRes(savedMainReport, savedDetailReport, mainContent, detailContent);
+
+        } catch (Exception e) {
+            log.error("Report 동기 생성 중 예외 발생 - mainReportId: {}, detailReportId: {}",
+                    savedMainReport != null ? savedMainReport.getId() : null,
+                    savedDetailReport != null ? savedDetailReport.getId() : null, e);
+
+            // [동기 실패 경로] 리포트 행을 삭제하고 크레딧을 환불한다.
+            // 비동기 콜백 실패(handleCallbackFailed, handleCallbackSuccess catch)와 달리,
+            // 동기 경로는 FAILED 상태를 남기지 않고 행 자체를 제거한다. (재시도를 허용하기 위해)
+            if (savedMainReport != null) {
+                entityManager.detach(savedMainReport);
+                devReportRepository.deleteById(savedMainReport.getId());
+            }
+            if (savedDetailReport != null) {
+                entityManager.detach(savedDetailReport);
+                devReportRepository.deleteById(savedDetailReport.getId());
+            }
+            reportCreditCommandService.refundCredit(member);
+
+            if (e instanceof ReportException re) throw re;
+
+            throw new ReportException(ReportErrorReason.REPORT_GENERATION_FAILED);
+        }
     }
 
     @Override
@@ -234,6 +348,20 @@ public class ReportCommandServiceImpl implements ReportCommandService {
                     report.getGitRepoUrl().getId(), report.getReportType());
             throw new ReportException(ReportErrorReason.REPORT_ALREADY_EXISTS);
         }
+    }
+
+    // REQUIRES_NEW 트랜잭션에서 리포트 저장 (트랜잭션 오염 방지) 후 현재 영속성 컨텍스트에 merge
+    private DevReport saveReportWithDuplicateCheckInNewTransaction(DevReport report) {
+        DevReport saved = requiresNewTxTemplate.execute(status -> {
+            try {
+                return devReportRepository.saveAndFlush(report);
+            } catch (DataIntegrityViolationException e) {
+                log.warn("리포트 중복 저장 시도 (동시 요청) - gitRepoId: {}, reportType: {}",
+                        report.getGitRepoUrl().getId(), report.getReportType());
+                throw new ReportException(ReportErrorReason.REPORT_ALREADY_EXISTS);
+            }
+        });
+        return devReportRepository.save(saved);
     }
 
 }
