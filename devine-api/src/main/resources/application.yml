@@ -60,3 +60,8 @@ portone:
     kg-inicis: ${PORTONE_CHANNEL_KEY_KG_INICIS:}
     kakaopay: ${PORTONE_CHANNEL_KEY_KAKAOPAY:}
     toss-payments: ${PORTONE_CHANNEL_KEY_TOSS_PAYMENTS:}
+
+# Credit
+devine:
+  credit:
+    initial-count: ${DEVINE_CREDIT_INITIAL_COUNT:1}

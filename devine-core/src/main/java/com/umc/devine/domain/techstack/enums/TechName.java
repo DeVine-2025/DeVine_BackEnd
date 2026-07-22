@@ -1,5 +1,11 @@
 package com.umc.devine.domain.techstack.enums;
 
+import java.util.Arrays;
+import java.util.Map;
+import java.util.Optional;
+import java.util.function.Function;
+import java.util.stream.Collectors;
+
 public enum TechName {
     // 포지션 (Root)
     BACKEND, FRONTEND, INFRA,
@@ -23,5 +29,13 @@ public enum TechName {
     AWS, FIREBASE,
 
     // Infra - 컨테이너
-    DOCKER, KUBERNETES
+    DOCKER, KUBERNETES;
+
+    private static final Map<String, TechName> LOOKUP =
+            Arrays.stream(values()).collect(Collectors.toMap(Enum::name, Function.identity()));
+
+    /** 이름으로 TechName을 찾는다. 매칭되는 값이 없거나 null이면 빈 Optional. (valueOf와 달리 예외를 던지지 않음) */
+    public static Optional<TechName> from(String name) {
+        return Optional.ofNullable(LOOKUP.get(name));
+    }
 }

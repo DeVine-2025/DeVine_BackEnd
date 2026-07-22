@@ -79,16 +79,6 @@ public class ReportController implements ReportControllerDocs {
     }
 
     @Override
-    @PostMapping("/sync")
-    public ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
-            @CurrentMember Member member,
-            @RequestBody @Valid ReportReqDTO.CreateReportReq request
-    ) {
-        ReportResDTO.CreateReportSyncRes response = reportCommandService.createReportSync(member.getId(), request);
-        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_CREATED, response);
-    }
-
-    @Override
     @GetMapping("/me")
     public ApiResponse<ReportResDTO.ReportSummaryListDTO> getMyReports(
             @CurrentMember Member member,
