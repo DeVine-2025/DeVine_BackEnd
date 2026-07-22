@@ -6,6 +6,7 @@ import com.umc.devine.domain.report.dto.ReportResDTO;
 import com.umc.devine.domain.report.enums.ReportType;
 import com.umc.devine.domain.report.exception.code.ReportSuccessCode;
 import com.umc.devine.domain.report.service.command.ReportCommandService;
+import com.umc.devine.domain.report.service.command.ReportSyncCommandService;
 import com.umc.devine.domain.report.service.query.ReportQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
@@ -25,6 +26,7 @@ public class ReportController implements ReportControllerDocs {
 
     private final ReportQueryService reportQueryService;
     private final ReportCommandService reportCommandService;
+    private final ReportSyncCommandService reportSyncCommandService;
 
     @Override
     @GetMapping("/{gitRepoId}/main")
@@ -76,6 +78,16 @@ public class ReportController implements ReportControllerDocs {
     ) {
         ReportResDTO.CreateReportRes response = reportCommandService.createReport(member.getId(), request);
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_GENERATION_REQUESTED, response);
+    }
+
+    @Override
+    @PostMapping("/sync")
+    public ApiResponse<ReportResDTO.CreateReportSyncRes> createReportSync(
+            @CurrentMember Member member,
+            @RequestBody @Valid ReportReqDTO.CreateReportReq request
+    ) {
+        ReportResDTO.CreateReportSyncRes response = reportSyncCommandService.createReportSync(member.getId(), request);
+        return ApiResponse.onSuccess(ReportSuccessCode.REPORT_CREATED, response);
     }
 
     @Override
