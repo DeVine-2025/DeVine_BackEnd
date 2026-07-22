@@ -114,6 +114,7 @@ public class ProjectConverter {
                 .creatorId(project.getMember().getId())
                 .creatorNickname(project.getMember().getNickname())
                 .creatorImage(project.getMember().getImage())
+                .creatorClerkId(project.getMember().getClerkId())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), techstackMap))
                 .images(toImageInfoList(project.getImages()))
                 .build();

@@ -33,7 +33,7 @@ public class SwaggerConfig {
     private Info apiInfo() {
         return new Info()
                 .title("DeVine API")
-                .version("v1.1.0")
+                .version("v1.1.1")
                 .description("")
                 .contact(new Contact()
                         .name("DeVine Github")

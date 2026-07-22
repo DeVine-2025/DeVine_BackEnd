@@ -16,7 +16,9 @@ on:
 
 jobs:
   test-and-build:
-    runs-on: ubuntu-latest
+    # qa(개발환경, OCI ARM) 빌드는 ARM 네이티브 러너에서 arm64 이미지 생성.
+    # main(운영, EC2 x86)은 기존 그대로.
+    runs-on: ${{ github.ref_name == 'qa' && 'ubuntu-24.04-arm' || 'ubuntu-latest' }}
     steps:
       - uses: actions/checkout@v4
       - uses: ./.github/actions/ci-build

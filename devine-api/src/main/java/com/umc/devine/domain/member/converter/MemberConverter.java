@@ -148,7 +148,7 @@ public class MemberConverter {
             List<MemberCategory> memberCategories,
             List<Contact> contacts
     ) {
-        return toMemberProfileDTO(toOwnerDetailDTO(member), memberCategories, contacts);
+        return toMemberProfileDTO(toOwnerDetailDTO(member), memberCategories, contacts, member.getClerkId());
     }
 
     public static MemberResDTO.MemberProfileDTO toOtherProfileDTO(
@@ -156,13 +156,14 @@ public class MemberConverter {
             List<MemberCategory> memberCategories,
             List<Contact> contacts
     ) {
-        return toMemberProfileDTO(toOtherDetailDTO(member), memberCategories, contacts);
+        return toMemberProfileDTO(toOtherDetailDTO(member), memberCategories, contacts, member.getClerkId());
     }
 
     private static MemberResDTO.MemberProfileDTO toMemberProfileDTO(
             MemberResDTO.MemberDetailDTO memberDTO,
             List<MemberCategory> memberCategories,
-            List<Contact> contacts
+            List<Contact> contacts,
+            String clerkId
     ) {
 
         List<CategoryGenre> domains = memberCategories.stream()
@@ -181,6 +182,7 @@ public class MemberConverter {
                 .member(memberDTO)
                 .domains(domains)
                 .contacts(contactDTOs)
+                .clerkId(clerkId)
                 .build();
     }
 
