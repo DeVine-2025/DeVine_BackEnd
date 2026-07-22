@@ -1,6 +1,5 @@
 package com.umc.devine.infrastructure.fastapi;
 
-import com.umc.devine.domain.report.entity.DevReport;
 import com.umc.devine.domain.report.exception.ReportException;
 import com.umc.devine.domain.report.exception.code.ReportErrorReason;
 import com.umc.devine.domain.techstack.enums.TechName;
@@ -42,8 +41,8 @@ public class FastApiSyncReportClient {
     }
 
     public FastApiResDto.ReportGenerationSyncRes requestReportGenerationSync(
-            DevReport mainReport,
-            DevReport detailReport,
+            Long mainReportId,
+            Long detailReportId,
             String gitUrl,
             String clerkId
     ) {
@@ -52,7 +51,7 @@ public class FastApiSyncReportClient {
             githubToken = clerkApiClient.getGitHubAccessToken(clerkId);
         } catch (Exception e) {
             log.error("GitHub 토큰 조회 실패 - mainReportId: {}, detailReportId: {}, error: {}",
-                    mainReport.getId(), detailReport.getId(), e.getMessage());
+                    mainReportId, detailReportId, e.getMessage());
             throw new ReportException(ReportErrorReason.GITHUB_TOKEN_ERROR);
         }
 
@@ -63,15 +62,15 @@ public class FastApiSyncReportClient {
         List<String> authorEmails;
         try {
             authorEmails = gitHubApiClient.getAllAuthorEmails(githubToken);
-            log.info("GitHub 이메일 조회 성공 - mainReportId: {}, emails: {}", mainReport.getId(), authorEmails);
+            log.info("GitHub 이메일 조회 성공 - mainReportId: {}, emails: {}", mainReportId, authorEmails);
         } catch (Exception e) {
             log.warn("GitHub 이메일 조회 실패, 빈 리스트로 진행 - error: {}", e.getMessage());
             authorEmails = Collections.emptyList();
         }
 
         FastApiReqDto.ReportGenerationSyncReq request = FastApiReqDto.ReportGenerationSyncReq.builder()
-                .mainReportId(mainReport.getId())
-                .detailReportId(detailReport.getId())
+                .mainReportId(mainReportId)
+                .detailReportId(detailReportId)
                 .gitUrl(gitUrl)
                 .githubToken(githubToken)
                 .embeddingCallbackUrl(callbackBaseUrl + "/api/v1/embeddings/callback")
@@ -92,13 +91,13 @@ public class FastApiSyncReportClient {
                     .body(FastApiResDto.ReportGenerationSyncRes.class);
 
             log.info("FastAPI 동기 응답 - mainReportId: {}, detailReportId: {}, status: {}",
-                    mainReport.getId(), detailReport.getId(),
+                    mainReportId, detailReportId,
                     response != null ? response.status() : "null");
 
             return response;
         } catch (RestClientException e) {
             log.error("FastAPI 동기 호출 실패 - mainReportId: {}, detailReportId: {}, error: {}",
-                    mainReport.getId(), detailReport.getId(), e.getMessage());
+                    mainReportId, detailReportId, e.getMessage());
             throw new ReportException(ReportErrorReason.FASTAPI_REQUEST_FAILED);
         }
     }
