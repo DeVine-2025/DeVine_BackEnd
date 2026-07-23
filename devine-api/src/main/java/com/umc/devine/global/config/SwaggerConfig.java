@@ -29,11 +29,10 @@ public class SwaggerConfig {
                 .components(securityComponents());
     }
 
-    // TODO 설명 추가
     private Info apiInfo() {
         return new Info()
                 .title("DeVine API")
-                .version("v1.1.0")
+                .version("v1.1.2")
                 .description("")
                 .contact(new Contact()
                         .name("DeVine Github")

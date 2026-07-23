@@ -6,6 +6,7 @@ import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Positive;
+import jakarta.validation.constraints.Size;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
@@ -26,6 +27,7 @@ public class PaymentReqDTO {
     @Schema(description = "결제 완료 요청")
     public record CompletePaymentDTO(
             @NotBlank(message = "결제 ID는 필수입니다.")
+            @Size(max = 40, message = "결제 ID는 40자를 초과할 수 없습니다.")
             @Schema(description = "PortOne 결제 ID", example = "payment_1234567890")
             String paymentId,
 
