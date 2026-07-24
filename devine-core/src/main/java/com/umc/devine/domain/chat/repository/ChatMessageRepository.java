@@ -57,8 +57,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             WHERE cm.sender.id != :memberId
               AND cm.isRead = false
               AND (
-                (cr.member1.id = :memberId AND cr.member1Left = false)
-                OR (cr.member2.id = :memberId AND cr.member2Left = false)
+                (cr.member1.id = :memberId AND cr.member1Left = false
+                    AND (cr.member1LeftAt IS NULL OR cm.createdAt > cr.member1LeftAt))
+                OR (cr.member2.id = :memberId AND cr.member2Left = false
+                    AND (cr.member2LeftAt IS NULL OR cm.createdAt > cr.member2LeftAt))
               )
             """)
     long countRoomsWithUnreadMessages(@Param("memberId") Long memberId);
@@ -66,9 +68,16 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     @Query("""
             SELECT cm.chatRoom.id, COUNT(cm)
             FROM ChatMessage cm
-            WHERE cm.chatRoom.id IN :roomIds
+            JOIN cm.chatRoom cr
+            WHERE cr.id IN :roomIds
               AND cm.sender.id != :memberId
               AND cm.isRead = false
+              AND (
+                (cr.member1.id = :memberId
+                    AND (cr.member1LeftAt IS NULL OR cm.createdAt > cr.member1LeftAt))
+                OR (cr.member2.id = :memberId
+                    AND (cr.member2LeftAt IS NULL OR cm.createdAt > cr.member2LeftAt))
+              )
             GROUP BY cm.chatRoom.id
             """)
     List<Object[]> countUnreadPerRoom(
@@ -83,9 +92,19 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
             JOIN FETCH cm.sender
             WHERE cm.id IN (
                 SELECT MAX(cm2.id) FROM ChatMessage cm2
-                WHERE cm2.chatRoom.id IN :roomIds
+                JOIN cm2.chatRoom cr2
+                WHERE cr2.id IN :roomIds
+                  AND (
+                    (cr2.member1.id = :memberId
+                        AND (cr2.member1LeftAt IS NULL OR cm2.createdAt > cr2.member1LeftAt))
+                    OR (cr2.member2.id = :memberId
+                        AND (cr2.member2LeftAt IS NULL OR cm2.createdAt > cr2.member2LeftAt))
+                  )
                 GROUP BY cm2.chatRoom.id
             )
             """)
-    List<ChatMessage> findLastMessagesByRoomIds(@Param("roomIds") List<Long> roomIds);
+    List<ChatMessage> findLastMessagesByRoomIds(
+            @Param("roomIds") List<Long> roomIds,
+            @Param("memberId") Long memberId
+    );
 }

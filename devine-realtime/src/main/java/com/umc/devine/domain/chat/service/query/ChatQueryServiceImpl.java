@@ -53,7 +53,7 @@ public class ChatQueryServiceImpl implements ChatQueryService {
         chatMessageRepository.countUnreadPerRoom(roomIds, memberId)
                 .forEach(row -> unreadMap.put((Long) row[0], (Long) row[1]));
 
-        Map<Long, ChatMessage> lastMsgMap = chatMessageRepository.findLastMessagesByRoomIds(roomIds).stream()
+        Map<Long, ChatMessage> lastMsgMap = chatMessageRepository.findLastMessagesByRoomIds(roomIds, memberId).stream()
                 .collect(Collectors.toMap(cm -> cm.getChatRoom().getId(), Function.identity()));
 
         List<ChatResDTO.ChatRoomDetail> rooms = roomIds.stream()

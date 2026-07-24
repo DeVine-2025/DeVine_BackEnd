@@ -16,6 +16,10 @@ public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
             SELECT cr.chat_room_id, COALESCE(MAX(cm.created_at), cr.created_at) AS last_activity
             FROM chat_room cr
             LEFT JOIN chat_message cm ON cm.chat_room_id = cr.chat_room_id
+                AND (
+                    (cr.member1_id = :memberId AND (cr.member1_left_at IS NULL OR cm.created_at > cr.member1_left_at))
+                    OR (cr.member2_id = :memberId AND (cr.member2_left_at IS NULL OR cm.created_at > cr.member2_left_at))
+                )
             WHERE (cr.member1_id = :memberId AND cr.member1_left = false)
                OR (cr.member2_id = :memberId AND cr.member2_left = false)
             GROUP BY cr.chat_room_id
