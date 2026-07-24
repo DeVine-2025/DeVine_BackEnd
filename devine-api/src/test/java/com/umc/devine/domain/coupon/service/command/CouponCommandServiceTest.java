@@ -3,7 +3,6 @@ package com.umc.devine.domain.coupon.service.command;
 import com.umc.devine.domain.coupon.dto.CouponResDTO;
 import com.umc.devine.domain.coupon.entity.Coupon;
 import com.umc.devine.domain.coupon.entity.CouponCode;
-import com.umc.devine.domain.coupon.enums.CouponCodeStatus;
 import com.umc.devine.domain.coupon.enums.DiscountType;
 import com.umc.devine.domain.coupon.exception.CouponException;
 import com.umc.devine.domain.coupon.exception.code.CouponErrorReason;
@@ -73,8 +72,8 @@ class CouponCommandServiceTest extends IntegrationTestSupport {
 
     @AfterEach
     void tearDown() {
-        couponCodeRepository.deleteAll();
         memberCouponRepository.deleteAll();
+        couponCodeRepository.deleteAll();
         couponRepository.deleteAll();
         memberRepository.deleteAll();
     }
@@ -84,15 +83,46 @@ class CouponCommandServiceTest extends IntegrationTestSupport {
     class RegisterByCode {
 
         @Test
-        @DisplayName("유효한 코드를 등록하면 보유 쿠폰이 생성되고 코드는 REDEEMED로 전환된다")
+        @DisplayName("유효한 코드를 등록하면 보유 쿠폰이 생성되고 코드는 사용 처리된다")
         void registersCode() {
-            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "ABCD1234"));
+            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "ABCD1234", 1));
 
             CouponResDTO.MemberCouponDTO result = couponCommandService.registerByCode("abcd1234", member);
 
             assertThat(result.couponName()).isEqualTo("코드 등록 쿠폰");
             CouponCode reloaded = couponCodeRepository.findById(couponCode.getId()).orElseThrow();
-            assertThat(reloaded.getStatus()).isEqualTo(CouponCodeStatus.REDEEMED);
+            assertThat(reloaded.isRedeemable()).isFalse();
+        }
+
+        @Test
+        @DisplayName("공유 코드(maxUses > 1)는 서로 다른 회원이 각각 등록할 수 있다")
+        void sharedCodeCanBeRegisteredByMultipleMembers() {
+            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "SHARE0001", 2));
+            Member another = memberRepository.save(Member.builder()
+                    .clerkId("coupon-cmd-member-3")
+                    .nickname("coupon-cmd-member-3")
+                    .used(MemberStatus.ACTIVE)
+                    .mainType(MemberMainType.DEVELOPER)
+                    .build());
+
+            couponCommandService.registerByCode(couponCode.getCode(), member);
+            couponCommandService.registerByCode(couponCode.getCode(), another);
+
+            CouponCode reloaded = couponCodeRepository.findById(couponCode.getId()).orElseThrow();
+            assertThat(reloaded.isRedeemable()).isFalse();
+        }
+
+        @Test
+        @DisplayName("같은 회원이 동일한 공유 코드를 두 번 등록하면 예외가 발생한다")
+        void throwsWhenSameMemberRegistersSharedCodeTwice() {
+            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "SHARE0002", 5));
+
+            couponCommandService.registerByCode(couponCode.getCode(), member);
+
+            assertThatThrownBy(() -> couponCommandService.registerByCode(couponCode.getCode(), member))
+                    .isInstanceOf(CouponException.class)
+                    .satisfies(e -> assertThat(((CouponException) e).getReason())
+                            .isEqualTo(CouponErrorReason.COUPON_CODE_ALREADY_USED_BY_MEMBER));
         }
 
         @Test
@@ -107,7 +137,7 @@ class CouponCommandServiceTest extends IntegrationTestSupport {
         @Test
         @DisplayName("이미 등록된 코드면 예외가 발생한다")
         void throwsWhenAlreadyRedeemed() {
-            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "USED0001"));
+            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, "USED0001", 1));
             couponCommandService.registerByCode("USED0001", member);
 
             Member another = memberRepository.save(Member.builder()
@@ -136,7 +166,7 @@ class CouponCommandServiceTest extends IntegrationTestSupport {
                     .validUntil(LocalDateTime.now().minusDays(1))
                     .isActive(true)
                     .build());
-            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(expired, "EXPIRED1"));
+            CouponCode couponCode = couponCodeRepository.save(CouponCode.of(expired, "EXPIRED1", 1));
 
             assertThatThrownBy(() -> couponCommandService.registerByCode(couponCode.getCode(), member))
                     .isInstanceOf(CouponException.class)

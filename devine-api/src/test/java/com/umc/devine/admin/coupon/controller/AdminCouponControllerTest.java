@@ -61,8 +61,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
 
     @AfterEach
     void tearDown() {
-        couponCodeRepository.deleteAll();
         memberCouponRepository.deleteAll();
+        couponCodeRepository.deleteAll();
         couponRepository.deleteAll();
         memberRepository.deleteAll();
     }
@@ -185,7 +185,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     .build());
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(member.getNickname()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(member.getNickname()), null, null, null, null);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -198,7 +198,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("CODE_GEN 방식으로 코드를 배치 생성한다")
         void issuesGeneratedCodes() throws Exception {
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 3);
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 3, null, null);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -206,6 +206,20 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.issuedCount").value(3))
                     .andExpect(jsonPath("$.result.generatedCodes.length()").value(3));
+        }
+
+        @Test
+        @DisplayName("코드를 직접 입력하고 maxUses를 지정하면 공유 코드 1개가 생성된다")
+        void issuesExplicitSharedCode() throws Exception {
+            AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "summer2026", 50);
+
+            mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(request)))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.issuedCount").value(50))
+                    .andExpect(jsonPath("$.result.generatedCodes[0]").value("SUMMER2026"));
         }
     }
 

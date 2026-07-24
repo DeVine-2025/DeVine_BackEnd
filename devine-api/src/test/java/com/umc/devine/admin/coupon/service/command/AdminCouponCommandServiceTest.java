@@ -52,8 +52,8 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
 
     @AfterEach
     void tearDown() {
-        couponCodeRepository.deleteAll();
         memberCouponRepository.deleteAll();
+        couponCodeRepository.deleteAll();
         couponRepository.deleteAll();
         memberRepository.deleteAll();
     }
@@ -176,7 +176,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             memberRepository.save(withdrawn);
 
             AdminCouponReqDTO.IssueCouponReq request =
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.ALL, null, null, null);
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.ALL, null, null, null, null, null);
 
             AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
 
@@ -195,7 +195,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             saveMember("not-targeted");
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null, null, null);
 
             AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
 
@@ -208,7 +208,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of("no-such-nickname"), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of("no-such-nickname"), null, null, null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(MemberException.class)
@@ -222,7 +222,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(), null, null, null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(CouponAdminException.class)
@@ -236,7 +236,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.IssueCouponReq request =
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 5);
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 5, null, null);
 
             AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
 
@@ -247,6 +247,53 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
+        @DisplayName("코드를 직접 입력하면 그 코드로 쿠폰 코드가 하나 생성된다")
+        void issuesExplicitCode() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+
+            AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "welcome10", null);
+
+            AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
+
+            assertThat(result.issuedCount()).isEqualTo(1);
+            assertThat(result.generatedCodes()).containsExactly("WELCOME10");
+            Coupon reloaded = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertThat(reloaded.getIssuedCount()).isEqualTo(1);
+        }
+
+        @Test
+        @DisplayName("maxUses를 지정하면 발급 건수는 코드 개수가 아니라 코드 개수 * maxUses로 집계된다")
+        void issuesExplicitCodeWithMaxUses() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+
+            AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "share100", 100);
+
+            AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
+
+            assertThat(result.issuedCount()).isEqualTo(100);
+            Coupon reloaded = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertThat(reloaded.getIssuedCount()).isEqualTo(100);
+        }
+
+        @Test
+        @DisplayName("이미 존재하는 코드를 직접 입력하면 예외가 발생한다")
+        void throwsWhenExplicitCodeAlreadyExists() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+            adminCouponCommandService.issueCoupon(coupon.getId(), new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "dup-code", null));
+
+            AdminCouponReqDTO.IssueCouponReq duplicate = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "dup-code", null);
+
+            assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), duplicate))
+                    .isInstanceOf(CouponAdminException.class)
+                    .satisfies(e -> assertThat(((CouponAdminException) e).getReason())
+                            .isEqualTo(CouponAdminErrorReason.DUPLICATE_COUPON_CODE));
+        }
+
+        @Test
         @DisplayName("발급 수량 제한을 초과하면 예외가 발생하고 아무것도 발급되지 않는다")
         void throwsWhenIssueLimitExceeded() {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, 1);
@@ -254,7 +301,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Member m2 = saveMember("limit-2");
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null, null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(CouponException.class)
@@ -279,7 +326,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
                     .build());
 
             AdminCouponReqDTO.IssueCouponReq request =
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.ALL, null, null, null);
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.ALL, null, null, null, null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(CouponException.class)
@@ -295,11 +342,11 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Member m2 = saveMember("dup-2");
 
             AdminCouponReqDTO.IssueCouponReq firstRequest = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null, null, null);
             adminCouponCommandService.issueCoupon(coupon.getId(), firstRequest);
 
             AdminCouponReqDTO.IssueCouponReq retryRequest = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null, null, null);
             AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), retryRequest);
 
             assertThat(result.issuedCount()).isEqualTo(1);
@@ -314,7 +361,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Member m1 = saveMember("limit-usable-1");
 
             adminCouponCommandService.issueCoupon(coupon.getId(),
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null));
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null, null, null));
 
             Coupon reloaded = couponRepository.findById(coupon.getId()).orElseThrow();
             assertThat(reloaded.getIssuedCount()).isEqualTo(reloaded.getTotalIssueLimit());
@@ -328,14 +375,14 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.IssueCouponReq tooLong =
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 21, 1);
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 21, 1, null, null);
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), tooLong))
                     .isInstanceOf(CouponAdminException.class)
                     .satisfies(e -> assertThat(((CouponAdminException) e).getReason())
                             .isEqualTo(CouponAdminErrorReason.INVALID_ISSUE_REQUEST));
 
             AdminCouponReqDTO.IssueCouponReq tooMany =
-                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 1001);
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 1001, null, null);
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), tooMany))
                     .isInstanceOf(CouponAdminException.class)
                     .satisfies(e -> assertThat(((CouponAdminException) e).getReason())

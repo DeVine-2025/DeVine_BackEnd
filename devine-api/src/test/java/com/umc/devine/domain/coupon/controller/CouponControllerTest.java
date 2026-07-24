@@ -79,8 +79,8 @@ class CouponControllerTest extends ControllerIntegrationTestSupport {
 
     @AfterEach
     void tearDown() {
-        couponCodeRepository.deleteAll();
         memberCouponRepository.deleteAll();
+        couponCodeRepository.deleteAll();
         couponRepository.deleteAll();
         memberRepository.deleteAll();
     }
@@ -92,7 +92,7 @@ class CouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("인증된 사용자가 코드를 등록한다")
         void registersCode() throws Exception {
-            couponCodeRepository.save(CouponCode.of(coupon, "CTRL0001"));
+            couponCodeRepository.save(CouponCode.of(coupon, "CTRL0001", null));
 
             mockMvc.perform(post("/api/v1/coupon/register")
                             .with(authentication(auth))
