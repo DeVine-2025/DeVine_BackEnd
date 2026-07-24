@@ -119,6 +119,27 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Nested
+    @DisplayName("GET /admin/v1/coupon/{couponId}")
+    class GetCoupon {
+
+        @Test
+        @DisplayName("쿠폰 상세 정보를 조회한다")
+        void returnsCouponDetail() throws Exception {
+            mockMvc.perform(get("/admin/v1/coupon/{couponId}", coupon.getId()))
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.couponId").value(coupon.getId()))
+                    .andExpect(jsonPath("$.result.name").value("컨트롤러 테스트 쿠폰"));
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 쿠폰이면 404를 반환한다")
+        void returns404WhenNotFound() throws Exception {
+            mockMvc.perform(get("/admin/v1/coupon/{couponId}", 999_999L))
+                    .andExpect(status().isNotFound());
+        }
+    }
+
+    @Nested
     @DisplayName("PATCH /admin/v1/coupon/{couponId}")
     class UpdateCoupon {
 

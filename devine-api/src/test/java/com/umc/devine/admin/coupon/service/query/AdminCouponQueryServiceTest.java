@@ -116,4 +116,31 @@ class AdminCouponQueryServiceTest extends IntegrationTestSupport {
                             .isEqualTo(CouponErrorReason.COUPON_NOT_FOUND));
         }
     }
+
+    @Nested
+    @DisplayName("getCoupon")
+    class GetCoupon {
+
+        @Test
+        @DisplayName("쿠폰 ID로 단건 상세 정보를 조회한다")
+        void returnsCouponDetail() {
+            Coupon coupon = saveCoupon(5, 2, LocalDateTime.now().plusDays(30));
+
+            AdminCouponResDTO.CouponDTO result = adminCouponQueryService.getCoupon(coupon.getId());
+
+            assertThat(result.couponId()).isEqualTo(coupon.getId());
+            assertThat(result.name()).isEqualTo("쿠폰");
+            assertThat(result.issuedCount()).isEqualTo(5);
+            assertThat(result.usedCount()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("존재하지 않는 쿠폰ID면 예외가 발생한다")
+        void throwsWhenCouponNotFound() {
+            assertThatThrownBy(() -> adminCouponQueryService.getCoupon(999_999L))
+                    .isInstanceOf(CouponException.class)
+                    .satisfies(e -> assertThat(((CouponException) e).getReason())
+                            .isEqualTo(CouponErrorReason.COUPON_NOT_FOUND));
+        }
+    }
 }
