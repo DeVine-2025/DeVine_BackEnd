@@ -7,12 +7,16 @@ import com.umc.devine.admin.complaint.entity.Complaint;
 import com.umc.devine.admin.complaint.entity.ComplaintHistory;
 import com.umc.devine.admin.complaint.enums.ComplaintAction;
 import com.umc.devine.admin.complaint.enums.ComplaintStatus;
+import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
 import com.umc.devine.admin.complaint.exception.ComplaintException;
 import com.umc.devine.admin.complaint.exception.code.ComplaintErrorReason;
 import com.umc.devine.admin.complaint.repository.ComplaintHistoryRepository;
 import com.umc.devine.admin.complaint.repository.ComplaintRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.repository.ProjectRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +32,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
     private final ComplaintRepository complaintRepository;
     private final ComplaintHistoryRepository complaintHistoryRepository;
     private final MemberRepository memberRepository;
+    private final ProjectRepository projectRepository;
 
     @Override
     public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, Long processorMemberId, ComplaintReqDTO.UpdateStatusReq request) {
@@ -50,7 +55,9 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
             resolvedAt = LocalDateTime.now();
 
             // TODO: action == SUSPEND 인 경우 [계정 정지/정지해제/강제탈퇴] 기능 호출 필요 (피신고자 대상). 기능 미구현으로 현재는 신고 상태만 변경.
-            // TODO: action == DELETE && targetType == PROJECT 인 경우 [프로젝트 게시글 노출/비노출 처리] 기능 호출 필요. 기능 미구현으로 현재는 신고 상태만 변경.
+            if (action == ComplaintAction.DELETE && complaint.getTargetType() == ComplaintTargetType.PROJECT) {
+                hideReportedProject(complaint.getTargetId());
+            }
         }
 
         Member resolver = processorMemberId != null ? memberRepository.findById(processorMemberId).orElse(null) : null;
@@ -66,5 +73,12 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
                 .build());
 
         return ComplaintConverter.toUpdateStatusRes(complaint, reprocessWarning);
+    }
+
+    // 신고된 프로젝트 게시글을 비노출 처리한다. 이미 삭제됐거나 존재하지 않는 프로젝트는 조치할 대상이 없으므로 조용히 넘어간다.
+    private void hideReportedProject(Long projectId) {
+        projectRepository.findById(projectId)
+                .filter(project -> project.getStatus() != ProjectStatus.DELETED)
+                .ifPresent(Project::delete);
     }
 }

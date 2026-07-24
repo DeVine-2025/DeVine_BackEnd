@@ -188,11 +188,12 @@
 ### 처리 로직
 1. `complaintId` 존재 확인 → 없으면 `COMPLAINT404_1` (404)
 2. `status`가 `COMPLETED`일 때 `action` 없으면 `COMPLAINT400_1`(400), `reason` 비어있으면 `COMPLAINT400_2`(400)
-3. `action == SUSPEND` (계정 정지/정지해제/강제탈퇴 대상: 피신고자) / `action == DELETE && targetType == PROJECT` (프로젝트 게시글 비노출 처리) → **TODO 미구현**: 해당 하위 기능이 아직 없어 실제 호출 없이 신고 상태만 변경됩니다.
+3. `action == SUSPEND`(계정 정지/정지해제/강제탈퇴 대상: 피신고자)는 **TODO 미구현** — 해당 하위 기능이 아직 없어 실제 호출 없이 신고 상태만 변경됩니다.
+   `action == DELETE && targetType == PROJECT`(프로젝트 게시글 비노출 처리)는 구현되어 있어, 대상 프로젝트를 찾아 상태를 `DELETED`로 변경합니다(`Project.delete()`). 이미 삭제됐거나 존재하지 않는 프로젝트는 조치할 대상이 없으므로 조용히 넘어갑니다.
 4. 신고의 `status`/`action`/`resolutionReason`/`resolver`/`resolvedAt` 업데이트
 5. **`ComplaintHistory`에 이력 레코드 1건 추가** (상태가 실제로 바뀌었는지와 무관하게, 호출될 때마다 무조건 기록)
 6. 이미 `COMPLETED` 상태인 신고를 다시 변경하는 경우, 응답의 `reprocessWarning: true`로 표시(프론트에서 확인 다이얼로그 노출용) — 예외는 아니며 정상 처리됨
-7. 이번 하위 기능(정지/비노출)들은 아직 실제 호출이 없어 트랜잭션 롤백이 발동할 상황이 없지만, 서비스 메서드 전체가 `@Transactional`로 묶여 있어 향후 하위 기능 연동 시 예외가 발생하면 신고 상태 변경까지 자동으로 롤백됩니다.
+7. 서비스 메서드 전체가 `@Transactional`로 묶여 있어, 프로젝트 비노출 처리(또는 향후 연동될 정지 처리)에서 예외가 발생하면 신고 상태 변경까지 자동으로 롤백됩니다.
 
 ---
 
@@ -202,7 +203,6 @@
 |---|---|
 | 관리자 인증/인가 | 없음 — 3개 API 모두 인증 없이 호출 가능 |
 | 계정 정지/정지해제/강제탈퇴 연동 (`action == SUSPEND`) | 미구현 — 신고 상태만 변경 |
-| 프로젝트 게시글 노출/비노출 연동 (`action == DELETE && targetType == PROJECT`) | 미구현 — 신고 상태만 변경 |
 
 ## 참고
 

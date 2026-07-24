@@ -10,10 +10,19 @@ import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
 import com.umc.devine.admin.complaint.exception.ComplaintException;
 import com.umc.devine.admin.complaint.repository.ComplaintHistoryRepository;
 import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.category.entity.Category;
+import com.umc.devine.domain.category.enums.CategoryGenre;
+import com.umc.devine.domain.category.repository.CategoryRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.DurationRange;
+import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.ProjectMode;
+import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.support.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -21,6 +30,7 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
+import java.time.LocalDate;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,6 +49,12 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private MemberRepository memberRepository;
+
+    @Autowired
+    private ProjectRepository projectRepository;
+
+    @Autowired
+    private CategoryRepository categoryRepository;
 
     private Member complainant;
     private Member respondentMember;
@@ -75,13 +91,35 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
     }
 
     private Complaint createComplaint(ComplaintStatus status) {
+        return createComplaint(ComplaintTargetType.CHAT, 1L, status);
+    }
+
+    private Complaint createComplaint(ComplaintTargetType targetType, Long targetId, ComplaintStatus status) {
         return complaintRepository.save(Complaint.builder()
                 .complainant(complainant)
                 .respondentMember(respondentMember)
-                .targetType(ComplaintTargetType.CHAT)
-                .targetId(1L)
+                .targetType(targetType)
+                .targetId(targetId)
                 .reason("부적절한 콘텐츠입니다.")
                 .status(status)
+                .build());
+    }
+
+    private Project createProject(ProjectStatus status) {
+        Category category = categoryRepository.save(Category.builder()
+                .genre(CategoryGenre.ECOMMERCE)
+                .build());
+        return projectRepository.save(Project.builder()
+                .name("프로젝트")
+                .content("프로젝트 원문 내용입니다.")
+                .status(status)
+                .projectField(ProjectField.WEB)
+                .mode(ProjectMode.ONLINE)
+                .durationRange(DurationRange.ONE_TO_THREE)
+                .location("온라인")
+                .recruitmentDeadline(LocalDate.now().plusDays(30))
+                .category(category)
+                .member(respondentMember)
                 .build());
     }
 
@@ -229,6 +267,45 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
             assertThat(histories).hasSize(2);
             assertThat(histories.get(0).getStatus()).isEqualTo(ComplaintStatus.COMPLETED);
             assertThat(histories.get(1).getStatus()).isEqualTo(ComplaintStatus.IN_REVIEW);
+        }
+
+        @Test
+        @DisplayName("PROJECT 유형 신고를 DELETE로 처리하면 신고된 프로젝트가 비노출(삭제) 처리된다")
+        void updateStatus_deleteAction_hidesReportedProject() {
+            // given
+            Project project = createProject(ProjectStatus.RECRUITING);
+            Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.DELETE)
+                    .reason("확인 결과 저작권 침해로 비노출 처리")
+                    .build();
+
+            // when
+            complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+
+            // then
+            Project updated = projectRepository.findById(project.getId()).orElseThrow();
+            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.DELETED);
+        }
+
+        @Test
+        @DisplayName("이미 삭제된 프로젝트를 DELETE로 다시 처리해도 예외 없이 신고 상태만 변경된다")
+        void updateStatus_deleteAction_alreadyDeletedProject() {
+            // given
+            Project project = createProject(ProjectStatus.DELETED);
+            Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.DELETE)
+                    .reason("이미 삭제된 프로젝트지만 신고는 처리")
+                    .build();
+
+            // when
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+
+            // then
+            assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
         }
     }
 }
