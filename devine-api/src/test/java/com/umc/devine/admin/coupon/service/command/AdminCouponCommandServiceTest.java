@@ -140,7 +140,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.UpdateCouponReq request = new AdminCouponReqDTO.UpdateCouponReq(
-                    "새 이름", null, null, null, false, null);
+                    "새 이름", null, null, null, false, false, null);
 
             AdminCouponResDTO.CouponDTO result = adminCouponCommandService.updateCoupon(coupon.getId(), request);
 
@@ -152,12 +152,25 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         @DisplayName("존재하지 않는 쿠폰이면 예외가 발생한다")
         void throwsWhenCouponNotFound() {
             AdminCouponReqDTO.UpdateCouponReq request = new AdminCouponReqDTO.UpdateCouponReq(
-                    "이름", null, null, null, null, null);
+                    "이름", null, null, null, false, null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.updateCoupon(999_999L, request))
                     .isInstanceOf(CouponException.class)
                     .satisfies(e -> assertThat(((CouponException) e).getReason())
                             .isEqualTo(CouponErrorReason.COUPON_NOT_FOUND));
+        }
+
+        @Test
+        @DisplayName("clearTotalIssueLimit이 true면 발급 수량 제한을 무제한으로 되돌린다")
+        void clearsTotalIssueLimit() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, 100);
+
+            AdminCouponReqDTO.UpdateCouponReq request = new AdminCouponReqDTO.UpdateCouponReq(
+                    null, null, null, null, true, null, null);
+
+            AdminCouponResDTO.CouponDTO result = adminCouponCommandService.updateCoupon(coupon.getId(), request);
+
+            assertThat(result.totalIssueLimit()).isNull();
         }
     }
 

@@ -120,6 +120,10 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
         );
     }
 
+    private String ownerCustomData() throws Exception {
+        return objectMapper.writeValueAsString(Map.of("clerkId", member.getClerkId()));
+    }
+
     private PortOnePaymentResponse paidResponse(long amount, String customData) {
         return new PortOnePaymentResponse(
                 "txn_1", "PAID", new PortOnePaymentResponse.AmountDetail(amount),
@@ -135,11 +139,11 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
 
         @Test
         @DisplayName("정액 쿠폰 적용 후 할인된 금액으로 결제가 완료되고 쿠폰이 사용 처리된다")
-        void completesWithDiscount() {
+        void completesWithDiscount() throws Exception {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000);
             MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
 
-            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(3900L, null));
+            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(3900L, ownerCustomData()));
 
             PaymentResDTO.PaymentDTO result = paymentCommandService.completePayment(
                     completeReq(4900L, memberCoupon.getId()), member);
@@ -155,12 +159,11 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
 
         @Test
         @DisplayName("PortOne 실결제 금액이 할인 후 금액과 다르면 예외가 발생하고 쿠폰은 사용되지 않는다")
-        void throwsWhenActualAmountMismatchesDiscountedAmount() {
+        void throwsWhenActualAmountMismatchesDiscountedAmount() throws Exception {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000);
             MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
 
-            // PortOne이 할인 미반영 금액(4900)을 돌려준다고 응답 — 실제로는 3900이어야 함
-            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(4900L, null));
+            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(4900L, ownerCustomData()));
 
             assertThatThrownBy(() -> paymentCommandService.completePayment(
                     completeReq(4900L, memberCoupon.getId()), member))
@@ -174,8 +177,8 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
 
         @Test
         @DisplayName("쿠폰 없이 결제하면 원금 그대로 결제된다")
-        void completesWithoutCoupon() {
-            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(4900L, null));
+        void completesWithoutCoupon() throws Exception {
+            given(portOneClient.getPayment(anyString())).willReturn(paidResponse(4900L, ownerCustomData()));
 
             PaymentResDTO.PaymentDTO result = paymentCommandService.completePayment(completeReq(4900L, null), member);
 
@@ -237,7 +240,7 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
             MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
 
             String customData = objectMapper.writeValueAsString(Map.of(
-                    "memberId", member.getId(),
+                    "clerkId", member.getClerkId(),
                     "orderName", "리포트 생성권 1개 x1",
                     "items", List.of(Map.of("ticketProductId", product.getId(), "quantity", 1)),
                     "memberCouponId", memberCoupon.getId()
@@ -258,7 +261,7 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
             MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
 
             String customData = objectMapper.writeValueAsString(Map.of(
-                    "memberId", member.getId(),
+                    "clerkId", member.getClerkId(),
                     "orderName", "리포트 생성권 1개 x1",
                     "items", List.of(Map.of("ticketProductId", product.getId(), "quantity", 1)),
                     "memberCouponId", memberCoupon.getId()

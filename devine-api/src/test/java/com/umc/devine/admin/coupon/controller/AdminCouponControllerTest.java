@@ -147,7 +147,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("쿠폰을 수정한다")
         void updatesCoupon() throws Exception {
             AdminCouponReqDTO.UpdateCouponReq request = new AdminCouponReqDTO.UpdateCouponReq(
-                    "수정된 이름", null, null, null, false, null);
+                    "수정된 이름", null, null, null, false, false, null);
 
             mockMvc.perform(patch("/admin/v1/coupon/{couponId}", coupon.getId())
                             .contentType(MediaType.APPLICATION_JSON)
@@ -161,7 +161,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("존재하지 않는 쿠폰이면 404를 반환한다")
         void returns404WhenNotFound() throws Exception {
             AdminCouponReqDTO.UpdateCouponReq request = new AdminCouponReqDTO.UpdateCouponReq(
-                    "이름", null, null, null, null, null);
+                    "이름", null, null, null, false, null, null);
 
             mockMvc.perform(patch("/admin/v1/coupon/{couponId}", 999_999L)
                             .contentType(MediaType.APPLICATION_JSON)
