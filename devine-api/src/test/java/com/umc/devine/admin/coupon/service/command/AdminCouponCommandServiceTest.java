@@ -195,7 +195,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             saveMember("not-targeted");
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getId(), m2.getId()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
 
             AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), request);
 
@@ -203,12 +203,12 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("SPECIFIC 방식인데 존재하지 않는 회원 ID가 섞여 있으면 예외가 발생한다")
+        @DisplayName("SPECIFIC 방식인데 존재하지 않는 닉네임이 섞여 있으면 예외가 발생한다")
         void throwsWhenSpecificMemberNotFound() {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(999_999L), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of("no-such-nickname"), null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(MemberException.class)
@@ -217,7 +217,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("SPECIFIC 방식인데 회원 ID 목록이 비어있으면 예외가 발생한다")
+        @DisplayName("SPECIFIC 방식인데 닉네임 목록이 비어있으면 예외가 발생한다")
         void throwsWhenSpecificMemberIdsEmpty() {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
 
@@ -254,7 +254,7 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
             Member m2 = saveMember("limit-2");
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getId(), m2.getId()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
                     .isInstanceOf(CouponException.class)

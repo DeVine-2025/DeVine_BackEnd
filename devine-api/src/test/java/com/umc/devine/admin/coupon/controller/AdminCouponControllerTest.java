@@ -164,7 +164,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     .build());
 
             AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(member.getId()), null, null);
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(member.getNickname()), null, null);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
                             .contentType(MediaType.APPLICATION_JSON)
