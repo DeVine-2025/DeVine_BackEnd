@@ -286,5 +286,60 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
                     .satisfies(e -> assertThat(((CouponException) e).getReason())
                             .isEqualTo(CouponErrorReason.COUPON_NOT_USABLE));
         }
+
+        @Test
+        @DisplayName("이미 해당 쿠폰을 보유한 회원은 다시 발급되지 않는다 (재클릭/재시도 대비)")
+        void skipsMembersAlreadyHoldingTheCoupon() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+            Member m1 = saveMember("dup-1");
+            Member m2 = saveMember("dup-2");
+
+            AdminCouponReqDTO.IssueCouponReq firstRequest = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null);
+            adminCouponCommandService.issueCoupon(coupon.getId(), firstRequest);
+
+            AdminCouponReqDTO.IssueCouponReq retryRequest = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname(), m2.getNickname()), null, null);
+            AdminCouponResDTO.IssueResultDTO result = adminCouponCommandService.issueCoupon(coupon.getId(), retryRequest);
+
+            assertThat(result.issuedCount()).isEqualTo(1);
+            assertThat(memberCouponRepository.findByMemberOrderByCreatedAtDesc(m1)).hasSize(1);
+            assertThat(memberCouponRepository.findByMemberOrderByCreatedAtDesc(m2)).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("이미 발급 한도에 도달해도 기존에 발급받은 쿠폰은 결제 등에서 계속 사용할 수 있다")
+        void issuedCouponsRemainUsableAfterLimitReached() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, 1);
+            Member m1 = saveMember("limit-usable-1");
+
+            adminCouponCommandService.issueCoupon(coupon.getId(),
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.SPECIFIC, List.of(m1.getNickname()), null, null));
+
+            Coupon reloaded = couponRepository.findById(coupon.getId()).orElseThrow();
+            assertThat(reloaded.getIssuedCount()).isEqualTo(reloaded.getTotalIssueLimit());
+            assertThat(reloaded.isUsable()).isTrue();
+            assertThat(reloaded.isIssuable()).isFalse();
+        }
+
+        @Test
+        @DisplayName("CODE_GEN 방식은 코드 자릿수/개수 상한을 초과하면 예외가 발생한다")
+        void throwsWhenCodeGenExceedsUpperBound() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+
+            AdminCouponReqDTO.IssueCouponReq tooLong =
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 21, 1);
+            assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), tooLong))
+                    .isInstanceOf(CouponAdminException.class)
+                    .satisfies(e -> assertThat(((CouponAdminException) e).getReason())
+                            .isEqualTo(CouponAdminErrorReason.INVALID_ISSUE_REQUEST));
+
+            AdminCouponReqDTO.IssueCouponReq tooMany =
+                    new AdminCouponReqDTO.IssueCouponReq(AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 1001);
+            assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), tooMany))
+                    .isInstanceOf(CouponAdminException.class)
+                    .satisfies(e -> assertThat(((CouponAdminException) e).getReason())
+                            .isEqualTo(CouponAdminErrorReason.INVALID_ISSUE_REQUEST));
+        }
     }
 }

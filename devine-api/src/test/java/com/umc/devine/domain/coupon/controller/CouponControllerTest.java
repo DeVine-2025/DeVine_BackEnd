@@ -110,6 +110,23 @@ class CouponControllerTest extends ControllerIntegrationTestSupport {
                             .content(objectMapper.writeValueAsString(new CouponReqDTO.RegisterCodeReq("CTRL0001"))))
                     .andExpect(status().isUnauthorized());
         }
+
+        @Test
+        @DisplayName("분당 시도 횟수를 초과하면 429를 반환한다 (브루트포스 방지)")
+        void returns429WhenRateLimitExceeded() throws Exception {
+            for (int i = 0; i < 10; i++) {
+                mockMvc.perform(post("/api/v1/coupon/register")
+                        .with(authentication(auth))
+                        .contentType(MediaType.APPLICATION_JSON)
+                        .content(objectMapper.writeValueAsString(new CouponReqDTO.RegisterCodeReq("NO-SUCH-CODE"))));
+            }
+
+            mockMvc.perform(post("/api/v1/coupon/register")
+                            .with(authentication(auth))
+                            .contentType(MediaType.APPLICATION_JSON)
+                            .content(objectMapper.writeValueAsString(new CouponReqDTO.RegisterCodeReq("NO-SUCH-CODE"))))
+                    .andExpect(status().isTooManyRequests());
+        }
     }
 
     @Nested
