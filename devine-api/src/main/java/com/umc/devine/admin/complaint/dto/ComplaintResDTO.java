@@ -43,7 +43,7 @@ public class ComplaintResDTO {
             @Schema(description = "신고 유형", example = "PROJECT")
             ComplaintTargetType targetType,
 
-            @Schema(description = "신고 대상 ID (채팅방ID/프로젝트ID). DEVELOPER 유형은 null", nullable = true)
+            @Schema(description = "신고 대상 ID (채팅 메시지ID/프로젝트ID). DEVELOPER 유형은 null", nullable = true)
             Long targetId,
 
             @Schema(description = "신고자 닉네임", example = "complainant")

@@ -10,7 +10,8 @@ import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
 import com.umc.devine.admin.complaint.exception.ComplaintException;
 import com.umc.devine.admin.complaint.exception.code.ComplaintErrorReason;
 import com.umc.devine.admin.complaint.repository.ComplaintRepository;
-import com.umc.devine.domain.chat.repository.ChatRoomRepository;
+import com.umc.devine.domain.chat.entity.ChatMessage;
+import com.umc.devine.domain.chat.repository.ChatMessageRepository;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.global.dto.PagedResponse;
@@ -32,7 +33,7 @@ public class ComplaintQueryServiceImpl implements ComplaintQueryService {
 
     private final ComplaintRepository complaintRepository;
     private final ProjectRepository projectRepository;
-    private final ChatRoomRepository chatRoomRepository;
+    private final ChatMessageRepository chatMessageRepository;
 
     @Override
     public PagedResponse<ComplaintResDTO.ComplaintSummaryDTO> getComplaintList(ComplaintReqDTO.SearchReq request) {
@@ -93,9 +94,9 @@ public class ComplaintQueryServiceImpl implements ComplaintQueryService {
                     .orElse(DELETED_CONTENT_PLACEHOLDER);
         }
         if (complaint.getTargetType() == ComplaintTargetType.CHAT) {
-            // TODO: 채팅 로그 원문 연동 필요 (신고 시점 스냅샷 vs 실시간 조회 정책 미정)
-            return chatRoomRepository.findById(complaint.getTargetId())
-                    .map(chatRoom -> "TODO: 채팅 로그 연동 필요")
+            // 신고 대상은 채팅방 전체가 아니라 신고당한 그 메시지 한 건(target_id = chat_message_id)이라 DB에서 바로 조회한다.
+            return chatMessageRepository.findById(complaint.getTargetId())
+                    .map(ChatMessage::getContent)
                     .orElse(DELETED_CONTENT_PLACEHOLDER);
         }
         return null;

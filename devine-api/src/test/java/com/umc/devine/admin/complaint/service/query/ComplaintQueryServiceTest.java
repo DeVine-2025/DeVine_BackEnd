@@ -10,6 +10,10 @@ import com.umc.devine.admin.complaint.repository.ComplaintRepository;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.CategoryRepository;
+import com.umc.devine.domain.chat.entity.ChatMessage;
+import com.umc.devine.domain.chat.entity.ChatRoom;
+import com.umc.devine.domain.chat.repository.ChatMessageRepository;
+import com.umc.devine.domain.chat.repository.ChatRoomRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
@@ -52,6 +56,12 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private CategoryRepository categoryRepository;
+
+    @Autowired
+    private ChatRoomRepository chatRoomRepository;
+
+    @Autowired
+    private ChatMessageRepository chatMessageRepository;
 
     @Autowired
     private JdbcTemplate jdbcTemplate;
@@ -103,6 +113,18 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
         entityManager.flush();
         jdbcTemplate.update("UPDATE complaint SET created_at = ? WHERE complaint_id = ?", createdAt, complaintId);
         entityManager.clear();
+    }
+
+    private ChatMessage createChatMessage(String content) {
+        ChatRoom chatRoom = chatRoomRepository.save(ChatRoom.builder()
+                .member1(complainant)
+                .member2(respondentMember)
+                .build());
+        return chatMessageRepository.save(ChatMessage.builder()
+                .chatRoom(chatRoom)
+                .sender(respondentMember)
+                .content(content)
+                .build());
     }
 
     private Project createProject(ProjectStatus status) {
@@ -253,6 +275,33 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
             // given
             Project project = createProject(ProjectStatus.DELETED);
             Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.PENDING);
+
+            // when
+            ComplaintResDTO.ComplaintDetailRes result = complaintQueryService.getComplaintDetail(complaint.getId());
+
+            // then
+            assertThat(result.content()).isEqualTo("삭제된 콘텐츠입니다");
+        }
+
+        @Test
+        @DisplayName("CHAT 유형 신고는 신고당한 그 메시지의 원문을 반환한다")
+        void getComplaintDetail_chat() {
+            // given
+            ChatMessage message = createChatMessage("이 프로젝트 진짜 별로네");
+            Complaint complaint = createComplaint(ComplaintTargetType.CHAT, message.getId(), ComplaintStatus.PENDING);
+
+            // when
+            ComplaintResDTO.ComplaintDetailRes result = complaintQueryService.getComplaintDetail(complaint.getId());
+
+            // then
+            assertThat(result.content()).isEqualTo("이 프로젝트 진짜 별로네");
+        }
+
+        @Test
+        @DisplayName("삭제된(존재하지 않는) 메시지에 대한 신고는 삭제 안내 문구를 반환한다")
+        void getComplaintDetail_deletedChatMessage() {
+            // given
+            Complaint complaint = createComplaint(ComplaintTargetType.CHAT, 999999L, ComplaintStatus.PENDING);
 
             // when
             ComplaintResDTO.ComplaintDetailRes result = complaintQueryService.getComplaintDetail(complaint.getId());
