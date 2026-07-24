@@ -74,7 +74,7 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
                 notifyUnsuspended(member);
             }
             case FORCE_WITHDRAW -> {
-                requireNotAlreadyProcessed(member);
+                requireStatus(member, MemberStatus.ACTIVE, MemberStatus.INACTIVE);
                 requireReason(request);
                 member.scheduleForceWithdrawal(LocalDateTime.now().plusDays(FORCE_WITHDRAWAL_GRACE_DAYS));
                 notifyForceWithdrawScheduled(member, request.reason());
@@ -97,15 +97,6 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
             throw new MemberAdminException(MemberAdminErrorReason.ALREADY_WITHDRAWN);
         }
         throw new MemberAdminException(MemberAdminErrorReason.INVALID_STATUS_TRANSITION);
-    }
-
-    private void requireNotAlreadyProcessed(Member member) {
-        if (member.getUsed() == MemberStatus.DELETED) {
-            throw new MemberAdminException(MemberAdminErrorReason.ALREADY_WITHDRAWN);
-        }
-        if (member.getUsed() == MemberStatus.PENDING_WITHDRAWAL) {
-            throw new MemberAdminException(MemberAdminErrorReason.INVALID_STATUS_TRANSITION);
-        }
     }
 
     private void requireReason(AdminMemberReqDTO.ChangeStatusReq request) {
