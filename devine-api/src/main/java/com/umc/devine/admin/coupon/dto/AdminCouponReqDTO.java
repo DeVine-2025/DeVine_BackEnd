@@ -60,6 +60,9 @@ public class AdminCouponReqDTO {
             @Positive(message = "발급 수량 제한은 양수여야 합니다.")
             Integer totalIssueLimit,
 
+            @Schema(description = "true면 totalIssueLimit을 무제한(null)으로 되돌린다. totalIssueLimit 값보다 우선한다.")
+            boolean clearTotalIssueLimit,
+
             Boolean isActive,
             String description
     ) {}

@@ -18,6 +18,9 @@ public enum CouponAdminErrorReason implements DomainErrorReason {
     DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT,
             "COUPONADMIN409_2",
             "이미 존재하는 쿠폰 코드입니다."),
+    CONCURRENT_ISSUE_CONFLICT(HttpStatus.CONFLICT,
+            "COUPONADMIN409_3",
+            "동시에 처리된 다른 요청과 충돌했습니다. 발급 대상을 다시 확인 후 재시도해주세요."),
     ;
 
     private final HttpStatus status;

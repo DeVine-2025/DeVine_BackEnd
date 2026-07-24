@@ -53,7 +53,8 @@ CREATE TABLE
         updated_at TIMESTAMP(6),
         created_by VARCHAR(255),
         updated_by VARCHAR(255),
-        CONSTRAINT member_coupon_status_check CHECK (status IN ('AVAILABLE', 'USED', 'EXPIRED'))
+        CONSTRAINT member_coupon_status_check CHECK (status IN ('AVAILABLE', 'USED', 'EXPIRED')),
+        CONSTRAINT member_coupon_unique_coupon_member UNIQUE (coupon_id, member_id)
     );
 
 -- 인덱스
@@ -64,8 +65,3 @@ CREATE INDEX idx_member_coupon_coupon_id ON member_coupon (coupon_id);
 CREATE INDEX idx_member_coupon_status ON member_coupon (status);
 
 CREATE INDEX idx_coupon_code_coupon_id ON coupon_code (coupon_id);
-
--- 같은 코드를 같은 회원이 두 번 등록하는 것을 DB 레벨에서도 막는다 (공유 코드 대비 방어선).
-CREATE UNIQUE INDEX idx_member_coupon_code_member_unique ON member_coupon (coupon_code_id, member_id)
-WHERE
-    coupon_code_id IS NOT NULL;

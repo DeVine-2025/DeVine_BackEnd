@@ -94,7 +94,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             throw new PaymentException(PaymentErrorReason.PAYMENT_NOT_PAID);
         }
 
-        // 7. 결제 소유자 검증 (customData.memberId == 현재 사용자)
+        // 7. 결제 소유자 검증 (customData.clerkId == 현재 사용자)
         verifyPaymentOwner(portOneResponse, member);
 
         // 8. 결제 금액 검증 (PortOne 실결제 금액 == 쿠폰 적용 후 금액)
@@ -227,9 +227,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        // customData에서 memberId, items, memberCouponId 파싱
-        // 프론트엔드에서 결제 요청 시 customData에 JSON 형태로 포함해야 함
-        // 예: {"memberId": 1, "items": [{"ticketProductId": 1, "quantity": 2}], "orderName": "리포트 생성권 1개 x2", "memberCouponId": 5}
+        // 예: {"clerkId": "user_xxx", "items": [{"ticketProductId": 1, "quantity": 2}], "orderName": "...", "memberCouponId": 5}
         if (portOneResponse.customData() == null) {
             log.warn("웹훅: customData 없음 - paymentId: {}", portonePaymentId);
             return;
@@ -243,16 +241,16 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        Long memberId = customData.path("memberId").asLong(0);
+        String clerkId = customData.path("clerkId").asText(null);
         String orderName = customData.path("orderName").asText("웹훅 결제");
-        if (memberId == 0) {
-            log.error("웹훅: customData에 memberId 없음 - paymentId: {}", portonePaymentId);
+        if (clerkId == null) {
+            log.error("웹훅: customData에 clerkId 없음 - paymentId: {}", portonePaymentId);
             return;
         }
 
-        Member member = memberRepository.findById(memberId).orElse(null);
+        Member member = memberRepository.findByClerkId(clerkId).orElse(null);
         if (member == null) {
-            log.error("웹훅: 존재하지 않는 회원 - paymentId: {}, memberId: {}", portonePaymentId, memberId);
+            log.error("웹훅: 존재하지 않는 회원 - paymentId: {}, clerkId: {}", portonePaymentId, clerkId);
             return;
         }
 
@@ -317,7 +315,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                 useCouponIfPresent(memberCouponId, member, savedPayment, ticketProductIds);
                 return null;
             });
-            log.info("웹훅: 결제 처리 완료 - paymentId: {}, memberId: {}", portonePaymentId, memberId);
+            log.info("웹훅: 결제 처리 완료 - paymentId: {}, clerkId: {}", portonePaymentId, clerkId);
         } catch (DataIntegrityViolationException e) {
             // 동시에 /complete API 호출로 이미 처리됨
             log.info("웹훅: 동시 처리로 이미 저장됨 - paymentId: {}", portonePaymentId);
@@ -394,18 +392,21 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         }
     }
 
+    // customData가 없거나 파싱 실패, clerkId 불일치 시 모두 거부한다. 통과시키면 남의 결제 건을 가로챌 수 있다.
     private void verifyPaymentOwner(PortOnePaymentResponse portOneResponse, Member member) {
-        if (portOneResponse.customData() == null) return;
+        if (portOneResponse.customData() == null) {
+            throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
+        }
+        JsonNode customData;
         try {
-            JsonNode customData = objectMapper.readTree(portOneResponse.customData());
-            long paymentMemberId = customData.path("memberId").asLong(0);
-            if (paymentMemberId != 0 && !member.getId().equals(paymentMemberId)) {
-                throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
-            }
-        } catch (PaymentException e) {
-            throw e;
+            customData = objectMapper.readTree(portOneResponse.customData());
         } catch (Exception e) {
-            log.warn("customData 파싱 실패, 소유자 검증 스킵 - paymentId: {}", portOneResponse.transactionId());
+            log.warn("customData 파싱 실패 - paymentId: {}", portOneResponse.transactionId());
+            throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
+        }
+        String clerkId = customData.path("clerkId").asText(null);
+        if (clerkId == null || !clerkId.equals(member.getClerkId())) {
+            throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
         }
     }
 

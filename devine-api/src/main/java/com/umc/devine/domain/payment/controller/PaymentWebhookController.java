@@ -7,6 +7,7 @@ import com.umc.devine.domain.payment.exception.code.PaymentErrorReason;
 import com.umc.devine.domain.payment.exception.code.PaymentSuccessCode;
 import com.umc.devine.domain.payment.service.command.PaymentCommandService;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import com.umc.devine.global.exception.DomainException;
 import com.umc.devine.infrastructure.portone.PortOneWebhookVerifier;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -53,10 +54,11 @@ public class PaymentWebhookController implements PaymentWebhookControllerDocs {
             throw new PaymentException(PaymentErrorReason.INVALID_WEBHOOK_BODY);
         }
 
-        // 4. 결제 처리 — 비즈니스 오류(PaymentException)는 200 반환, 일시적 오류는 전파하여 PortOne 재시도 유도
+        // 4. 결제 처리. 비즈니스 오류(DomainException, 예: PaymentException/CouponException)는 200 반환,
+        //    일시적 오류는 전파하여 PortOne 재시도 유도
         try {
             paymentCommandService.handleWebhookPayment(webhook.data().paymentId());
-        } catch (PaymentException e) {
+        } catch (DomainException e) {
             log.warn("웹훅: 결제 처리 비즈니스 오류 - paymentId: {}, error: {}", webhook.data().paymentId(), e.getMessage());
         }
 

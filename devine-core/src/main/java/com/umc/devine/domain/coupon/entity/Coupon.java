@@ -72,7 +72,8 @@ public class Coupon extends BaseEntity {
     }
 
     public boolean isExpiringSoon() {
-        return LocalDateTime.now().plusDays(7).isAfter(validUntil);
+        LocalDateTime now = LocalDateTime.now();
+        return now.isBefore(validUntil) && now.plusDays(7).isAfter(validUntil);
     }
 
     public boolean isApplicableTo(Long ticketProductId) {
@@ -80,11 +81,16 @@ public class Coupon extends BaseEntity {
     }
 
     public void update(String name, LocalDateTime validFrom, LocalDateTime validUntil,
-                        Integer totalIssueLimit, Boolean isActive, String description) {
+                        Integer totalIssueLimit, boolean clearTotalIssueLimit,
+                        Boolean isActive, String description) {
         if (name != null) this.name = name;
         if (validFrom != null) this.validFrom = validFrom;
         if (validUntil != null) this.validUntil = validUntil;
-        if (totalIssueLimit != null) this.totalIssueLimit = totalIssueLimit;
+        if (clearTotalIssueLimit) {
+            this.totalIssueLimit = null;
+        } else if (totalIssueLimit != null) {
+            this.totalIssueLimit = totalIssueLimit;
+        }
         if (isActive != null) this.isActive = isActive;
         if (description != null) this.description = description;
     }

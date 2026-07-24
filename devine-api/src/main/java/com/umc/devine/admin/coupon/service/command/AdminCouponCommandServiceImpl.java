@@ -22,6 +22,7 @@ import com.umc.devine.domain.ticket.entity.TicketProduct;
 import com.umc.devine.domain.ticket.exception.TicketException;
 import com.umc.devine.domain.ticket.exception.code.TicketErrorReason;
 import lombok.RequiredArgsConstructor;
+import org.springframework.dao.DataIntegrityViolationException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -98,6 +99,7 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
                 request.validFrom(),
                 request.validUntil(),
                 request.totalIssueLimit(),
+                request.clearTotalIssueLimit(),
                 request.isActive(),
                 request.description()
         );
@@ -162,7 +164,11 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         List<MemberCoupon> memberCoupons = targets.stream()
                 .map(member -> MemberCoupon.issueTo(member, coupon))
                 .toList();
-        memberCouponRepository.saveAll(memberCoupons);
+        try {
+            memberCouponRepository.saveAllAndFlush(memberCoupons);
+        } catch (DataIntegrityViolationException e) {
+            throw new CouponAdminException(CouponAdminErrorReason.CONCURRENT_ISSUE_CONFLICT);
+        }
 
         return new AdminCouponResDTO.IssueResultDTO(targets.size(), null);
     }
@@ -175,13 +181,13 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         int perCodeCapacity = maxUses != null ? maxUses : 1;
 
         if (explicitCode != null && !explicitCode.isBlank()) {
-            return issueExplicitCode(coupon, explicitCode, maxUses, perCodeCapacity);
+            return issueExplicitCode(coupon, explicitCode, perCodeCapacity);
         }
-        return issueGeneratedCodes(coupon, codeLength, codeCount, maxUses, perCodeCapacity);
+        return issueGeneratedCodes(coupon, codeLength, codeCount, perCodeCapacity);
     }
 
     private AdminCouponResDTO.IssueResultDTO issueExplicitCode(
-            Coupon coupon, String explicitCode, Integer maxUses, int perCodeCapacity) {
+            Coupon coupon, String explicitCode, int perCodeCapacity) {
         String normalized = explicitCode.trim().toUpperCase();
         if (normalized.length() < CODE_LENGTH_MIN || normalized.length() > CODE_LENGTH_MAX) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
@@ -191,12 +197,17 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         }
         reserveIssueCount(coupon, perCodeCapacity);
 
-        CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, normalized, maxUses));
+        CouponCode couponCode;
+        try {
+            couponCode = couponCodeRepository.saveAndFlush(CouponCode.of(coupon, normalized, perCodeCapacity));
+        } catch (DataIntegrityViolationException e) {
+            throw new CouponAdminException(CouponAdminErrorReason.DUPLICATE_COUPON_CODE);
+        }
         return new AdminCouponResDTO.IssueResultDTO(perCodeCapacity, List.of(couponCode.getCode()));
     }
 
     private AdminCouponResDTO.IssueResultDTO issueGeneratedCodes(
-            Coupon coupon, Integer codeLength, Integer codeCount, Integer maxUses, int perCodeCapacity) {
+            Coupon coupon, Integer codeLength, Integer codeCount, int perCodeCapacity) {
         if (codeLength == null || codeLength < CODE_LENGTH_MIN || codeLength > CODE_LENGTH_MAX
                 || codeCount == null || codeCount < 1 || codeCount > CODE_COUNT_MAX) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
@@ -208,7 +219,7 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         for (int i = 0; i < codeCount; i++) {
             String code = generateUniqueCode(codeLength, generated);
             generated.add(code);
-            couponCodes.add(CouponCode.of(coupon, code, maxUses));
+            couponCodes.add(CouponCode.of(coupon, code, perCodeCapacity));
         }
         couponCodeRepository.saveAll(couponCodes);
 
