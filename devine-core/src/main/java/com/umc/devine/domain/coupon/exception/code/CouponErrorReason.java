@@ -39,6 +39,9 @@ public enum CouponErrorReason implements DomainErrorReason {
     DISCOUNT_VALUE_INVALID(HttpStatus.BAD_REQUEST,
             "COUPON400_7",
             "정률 할인 값은 1~100 사이여야 합니다."),
+    REGISTER_RATE_LIMIT_EXCEEDED(HttpStatus.TOO_MANY_REQUESTS,
+            "COUPON429_1",
+            "쿠폰 코드 등록 시도가 너무 많습니다. 잠시 후 다시 시도해주세요."),
     ;
 
     private final HttpStatus status;

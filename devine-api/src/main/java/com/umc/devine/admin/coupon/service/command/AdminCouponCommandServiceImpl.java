@@ -38,6 +38,8 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
 
     private static final int CODE_GENERATION_MAX_RETRY = 5;
     private static final String CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH_MAX = 20;
+    private static final int CODE_COUNT_MAX = 1000;
 
     private final CouponRepository couponRepository;
     private final CouponCodeRepository couponCodeRepository;
@@ -114,7 +116,7 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new CouponException(CouponErrorReason.COUPON_NOT_FOUND));
 
-        if (!coupon.isUsable()) {
+        if (!coupon.isIssuable()) {
             throw new CouponException(CouponErrorReason.COUPON_NOT_USABLE);
         }
 
@@ -140,18 +142,32 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         if (members.isEmpty()) {
             return new AdminCouponResDTO.IssueResultDTO(0, null);
         }
-        reserveIssueCount(coupon, members.size());
 
-        List<MemberCoupon> memberCoupons = members.stream()
+        // 이미 이 쿠폰을 보유한 회원은 건너뛴다 — 관리자가 발급 버튼을 재클릭하거나 요청이 재시도되어도
+        // 같은 회원에게 중복 발급되지 않도록 하기 위함.
+        Set<Long> alreadyHoldingIds = memberCouponRepository.findMembersAlreadyHolding(coupon, members).stream()
+                .map(Member::getId)
+                .collect(java.util.stream.Collectors.toSet());
+        List<Member> targets = members.stream()
+                .filter(member -> !alreadyHoldingIds.contains(member.getId()))
+                .toList();
+
+        if (targets.isEmpty()) {
+            return new AdminCouponResDTO.IssueResultDTO(0, null);
+        }
+        reserveIssueCount(coupon, targets.size());
+
+        List<MemberCoupon> memberCoupons = targets.stream()
                 .map(member -> MemberCoupon.issueTo(member, coupon))
                 .toList();
         memberCouponRepository.saveAll(memberCoupons);
 
-        return new AdminCouponResDTO.IssueResultDTO(members.size(), null);
+        return new AdminCouponResDTO.IssueResultDTO(targets.size(), null);
     }
 
     private AdminCouponResDTO.IssueResultDTO issueCodes(Coupon coupon, Integer codeLength, Integer codeCount) {
-        if (codeLength == null || codeLength < 4 || codeCount == null || codeCount < 1) {
+        if (codeLength == null || codeLength < 4 || codeLength > CODE_LENGTH_MAX
+                || codeCount == null || codeCount < 1 || codeCount > CODE_COUNT_MAX) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
         }
         reserveIssueCount(coupon, codeCount);

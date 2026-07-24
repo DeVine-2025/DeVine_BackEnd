@@ -24,7 +24,9 @@ public class CouponCommandServiceImpl implements CouponCommandService {
 
     @Override
     public CouponResDTO.MemberCouponDTO registerByCode(String code, Member member) {
-        CouponCode couponCode = couponCodeRepository.findByCode(code.trim().toUpperCase())
+        // 동일한 코드를 여러 요청이 동시에 등록하면 두 요청 모두 UNREDEEMED를 읽고 각자 보유 쿠폰을 만들 수 있어
+        // SELECT FOR UPDATE로 잠그고 재확인한다.
+        CouponCode couponCode = couponCodeRepository.findByCodeWithLock(code.trim().toUpperCase())
                 .orElseThrow(() -> new CouponException(CouponErrorReason.COUPON_CODE_NOT_FOUND));
 
         if (!couponCode.isRedeemable()) {

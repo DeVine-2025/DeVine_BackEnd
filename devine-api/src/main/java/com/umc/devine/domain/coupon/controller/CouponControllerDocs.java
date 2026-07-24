@@ -20,7 +20,8 @@ public interface CouponControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created, 등록 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 등록된 코드, 사용 불가능한 쿠폰"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
-            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 쿠폰 코드")
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "존재하지 않는 쿠폰 코드"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "429", description = "분당 시도 횟수 초과 (브루트포스 방지)")
     })
     ApiResponse<CouponResDTO.MemberCouponDTO> registerByCode(
             @Parameter(hidden = true) @CurrentMember Member member,
