@@ -96,6 +96,49 @@ class CouponQueryServiceTest extends IntegrationTestSupport {
 
             assertThat(result.coupons()).hasSize(1);
             assertThat(result.coupons().get(0).couponName()).isEqualTo("쿠폰");
+            assertThat(result.coupons().get(0).validUntil()).isNotNull();
+            assertThat(result.coupons().get(0).isUsable()).isTrue();
+        }
+
+        @Test
+        @DisplayName("쿠폰이 만료되면 보유 쿠폰 목록에는 남아있지만 isUsable은 false로 내려간다")
+        void expiredCouponIsMarkedNotUsable() {
+            Coupon expired = couponRepository.save(Coupon.builder()
+                    .name("만료 쿠폰")
+                    .discountType(DiscountType.FIXED_AMOUNT)
+                    .discountValue(1000L)
+                    .issuedCount(1)
+                    .usedCount(0)
+                    .validFrom(LocalDateTime.now().minusDays(10))
+                    .validUntil(LocalDateTime.now().minusDays(1))
+                    .isActive(true)
+                    .build());
+            memberCouponRepository.save(MemberCoupon.issueTo(member, expired));
+
+            CouponResDTO.MemberCouponListDTO result = couponQueryService.getMyCoupons(member);
+
+            assertThat(result.coupons()).hasSize(1);
+            assertThat(result.coupons().get(0).isUsable()).isFalse();
+        }
+
+        @Test
+        @DisplayName("관리자가 쿠폰을 비활성화하면 isUsable은 false로 내려간다")
+        void deactivatedCouponIsMarkedNotUsable() {
+            Coupon coupon = couponRepository.save(Coupon.builder()
+                    .name("비활성 쿠폰")
+                    .discountType(DiscountType.FIXED_AMOUNT)
+                    .discountValue(1000L)
+                    .issuedCount(1)
+                    .usedCount(0)
+                    .validFrom(LocalDateTime.now().minusDays(1))
+                    .validUntil(LocalDateTime.now().plusDays(7))
+                    .isActive(false)
+                    .build());
+            memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
+
+            CouponResDTO.MemberCouponListDTO result = couponQueryService.getMyCoupons(member);
+
+            assertThat(result.coupons().get(0).isUsable()).isFalse();
         }
     }
 
