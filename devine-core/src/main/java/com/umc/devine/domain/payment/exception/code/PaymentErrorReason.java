@@ -42,6 +42,9 @@ public enum PaymentErrorReason implements DomainErrorReason {
     PAYMENT_OWNER_MISMATCH(HttpStatus.FORBIDDEN,
             "PAYMENT403_1",
             "결제 소유자가 일치하지 않습니다."),
+    FREE_PAYMENT_AMOUNT_NOT_ZERO(HttpStatus.BAD_REQUEST,
+            "PAYMENT400_7",
+            "쿠폰 적용 후 결제 금액이 0원이 아닙니다. 일반 결제를 이용해주세요."),
     ;
 
     private final HttpStatus status;

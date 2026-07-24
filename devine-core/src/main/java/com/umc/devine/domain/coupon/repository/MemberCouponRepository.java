@@ -15,9 +15,17 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
 
     List<MemberCoupon> findByMemberOrderByCreatedAtDesc(Member member);
 
-    Optional<MemberCoupon> findByIdAndMember(Long id, Member member);
+    /**
+     * coupon과 (nullable) applicableTicketProduct까지 즉시 로딩한다.
+     * 트랜잭션 밖(예: PaymentCommandServiceImpl의 1차 검증)에서도 LazyInitializationException 없이 안전하게 사용하기 위함.
+     */
+    @Query("SELECT mc FROM MemberCoupon mc " +
+            "JOIN FETCH mc.coupon c " +
+            "LEFT JOIN FETCH c.applicableTicketProduct " +
+            "WHERE mc.id = :id AND mc.member = :member")
+    Optional<MemberCoupon> findByIdAndMember(@Param("id") Long id, @Param("member") Member member);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)
-    @Query("SELECT mc FROM MemberCoupon mc WHERE mc.id = :id AND mc.member = :member")
+    @Query("SELECT mc FROM MemberCoupon mc JOIN FETCH mc.coupon WHERE mc.id = :id AND mc.member = :member")
     Optional<MemberCoupon> findByIdAndMemberWithLock(@Param("id") Long id, @Param("member") Member member);
 }

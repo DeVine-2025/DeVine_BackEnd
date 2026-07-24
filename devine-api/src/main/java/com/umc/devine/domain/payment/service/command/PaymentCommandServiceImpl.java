@@ -3,6 +3,12 @@ package com.umc.devine.domain.payment.service.command;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.domain.coupon.entity.MemberCoupon;
+import com.umc.devine.domain.coupon.exception.CouponException;
+import com.umc.devine.domain.coupon.exception.code.CouponErrorReason;
+import com.umc.devine.domain.coupon.helper.CouponDiscountCalculator;
+import com.umc.devine.domain.coupon.repository.CouponRepository;
+import com.umc.devine.domain.coupon.repository.MemberCouponRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.payment.converter.PaymentConverter;
@@ -32,6 +38,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.List;
 import java.util.Objects;
+import java.util.UUID;
 
 @Slf4j
 @Service
@@ -45,6 +52,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private final PaymentTicketRepository paymentTicketRepository;
     private final MemberReportCreditRepository memberReportCreditRepository;
     private final MemberRepository memberRepository;
+    private final MemberCouponRepository memberCouponRepository;
+    private final CouponRepository couponRepository;
+    private final CouponDiscountCalculator couponDiscountCalculator;
     private final ObjectMapper objectMapper;
 
     @Override
@@ -65,41 +75,141 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         // 3. 티켓 상품 유효성 검증 (트랜잭션 밖 — DB 커넥션 점유 방지)
         List<TicketProduct> ticketProducts = validateAndGetProducts(request.items());
 
-        // 3. 서버 측 금액 검증 (상품 가격 × 수량 합계 == 요청 금액)
-        long expectedAmount = calculateExpectedAmount(request.items(), ticketProducts);
-        if (!request.amount().equals(expectedAmount)) {
+        // 3. 서버 측 금액 검증 (상품 가격 × 수량 합계 == 요청 금액, 쿠폰 적용 전 원금 기준)
+        long originalAmount = calculateExpectedAmount(request.items(), ticketProducts);
+        if (!request.amount().equals(originalAmount)) {
             throw new PaymentException(PaymentErrorReason.AMOUNT_MISMATCH);
         }
 
-        // 4. PortOne API에서 결제 정보 조회 (트랜잭션 밖 — DB 커넥션 점유 방지)
+        // 4. 쿠폰 검증 및 할인 계산 (트랜잭션 밖 — 1차 검증)
+        List<Long> ticketProductIds = ticketProductIds(request.items());
+        MemberCoupon memberCoupon = resolveAndValidateCoupon(request.memberCouponId(), member, ticketProductIds);
+        long finalAmount = applyDiscount(memberCoupon, originalAmount, ticketProductIds);
+
+        // 5. PortOne API에서 결제 정보 조회 (트랜잭션 밖 — DB 커넥션 점유 방지)
         PortOnePaymentResponse portOneResponse = portOneClient.getPayment(request.paymentId());
 
-        // 5. 결제 상태 검증
+        // 6. 결제 상태 검증
         if (!"PAID".equals(portOneResponse.status())) {
             throw new PaymentException(PaymentErrorReason.PAYMENT_NOT_PAID);
         }
 
-        // 6. 결제 소유자 검증 (customData.memberId == 현재 사용자)
+        // 7. 결제 소유자 검증 (customData.memberId == 현재 사용자)
         verifyPaymentOwner(portOneResponse, member);
 
-        // 7. 결제 금액 검증 (PortOne 실결제 금액 == 요청 금액)
-        if (!request.amount().equals(portOneResponse.amount().total())) {
+        // 8. 결제 금액 검증 (PortOne 실결제 금액 == 쿠폰 적용 후 금액)
+        if (!Long.valueOf(finalAmount).equals(portOneResponse.amount().total())) {
             throw new PaymentException(PaymentErrorReason.AMOUNT_MISMATCH);
         }
 
-        // 7. MemberReportCredit 행을 미리 보장 (트랜잭션 밖 — 동시 요청 시 UNIQUE 위반 방지)
+        // 9. MemberReportCredit 행을 미리 보장 (트랜잭션 밖 — 동시 요청 시 UNIQUE 위반 방지)
         ensureCreditRowExists(member);
 
-        // 8. Payment, Transaction, PaymentTicket 저장 및 크레딧 지급 (트랜잭션 안)
+        // 10. Payment, Transaction, PaymentTicket 저장, 쿠폰 사용 처리, 크레딧 지급 (트랜잭션 안)
         try {
             return Objects.requireNonNull(transactionTemplate.execute(status -> {
                 Payment payment = PaymentConverter.toPayment(request, member, portOneResponse);
                 Payment savedPayment = savePaymentWithTickets(payment, portOneResponse, request.items(), ticketProducts, member);
+                useCouponIfPresent(request.memberCouponId(), member, savedPayment, ticketProductIds);
                 return PaymentConverter.toPaymentDTO(savedPayment);
             }));
         } catch (DataIntegrityViolationException e) {
             throw new PaymentException(PaymentErrorReason.ALREADY_PROCESSED_PAYMENT);
         }
+    }
+
+    @Override
+    public PaymentResDTO.PaymentDTO freePayment(PaymentReqDTO.FreePaymentDTO request, Member member) {
+        // 1. 중복 상품 검증
+        long distinctCount = request.items().stream()
+                .map(PaymentReqDTO.TicketPurchaseItem::ticketProductId)
+                .distinct().count();
+        if (distinctCount != request.items().size()) {
+            throw new PaymentException(PaymentErrorReason.DUPLICATE_TICKET_PRODUCT);
+        }
+
+        // 2. 티켓 상품 유효성 검증
+        List<TicketProduct> ticketProducts = validateAndGetProducts(request.items());
+
+        // 3. 서버 측 원금 검증
+        long originalAmount = calculateExpectedAmount(request.items(), ticketProducts);
+        if (!request.originalAmount().equals(originalAmount)) {
+            throw new PaymentException(PaymentErrorReason.AMOUNT_MISMATCH);
+        }
+
+        // 4. 쿠폰 검증 및 할인 계산 (0원 결제는 쿠폰이 필수)
+        List<Long> ticketProductIds = ticketProductIds(request.items());
+        MemberCoupon memberCoupon = resolveAndValidateCoupon(request.memberCouponId(), member, ticketProductIds);
+        long finalAmount = applyDiscount(memberCoupon, originalAmount, ticketProductIds);
+
+        // 5. 실제로 0원인지 확인 (0원이 아니면 일반 결제 사용 요구)
+        if (finalAmount > 0) {
+            throw new PaymentException(PaymentErrorReason.FREE_PAYMENT_AMOUNT_NOT_ZERO);
+        }
+
+        ensureCreditRowExists(member);
+
+        String freePaymentId = "FREE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
+
+        try {
+            return Objects.requireNonNull(transactionTemplate.execute(status -> {
+                Payment payment = Payment.builder()
+                        .portonePaymentId(freePaymentId)
+                        .member(member)
+                        .orderName(request.orderName())
+                        .amount(0L)
+                        .currency("KRW")
+                        .build();
+                Payment savedPayment = savePaymentWithTickets(payment, null, request.items(), ticketProducts, member);
+                useCouponIfPresent(request.memberCouponId(), member, savedPayment, ticketProductIds);
+                return PaymentConverter.toPaymentDTO(savedPayment);
+            }));
+        } catch (DataIntegrityViolationException e) {
+            throw new PaymentException(PaymentErrorReason.ALREADY_PROCESSED_PAYMENT);
+        }
+    }
+
+    private List<Long> ticketProductIds(List<PaymentReqDTO.TicketPurchaseItem> items) {
+        return items.stream().map(PaymentReqDTO.TicketPurchaseItem::ticketProductId).toList();
+    }
+
+    /**
+     * 트랜잭션 밖에서의 1차 쿠폰 검증(소유권 + 사용가능 여부 + 적용대상 상품). 락 없이 fail-fast 용도이며,
+     * 실제 사용 확정은 결제 저장 트랜잭션 안의 {@link #useCouponIfPresent}에서 락을 걸고 재검증한다.
+     */
+    private MemberCoupon resolveAndValidateCoupon(Long memberCouponId, Member member, List<Long> ticketProductIds) {
+        if (memberCouponId == null) return null;
+
+        MemberCoupon memberCoupon = memberCouponRepository.findByIdAndMember(memberCouponId, member)
+                .orElseThrow(() -> new CouponException(CouponErrorReason.MEMBER_COUPON_NOT_FOUND));
+        if (!memberCoupon.isAvailable()) {
+            throw new CouponException(CouponErrorReason.COUPON_ALREADY_USED);
+        }
+        couponDiscountCalculator.validate(memberCoupon.getCoupon(), ticketProductIds);
+        return memberCoupon;
+    }
+
+    private long applyDiscount(MemberCoupon memberCoupon, long originalAmount, List<Long> ticketProductIds) {
+        if (memberCoupon == null) return originalAmount;
+        return couponDiscountCalculator.calculate(originalAmount, memberCoupon.getCoupon(), ticketProductIds).finalAmount();
+    }
+
+    /**
+     * 쿠폰 행을 잠그고(SELECT FOR UPDATE) 재검증한 뒤 사용 처리한다.
+     * PortOne 결제 완료 후 동시 요청으로 같은 쿠폰이 이중 사용되는 것을 원천 차단하기 위함.
+     */
+    private void useCouponIfPresent(Long memberCouponId, Member member, Payment payment, List<Long> ticketProductIds) {
+        if (memberCouponId == null) return;
+
+        MemberCoupon locked = memberCouponRepository.findByIdAndMemberWithLock(memberCouponId, member)
+                .orElseThrow(() -> new CouponException(CouponErrorReason.MEMBER_COUPON_NOT_FOUND));
+        if (!locked.isAvailable()) {
+            throw new CouponException(CouponErrorReason.COUPON_ALREADY_USED);
+        }
+        couponDiscountCalculator.validate(locked.getCoupon(), ticketProductIds);
+
+        locked.use(payment);
+        couponRepository.incrementUsedCountById(locked.getCoupon().getId());
     }
 
     @Override
@@ -117,9 +227,9 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        // customData에서 memberId, items 파싱
+        // customData에서 memberId, items, memberCouponId 파싱
         // 프론트엔드에서 결제 요청 시 customData에 JSON 형태로 포함해야 함
-        // 예: {"memberId": 1, "items": [{"ticketProductId": 1, "quantity": 2}], "orderName": "리포트 생성권 1개 x2"}
+        // 예: {"memberId": 1, "items": [{"ticketProductId": 1, "quantity": 2}], "orderName": "리포트 생성권 1개 x2", "memberCouponId": 5}
         if (portOneResponse.customData() == null) {
             log.warn("웹훅: customData 없음 - paymentId: {}", portonePaymentId);
             return;
@@ -170,11 +280,24 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        // 금액 검증
-        long expectedAmount = calculateExpectedAmount(items, ticketProducts);
-        if (expectedAmount != portOneResponse.amount().total()) {
+        // 쿠폰 파싱 및 검증 (실패하면 웹훅 처리를 중단하고 로그만 남김 — /complete API 쪽에서 정상 처리되는 것으로 기대)
+        List<Long> ticketProductIds = ticketProductIds(items);
+        Long memberCouponId = customData.hasNonNull("memberCouponId") ? customData.path("memberCouponId").asLong() : null;
+        MemberCoupon memberCoupon;
+        try {
+            memberCoupon = resolveAndValidateCoupon(memberCouponId, member, ticketProductIds);
+        } catch (CouponException e) {
+            log.error("웹훅: 쿠폰 검증 실패 - paymentId: {}, memberCouponId: {}, reason: {}",
+                    portonePaymentId, memberCouponId, e.getReason().getMessage());
+            return;
+        }
+
+        // 금액 검증 (쿠폰 할인 반영 후 최종 금액 기준)
+        long originalAmount = calculateExpectedAmount(items, ticketProducts);
+        long finalAmount = applyDiscount(memberCoupon, originalAmount, ticketProductIds);
+        if (finalAmount != portOneResponse.amount().total()) {
             log.error("웹훅: 금액 불일치 - paymentId: {}, expected: {}, actual: {}",
-                    portonePaymentId, expectedAmount, portOneResponse.amount().total());
+                    portonePaymentId, finalAmount, portOneResponse.amount().total());
             return;
         }
 
@@ -190,7 +313,8 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
                         .currency(portOneResponse.currency())
                         .build();
 
-                savePaymentWithTickets(payment, portOneResponse, items, ticketProducts, member);
+                Payment savedPayment = savePaymentWithTickets(payment, portOneResponse, items, ticketProducts, member);
+                useCouponIfPresent(memberCouponId, member, savedPayment, ticketProductIds);
                 return null;
             });
             log.info("웹훅: 결제 처리 완료 - paymentId: {}, memberId: {}", portonePaymentId, memberId);
@@ -224,9 +348,11 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
     private Payment savePaymentWithTickets(Payment payment, PortOnePaymentResponse portOneResponse,
                                            List<PaymentReqDTO.TicketPurchaseItem> items,
                                            List<TicketProduct> ticketProducts, Member member) {
-        Transaction transaction = PaymentConverter.toTransaction(portOneResponse, payment);
-        attachPaymentDetail(transaction, portOneResponse.method());
-        payment.addTransaction(transaction);
+        if (portOneResponse != null) {
+            Transaction transaction = PaymentConverter.toTransaction(portOneResponse, payment);
+            attachPaymentDetail(transaction, portOneResponse.method());
+            payment.addTransaction(transaction);
+        }
         paymentRepository.save(payment);
 
         int totalCredits = 0;

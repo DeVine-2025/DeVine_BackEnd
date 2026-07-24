@@ -43,7 +43,31 @@ public class PaymentReqDTO {
             @NotEmpty(message = "구매 항목은 1개 이상이어야 합니다.")
             @Valid
             @Schema(description = "구매 항목 목록")
-            List<TicketPurchaseItem> items
+            List<TicketPurchaseItem> items,
+
+            @Schema(description = "적용할 보유 쿠폰(memberCoupon) ID (없으면 null)")
+            Long memberCouponId
+    ) {}
+
+    @Schema(description = "0원 결제 요청 (쿠폰 할인으로 결제 금액이 0원이 되는 경우, PortOne 호출 없이 서버에서 직접 처리)")
+    public record FreePaymentDTO(
+            @NotBlank(message = "주문명은 필수입니다.")
+            @Schema(description = "주문명", example = "리포트 생성권 1개 x1")
+            String orderName,
+
+            @NotNull(message = "원래 결제 금액은 필수입니다.")
+            @Positive(message = "결제 금액은 양수여야 합니다.")
+            @Schema(description = "쿠폰 적용 전 원래 결제 금액 (KRW)", example = "4900")
+            Long originalAmount,
+
+            @NotEmpty(message = "구매 항목은 1개 이상이어야 합니다.")
+            @Valid
+            @Schema(description = "구매 항목 목록")
+            List<TicketPurchaseItem> items,
+
+            @NotNull(message = "0원 결제는 쿠폰이 필수입니다.")
+            @Schema(description = "적용할 보유 쿠폰(memberCoupon) ID")
+            Long memberCouponId
     ) {}
 
     @Schema(description = "구매 항목")
