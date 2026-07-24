@@ -35,9 +35,14 @@ public class MaintenanceModeService {
     /**
      * 초기 로드는 실패 시 예외를 전파해 기동을 중단시킨다.
      * 점검 상태를 모르는 채 트래픽을 받는 것보다 뜨지 않는 편이 안전하다.
+     *
+     * <p>여기에 {@code @Transactional}을 붙이지 않는다. {@code @PostConstruct}는 AOP 프록시가
+     * 적용되기 전, 원본 인스턴스에서 호출되므로 트랜잭션 어드바이스가 걸리지 않는다(무효).
+     * 지금은 단일 읽기이고 Spring Data 리포지토리 호출이 자체 트랜잭션을 열어 문제가 없다.
+     * <b>init에 쓰기나 다단계 DB 로직을 추가한다면</b> {@code @Transactional}로는 경계가 생기지
+     * 않으니 {@code TransactionTemplate}으로 명시적 트랜잭션을 열어야 한다.
      */
     @PostConstruct
-    @Transactional(readOnly = true)
     public void init() {
         this.cache = load();
         log.info("점검 모드 초기 상태 로드 완료 - enabled: {}", cache.enabled());
