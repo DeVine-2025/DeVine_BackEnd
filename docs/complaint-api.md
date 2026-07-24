@@ -5,7 +5,7 @@
 
 ## 공통 사항
 
-- **Base path**: `/api/v1/admin/complaints`
+- **Base path**: `/admin/v1/complaints`
 - **인증**: 관리자 인증/인가 기능이 아직 없어 이 3개 API는 인증을 강제하지 않습니다(`ApiSecurityConfig`에 permitAll 처리). 상태 변경 API만 로그인 세션이 있으면 처리자로 기록하고(`@CurrentMember(required = false)`), 없으면 처리자가 `null`로 남습니다.
   - TODO: 관리자 인증/인가가 추가되면 인증을 필수로 전환하고 관리자 권한 검증을 추가해야 합니다.
 - **응답 포맷**: 공통 `ApiResponse` 봉투 사용
@@ -38,7 +38,7 @@
 
 ## 1. 신고 목록 조회
 
-`GET /api/v1/admin/complaints`
+`GET /admin/v1/complaints`
 
 채팅/프로젝트/개발자 유형별, 상태별, 날짜별로 필터링해 신고 목록을 조회합니다. 접수 후 48시간이 지난 미처리 건은 `slaExceeded: true`로 표시됩니다.
 
@@ -89,7 +89,7 @@
 
 ## 2. 신고 상세 조회
 
-`GET /api/v1/admin/complaints/{complaintId}`
+`GET /admin/v1/complaints/{complaintId}`
 
 신고 사유, 신고자/피신고자 정보, 관련 콘텐츠 원문, 피신고자의 누적 신고/제재 이력을 함께 반환합니다.
 
@@ -152,7 +152,7 @@
 
 ## 3. 신고 처리 상태 변경
 
-`PATCH /api/v1/admin/complaints/{complaintId}/status`
+`PATCH /admin/v1/complaints/{complaintId}/status`
 
 대기(`PENDING`) → 검토중(`IN_REVIEW`) → 처리완료(`COMPLETED`, 세부 액션: 경고/삭제/정지/기각)로 상태를 변경하고, 변경할 때마다 처리 이력을 기록합니다.
 

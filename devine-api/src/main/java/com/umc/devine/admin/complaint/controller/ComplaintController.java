@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.*;
 
 @RestController
 @RequiredArgsConstructor
-@RequestMapping("/api/v1/admin/complaints")
+@RequestMapping("/admin/v1/complaints")
 @Validated
 public class ComplaintController implements ComplaintControllerDocs {
 

@@ -98,7 +98,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
             createComplaint(ComplaintStatus.PENDING);
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/complaints")
+            mockMvc.perform(get("/admin/v1/complaints")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -118,7 +118,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
             Complaint complaint = createComplaint(ComplaintStatus.PENDING);
 
             // when & then
-            mockMvc.perform(get("/api/v1/admin/complaints/{complaintId}", complaint.getId())
+            mockMvc.perform(get("/admin/v1/complaints/{complaintId}", complaint.getId())
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -129,7 +129,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 신고ID면 404를 반환한다")
         void getComplaintDetail_notFound() throws Exception {
-            mockMvc.perform(get("/api/v1/admin/complaints/{complaintId}", 999999L)
+            mockMvc.perform(get("/admin/v1/complaints/{complaintId}", 999999L)
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isNotFound())
@@ -151,7 +151,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
                     .build();
 
             // when & then
-            mockMvc.perform(patch("/api/v1/admin/complaints/{complaintId}/status", complaint.getId())
+            mockMvc.perform(patch("/admin/v1/complaints/{complaintId}/status", complaint.getId())
                             .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(dto)))
@@ -172,7 +172,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
                     .build();
 
             // when & then
-            mockMvc.perform(patch("/api/v1/admin/complaints/{complaintId}/status", complaint.getId())
+            mockMvc.perform(patch("/admin/v1/complaints/{complaintId}/status", complaint.getId())
                             .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(dto)))
