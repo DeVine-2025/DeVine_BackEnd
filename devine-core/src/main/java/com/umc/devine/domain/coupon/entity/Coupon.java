@@ -70,4 +70,14 @@ public class Coupon extends BaseEntity {
     public boolean isApplicableTo(Long ticketProductId) {
         return applicableTicketProduct == null || applicableTicketProduct.getId().equals(ticketProductId);
     }
+
+    public void update(String name, LocalDateTime validFrom, LocalDateTime validUntil,
+                        Integer totalIssueLimit, Boolean isActive, String description) {
+        if (name != null) this.name = name;
+        if (validFrom != null) this.validFrom = validFrom;
+        if (validUntil != null) this.validUntil = validUntil;
+        if (totalIssueLimit != null) this.totalIssueLimit = totalIssueLimit;
+        if (isActive != null) this.isActive = isActive;
+        if (description != null) this.description = description;
+    }
 }

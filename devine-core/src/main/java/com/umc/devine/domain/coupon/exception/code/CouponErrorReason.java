@@ -36,6 +36,9 @@ public enum CouponErrorReason implements DomainErrorReason {
     VALID_PERIOD_INVALID(HttpStatus.BAD_REQUEST,
             "COUPON400_6",
             "유효기간 종료일은 시작일 이후여야 합니다."),
+    DISCOUNT_VALUE_INVALID(HttpStatus.BAD_REQUEST,
+            "COUPON400_7",
+            "정률 할인 값은 1~100 사이여야 합니다."),
     ;
 
     private final HttpStatus status;

@@ -80,6 +80,8 @@ public class ApiSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
+                        // 관리자 쿠폰 관리 (관리자 인증/인가 양식 확정 전까지 임시 허용)
+                        .requestMatchers("/admin/v1/coupon/**").permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )
