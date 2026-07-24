@@ -17,7 +17,9 @@ public class CouponConverter {
                         ? memberCoupon.getCoupon().getApplicableTicketProduct().getId() : null,
                 memberCoupon.getStatus(),
                 memberCoupon.getUsedAt(),
-                memberCoupon.getCreatedAt()
+                memberCoupon.getCreatedAt(),
+                memberCoupon.getCoupon().getValidUntil(),
+                memberCoupon.isAvailable() && memberCoupon.getCoupon().isUsable()
         );
     }
 

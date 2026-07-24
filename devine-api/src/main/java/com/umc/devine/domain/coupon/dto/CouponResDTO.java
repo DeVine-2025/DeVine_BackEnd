@@ -18,7 +18,11 @@ public class CouponResDTO {
             Long applicableTicketProductId,
             MemberCouponStatus status,
             LocalDateTime usedAt,
-            LocalDateTime issuedAt
+            LocalDateTime issuedAt,
+            LocalDateTime validUntil,
+
+            @Schema(description = "지금 결제에 사용할 수 있는 쿠폰인지 (보유 상태 AVAILABLE + 쿠폰 자체가 활성/기간 내)")
+            boolean isUsable
     ) {}
 
     @Schema(description = "보유 쿠폰 목록")
