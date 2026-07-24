@@ -273,4 +273,100 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
             assertThat(result).isFalse();
         }
     }
+
+    @Nested
+    @DisplayName("search (관리자 유저 검색)")
+    class SearchTest {
+
+        @Autowired
+        private com.umc.devine.domain.member.repository.ContactRepository contactRepository;
+
+        @BeforeEach
+        void setUpContacts() {
+            contactRepository.save(com.umc.devine.domain.member.entity.Contact.builder()
+                    .contactType(com.umc.devine.domain.member.enums.ContactType.EMAIL)
+                    .value("testuser@example.com")
+                    .member(testMember)
+                    .build());
+        }
+
+        private com.querydsl.core.BooleanBuilder keywordPredicate(String keyword) {
+            com.umc.devine.domain.member.entity.QMember member = com.umc.devine.domain.member.entity.QMember.member;
+            com.umc.devine.domain.member.entity.QContact contact = com.umc.devine.domain.member.entity.QContact.contact;
+
+            com.querydsl.core.BooleanBuilder builder = new com.querydsl.core.BooleanBuilder();
+            builder.and(member.nickname.containsIgnoreCase(keyword)
+                    .or(member.name.containsIgnoreCase(keyword))
+                    .or(contact.value.containsIgnoreCase(keyword)));
+            return builder;
+        }
+
+        @Test
+        @DisplayName("닉네임으로 검색할 수 있다")
+        void search_byNickname() {
+            // when
+            Page<Member> result = memberRepository.search(keywordPredicate("testuser"), PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getId()).isEqualTo(testMember.getId());
+        }
+
+        @Test
+        @DisplayName("이메일로 검색할 수 있다")
+        void search_byEmail() {
+            // when
+            Page<Member> result = memberRepository.search(keywordPredicate("testuser@example.com"), PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getId()).isEqualTo(testMember.getId());
+        }
+
+        @Test
+        @DisplayName("일치하는 결과가 없으면 빈 목록을 반환한다")
+        void search_noMatch() {
+            // when
+            Page<Member> result = memberRepository.search(keywordPredicate("nonexistent"), PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getContent()).isEmpty();
+            assertThat(result.getTotalElements()).isZero();
+        }
+    }
+
+    @Nested
+    @DisplayName("findByUsedAndScheduledWithdrawalAtBefore (강제탈퇴 확정 대상 조회)")
+    class FindByUsedAndScheduledWithdrawalAtBeforeTest {
+
+        @Test
+        @DisplayName("예정일시가 지난 PENDING_WITHDRAWAL 회원을 조회한다")
+        void findByUsedAndScheduledWithdrawalAtBefore_returnsExpired() {
+            // given
+            testMember.scheduleForceWithdrawal(java.time.LocalDateTime.now().minusDays(1));
+            memberRepository.save(testMember);
+
+            // when
+            List<Member> result = memberRepository.findByUsedAndScheduledWithdrawalAtBefore(
+                    MemberStatus.PENDING_WITHDRAWAL, java.time.LocalDateTime.now());
+
+            // then
+            assertThat(result).extracting(Member::getId).containsExactly(testMember.getId());
+        }
+
+        @Test
+        @DisplayName("예정일시가 아직 남은 회원은 조회되지 않는다")
+        void findByUsedAndScheduledWithdrawalAtBefore_excludesNotYetDue() {
+            // given
+            testMember.scheduleForceWithdrawal(java.time.LocalDateTime.now().plusDays(29));
+            memberRepository.save(testMember);
+
+            // when
+            List<Member> result = memberRepository.findByUsedAndScheduledWithdrawalAtBefore(
+                    MemberStatus.PENDING_WITHDRAWAL, java.time.LocalDateTime.now());
+
+            // then
+            assertThat(result).isEmpty();
+        }
+    }
 }
