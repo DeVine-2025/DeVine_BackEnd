@@ -2,9 +2,11 @@ package com.umc.devine.admin.coupon.service.query;
 
 import com.umc.devine.admin.coupon.dto.AdminCouponResDTO;
 import com.umc.devine.domain.coupon.entity.Coupon;
+import com.umc.devine.domain.coupon.entity.CouponCode;
 import com.umc.devine.domain.coupon.enums.DiscountType;
 import com.umc.devine.domain.coupon.exception.CouponException;
 import com.umc.devine.domain.coupon.exception.code.CouponErrorReason;
+import com.umc.devine.domain.coupon.repository.CouponCodeRepository;
 import com.umc.devine.domain.coupon.repository.CouponRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.dto.PageRequest;
@@ -32,8 +34,12 @@ class AdminCouponQueryServiceTest extends IntegrationTestSupport {
     @Autowired
     private CouponRepository couponRepository;
 
+    @Autowired
+    private CouponCodeRepository couponCodeRepository;
+
     @AfterEach
     void tearDown() {
+        couponCodeRepository.deleteAll();
         couponRepository.deleteAll();
     }
 
@@ -132,6 +138,31 @@ class AdminCouponQueryServiceTest extends IntegrationTestSupport {
             assertThat(result.name()).isEqualTo("쿠폰");
             assertThat(result.issuedCount()).isEqualTo(5);
             assertThat(result.usedCount()).isEqualTo(2);
+        }
+
+        @Test
+        @DisplayName("이 쿠폰으로 생성된 코드 목록을 함께 반환한다")
+        void returnsCouponCodes() {
+            Coupon coupon = saveCoupon(0, 0, LocalDateTime.now().plusDays(30));
+            couponCodeRepository.save(CouponCode.of(coupon, "DETAIL001", 1));
+            couponCodeRepository.save(CouponCode.of(coupon, "DETAIL002", 5));
+
+            AdminCouponResDTO.CouponDTO result = adminCouponQueryService.getCoupon(coupon.getId());
+
+            assertThat(result.codes()).extracting(AdminCouponResDTO.CouponCodeDTO::code)
+                    .containsExactlyInAnyOrder("DETAIL001", "DETAIL002");
+        }
+
+        @Test
+        @DisplayName("목록 조회에서는 codes가 null이다 (N+1 방지)")
+        void listDoesNotIncludeCodes() {
+            Coupon coupon = saveCoupon(0, 0, LocalDateTime.now().plusDays(30));
+            couponCodeRepository.save(CouponCode.of(coupon, "LIST0001", 1));
+
+            PagedResponse<AdminCouponResDTO.CouponDTO> result =
+                    adminCouponQueryService.getCoupons(PageRequest.of(1, 10));
+
+            assertThat(result.getContent().get(0).codes()).isNull();
         }
 
         @Test

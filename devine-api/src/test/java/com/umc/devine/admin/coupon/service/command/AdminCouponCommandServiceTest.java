@@ -276,6 +276,20 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
+        @DisplayName("직접입력한 코드에 영문/숫자가 아닌 문자가 섞여 있으면 예외가 발생한다")
+        void throwsWhenExplicitCodeHasNonAlphanumericChars() {
+            Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
+
+            AdminCouponReqDTO.IssueCouponReq request = new AdminCouponReqDTO.IssueCouponReq(
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "쿠폰코드", null);
+
+            assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), request))
+                    .isInstanceOf(CouponAdminException.class)
+                    .satisfies(e -> assertThat(((CouponAdminException) e).getReason())
+                            .isEqualTo(CouponAdminErrorReason.INVALID_ISSUE_REQUEST));
+        }
+
+        @Test
         @DisplayName("maxUses를 지정하면 발급 건수는 코드 개수가 아니라 코드 개수 * maxUses로 집계된다")
         void issuesExplicitCodeWithMaxUses() {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
@@ -295,10 +309,10 @@ class AdminCouponCommandServiceTest extends IntegrationTestSupport {
         void throwsWhenExplicitCodeAlreadyExists() {
             Coupon coupon = saveCoupon(DiscountType.FIXED_AMOUNT, 1000, null);
             adminCouponCommandService.issueCoupon(coupon.getId(), new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "dup-code", null));
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "DUPCODE1", null));
 
             AdminCouponReqDTO.IssueCouponReq duplicate = new AdminCouponReqDTO.IssueCouponReq(
-                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "dup-code", null);
+                    AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "DUPCODE1", null);
 
             assertThatThrownBy(() -> adminCouponCommandService.issueCoupon(coupon.getId(), duplicate))
                     .isInstanceOf(CouponAdminException.class)
