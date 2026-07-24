@@ -120,17 +120,17 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
 
         return switch (request.issueType()) {
             case ALL -> issueDirectly(coupon, memberRepository.findAllActive());
-            case SPECIFIC -> issueToSpecific(coupon, request.memberIds());
+            case SPECIFIC -> issueToSpecific(coupon, request.nicknames());
             case CODE_GEN -> issueCodes(coupon, request.codeLength(), request.codeCount());
         };
     }
 
-    private AdminCouponResDTO.IssueResultDTO issueToSpecific(Coupon coupon, List<Long> memberIds) {
-        if (memberIds == null || memberIds.isEmpty()) {
+    private AdminCouponResDTO.IssueResultDTO issueToSpecific(Coupon coupon, List<String> nicknames) {
+        if (nicknames == null || nicknames.isEmpty()) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
         }
-        List<Member> members = memberRepository.findAllById(memberIds);
-        if (members.size() != memberIds.size()) {
+        List<Member> members = memberRepository.findAllByNicknameIn(nicknames);
+        if (members.size() != nicknames.size()) {
             throw new MemberException(MemberErrorReason.NOT_FOUND);
         }
         return issueDirectly(coupon, members);

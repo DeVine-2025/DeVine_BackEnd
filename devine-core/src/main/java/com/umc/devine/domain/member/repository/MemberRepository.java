@@ -42,4 +42,7 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m FROM Member m WHERE m.used = 'ACTIVE'")
     List<Member> findAllActive();
+
+    @Query("SELECT m FROM Member m WHERE m.nickname IN :nicknames AND m.used = 'ACTIVE'")
+    List<Member> findAllByNicknameIn(@Param("nicknames") List<String> nicknames);
 }

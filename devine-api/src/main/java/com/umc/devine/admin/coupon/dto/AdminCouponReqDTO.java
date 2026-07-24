@@ -69,8 +69,8 @@ public class AdminCouponReqDTO {
             @NotNull(message = "발급 방식은 필수입니다.")
             IssueType issueType,
 
-            @Schema(description = "SPECIFIC 방식일 때 발급 대상 회원 ID 목록")
-            List<Long> memberIds,
+            @Schema(description = "SPECIFIC 방식일 때 발급 대상 회원 닉네임 목록 (외부에 회원 ID를 노출하지 않기 위해 닉네임으로 지정)")
+            List<String> nicknames,
 
             @Schema(description = "CODE_GEN 방식일 때 생성할 코드 자릿수", example = "8")
             Integer codeLength,
