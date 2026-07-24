@@ -8,6 +8,7 @@ import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -74,6 +75,9 @@ public class Member extends BaseEntity {
     @Column(nullable = false, length = 20)
     private MemberStatus used;
 
+    @Column(name = "scheduled_withdrawal_at")
+    private LocalDateTime scheduledWithdrawalAt;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MemberCategory> memberCategories = new ArrayList<>();
@@ -129,6 +133,44 @@ public class Member extends BaseEntity {
      */
     public void withdraw() {
         this.used = MemberStatus.DELETED;
+    }
+
+    /**
+     * 관리자에 의한 계정 정지.
+     */
+    public void suspend() {
+        this.used = MemberStatus.SUSPENDED;
+    }
+
+    /**
+     * 관리자에 의한 정지 해제.
+     */
+    public void unsuspend() {
+        this.used = MemberStatus.ACTIVE;
+    }
+
+    /**
+     * 관리자에 의한 강제탈퇴(자격상실) 예정 통지. 30일 소명 절차 후 스케줄러가 최종 확정한다.
+     */
+    public void scheduleForceWithdrawal(LocalDateTime scheduledWithdrawalAt) {
+        this.used = MemberStatus.PENDING_WITHDRAWAL;
+        this.scheduledWithdrawalAt = scheduledWithdrawalAt;
+    }
+
+    /**
+     * 소명 성공 등으로 예정된 강제탈퇴를 취소.
+     */
+    public void cancelScheduledWithdrawal() {
+        this.used = MemberStatus.ACTIVE;
+        this.scheduledWithdrawalAt = null;
+    }
+
+    /**
+     * 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정.
+     */
+    public void finalizeWithdrawal() {
+        this.used = MemberStatus.DELETED;
+        this.scheduledWithdrawalAt = null;
     }
 
 }

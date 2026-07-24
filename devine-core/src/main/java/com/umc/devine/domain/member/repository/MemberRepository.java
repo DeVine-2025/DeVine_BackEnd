@@ -2,6 +2,8 @@ package com.umc.devine.domain.member.repository;
 
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.repository.querydsl.MemberQueryDsl;
 import com.umc.devine.domain.techstack.enums.TechName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
@@ -9,13 +11,18 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
-public interface MemberRepository extends JpaRepository<Member, Long> {
+public interface MemberRepository extends JpaRepository<Member, Long>, MemberQueryDsl {
 
     @Query("SELECT m FROM Member m WHERE m.nickname = :nickname AND m.used = 'ACTIVE'")
     Optional<Member> findByNickname(@Param("nickname") String nickname);
+
+    /** 관리자용 조회. 정지/강제탈퇴예정 등 ACTIVE가 아닌 회원도 찾아야 하므로 상태로 거르지 않는다. */
+    @Query("SELECT m FROM Member m WHERE m.nickname = :nickname")
+    Optional<Member> findByNicknameIncludingInactive(@Param("nickname") String nickname);
 
     @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.nickname = :nickname AND m.used = 'ACTIVE'")
     boolean existsByNickname(@Param("nickname") String nickname);
@@ -39,4 +46,6 @@ public interface MemberRepository extends JpaRepository<Member, Long> {
 
     @Query("SELECT m.id FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Long> findIdByClerkId(@Param("clerkId") String clerkId);
+
+    List<Member> findByUsedAndScheduledWithdrawalAtBefore(MemberStatus used, LocalDateTime threshold);
 }
