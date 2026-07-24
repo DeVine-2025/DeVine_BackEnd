@@ -48,6 +48,17 @@ public class AdminCouponController implements AdminCouponControllerDocs {
     }
 
     @Override
+    @GetMapping("/{couponId}")
+    public ApiResponse<AdminCouponResDTO.CouponDTO> getCoupon(
+            @PathVariable Long couponId
+    ) {
+        return ApiResponse.onSuccess(
+                AdminCouponSuccessCode.COUPON_FOUND,
+                adminCouponQueryService.getCoupon(couponId)
+        );
+    }
+
+    @Override
     @PatchMapping("/{couponId}")
     public ApiResponse<AdminCouponResDTO.CouponDTO> updateCoupon(
             @PathVariable Long couponId,

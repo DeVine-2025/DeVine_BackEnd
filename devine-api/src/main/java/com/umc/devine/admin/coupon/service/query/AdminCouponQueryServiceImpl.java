@@ -32,6 +32,13 @@ public class AdminCouponQueryServiceImpl implements AdminCouponQueryService {
     }
 
     @Override
+    public AdminCouponResDTO.CouponDTO getCoupon(Long couponId) {
+        Coupon coupon = couponRepository.findById(couponId)
+                .orElseThrow(() -> new CouponException(CouponErrorReason.COUPON_NOT_FOUND));
+        return AdminCouponConverter.toCouponDTO(coupon);
+    }
+
+    @Override
     public List<AdminCouponResDTO.UsageStatDTO> getUsageStats(Long couponId) {
         if (couponId != null) {
             Coupon coupon = couponRepository.findById(couponId)

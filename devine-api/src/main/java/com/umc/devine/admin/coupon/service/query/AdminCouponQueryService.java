@@ -10,5 +10,7 @@ public interface AdminCouponQueryService {
 
     PagedResponse<AdminCouponResDTO.CouponDTO> getCoupons(PageRequest pageRequest);
 
+    AdminCouponResDTO.CouponDTO getCoupon(Long couponId);
+
     List<AdminCouponResDTO.UsageStatDTO> getUsageStats(Long couponId);
 }

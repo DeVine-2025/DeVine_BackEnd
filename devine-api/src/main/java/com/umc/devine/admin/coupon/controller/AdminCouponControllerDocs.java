@@ -33,6 +33,15 @@ public interface AdminCouponControllerDocs {
     })
     ApiResponse<PagedResponse<AdminCouponResDTO.CouponDTO>> getCoupons(PageRequest pageRequest);
 
+    @Operation(summary = "쿠폰 상세 조회 API", description = "쿠폰 ID로 단건 상세 정보를 조회합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "쿠폰을 찾을 수 없음")
+    })
+    ApiResponse<AdminCouponResDTO.CouponDTO> getCoupon(
+            @Parameter(description = "쿠폰 ID") Long couponId
+    );
+
     @Operation(summary = "쿠폰 수정 API", description = "이름/유효기간/발급수량제한/활성화여부/설명을 수정합니다. null인 필드는 변경하지 않습니다. 할인 방식/값/적용상품은 수정할 수 없습니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 수정 성공"),

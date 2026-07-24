@@ -24,6 +24,9 @@ public enum AdminCouponSuccessCode implements BaseSuccessCode {
     COUPON_USAGE_FOUND(HttpStatus.OK,
             "ADMINCOUPON200_3",
             "쿠폰 사용 현황을 성공적으로 조회했습니다."),
+    COUPON_FOUND(HttpStatus.OK,
+            "ADMINCOUPON200_4",
+            "쿠폰 상세 정보를 성공적으로 조회했습니다."),
     ;
 
     private final HttpStatus status;
