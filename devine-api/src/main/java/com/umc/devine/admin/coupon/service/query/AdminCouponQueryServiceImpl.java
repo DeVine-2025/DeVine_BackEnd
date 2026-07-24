@@ -5,6 +5,7 @@ import com.umc.devine.admin.coupon.dto.AdminCouponResDTO;
 import com.umc.devine.domain.coupon.entity.Coupon;
 import com.umc.devine.domain.coupon.exception.CouponException;
 import com.umc.devine.domain.coupon.exception.code.CouponErrorReason;
+import com.umc.devine.domain.coupon.repository.CouponCodeRepository;
 import com.umc.devine.domain.coupon.repository.CouponRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.dto.PageRequest;
@@ -21,6 +22,7 @@ import java.util.List;
 public class AdminCouponQueryServiceImpl implements AdminCouponQueryService {
 
     private final CouponRepository couponRepository;
+    private final CouponCodeRepository couponCodeRepository;
 
     @Override
     public PagedResponse<AdminCouponResDTO.CouponDTO> getCoupons(PageRequest pageRequest) {
@@ -35,7 +37,7 @@ public class AdminCouponQueryServiceImpl implements AdminCouponQueryService {
     public AdminCouponResDTO.CouponDTO getCoupon(Long couponId) {
         Coupon coupon = couponRepository.findById(couponId)
                 .orElseThrow(() -> new CouponException(CouponErrorReason.COUPON_NOT_FOUND));
-        return AdminCouponConverter.toCouponDTO(coupon);
+        return AdminCouponConverter.toCouponDTO(coupon, couponCodeRepository.findByCouponOrderByCreatedAtDesc(coupon));
     }
 
     @Override

@@ -23,7 +23,17 @@ public class AdminCouponResDTO {
             LocalDateTime validUntil,
             Boolean isActive,
             String description,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+
+            @Schema(description = "이 쿠폰으로 생성된 코드 목록 (상세 조회에서만 채워지고, 목록 조회에서는 null)")
+            List<CouponCodeDTO> codes
+    ) {}
+
+    @Schema(description = "쿠폰 코드 정보")
+    public record CouponCodeDTO(
+            String code,
+            Integer maxUses,
+            Integer usedCount
     ) {}
 
     @Schema(description = "쿠폰 발급 결과")

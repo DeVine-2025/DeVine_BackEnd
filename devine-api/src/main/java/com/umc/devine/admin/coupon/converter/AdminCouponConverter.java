@@ -2,10 +2,17 @@ package com.umc.devine.admin.coupon.converter;
 
 import com.umc.devine.admin.coupon.dto.AdminCouponResDTO;
 import com.umc.devine.domain.coupon.entity.Coupon;
+import com.umc.devine.domain.coupon.entity.CouponCode;
+
+import java.util.List;
 
 public class AdminCouponConverter {
 
     public static AdminCouponResDTO.CouponDTO toCouponDTO(Coupon coupon) {
+        return toCouponDTO(coupon, null);
+    }
+
+    public static AdminCouponResDTO.CouponDTO toCouponDTO(Coupon coupon, List<CouponCode> codes) {
         return new AdminCouponResDTO.CouponDTO(
                 coupon.getId(),
                 coupon.getName(),
@@ -20,8 +27,13 @@ public class AdminCouponConverter {
                 coupon.getValidUntil(),
                 coupon.getIsActive(),
                 coupon.getDescription(),
-                coupon.getCreatedAt()
+                coupon.getCreatedAt(),
+                codes == null ? null : codes.stream().map(AdminCouponConverter::toCouponCodeDTO).toList()
         );
+    }
+
+    private static AdminCouponResDTO.CouponCodeDTO toCouponCodeDTO(CouponCode code) {
+        return new AdminCouponResDTO.CouponCodeDTO(code.getCode(), code.getMaxUses(), code.getUsedCount());
     }
 
     public static AdminCouponResDTO.UsageStatDTO toUsageStatDTO(Coupon coupon) {

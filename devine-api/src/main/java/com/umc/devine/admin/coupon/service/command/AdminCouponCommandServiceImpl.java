@@ -189,7 +189,8 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
     private AdminCouponResDTO.IssueResultDTO issueExplicitCode(
             Coupon coupon, String explicitCode, int perCodeCapacity) {
         String normalized = explicitCode.trim().toUpperCase();
-        if (normalized.length() < CODE_LENGTH_MIN || normalized.length() > CODE_LENGTH_MAX) {
+        if (normalized.length() < CODE_LENGTH_MIN || normalized.length() > CODE_LENGTH_MAX
+                || !normalized.matches("^[A-Z0-9]+$")) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
         }
         if (couponCodeRepository.existsByCode(normalized)) {
