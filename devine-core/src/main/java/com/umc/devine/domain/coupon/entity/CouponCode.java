@@ -1,6 +1,5 @@
 package com.umc.devine.domain.coupon.entity;
 
-import com.umc.devine.domain.coupon.enums.CouponCodeStatus;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -25,28 +24,28 @@ public class CouponCode extends BaseEntity {
     @Column(nullable = false, unique = true, length = 30)
     private String code;
 
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false, length = 20)
-    private CouponCodeStatus status;
+    /** null이면 무제한, N이면 서로 다른 회원 N명까지 각 1회씩 이 코드를 등록할 수 있다. */
+    @Column(name = "max_uses")
+    private Integer maxUses;
 
-    @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "redeemed_member_coupon_id")
-    private MemberCoupon redeemedMemberCoupon;
+    @Column(name = "used_count", nullable = false)
+    @Builder.Default
+    private int usedCount = 0;
 
-    public static CouponCode of(Coupon coupon, String code) {
+    public static CouponCode of(Coupon coupon, String code, Integer maxUses) {
         return CouponCode.builder()
                 .coupon(coupon)
                 .code(code)
-                .status(CouponCodeStatus.UNREDEEMED)
+                .maxUses(maxUses)
+                .usedCount(0)
                 .build();
     }
 
-    public void redeem(MemberCoupon memberCoupon) {
-        this.status = CouponCodeStatus.REDEEMED;
-        this.redeemedMemberCoupon = memberCoupon;
+    public void incrementUsedCount() {
+        this.usedCount++;
     }
 
     public boolean isRedeemable() {
-        return this.status == CouponCodeStatus.UNREDEEMED;
+        return this.maxUses == null || this.usedCount < this.maxUses;
     }
 }

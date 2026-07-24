@@ -22,12 +22,30 @@ CREATE TABLE
         CONSTRAINT coupon_valid_period_check CHECK (valid_from < valid_until)
     );
 
+-- coupon_code 테이블 (배치 생성 또는 관리자 직접 입력된 코드, '코드생성' 발급 방식에서만 사용)
+-- max_uses가 NULL이면 무제한, N이면 서로 다른 회원 N명까지 각 1회씩 등록 가능한 공유 코드
+CREATE TABLE
+    coupon_code (
+        coupon_code_id BIGSERIAL PRIMARY KEY,
+        coupon_id BIGINT NOT NULL REFERENCES coupon (coupon_id),
+        code VARCHAR(30) NOT NULL UNIQUE,
+        max_uses INTEGER,
+        used_count INTEGER NOT NULL DEFAULT 0,
+        created_at TIMESTAMP(6) NOT NULL DEFAULT now (),
+        updated_at TIMESTAMP(6),
+        created_by VARCHAR(255),
+        updated_by VARCHAR(255),
+        CONSTRAINT coupon_code_max_uses_check CHECK (max_uses IS NULL OR max_uses > 0),
+        CONSTRAINT coupon_code_used_count_check CHECK (used_count >= 0)
+    );
+
 -- member_coupon 테이블 (회원이 실제로 보유한 쿠폰)
 CREATE TABLE
     member_coupon (
         member_coupon_id BIGSERIAL PRIMARY KEY,
         member_id BIGINT NOT NULL REFERENCES member (member_id),
         coupon_id BIGINT NOT NULL REFERENCES coupon (coupon_id),
+        coupon_code_id BIGINT REFERENCES coupon_code (coupon_code_id),
         status VARCHAR(20) NOT NULL DEFAULT 'AVAILABLE',
         used_at TIMESTAMP(6),
         payment_id BIGINT REFERENCES payment (payment_id),
@@ -38,21 +56,6 @@ CREATE TABLE
         CONSTRAINT member_coupon_status_check CHECK (status IN ('AVAILABLE', 'USED', 'EXPIRED'))
     );
 
--- coupon_code 테이블 (배치로 생성된 개별 코드, '코드생성' 발급 방식에서만 사용)
-CREATE TABLE
-    coupon_code (
-        coupon_code_id BIGSERIAL PRIMARY KEY,
-        coupon_id BIGINT NOT NULL REFERENCES coupon (coupon_id),
-        code VARCHAR(30) NOT NULL UNIQUE,
-        status VARCHAR(20) NOT NULL DEFAULT 'UNREDEEMED',
-        redeemed_member_coupon_id BIGINT REFERENCES member_coupon (member_coupon_id),
-        created_at TIMESTAMP(6) NOT NULL DEFAULT now (),
-        updated_at TIMESTAMP(6),
-        created_by VARCHAR(255),
-        updated_by VARCHAR(255),
-        CONSTRAINT coupon_code_status_check CHECK (status IN ('UNREDEEMED', 'REDEEMED'))
-    );
-
 -- 인덱스
 CREATE INDEX idx_member_coupon_member_id ON member_coupon (member_id);
 
@@ -61,3 +64,8 @@ CREATE INDEX idx_member_coupon_coupon_id ON member_coupon (coupon_id);
 CREATE INDEX idx_member_coupon_status ON member_coupon (status);
 
 CREATE INDEX idx_coupon_code_coupon_id ON coupon_code (coupon_id);
+
+-- 같은 코드를 같은 회원이 두 번 등록하는 것을 DB 레벨에서도 막는다 (공유 코드 대비 방어선).
+CREATE UNIQUE INDEX idx_member_coupon_code_member_unique ON member_coupon (coupon_code_id, member_id)
+WHERE
+    coupon_code_id IS NOT NULL;

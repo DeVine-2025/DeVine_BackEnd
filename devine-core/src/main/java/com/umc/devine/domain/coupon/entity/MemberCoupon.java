@@ -30,6 +30,11 @@ public class MemberCoupon extends BaseEntity {
     @JoinColumn(name = "coupon_id", nullable = false)
     private Coupon coupon;
 
+    /** 코드 등록으로 발급된 경우에만 채워진다 (전체/특정유저 직접 발급은 null). 같은 회원의 동일 코드 중복 등록 방지에 사용. */
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "coupon_code_id")
+    private CouponCode couponCode;
+
     @Enumerated(EnumType.STRING)
     @Column(nullable = false, length = 20)
     private MemberCouponStatus status;
@@ -45,6 +50,15 @@ public class MemberCoupon extends BaseEntity {
         return MemberCoupon.builder()
                 .member(member)
                 .coupon(coupon)
+                .status(MemberCouponStatus.AVAILABLE)
+                .build();
+    }
+
+    public static MemberCoupon issueFromCode(Member member, Coupon coupon, CouponCode couponCode) {
+        return MemberCoupon.builder()
+                .member(member)
+                .coupon(coupon)
+                .couponCode(couponCode)
                 .status(MemberCouponStatus.AVAILABLE)
                 .build();
     }

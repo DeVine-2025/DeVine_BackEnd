@@ -1,6 +1,7 @@
 package com.umc.devine.domain.coupon.repository;
 
 import com.umc.devine.domain.coupon.entity.Coupon;
+import com.umc.devine.domain.coupon.entity.CouponCode;
 import com.umc.devine.domain.coupon.entity.MemberCoupon;
 import com.umc.devine.domain.member.entity.Member;
 import jakarta.persistence.LockModeType;
@@ -33,4 +34,7 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     /** 주어진 회원 후보 목록 중 이미 해당 쿠폰을 보유한 회원만 골라낸다 (직접 발급 시 중복 발급 방지용). */
     @Query("SELECT mc.member FROM MemberCoupon mc WHERE mc.coupon = :coupon AND mc.member IN :members")
     List<Member> findMembersAlreadyHolding(@Param("coupon") Coupon coupon, @Param("members") List<Member> members);
+
+    /** 공유 코드(max_uses > 1)를 같은 회원이 두 번 등록하는 것을 막기 위한 중복 체크. */
+    boolean existsByMemberAndCouponCode(Member member, CouponCode couponCode);
 }

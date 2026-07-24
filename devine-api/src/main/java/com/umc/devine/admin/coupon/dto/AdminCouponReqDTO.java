@@ -72,10 +72,16 @@ public class AdminCouponReqDTO {
             @Schema(description = "SPECIFIC 방식일 때 발급 대상 회원 닉네임 목록 (외부에 회원 ID를 노출하지 않기 위해 닉네임으로 지정)")
             List<String> nicknames,
 
-            @Schema(description = "CODE_GEN 방식일 때 생성할 코드 자릿수", example = "8")
+            @Schema(description = "CODE_GEN 방식일 때 생성할 코드 자릿수 (code를 직접 입력하면 무시됨)", example = "8")
             Integer codeLength,
 
-            @Schema(description = "CODE_GEN 방식일 때 생성할 코드 개수", example = "100")
-            Integer codeCount
+            @Schema(description = "CODE_GEN 방식일 때 생성할 코드 개수 (code를 직접 입력하면 무시됨, 항상 1개만 생성)", example = "100")
+            Integer codeCount,
+
+            @Schema(description = "CODE_GEN 방식일 때 관리자가 직접 지정하는 코드 (null이면 무작위 생성)", example = "SUMMER2026")
+            String code,
+
+            @Schema(description = "CODE_GEN 방식일 때 코드 1개당 등록 가능 인원 수 (null이면 1, 즉 코드당 1명만 등록 가능)", example = "100")
+            Integer maxUses
     ) {}
 }

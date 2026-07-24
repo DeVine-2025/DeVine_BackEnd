@@ -15,6 +15,9 @@ public enum CouponAdminErrorReason implements DomainErrorReason {
     CODE_GENERATION_FAILED(HttpStatus.CONFLICT,
             "COUPONADMIN409_1",
             "쿠폰 코드 생성에 반복적으로 실패했습니다. 잠시 후 다시 시도해주세요."),
+    DUPLICATE_COUPON_CODE(HttpStatus.CONFLICT,
+            "COUPONADMIN409_2",
+            "이미 존재하는 쿠폰 코드입니다."),
     ;
 
     private final HttpStatus status;

@@ -38,8 +38,13 @@ public class CouponCommandServiceImpl implements CouponCommandService {
             throw new CouponException(CouponErrorReason.COUPON_NOT_USABLE);
         }
 
-        MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueTo(member, coupon));
-        couponCode.redeem(memberCoupon);
+        // 공유 코드(max_uses > 1)를 같은 회원이 다시 등록하는 것을 막는다.
+        if (memberCouponRepository.existsByMemberAndCouponCode(member, couponCode)) {
+            throw new CouponException(CouponErrorReason.COUPON_CODE_ALREADY_USED_BY_MEMBER);
+        }
+
+        couponCode.incrementUsedCount();
+        MemberCoupon memberCoupon = memberCouponRepository.save(MemberCoupon.issueFromCode(member, coupon, couponCode));
 
         return CouponConverter.toMemberCouponDTO(memberCoupon);
     }

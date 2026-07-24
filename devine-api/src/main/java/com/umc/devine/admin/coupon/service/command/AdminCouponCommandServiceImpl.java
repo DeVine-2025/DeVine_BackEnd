@@ -38,8 +38,10 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
 
     private static final int CODE_GENERATION_MAX_RETRY = 5;
     private static final String CODE_ALPHABET = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    private static final int CODE_LENGTH_MIN = 4;
     private static final int CODE_LENGTH_MAX = 20;
     private static final int CODE_COUNT_MAX = 1000;
+    private static final int CODE_MAX_USES_MAX = 100_000;
 
     private final CouponRepository couponRepository;
     private final CouponCodeRepository couponCodeRepository;
@@ -123,7 +125,7 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         return switch (request.issueType()) {
             case ALL -> issueDirectly(coupon, memberRepository.findAllActive());
             case SPECIFIC -> issueToSpecific(coupon, request.nicknames());
-            case CODE_GEN -> issueCodes(coupon, request.codeLength(), request.codeCount());
+            case CODE_GEN -> issueCodes(coupon, request.code(), request.codeLength(), request.codeCount(), request.maxUses());
         };
     }
 
@@ -165,23 +167,53 @@ public class AdminCouponCommandServiceImpl implements AdminCouponCommandService 
         return new AdminCouponResDTO.IssueResultDTO(targets.size(), null);
     }
 
-    private AdminCouponResDTO.IssueResultDTO issueCodes(Coupon coupon, Integer codeLength, Integer codeCount) {
-        if (codeLength == null || codeLength < 4 || codeLength > CODE_LENGTH_MAX
+    private AdminCouponResDTO.IssueResultDTO issueCodes(
+            Coupon coupon, String explicitCode, Integer codeLength, Integer codeCount, Integer maxUses) {
+        if (maxUses != null && (maxUses < 1 || maxUses > CODE_MAX_USES_MAX)) {
+            throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
+        }
+        int perCodeCapacity = maxUses != null ? maxUses : 1;
+
+        if (explicitCode != null && !explicitCode.isBlank()) {
+            return issueExplicitCode(coupon, explicitCode, maxUses, perCodeCapacity);
+        }
+        return issueGeneratedCodes(coupon, codeLength, codeCount, maxUses, perCodeCapacity);
+    }
+
+    private AdminCouponResDTO.IssueResultDTO issueExplicitCode(
+            Coupon coupon, String explicitCode, Integer maxUses, int perCodeCapacity) {
+        String normalized = explicitCode.trim().toUpperCase();
+        if (normalized.length() < CODE_LENGTH_MIN || normalized.length() > CODE_LENGTH_MAX) {
+            throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
+        }
+        if (couponCodeRepository.existsByCode(normalized)) {
+            throw new CouponAdminException(CouponAdminErrorReason.DUPLICATE_COUPON_CODE);
+        }
+        reserveIssueCount(coupon, perCodeCapacity);
+
+        CouponCode couponCode = couponCodeRepository.save(CouponCode.of(coupon, normalized, maxUses));
+        return new AdminCouponResDTO.IssueResultDTO(perCodeCapacity, List.of(couponCode.getCode()));
+    }
+
+    private AdminCouponResDTO.IssueResultDTO issueGeneratedCodes(
+            Coupon coupon, Integer codeLength, Integer codeCount, Integer maxUses, int perCodeCapacity) {
+        if (codeLength == null || codeLength < CODE_LENGTH_MIN || codeLength > CODE_LENGTH_MAX
                 || codeCount == null || codeCount < 1 || codeCount > CODE_COUNT_MAX) {
             throw new CouponAdminException(CouponAdminErrorReason.INVALID_ISSUE_REQUEST);
         }
-        reserveIssueCount(coupon, codeCount);
+        reserveIssueCount(coupon, codeCount * perCodeCapacity);
 
         Set<String> generated = new HashSet<>();
         List<CouponCode> couponCodes = new ArrayList<>();
         for (int i = 0; i < codeCount; i++) {
             String code = generateUniqueCode(codeLength, generated);
             generated.add(code);
-            couponCodes.add(CouponCode.of(coupon, code));
+            couponCodes.add(CouponCode.of(coupon, code, maxUses));
         }
         couponCodeRepository.saveAll(couponCodes);
 
-        return new AdminCouponResDTO.IssueResultDTO(codeCount, couponCodes.stream().map(CouponCode::getCode).toList());
+        return new AdminCouponResDTO.IssueResultDTO(
+                codeCount * perCodeCapacity, couponCodes.stream().map(CouponCode::getCode).toList());
     }
 
     private void reserveIssueCount(Coupon coupon, int count) {
