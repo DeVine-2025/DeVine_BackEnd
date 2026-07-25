@@ -36,11 +36,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses);
 
-    Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
+    Optional<Project> findByIdAndStatusNotIn(Long id, List<ProjectStatus> statuses);
 
     // 프로젝트 상세 조회용 (Member, Category fetch join)
-    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category WHERE p.id = :id AND p.status <> :status")
-    Optional<Project> findByIdWithMemberAndStatusNot(@Param("id") Long id, @Param("status") ProjectStatus status);
+    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category WHERE p.id = :id AND p.status NOT IN :statuses")
+    Optional<Project> findByIdWithMemberAndStatusNotIn(@Param("id") Long id, @Param("statuses") List<ProjectStatus> statuses);
 
     @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
     Optional<Project> findByIdWithCategory(@Param("id") Long id);
@@ -51,11 +51,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT p FROM Project p " +
             "JOIN FETCH p.category " +
             "JOIN FETCH p.member " +
-            "WHERE p.status <> :status " +
+            "WHERE p.status NOT IN :statuses " +
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY CASE WHEN :isMonday = true THEN p.previousWeekViewCount ELSE p.weeklyViewCount END DESC, " +
             "p.createdAt DESC")
-    List<Project> findWeeklyBestProjects(@Param("status") ProjectStatus status, @Param("isMonday") boolean isMonday);
+    List<Project> findWeeklyBestProjects(@Param("statuses") List<ProjectStatus> statuses, @Param("isMonday") boolean isMonday);
 
     // 주간 조회수 리셋이 필요한 프로젝트 조회
     @Query("SELECT p FROM Project p " +
