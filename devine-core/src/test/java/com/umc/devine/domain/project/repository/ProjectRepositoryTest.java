@@ -84,8 +84,8 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             Project project = createProject("정상 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            Optional<Project> result = projectRepository.findByIdAndStatusNot(
-                    project.getId(), ProjectStatus.DELETED);
+            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
+                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
 
             // then
             assertThat(result).isPresent();
@@ -99,8 +99,22 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             Project project = createProject("삭제된 프로젝트", ProjectStatus.DELETED);
 
             // when
-            Optional<Project> result = projectRepository.findByIdAndStatusNot(
-                    project.getId(), ProjectStatus.DELETED);
+            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
+                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("숨김 처리된 프로젝트는 조회되지 않는다")
+        void findByIdAndStatusNot_hidden() {
+            // given
+            Project project = createProject("숨김 처리된 프로젝트", ProjectStatus.HIDDEN);
+
+            // when
+            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
+                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
 
             // then
             assertThat(result).isEmpty();
@@ -108,7 +122,7 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findByIdWithMemberAndStatusNot")
+    @DisplayName("findByIdWithMemberAndStatusNotIn")
     class FindByIdWithMemberAndStatusNotTest {
 
         @Test
@@ -118,8 +132,8 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             Project project = createProject("페치조인 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            Optional<Project> result = projectRepository.findByIdWithMemberAndStatusNot(
-                    project.getId(), ProjectStatus.DELETED);
+            Optional<Project> result = projectRepository.findByIdWithMemberAndStatusNotIn(
+                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
 
             // then
             assertThat(result).isPresent();
@@ -182,7 +196,7 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
 
             // when
             List<Project> result = projectRepository.findWeeklyBestProjects(
-                    ProjectStatus.DELETED, false);
+                    ProjectStatus.INVISIBLE_STATUSES, false);
 
             // then
             assertThat(result).hasSize(2);

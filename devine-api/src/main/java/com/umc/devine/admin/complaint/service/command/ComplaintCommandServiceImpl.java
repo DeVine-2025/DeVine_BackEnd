@@ -75,10 +75,9 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
         return ComplaintConverter.toUpdateStatusRes(complaint, reprocessWarning);
     }
 
-    // 신고된 프로젝트 게시글을 비노출 처리한다. 이미 삭제됐거나 존재하지 않는 프로젝트는 조치할 대상이 없으므로 조용히 넘어간다.
     private void hideReportedProject(Long projectId) {
         projectRepository.findById(projectId)
-                .filter(project -> project.getStatus() != ProjectStatus.DELETED)
-                .ifPresent(Project::delete);
+                .filter(project -> !ProjectStatus.INVISIBLE_STATUSES.contains(project.getStatus()))
+                .ifPresent(Project::hide);
     }
 }

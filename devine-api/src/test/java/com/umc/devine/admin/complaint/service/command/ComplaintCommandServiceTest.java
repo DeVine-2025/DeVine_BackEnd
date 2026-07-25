@@ -270,7 +270,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("PROJECT 유형 신고를 DELETE로 처리하면 신고된 프로젝트가 비노출(삭제) 처리된다")
+        @DisplayName("PROJECT 유형 신고를 DELETE로 처리하면 신고된 프로젝트가 비노출(HIDDEN) 처리된다")
         void updateStatus_deleteAction_hidesReportedProject() {
             // given
             Project project = createProject(ProjectStatus.RECRUITING);
@@ -286,7 +286,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
 
             // then
             Project updated = projectRepository.findById(project.getId()).orElseThrow();
-            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.DELETED);
+            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.HIDDEN);
         }
 
         @Test
@@ -299,6 +299,25 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
                     .reason("이미 삭제된 프로젝트지만 신고는 처리")
+                    .build();
+
+            // when
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+
+            // then
+            assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
+        }
+
+        @Test
+        @DisplayName("이미 숨김 처리된 프로젝트를 DELETE로 다시 처리해도 예외 없이 신고 상태만 변경된다")
+        void updateStatus_deleteAction_alreadyHiddenProject() {
+            // given
+            Project project = createProject(ProjectStatus.HIDDEN);
+            Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.DELETE)
+                    .reason("이미 숨김 처리된 프로젝트지만 신고는 처리")
                     .build();
 
             // when
