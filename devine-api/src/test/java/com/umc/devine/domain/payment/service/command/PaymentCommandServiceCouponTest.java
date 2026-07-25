@@ -16,6 +16,7 @@ import com.umc.devine.domain.payment.dto.PaymentResDTO;
 import com.umc.devine.domain.payment.exception.PaymentException;
 import com.umc.devine.domain.payment.exception.code.PaymentErrorReason;
 import com.umc.devine.domain.payment.repository.PaymentRepository;
+import com.umc.devine.global.exception.DomainErrorReason;
 import com.umc.devine.domain.ticket.entity.TicketProduct;
 import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
 import com.umc.devine.domain.ticket.repository.TicketProductRepository;
@@ -125,10 +126,15 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
     }
 
     private PortOnePaymentResponse paidResponse(long amount, String customData) {
+        return paidResponse(amount, customData,
+                new PortOnePaymentResponse.MethodDetail("PaymentMethodEasyPay", null, null, null, "KAKAOPAY", null));
+    }
+
+    private PortOnePaymentResponse paidResponse(long amount, String customData, PortOnePaymentResponse.MethodDetail method) {
         return new PortOnePaymentResponse(
                 "txn_1", "PAID", new PortOnePaymentResponse.AmountDetail(amount),
                 "KRW", "2026-07-24T00:00:00Z",
-                new PortOnePaymentResponse.MethodDetail("PaymentMethodEasyPay", null, null, null, "KAKAOPAY", null),
+                method,
                 "KAKAOPAY", customData
         );
     }
@@ -183,6 +189,24 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
             PaymentResDTO.PaymentDTO result = paymentCommandService.completePayment(completeReq(4900L, null), member);
 
             assertThat(result.amount()).isEqualTo(4900L);
+        }
+
+        @Test
+        @DisplayName("PortOne이 알 수 없는 결제수단 타입을 반환하면 UNSUPPORTED_PAYMENT_METHOD 예외가 발생한다")
+        void throwsWhenPaymentMethodTypeIsUnsupported() throws Exception {
+            PortOnePaymentResponse.MethodDetail unknownMethod =
+                    new PortOnePaymentResponse.MethodDetail("PaymentMethodUnknownXYZ", null, null, null, null, null);
+            given(portOneClient.getPayment(anyString()))
+                    .willReturn(paidResponse(4900L, ownerCustomData(), unknownMethod));
+
+            assertThatThrownBy(() -> paymentCommandService.completePayment(completeReq(4900L, null), member))
+                    .isInstanceOf(PaymentException.class)
+                    .satisfies(e -> {
+                        DomainErrorReason reason = ((PaymentException) e).getReason();
+                        assertThat(reason).isEqualTo(PaymentErrorReason.UNSUPPORTED_PAYMENT_METHOD);
+                        // 지원하지 않는 결제수단은 영구적인 데이터 문제이므로 재시도해도 소용없다.
+                        assertThat(reason.isRetryable()).isFalse();
+                    });
         }
     }
 
@@ -274,6 +298,36 @@ class PaymentCommandServiceCouponTest extends IntegrationTestSupport {
             assertThat(paymentRepository.existsByPortonePaymentId("webhook_payment_2")).isFalse();
             MemberCoupon reloaded = memberCouponRepository.findById(memberCoupon.getId()).orElseThrow();
             assertThat(reloaded.getStatus()).isEqualTo(MemberCouponStatus.AVAILABLE);
+        }
+
+        @Test
+        @DisplayName("customData items에 quantity가 없으면 결제를 저장하지 않는다")
+        void skipsWhenItemQuantityMissing() throws Exception {
+            String customData = objectMapper.writeValueAsString(Map.of(
+                    "clerkId", member.getClerkId(),
+                    "orderName", "리포트 생성권 1개 x1",
+                    // quantity 필드 누락 — 예전엔 asInt() 기본값 0으로 조용히 진행되던 케이스
+                    "items", List.of(Map.of("ticketProductId", product.getId()))
+            ));
+            given(portOneClient.getPayment("webhook_payment_3")).willReturn(paidResponse(4900L, customData));
+
+            paymentCommandService.handleWebhookPayment("webhook_payment_3");
+
+            assertThat(paymentRepository.existsByPortonePaymentId("webhook_payment_3")).isFalse();
+        }
+
+        @Test
+        @DisplayName("customData에 items 자체가 없으면 결제를 저장하지 않는다")
+        void skipsWhenItemsMissing() throws Exception {
+            String customData = objectMapper.writeValueAsString(Map.of(
+                    "clerkId", member.getClerkId(),
+                    "orderName", "리포트 생성권 1개 x1"
+            ));
+            given(portOneClient.getPayment("webhook_payment_4")).willReturn(paidResponse(4900L, customData));
+
+            paymentCommandService.handleWebhookPayment("webhook_payment_4");
+
+            assertThat(paymentRepository.existsByPortonePaymentId("webhook_payment_4")).isFalse();
         }
     }
 }
