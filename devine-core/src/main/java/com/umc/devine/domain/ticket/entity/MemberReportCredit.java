@@ -1,8 +1,6 @@
 package com.umc.devine.domain.ticket.entity;
 
 import com.umc.devine.domain.member.entity.Member;
-import com.umc.devine.domain.ticket.exception.TicketException;
-import com.umc.devine.domain.ticket.exception.code.TicketErrorReason;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;

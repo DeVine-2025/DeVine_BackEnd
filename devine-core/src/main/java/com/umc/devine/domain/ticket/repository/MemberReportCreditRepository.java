@@ -20,7 +20,21 @@ public interface MemberReportCreditRepository extends JpaRepository<MemberReport
     @Query("SELECT c FROM MemberReportCredit c WHERE c.member = :member")
     Optional<MemberReportCredit> findByMemberForUpdate(@Param("member") Member member);
 
-    @Modifying(clearAutomatically = true)
+
+    /** 중복 무시 삽입 — 이미 행이 있으면 아무 작업도 하지 않는다 (멱등) */
+    @Modifying
+    @Query(value = "INSERT INTO member_report_credit (member_id, remaining_count) VALUES (:memberId, :count) ON CONFLICT (member_id) DO NOTHING", nativeQuery = true)
+    void insertIfNotExists(@Param("memberId") Long memberId, @Param("count") int count);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
     @Query("UPDATE MemberReportCredit c SET c.remainingCount = c.remainingCount + :amount WHERE c.member = :member")
     int addCreditsByMember(@Param("member") Member member, @Param("amount") int amount);
+
+    /**
+     * 원자적 차감 — createReport의 동시성 제어용.
+     * remaining_count > 0 조건으로 크레딧 부족 시 0건 업데이트.
+     */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE MemberReportCredit c SET c.remainingCount = c.remainingCount - 1 WHERE c.member = :member AND c.remainingCount > 0")
+    int useCreditByMember(@Param("member") Member member);
 }
