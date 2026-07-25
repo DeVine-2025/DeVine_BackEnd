@@ -14,7 +14,6 @@ import org.springframework.data.domain.Slice;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.sql.Timestamp;
 import java.time.LocalDateTime;
 import java.util.*;
 import java.util.function.Function;
@@ -40,12 +39,6 @@ public class ChatQueryServiceImpl implements ChatQueryService {
                 .map(row -> ((Number) row[0]).longValue())
                 .toList();
 
-        Map<Long, LocalDateTime> lastActivityMap = activeRooms.stream()
-                .collect(Collectors.toMap(
-                        row -> ((Number) row[0]).longValue(),
-                        row -> row[1] instanceof Timestamp ts ? ts.toLocalDateTime() : (LocalDateTime) row[1]
-                ));
-
         Map<Long, ChatRoom> roomMap = chatRoomRepository.findRoomsWithMembersByIds(roomIds).stream()
                 .collect(Collectors.toMap(ChatRoom::getId, Function.identity()));
 
@@ -64,7 +57,7 @@ public class ChatQueryServiceImpl implements ChatQueryService {
                     return ChatConverter.toChatRoomDetail(
                             room, memberId,
                             lastMsg != null ? lastMsg.getContent() : null,
-                            lastActivityMap.get(roomId),
+                            lastMsg != null ? lastMsg.getCreatedAt() : null,
                             unreadMap.getOrDefault(roomId, 0L)
                     );
                 })
