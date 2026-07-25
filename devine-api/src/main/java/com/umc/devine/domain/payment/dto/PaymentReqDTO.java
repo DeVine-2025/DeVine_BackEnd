@@ -23,6 +23,15 @@ public class PaymentReqDTO {
         public record Data(String paymentId) {}
     }
 
+    @Schema(description = "PortOne customData에 담기는 주문 정보 (프론트가 결제 요청 시 포함)")
+    @JsonIgnoreProperties(ignoreUnknown = true)
+    public record WebhookCustomDataDTO(
+            String clerkId,
+            String orderName,
+            Long memberCouponId,
+            List<TicketPurchaseItem> items
+    ) {}
+
 
     @Schema(description = "결제 완료 요청")
     public record CompletePaymentDTO(

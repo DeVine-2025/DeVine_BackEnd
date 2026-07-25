@@ -1,7 +1,6 @@
 package com.umc.devine.domain.payment.service.command;
 
 import com.fasterxml.jackson.core.JsonProcessingException;
-import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.domain.coupon.entity.MemberCoupon;
 import com.umc.devine.domain.coupon.exception.CouponException;
@@ -39,6 +38,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.util.List;
 import java.util.Objects;
 import java.util.UUID;
+import java.util.function.Supplier;
 
 @Slf4j
 @Service
@@ -102,17 +102,13 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             throw new PaymentException(PaymentErrorReason.AMOUNT_MISMATCH);
         }
 
-        // 9. MemberReportCredit 행을 미리 보장 (트랜잭션 밖 — 동시 요청 시 UNIQUE 위반 방지)
-        ensureCreditRowExists(member);
-
-        // 10. Payment, Transaction, PaymentTicket 저장, 쿠폰 사용 처리, 크레딧 지급 (트랜잭션 안)
+        // 9. Payment, Transaction, PaymentTicket 저장, 쿠폰 사용 처리, 크레딧 지급 (트랜잭션 안)
         try {
-            return Objects.requireNonNull(transactionTemplate.execute(status -> {
-                Payment payment = PaymentConverter.toPayment(request, member, portOneResponse);
-                Payment savedPayment = savePaymentWithTickets(payment, portOneResponse, request.items(), ticketProducts, member);
-                useCouponIfPresent(request.memberCouponId(), member, savedPayment, ticketProductIds);
-                return PaymentConverter.toPaymentDTO(savedPayment);
-            }));
+            Payment savedPayment = persistPaymentInTransaction(
+                    () -> PaymentConverter.toPayment(request, member, portOneResponse),
+                    portOneResponse, request.items(), ticketProducts, member,
+                    request.memberCouponId(), ticketProductIds);
+            return PaymentConverter.toPaymentDTO(savedPayment);
         } catch (DataIntegrityViolationException e) {
             throw new PaymentException(PaymentErrorReason.ALREADY_PROCESSED_PAYMENT);
         }
@@ -147,23 +143,20 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             throw new PaymentException(PaymentErrorReason.FREE_PAYMENT_AMOUNT_NOT_ZERO);
         }
 
-        ensureCreditRowExists(member);
-
         String freePaymentId = "FREE_" + UUID.randomUUID().toString().replace("-", "").substring(0, 20).toUpperCase();
 
         try {
-            return Objects.requireNonNull(transactionTemplate.execute(status -> {
-                Payment payment = Payment.builder()
-                        .portonePaymentId(freePaymentId)
-                        .member(member)
-                        .orderName(request.orderName())
-                        .amount(0L)
-                        .currency("KRW")
-                        .build();
-                Payment savedPayment = savePaymentWithTickets(payment, null, request.items(), ticketProducts, member);
-                useCouponIfPresent(request.memberCouponId(), member, savedPayment, ticketProductIds);
-                return PaymentConverter.toPaymentDTO(savedPayment);
-            }));
+            Payment savedPayment = persistPaymentInTransaction(
+                    () -> Payment.builder()
+                            .portonePaymentId(freePaymentId)
+                            .member(member)
+                            .orderName(request.orderName())
+                            .amount(0L)
+                            .currency("KRW")
+                            .build(),
+                    null, request.items(), ticketProducts, member,
+                    request.memberCouponId(), ticketProductIds);
+            return PaymentConverter.toPaymentDTO(savedPayment);
         } catch (DataIntegrityViolationException e) {
             throw new PaymentException(PaymentErrorReason.ALREADY_PROCESSED_PAYMENT);
         }
@@ -233,16 +226,16 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        JsonNode customData;
+        PaymentReqDTO.WebhookCustomDataDTO customData;
         try {
-            customData = objectMapper.readTree(portOneResponse.customData());
+            customData = parseCustomData(portOneResponse.customData());
         } catch (JsonProcessingException e) {
             log.error("웹훅: customData 파싱 실패 - paymentId: {}", portonePaymentId, e);
             return;
         }
 
-        String clerkId = customData.path("clerkId").asText(null);
-        String orderName = customData.path("orderName").asText("웹훅 결제");
+        String clerkId = customData.clerkId();
+        String orderName = customData.orderName() != null ? customData.orderName() : "웹훅 결제";
         if (clerkId == null) {
             log.error("웹훅: customData에 clerkId 없음 - paymentId: {}", portonePaymentId);
             return;
@@ -254,19 +247,12 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        // 상품 목록 파싱 및 검증
-        JsonNode itemsNode = customData.path("items");
-        if (!itemsNode.isArray() || itemsNode.isEmpty()) {
-            log.error("웹훅: customData에 items 없음 - paymentId: {}", portonePaymentId);
+        // 상품 목록 검증
+        List<PaymentReqDTO.TicketPurchaseItem> items = customData.items();
+        if (items == null || items.isEmpty()
+                || items.stream().anyMatch(item -> item.ticketProductId() == null || item.quantity() == null)) {
+            log.error("웹훅: customData에 items 없음 또는 형식 오류 - paymentId: {}", portonePaymentId);
             return;
-        }
-
-        List<PaymentReqDTO.TicketPurchaseItem> items = new java.util.ArrayList<>();
-        for (JsonNode itemNode : itemsNode) {
-            items.add(new PaymentReqDTO.TicketPurchaseItem(
-                    itemNode.path("ticketProductId").asLong(),
-                    itemNode.path("quantity").asInt()
-            ));
         }
 
         List<TicketProduct> ticketProducts = items.stream()
@@ -280,7 +266,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
 
         // 쿠폰 파싱 및 검증 (실패하면 웹훅 처리를 중단하고 로그만 남김 — /complete API 쪽에서 정상 처리되는 것으로 기대)
         List<Long> ticketProductIds = ticketProductIds(items);
-        Long memberCouponId = customData.hasNonNull("memberCouponId") ? customData.path("memberCouponId").asLong() : null;
+        Long memberCouponId = customData.memberCouponId();
         MemberCoupon memberCoupon;
         try {
             memberCoupon = resolveAndValidateCoupon(memberCouponId, member, ticketProductIds);
@@ -299,27 +285,43 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
             return;
         }
 
-        ensureCreditRowExists(member);
-
         try {
-            transactionTemplate.execute(status -> {
-                Payment payment = Payment.builder()
-                        .portonePaymentId(portonePaymentId)
-                        .member(member)
-                        .orderName(orderName)
-                        .amount(portOneResponse.amount().total())
-                        .currency(portOneResponse.currency())
-                        .build();
-
-                Payment savedPayment = savePaymentWithTickets(payment, portOneResponse, items, ticketProducts, member);
-                useCouponIfPresent(memberCouponId, member, savedPayment, ticketProductIds);
-                return null;
-            });
+            persistPaymentInTransaction(
+                    () -> Payment.builder()
+                            .portonePaymentId(portonePaymentId)
+                            .member(member)
+                            .orderName(orderName)
+                            .amount(portOneResponse.amount().total())
+                            .currency(portOneResponse.currency())
+                            .build(),
+                    portOneResponse, items, ticketProducts, member, memberCouponId, ticketProductIds);
             log.info("웹훅: 결제 처리 완료 - paymentId: {}, clerkId: {}", portonePaymentId, clerkId);
         } catch (DataIntegrityViolationException e) {
             // 동시에 /complete API 호출로 이미 처리됨
             log.info("웹훅: 동시 처리로 이미 저장됨 - paymentId: {}", portonePaymentId);
         }
+    }
+
+    /**
+     * 크레딧 행을 보장한 뒤, Payment/Transaction/PaymentTicket 저장과 쿠폰 사용 처리를 하나의 트랜잭션으로 묶는다.
+     * completePayment/freePayment/handleWebhookPayment가 공통으로 사용하며, Payment 생성 방식만 각자 다르다.
+     */
+    private Payment persistPaymentInTransaction(Supplier<Payment> paymentSupplier,
+                                                 PortOnePaymentResponse portOneResponse,
+                                                 List<PaymentReqDTO.TicketPurchaseItem> items,
+                                                 List<TicketProduct> ticketProducts, Member member,
+                                                 Long memberCouponId, List<Long> ticketProductIds) {
+        ensureCreditRowExists(member);
+        return Objects.requireNonNull(transactionTemplate.execute(status -> {
+            Payment payment = paymentSupplier.get();
+            Payment savedPayment = savePaymentWithTickets(payment, portOneResponse, items, ticketProducts, member);
+            useCouponIfPresent(memberCouponId, member, savedPayment, ticketProductIds);
+            return savedPayment;
+        }));
+    }
+
+    private PaymentReqDTO.WebhookCustomDataDTO parseCustomData(String rawCustomData) throws JsonProcessingException {
+        return objectMapper.readValue(rawCustomData, PaymentReqDTO.WebhookCustomDataDTO.class);
     }
 
     private List<TicketProduct> validateAndGetProducts(List<PaymentReqDTO.TicketPurchaseItem> items) {
@@ -397,14 +399,14 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         if (portOneResponse.customData() == null) {
             throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
         }
-        JsonNode customData;
+        PaymentReqDTO.WebhookCustomDataDTO customData;
         try {
-            customData = objectMapper.readTree(portOneResponse.customData());
+            customData = parseCustomData(portOneResponse.customData());
         } catch (Exception e) {
             log.warn("customData 파싱 실패 - paymentId: {}", portOneResponse.transactionId());
             throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
         }
-        String clerkId = customData.path("clerkId").asText(null);
+        String clerkId = customData.clerkId();
         if (clerkId == null || !clerkId.equals(member.getClerkId())) {
             throw new PaymentException(PaymentErrorReason.PAYMENT_OWNER_MISMATCH);
         }
@@ -417,7 +419,7 @@ public class PaymentCommandServiceImpl implements PaymentCommandService {
         try {
             paymentMethod = PaymentMethod.fromPortOneType(method.type());
         } catch (IllegalArgumentException e) {
-            throw new PaymentException(PaymentErrorReason.PORTONE_API_ERROR);
+            throw new PaymentException(PaymentErrorReason.UNSUPPORTED_PAYMENT_METHOD);
         }
 
         if (paymentMethod == PaymentMethod.CARD) {

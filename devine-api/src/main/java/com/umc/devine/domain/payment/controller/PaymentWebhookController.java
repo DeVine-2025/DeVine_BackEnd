@@ -54,11 +54,13 @@ public class PaymentWebhookController implements PaymentWebhookControllerDocs {
             throw new PaymentException(PaymentErrorReason.INVALID_WEBHOOK_BODY);
         }
 
-        // 4. 결제 처리. 비즈니스 오류(DomainException, 예: PaymentException/CouponException)는 200 반환,
-        //    일시적 오류는 전파하여 PortOne 재시도 유도
+        // 4. 결제 처리. 비즈니스 오류(재시도 불가)는 200 반환, 일시적 오류(재시도 가능)는 전파하여 PortOne 재시도 유도
         try {
             paymentCommandService.handleWebhookPayment(webhook.data().paymentId());
         } catch (DomainException e) {
+            if (e.getReason().isRetryable()) {
+                throw e;
+            }
             log.warn("웹훅: 결제 처리 비즈니스 오류 - paymentId: {}, error: {}", webhook.data().paymentId(), e.getMessage());
         }
 
