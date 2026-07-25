@@ -120,6 +120,10 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.DELETED;
     }
 
+    public void hide() {
+        this.status = ProjectStatus.HIDDEN;
+    }
+
     public void updateStatus(ProjectStatus status) {
         this.status = status;
     }
