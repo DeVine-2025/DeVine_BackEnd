@@ -60,6 +60,20 @@ public class Complaint extends BaseEntity {
     @Column(name = "resolved_at")
     private LocalDateTime resolvedAt;
 
+    // 처리 결과에 따른 연동 조치(프로젝트 비노출, 계정 정지 등)가 실제로 반영됐는지 여부
+    @Column(name = "linked_action_completed", nullable = false)
+    @Builder.Default
+    private boolean linkedActionCompleted = false;
+
+    // 연동 조치가 반영된 시각
+    @Column(name = "linked_action_at")
+    private LocalDateTime linkedActionAt;
+
+    public void markLinkedActionCompleted(LocalDateTime completedAt) {
+        this.linkedActionCompleted = true;
+        this.linkedActionAt = completedAt;
+    }
+
     public void updateStatus(ComplaintStatus status, ComplaintAction action, String resolutionReason, Member resolver, LocalDateTime resolvedAt) {
         this.status = status;
         this.action = action;

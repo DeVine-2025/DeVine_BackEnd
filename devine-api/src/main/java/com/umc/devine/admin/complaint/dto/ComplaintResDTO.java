@@ -70,6 +70,9 @@ public class ComplaintResDTO {
             @Schema(description = "처리시각", nullable = true)
             LocalDateTime resolvedAt,
 
+            @Schema(description = "처리 결과에 따른 연동 조치(프로젝트 비노출 등)가 실제로 반영됐는지 여부", example = "false")
+            boolean linkedActionCompleted,
+
             @Schema(description = "관련 콘텐츠 원문(채팅 로그/프로젝트 게시글). 삭제된 경우 안내 문구, DEVELOPER 유형은 null", nullable = true)
             String content,
 
@@ -98,6 +101,9 @@ public class ComplaintResDTO {
             LocalDateTime resolvedAt,
 
             @Schema(description = "이미 처리완료된 건을 재변경한 경우 true (프론트 확인 다이얼로그 노출용)", example = "false")
-            boolean reprocessWarning
+            boolean reprocessWarning,
+
+            @Schema(description = "처리 결과에 따른 연동 조치(프로젝트 비노출 등)가 실제로 반영됐는지 여부", example = "false")
+            boolean linkedActionCompleted
     ) {}
 }
