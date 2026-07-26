@@ -5,6 +5,7 @@ import com.umc.devine.domain.maintenance.dto.MaintenanceState;
 import com.umc.devine.domain.maintenance.service.MaintenanceModeService;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
+import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -40,6 +41,18 @@ class MaintenanceControllerTest extends ControllerIntegrationTestSupport {
 
         ClerkPrincipal principal = new ClerkPrincipal("clerk_admin", "admin@example.com", "관리자", null);
         auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+    }
+
+    /**
+     * 캐시를 점검 OFF로 되돌린다. 롤백은 DB만 되돌리고 싱글턴 캐시는 그대로 두므로,
+     * 점검을 켠 테스트가 마지막에 실행되면 같은 컨텍스트를 쓰는 뒤 테스트들이 전부 503을 받는다.
+     *
+     * <p>여기서 {@code refresh()}를 쓰면 안 된다. @AfterEach는 테스트 트랜잭션이 아직 열린 채로
+     * 실행되어 롤백 전의 더러운 상태를 그대로 읽어 온다. 캐시를 직접 OFF로 덮어써야 한다.
+     */
+    @AfterEach
+    void disableMaintenance() {
+        maintenanceModeService.update(false, null, null);
     }
 
     @Test
