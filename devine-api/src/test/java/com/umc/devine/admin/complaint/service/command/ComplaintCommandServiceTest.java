@@ -31,6 +31,7 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -121,6 +122,12 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                 .category(category)
                 .member(respondentMember)
                 .build());
+    }
+
+    private Project createHiddenProject() {
+        Project project = createProject(ProjectStatus.RECRUITING);
+        project.changeVisibility(false, admin, LocalDateTime.now());
+        return projectRepository.save(project);
     }
 
     @Nested
@@ -270,7 +277,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("PROJECT 유형 신고를 DELETE로 처리하면 신고된 프로젝트가 비노출(HIDDEN) 처리된다")
+        @DisplayName("PROJECT 유형 신고를 DELETE로 처리하면 신고된 프로젝트가 비노출 처리되고 연동 완료로 표시된다")
         void updateStatus_deleteAction_hidesReportedProject() {
             // given
             Project project = createProject(ProjectStatus.RECRUITING);
@@ -282,11 +289,35 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
 
             // then
             Project updated = projectRepository.findById(project.getId()).orElseThrow();
-            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.HIDDEN);
+            assertThat(updated.isHidden()).isTrue();
+            // 라이프사이클 상태는 보존돼야 다시 노출로 되돌릴 수 있다
+            assertThat(updated.getStatus()).isEqualTo(ProjectStatus.RECRUITING);
+            assertThat(updated.getVisibilityChangedBy().getId()).isEqualTo(admin.getId());
+            assertThat(updated.getVisibilityChangedAt()).isNotNull();
+            assertThat(result.linkedActionCompleted()).isTrue();
+        }
+
+        @Test
+        @DisplayName("대상 프로젝트가 존재하지 않으면 연동 미완료로 남고 신고 상태만 변경된다")
+        void updateStatus_deleteAction_projectNotFound() {
+            // given
+            Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, 999999L, ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.DELETE)
+                    .reason("대상이 이미 사라졌지만 신고는 처리")
+                    .build();
+
+            // when
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+
+            // then
+            assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
+            assertThat(result.linkedActionCompleted()).isFalse();
         }
 
         @Test
@@ -306,18 +337,20 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
+            // 삭제된 프로젝트는 노출 전환 대상이 아니므로 연동 미완료로 남는다
+            assertThat(result.linkedActionCompleted()).isFalse();
         }
 
         @Test
-        @DisplayName("이미 숨김 처리된 프로젝트를 DELETE로 다시 처리해도 예외 없이 신고 상태만 변경된다")
+        @DisplayName("이미 비노출 처리된 프로젝트를 DELETE로 다시 처리해도 예외 없이 정상 처리된다")
         void updateStatus_deleteAction_alreadyHiddenProject() {
             // given
-            Project project = createProject(ProjectStatus.HIDDEN);
+            Project project = createHiddenProject();
             Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
             ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
-                    .reason("이미 숨김 처리된 프로젝트지만 신고는 처리")
+                    .reason("이미 비노출 처리된 프로젝트지만 신고는 처리")
                     .build();
 
             // when
@@ -325,6 +358,8 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
+            assertThat(result.linkedActionCompleted()).isTrue();
+            assertThat(projectRepository.findById(project.getId()).orElseThrow().isHidden()).isTrue();
         }
     }
 }
