@@ -21,26 +21,31 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "JOIN FETCH p.category " +
             "WHERE p.member = :member " +
             "AND p.status IN :statuses " +
+            "AND p.hidden = false " +
             "ORDER BY p.createdAt DESC",
             countQuery = "SELECT COUNT(p) FROM Project p " +
             "WHERE p.member = :member " +
-            "AND p.status IN :statuses")
+            "AND p.status IN :statuses " +
+            "AND p.hidden = false")
     Page<Project> findByMemberAndStatusIn(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses,
             Pageable pageable);
 
     // 내가 등록한 프로젝트를 상태별로 전체 조회 (비페이징, 내 프로젝트 통합 조회용)
-    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses ORDER BY p.createdAt DESC")
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses AND p.hidden = false ORDER BY p.createdAt DESC")
     List<Project> findAllByMemberAndStatusIn(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses);
 
-    Optional<Project> findByIdAndStatusNotIn(Long id, List<ProjectStatus> statuses);
+    // 유저 화면에 노출 가능한 프로젝트 단건 조회 (삭제되지 않고 비노출 처리도 되지 않은 것)
+    @Query("SELECT p FROM Project p WHERE p.id = :id AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED AND p.hidden = false")
+    Optional<Project> findVisibleById(@Param("id") Long id);
 
     // 프로젝트 상세 조회용 (Member, Category fetch join)
-    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category WHERE p.id = :id AND p.status NOT IN :statuses")
-    Optional<Project> findByIdWithMemberAndStatusNotIn(@Param("id") Long id, @Param("statuses") List<ProjectStatus> statuses);
+    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category " +
+            "WHERE p.id = :id AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED AND p.hidden = false")
+    Optional<Project> findVisibleByIdWithMember(@Param("id") Long id);
 
     @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
     Optional<Project> findByIdWithCategory(@Param("id") Long id);
@@ -51,11 +56,12 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT p FROM Project p " +
             "JOIN FETCH p.category " +
             "JOIN FETCH p.member " +
-            "WHERE p.status NOT IN :statuses " +
+            "WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
+            "AND p.hidden = false " +
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY CASE WHEN :isMonday = true THEN p.previousWeekViewCount ELSE p.weeklyViewCount END DESC, " +
             "p.createdAt DESC")
-    List<Project> findWeeklyBestProjects(@Param("statuses") List<ProjectStatus> statuses, @Param("isMonday") boolean isMonday);
+    List<Project> findWeeklyBestProjects(@Param("isMonday") boolean isMonday);
 
     // 주간 조회수 리셋이 필요한 프로젝트 조회
     @Query("SELECT p FROM Project p " +
@@ -82,7 +88,8 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT DISTINCT p FROM Project p " +
             "LEFT JOIN FETCH p.category " +
             "LEFT JOIN FETCH p.member " +
-            "WHERE p.id IN :ids")
+            "WHERE p.id IN :ids " +
+            "AND p.hidden = false")
     List<Project> findAllByIdIn(@Param("ids") List<Long> ids);
 
     // 기본 추천용: 최신 모집 중 프로젝트 조회
@@ -90,6 +97,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "LEFT JOIN FETCH p.category " +
             "LEFT JOIN FETCH p.member " +
             "WHERE p.status = :status " +
+            "AND p.hidden = false " +
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY p.createdAt DESC")
     List<Project> findByStatusOrderByCreatedAtDesc(@Param("status") ProjectStatus status);

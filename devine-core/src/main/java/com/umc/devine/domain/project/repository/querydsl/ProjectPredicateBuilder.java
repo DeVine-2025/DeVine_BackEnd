@@ -34,6 +34,9 @@ public class ProjectPredicateBuilder {
         // 모집 중인 프로젝트만
         builder.and(project.status.eq(ProjectStatus.RECRUITING));
 
+        // 관리자가 비노출 처리한 프로젝트 제외
+        builder.and(project.hidden.isFalse());
+
         // 모집마감일이 지나지 않은 프로젝트만
         builder.and(project.recruitmentDeadline.goe(DateExpression.currentDate(LocalDate.class)));
 
