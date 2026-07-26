@@ -2,12 +2,14 @@ package com.umc.devine.domain.maintenance.service;
 
 import com.umc.devine.domain.maintenance.dto.MaintenanceState;
 import com.umc.devine.domain.maintenance.entity.MaintenanceSetting;
+import com.umc.devine.domain.maintenance.event.MaintenanceEnabledEvent;
 import com.umc.devine.domain.maintenance.exception.MaintenanceException;
 import com.umc.devine.domain.maintenance.exception.code.MaintenanceErrorReason;
 import com.umc.devine.domain.maintenance.repository.MaintenanceSettingRepository;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -29,6 +31,7 @@ public class MaintenanceModeService {
     private static final long REFRESH_INTERVAL_MS = 10_000L;
 
     private final MaintenanceSettingRepository maintenanceSettingRepository;
+    private final ApplicationEventPublisher eventPublisher;
 
     private volatile MaintenanceState cache;
 
@@ -44,6 +47,7 @@ public class MaintenanceModeService {
      */
     @PostConstruct
     public void init() {
+        // 초기 로드는 전환 이벤트를 발행하지 않는다. 기동 시점엔 아직 연결이 없어 끊을 대상도 없다.
         this.cache = load();
         log.info("점검 모드 초기 상태 로드 완료 - enabled: {}", cache.enabled());
     }
@@ -58,7 +62,7 @@ public class MaintenanceModeService {
         setting.update(enabled, message, estimatedEndAt);
         maintenanceSettingRepository.save(setting);
 
-        this.cache = MaintenanceState.from(setting);
+        applyState(MaintenanceState.from(setting));
         log.info("점검 모드 변경 - enabled: {}, estimatedEndAt: {}", enabled, estimatedEndAt);
         return cache;
     }
@@ -74,9 +78,23 @@ public class MaintenanceModeService {
     @Transactional(readOnly = true)
     public void refresh() {
         try {
-            this.cache = load();
+            applyState(load());
         } catch (Exception e) {
             log.warn("점검 모드 상태 갱신 실패 - 직전 캐시를 유지한다: {}", e.getMessage());
+        }
+    }
+
+    /**
+     * 캐시를 갱신하고, OFF→ON 전환일 때만 이벤트를 발행한다.
+     * 전환 경계에서만 발행하므로 이미 켜진 상태에서 다시 켜도(메시지 연장 등) 중복 발행되지 않는다.
+     */
+    private void applyState(MaintenanceState newState) {
+        MaintenanceState previous = this.cache;
+        this.cache = newState;
+
+        boolean turnedOn = newState.enabled() && (previous == null || !previous.enabled());
+        if (turnedOn) {
+            eventPublisher.publishEvent(new MaintenanceEnabledEvent(newState));
         }
     }
 

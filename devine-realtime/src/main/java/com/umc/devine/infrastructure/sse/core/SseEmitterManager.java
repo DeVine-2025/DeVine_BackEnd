@@ -169,6 +169,29 @@ public class SseEmitterManager {
     }
 
     /**
+     * 점검 모드 전환 시 모든 SSE 연결 정리
+     * 클라이언트에 점검 이벤트를 보낸 뒤 연결을 완료 처리한다. 종료(shutdown)와 달리
+     * 새 연결 차단 플래그는 세우지 않는다 — 신규 연결 차단은 점검 필터가 담당한다.
+     * @return 정리한 연결 수
+     */
+    public int disconnectAllForMaintenance() {
+        int count = emitters.size();
+        emitters.forEach((memberId, emitter) -> {
+            try {
+                emitter.send(SseEmitter.event()
+                        .name(SseEventType.MAINTENANCE.getEventName())
+                        .data("maintenance"));
+                emitter.complete();
+            } catch (IOException e) {
+                log.debug("점검 종료 메시지 전송 실패 - memberId: {}", memberId);
+            }
+        });
+        emitters.clear();
+        log.info("점검 모드 전환으로 SSE 연결 {}건을 종료했습니다.", count);
+        return count;
+    }
+
+    /**
      * 애플리케이션 종료 시 모든 SSE 연결 정리
      * Spring 컨테이너가 종료될 때 @PreDestroy 어노테이션에 의해 자동으로 호출됨
      */
