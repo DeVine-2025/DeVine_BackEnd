@@ -70,7 +70,9 @@ public class ComplaintResDTO {
             @Schema(description = "처리시각", nullable = true)
             LocalDateTime resolvedAt,
 
-            @Schema(description = "처리 결과에 따른 연동 조치(프로젝트 비노출 등)가 실제로 반영됐는지 여부", example = "false")
+            @Schema(description = "이 신고 처리로 연동 조치(프로젝트 비노출 등)가 실행된 적이 있는지 여부(실행 이력). "
+                    + "이후 관리자가 노출 관리 API로 수동 복구해도 실행됐다는 사실은 바뀌지 않으므로 true로 유지된다. "
+                    + "프로젝트의 현재 노출 상태를 판단하는 용도로는 사용할 수 없다.", example = "false")
             boolean linkedActionCompleted,
 
             @Schema(description = "관련 콘텐츠 원문(채팅 로그/프로젝트 게시글). 삭제된 경우 안내 문구, DEVELOPER 유형은 null", nullable = true)
@@ -103,7 +105,8 @@ public class ComplaintResDTO {
             @Schema(description = "이미 처리완료된 건을 재변경한 경우 true (프론트 확인 다이얼로그 노출용)", example = "false")
             boolean reprocessWarning,
 
-            @Schema(description = "처리 결과에 따른 연동 조치(프로젝트 비노출 등)가 실제로 반영됐는지 여부", example = "false")
+            @Schema(description = "이 신고 처리로 연동 조치(프로젝트 비노출 등)가 실행된 적이 있는지 여부(실행 이력). "
+                    + "현재 노출 상태를 나타내는 값이 아니다.", example = "false")
             boolean linkedActionCompleted
     ) {}
 }

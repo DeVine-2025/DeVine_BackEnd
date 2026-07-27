@@ -302,6 +302,36 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
+        @DisplayName("DELETE로 비노출된 신고를 DISMISS로 재처리해도 비노출은 자동 해제되지 않는다")
+        void updateStatus_reprocessToDismiss_keepsProjectHidden() {
+            // given: 어떤 신고가 비노출을 유발했는지 추적하지 않으므로 자동 해제 시 다른 신고의 제재까지 풀릴 수 있어,
+            //        복구는 관리자가 노출 관리 API로 명시적으로 수행하도록 설계했다.
+            Project project = createProject(ProjectStatus.RECRUITING);
+            Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
+            complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+                    ComplaintReqDTO.UpdateStatusReq.builder()
+                            .status(ComplaintStatus.COMPLETED)
+                            .action(ComplaintAction.DELETE)
+                            .reason("저작권 침해로 비노출 처리")
+                            .build());
+
+            // when
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+                    ComplaintReqDTO.UpdateStatusReq.builder()
+                            .status(ComplaintStatus.COMPLETED)
+                            .action(ComplaintAction.DISMISS)
+                            .reason("재검토 결과 기각")
+                            .build());
+
+            // then
+            assertThat(result.action()).isEqualTo(ComplaintAction.DISMISS);
+            assertThat(result.reprocessWarning()).isTrue();
+            assertThat(projectRepository.findById(project.getId()).orElseThrow().isHidden()).isTrue();
+            // 실행 이력이므로 이후 조치가 바뀌어도 true로 남는다
+            assertThat(result.linkedActionCompleted()).isTrue();
+        }
+
+        @Test
         @DisplayName("대상 프로젝트가 존재하지 않으면 연동 미완료로 남고 신고 상태만 변경된다")
         void updateStatus_deleteAction_projectNotFound() {
             // given
