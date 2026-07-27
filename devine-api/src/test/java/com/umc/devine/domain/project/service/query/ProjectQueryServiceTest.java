@@ -83,6 +83,12 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                 .build());
     }
 
+    private Project createHiddenProject(String name, ProjectStatus status) {
+        Project project = createProject(name, ProjectField.WEB, ecommerceCategory, status);
+        project.changeVisibility(false, pmMember, java.time.LocalDateTime.now());
+        return projectRepository.save(project);
+    }
+
     @Nested
     @DisplayName("프로젝트 상세 조회")
     class GetProjectDetailTest {
@@ -95,7 +101,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     ecommerceCategory, ProjectStatus.RECRUITING);
 
             // when
-            ProjectResDTO.UpdateProjectRes result = projectQueryService.getProjectDetail(project.getId());
+            ProjectResDTO.UpdateProjectRes result = projectQueryService.getProjectDetail(null, project.getId());
 
             // then
             assertThat(result.projectId()).isEqualTo(project.getId());
@@ -103,6 +109,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
             assertThat(result.projectField()).isEqualTo(ProjectField.WEB);
             assertThat(result.category()).isEqualTo(CategoryGenre.ECOMMERCE);
             assertThat(result.creatorNickname()).isEqualTo("pmquery");
+            assertThat(result.visible()).isTrue();
         }
 
         @Test
@@ -113,7 +120,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     ecommerceCategory, ProjectStatus.DELETED);
 
             // when & then
-            assertThatThrownBy(() -> projectQueryService.getProjectDetail(project.getId()))
+            assertThatThrownBy(() -> projectQueryService.getProjectDetail(null, project.getId()))
                     .isInstanceOf(ProjectException.class);
         }
 
@@ -121,7 +128,51 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("존재하지 않는 프로젝트 조회 시 예외가 발생한다")
         void getProjectDetail_notFound() {
             // when & then
-            assertThatThrownBy(() -> projectQueryService.getProjectDetail(999999L))
+            assertThatThrownBy(() -> projectQueryService.getProjectDetail(null, 999999L))
+                    .isInstanceOf(ProjectException.class);
+        }
+
+        @Test
+        @DisplayName("비노출 프로젝트는 작성자 본인에게는 조회된다")
+        void getProjectDetail_hiddenProject_owner() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            ProjectResDTO.UpdateProjectRes result = projectQueryService.getProjectDetail(pmMember, project.getId());
+
+            // then
+            assertThat(result.projectId()).isEqualTo(project.getId());
+            assertThat(result.visible()).isFalse();
+        }
+
+        @Test
+        @DisplayName("비노출 프로젝트는 다른 회원에게는 조회되지 않는다")
+        void getProjectDetail_hiddenProject_otherMember() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+            Member other = memberRepository.save(Member.builder()
+                    .clerkId("clerk_other_viewer")
+                    .name("다른회원")
+                    .nickname("otherviewer")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            // when & then
+            assertThatThrownBy(() -> projectQueryService.getProjectDetail(other, project.getId()))
+                    .isInstanceOf(ProjectException.class);
+        }
+
+        @Test
+        @DisplayName("비노출 프로젝트는 비로그인 조회 시 조회되지 않는다")
+        void getProjectDetail_hiddenProject_anonymous() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when & then
+            assertThatThrownBy(() -> projectQueryService.getProjectDetail(null, project.getId()))
                     .isInstanceOf(ProjectException.class);
         }
     }
@@ -326,6 +377,41 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
 
             // then
             assertThat(result.projects().getContent()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("비노출 프로젝트도 작성자의 내 프로젝트 목록에는 visible=false로 표시된다")
+        void getMyProjects_includesHidden() {
+            // given
+            createProject("노출 프로젝트", ProjectField.WEB, ecommerceCategory, ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            ProjectResDTO.MyProjectsRes result = projectQueryService.getMyProjects(
+                    pmMember, List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.projects().getContent()).hasSize(2);
+            assertThat(result.projects().getContent())
+                    .filteredOn(info -> info.title().equals("비노출 프로젝트"))
+                    .singleElement()
+                    .satisfies(info -> assertThat(info.visible()).isFalse());
+        }
+
+        @Test
+        @DisplayName("개발자 추천 필터용 목록에서는 비노출 프로젝트가 제외된다")
+        void getMyCreatedRecruitingProjects_excludesHidden() {
+            // given: 확인용 목록과 달리 액션 대상을 고르는 목록이라 제재로 숨겨진 글은 빠져야 한다
+            createProject("노출 프로젝트", ProjectField.WEB, ecommerceCategory, ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            ProjectResDTO.MyProjectsRes result =
+                    projectQueryService.getMyCreatedRecruitingProjects(pmMember, PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.projects().getContent()).hasSize(1);
+            assertThat(result.projects().getContent().get(0).title()).isEqualTo("노출 프로젝트");
         }
     }
 

@@ -10,7 +10,13 @@ import java.util.List;
 
 public interface ProjectQueryService {
     // 프로젝트 상세 조회 (비회원 허용)
-    ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId);
+    /**
+     * 프로젝트 상세 조회.
+     * 비노출 처리된 프로젝트는 작성자 본인만 조회할 수 있으며, 그 외에는 존재하지 않는 것으로 처리된다.
+     *
+     * @param viewer 조회자. 비로그인 조회를 허용하는 엔드포인트라 null일 수 있다.
+     */
+    ProjectResDTO.UpdateProjectRes getProjectDetail(Member viewer, Long projectId);
 
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
     ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects();

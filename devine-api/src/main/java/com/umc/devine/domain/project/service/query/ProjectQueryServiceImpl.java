@@ -58,12 +58,17 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     @Transactional
-    public ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId) {
-        Project project = projectRepository.findVisibleByIdWithMember(projectId)
+    public ProjectResDTO.UpdateProjectRes getProjectDetail(Member viewer, Long projectId) {
+        // 비노출 프로젝트는 작성자 본인에게만 보인다. 비로그인이면 viewerId가 null이라 노출된 것만 조회된다.
+        Long viewerId = viewer != null ? viewer.getId() : null;
+        Project project = projectRepository.findByIdWithMemberVisibleTo(projectId, viewerId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        // 원자적 조회수 증가 (동시성 안전)
-        projectRepository.incrementViewCount(projectId);
+        // 비노출 프로젝트는 유저 화면에 노출되지 않으므로 조회수를 올리지 않는다.
+        if (!project.isHidden()) {
+            // 원자적 조회수 증가 (동시성 안전)
+            projectRepository.incrementViewCount(projectId);
+        }
 
         Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(List.of(projectId));
         return ProjectConverter.toUpdateProjectRes(project, techstackMap);
@@ -230,6 +235,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
                 .findAllByMemberAndStatusIn(member, List.of(ProjectStatus.RECRUITING))
                 .stream()
+                // 개발자 추천 대상을 고르는 목록이므로 비노출 프로젝트는 제외한다.
+                // 확인용인 "내 프로젝트" 목록과 달리, 제재로 숨겨진 글로 개발자를 모집하게 두면 안 된다.
+                .filter(project -> !project.isHidden())
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 

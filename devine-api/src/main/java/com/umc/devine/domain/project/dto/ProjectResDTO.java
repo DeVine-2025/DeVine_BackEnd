@@ -139,7 +139,11 @@ public class ProjectResDTO {
             List<RecruitmentInfo> recruitments,
 
             @Schema(description = "프로젝트 이미지 목록")
-            List<ImageInfo> images
+            List<ImageInfo> images,
+
+            @Schema(description = "유저 화면 노출 여부. false면 신고 처리 등으로 관리자가 비노출 처리한 상태다. "
+                    + "비노출 프로젝트는 작성자 본인만 조회할 수 있고 수정/삭제/상태변경은 불가하다.", example = "true")
+            boolean visible
     ) {}
 
     @Builder
@@ -383,7 +387,11 @@ public class ProjectResDTO {
             ProjectStatus projectStatus,
 
             @Schema(description = "프로젝트 상태 이름", example = "진행 중")
-            String projectStatusName
+            String projectStatusName,
+
+            @Schema(description = "유저 화면 노출 여부. false면 신고 처리 등으로 관리자가 비노출 처리한 상태로, "
+                    + "작성자 본인에게만 보이고 검색/추천 등 다른 경로에는 노출되지 않는다.", example = "true")
+            boolean visible
     ) {}
 
     // 내 프로젝트 목록 응답 (PM/개발자 공통)

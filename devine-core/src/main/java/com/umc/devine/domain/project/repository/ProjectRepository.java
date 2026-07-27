@@ -17,23 +17,23 @@ import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
     // PM용: 본인 프로젝트를 상태별로 조회 (페이징)
+    // 작성자 본인의 목록이므로 비노출 처리된 프로젝트도 포함한다. 소유자는 자기 글을 확인할 수 있어야 한다.
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.category " +
             "WHERE p.member = :member " +
             "AND p.status IN :statuses " +
-            "AND p.hidden = false " +
             "ORDER BY p.createdAt DESC",
             countQuery = "SELECT COUNT(p) FROM Project p " +
             "WHERE p.member = :member " +
-            "AND p.status IN :statuses " +
-            "AND p.hidden = false")
+            "AND p.status IN :statuses")
     Page<Project> findByMemberAndStatusIn(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses,
             Pageable pageable);
 
     // 내가 등록한 프로젝트를 상태별로 전체 조회 (비페이징, 내 프로젝트 통합 조회용)
-    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses AND p.hidden = false ORDER BY p.createdAt DESC")
+    // 위와 같은 이유로 비노출 프로젝트도 포함한다.
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses ORDER BY p.createdAt DESC")
     List<Project> findAllByMemberAndStatusIn(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses);
@@ -46,6 +46,14 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category " +
             "WHERE p.id = :id AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED AND p.hidden = false")
     Optional<Project> findVisibleByIdWithMember(@Param("id") Long id);
+
+    // 상세 조회용: 비노출 프로젝트는 작성자 본인에게만 보인다.
+    // viewerMemberId가 null(비로그인)이면 노출된 프로젝트만 조회된다.
+    @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category " +
+            "WHERE p.id = :id " +
+            "AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
+            "AND (p.hidden = false OR p.member.id = :viewerMemberId)")
+    Optional<Project> findByIdWithMemberVisibleTo(@Param("id") Long id, @Param("viewerMemberId") Long viewerMemberId);
 
     @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
     Optional<Project> findByIdWithCategory(@Param("id") Long id);
