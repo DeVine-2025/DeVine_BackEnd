@@ -1,7 +1,12 @@
 # 관리자 프로젝트 노출 관리 API
 
-신고 처리 결과 등에 따라 프로젝트 게시글을 유저 화면에서 노출/비노출로 전환하는 관리자 API 문서입니다.
-패키지: `com.umc.devine.admin.project` (devine-api: dto/service/controller, devine-core: `Project` 엔티티 필드)
+관리자 페이지에서 프로젝트 게시글 목록을 조회하고, 신고 처리 결과 등에 따라 유저 화면에서 노출/비노출로 전환하는 관리자 API 문서입니다.
+패키지: `com.umc.devine.admin.project` (devine-api: dto/converter/service/controller, devine-core: `Project` 엔티티 필드)
+
+| 엔드포인트 | 설명 |
+|---|---|
+| `GET /admin/v1/projects` | 프로젝트 목록 조회 (ID/제목/작성자/등록일/노출상태) |
+| `PATCH /admin/v1/projects/{projectId}/visibility` | 노출/비노출 전환 |
 
 ## 공통 사항
 
@@ -9,7 +14,7 @@
 - **인증**: 관리자 인증/인가 기능이 아직 없어 인증을 강제하지 않습니다(`ApiSecurityConfig`에 permitAll 처리). 로그인 세션이 있으면 처리자로 기록하고(`@CurrentMember(required = false)`), 없으면 처리자가 `null`로 남습니다.
   - TODO: 관리자 인증/인가가 추가되면 인증을 필수로 전환하고 관리자 권한 검증을 추가해야 합니다.
 - **응답 포맷**: 공통 `ApiResponse` 봉투 사용
-- **성공 코드**: `ADMIN_PROJECT200_1`(노출 상태 변경)
+- **성공 코드**: `ADMIN_PROJECT200_1`(노출 상태 변경), `ADMIN_PROJECT200_2`(목록 조회)
 - **에러 코드**
 
   | code | HTTP | 의미 |
@@ -42,7 +47,62 @@
 
 ---
 
-## 프로젝트 노출/비노출 전환
+## 1. 관리자 프로젝트 목록 조회
+
+`GET /admin/v1/projects`
+
+관리자 페이지 테이블에 필요한 항목만 등록일 최신순으로 반환합니다.
+
+### Query Parameters (`AdminProjectReqDTO.SearchReq`)
+
+| 필드 | 타입 | 필수 | 설명 |
+|---|---|---|---|
+| `visible` | Boolean | X | 노출 상태 필터. `true`=노출 중만, `false`=비노출만. 미지정 시 전체 조회 |
+| `page` | Integer | X | 페이지 번호, 1부터 시작 (기본값 1) |
+| `size` | Integer | X | 페이지 크기, 1~100 (기본값 10) |
+
+### Response (`PagedResponse<ProjectSummaryDTO>`)
+
+```json
+{
+  "isSuccess": true,
+  "code": "ADMIN_PROJECT200_2",
+  "message": "성공적으로 프로젝트 목록을 조회했습니다.",
+  "result": {
+    "content": [
+      {
+        "projectId": 10,
+        "title": "쇼핑몰 프로젝트",
+        "authorNickname": "devine_pm",
+        "createdAt": "2026-07-20T14:30:00",
+        "visible": true
+      }
+    ],
+    "page": 1,
+    "size": 10,
+    "totalElements": 1,
+    "totalPages": 1,
+    "isFirst": true,
+    "isLast": true
+  }
+}
+```
+
+| 필드 | 설명 |
+|---|---|
+| `projectId` | 프로젝트 ID (키값). 노출 전환 API의 path variable로 그대로 사용 |
+| `title` | 프로젝트 제목 |
+| `authorNickname` | 글 작성자 닉네임 |
+| `createdAt` | 등록일 |
+| `visible` | 노출 상태 (`true`=노출, `false`=비노출) |
+
+- **삭제된(`DELETED`) 프로젝트는 제외됩니다.** 삭제된 프로젝트는 노출 전환 API가 404를 반환하므로, 목록에 뜨는 모든 행이 곧 노출 전환 가능한 행입니다. 프론트에서 비활성 분기를 따로 둘 필요가 없습니다.
+- 조건에 해당하는 데이터가 없으면 에러가 아니라 `content: []`, `totalElements: 0`을 반환합니다.
+- 정렬은 등록일 최신순 고정입니다.
+
+---
+
+## 2. 프로젝트 노출/비노출 전환
 
 `PATCH /admin/v1/projects/{projectId}/visibility`
 

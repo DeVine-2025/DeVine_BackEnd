@@ -2,6 +2,7 @@ package com.umc.devine.admin.project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.admin.project.dto.AdminProjectReqDTO;
+import com.umc.devine.admin.project.service.command.ProjectVisibilityCommandService;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.CategoryRepository;
@@ -30,6 +31,7 @@ import java.time.LocalDate;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
+import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.patch;
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
@@ -48,6 +50,9 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired
     private ObjectMapper objectMapper;
+
+    @Autowired
+    private ProjectVisibilityCommandService projectVisibilityCommandService;
 
     private Member owner;
     private Category category;
@@ -94,6 +99,60 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
                 .category(category)
                 .member(owner)
                 .build());
+    }
+
+    @Nested
+    @DisplayName("관리자 프로젝트 목록 조회")
+    class GetProjectListTest {
+
+        @Test
+        @DisplayName("프론트에 필요한 필드를 담아 목록을 조회한다")
+        void getProjectList_success() throws Exception {
+            // given
+            Project project = createProject(ProjectStatus.RECRUITING);
+
+            // when & then
+            mockMvc.perform(get("/admin/v1/projects")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.isSuccess").value(true))
+                    .andExpect(jsonPath("$.result.content[0].projectId").value(project.getId()))
+                    .andExpect(jsonPath("$.result.content[0].title").value("프로젝트"))
+                    .andExpect(jsonPath("$.result.content[0].authorNickname").value("project_owner"))
+                    .andExpect(jsonPath("$.result.content[0].createdAt").exists())
+                    .andExpect(jsonPath("$.result.content[0].visible").value(true));
+        }
+
+        @Test
+        @DisplayName("visible=false로 비노출 프로젝트만 조회한다")
+        void getProjectList_hiddenOnly() throws Exception {
+            // given
+            createProject(ProjectStatus.RECRUITING);
+            Project hidden = createProject(ProjectStatus.RECRUITING);
+            projectVisibilityCommandService.hideForModeration(hidden.getId(), null);
+
+            // when & then
+            mockMvc.perform(get("/admin/v1/projects")
+                            .param("visible", "false")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.content.length()").value(1))
+                    .andExpect(jsonPath("$.result.content[0].projectId").value(hidden.getId()))
+                    .andExpect(jsonPath("$.result.content[0].visible").value(false));
+        }
+
+        @Test
+        @DisplayName("결과가 없어도 에러가 아니라 빈 목록을 반환한다")
+        void getProjectList_empty() throws Exception {
+            mockMvc.perform(get("/admin/v1/projects")
+                            .contentType(MediaType.APPLICATION_JSON))
+                    .andDo(print())
+                    .andExpect(status().isOk())
+                    .andExpect(jsonPath("$.result.content").isArray())
+                    .andExpect(jsonPath("$.result.totalElements").value(0));
+        }
     }
 
     @Nested

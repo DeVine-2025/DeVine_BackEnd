@@ -8,6 +8,25 @@ import java.time.LocalDateTime;
 public class AdminProjectResDTO {
 
     @Builder
+    @Schema(description = "관리자 프로젝트 목록 항목")
+    public record ProjectSummaryDTO(
+            @Schema(description = "프로젝트 ID", example = "1")
+            Long projectId,
+
+            @Schema(description = "프로젝트 제목", example = "쇼핑몰 프로젝트")
+            String title,
+
+            @Schema(description = "글 작성자 닉네임", example = "devine_pm")
+            String authorNickname,
+
+            @Schema(description = "등록일")
+            LocalDateTime createdAt,
+
+            @Schema(description = "노출 상태 (true=노출, false=비노출)", example = "true")
+            boolean visible
+    ) {}
+
+    @Builder
     @Schema(description = "프로젝트 노출 상태 변경 응답")
     public record UpdateVisibilityRes(
             @Schema(description = "프로젝트 ID", example = "1")

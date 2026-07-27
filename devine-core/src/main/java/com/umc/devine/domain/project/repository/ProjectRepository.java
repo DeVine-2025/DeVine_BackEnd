@@ -50,6 +50,18 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.id = :id")
     Optional<Project> findByIdWithCategory(@Param("id") Long id);
 
+    // 관리자 목록 조회용: 삭제된 프로젝트는 노출 전환 대상이 아니므로 제외한다.
+    // hidden이 null이면 노출/비노출 전체 조회.
+    @Query(value = "SELECT p FROM Project p " +
+            "JOIN FETCH p.member " +
+            "WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
+            "AND (:hidden IS NULL OR p.hidden = :hidden) " +
+            "ORDER BY p.createdAt DESC",
+            countQuery = "SELECT COUNT(p) FROM Project p " +
+            "WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
+            "AND (:hidden IS NULL OR p.hidden = :hidden)")
+    Page<Project> findForAdmin(@Param("hidden") Boolean hidden, Pageable pageable);
+
     // 주간 베스트 프로젝트 조회
     // - 월요일: previousWeekViewCount 기준 (전주 완성 데이터, 초반 데이터 부족 방지)
     // - 화~일: weeklyViewCount 기준 (이번 주 월요일부터 쌓인 데이터)
