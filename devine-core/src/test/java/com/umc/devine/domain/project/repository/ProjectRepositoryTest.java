@@ -296,23 +296,55 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findAllByIdIn")
-    class FindAllByIdInTest {
+    @DisplayName("findVisibleByIdIn")
+    class FindVisibleByIdInTest {
 
         @Test
         @DisplayName("ID 목록으로 프로젝트를 일괄 조회한다")
-        void findAllByIdIn_success() {
+        void findVisibleByIdIn_success() {
             // given
             Project project1 = createProject("프로젝트 1", ProjectStatus.RECRUITING);
             Project project2 = createProject("프로젝트 2", ProjectStatus.RECRUITING);
             createProject("프로젝트 3", ProjectStatus.RECRUITING);
 
             // when
-            List<Project> result = projectRepository.findAllByIdIn(
+            List<Project> result = projectRepository.findVisibleByIdIn(
                     List.of(project1.getId(), project2.getId()));
 
             // then
             assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("비노출 처리된 프로젝트는 제외된다")
+        void findVisibleByIdIn_excludeHidden() {
+            // given
+            Project visible = createProject("노출 프로젝트", ProjectStatus.RECRUITING);
+            Project hidden = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findVisibleByIdIn(
+                    List.of(visible.getId(), hidden.getId()));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getName()).isEqualTo("노출 프로젝트");
+        }
+
+        @Test
+        @DisplayName("삭제된 프로젝트는 제외된다")
+        void findVisibleByIdIn_excludeDeleted() {
+            // given
+            Project visible = createProject("노출 프로젝트", ProjectStatus.RECRUITING);
+            Project deleted = createProject("삭제된 프로젝트", ProjectStatus.DELETED);
+
+            // when
+            List<Project> result = projectRepository.findVisibleByIdIn(
+                    List.of(visible.getId(), deleted.getId()));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getName()).isEqualTo("노출 프로젝트");
         }
     }
 

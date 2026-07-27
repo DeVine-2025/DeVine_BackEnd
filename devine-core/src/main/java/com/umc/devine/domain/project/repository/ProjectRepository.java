@@ -96,13 +96,15 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "WHERE p.lastViewResetDate IS NULL OR p.lastViewResetDate < :resetDate")
     int rotateWeeklyViewCount(@Param("resetDate") java.time.LocalDate resetDate);
 
-    // N+1 방지용 IN 쿼리 (추천 프로젝트 조회 - List 컬렉션 동시 FETCH 불가하므로 category/member만)
+    // 유저 화면에 노출 가능한 프로젝트 다건 조회
+    // (N+1 방지용 IN 쿼리, 추천 프로젝트 조회 - List 컬렉션 동시 FETCH 불가하므로 category/member만)
     @Query("SELECT DISTINCT p FROM Project p " +
             "LEFT JOIN FETCH p.category " +
             "LEFT JOIN FETCH p.member " +
             "WHERE p.id IN :ids " +
+            "AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
             "AND p.hidden = false")
-    List<Project> findAllByIdIn(@Param("ids") List<Long> ids);
+    List<Project> findVisibleByIdIn(@Param("ids") List<Long> ids);
 
     // 기본 추천용: 최신 모집 중 프로젝트 조회
     @Query("SELECT p FROM Project p " +

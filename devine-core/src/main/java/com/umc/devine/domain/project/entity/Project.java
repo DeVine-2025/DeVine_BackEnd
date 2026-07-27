@@ -144,8 +144,10 @@ public class Project extends BaseEntity {
      * @return 노출 상태가 실제로 바뀌었으면 true, 이미 동일한 상태였으면 false
      */
     public boolean changeVisibility(boolean visible, Member processor, LocalDateTime changedAt) {
-        boolean changed = (this.hidden == visible);
-        this.hidden = !visible;
+        boolean willHide = !visible;
+        boolean changed = this.hidden != willHide;
+
+        this.hidden = willHide;
         this.visibilityChangedBy = processor;
         this.visibilityChangedAt = changedAt;
         return changed;

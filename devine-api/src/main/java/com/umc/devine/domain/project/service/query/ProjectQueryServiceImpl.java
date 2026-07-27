@@ -306,7 +306,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .map(row -> ((Number) row[0]).longValue())
                 .toList();
 
-        List<Project> projects = projectRepository.findAllByIdIn(projectIds);
+        List<Project> projects = projectRepository.findVisibleByIdIn(projectIds);
         Map<Long, Project> projectMap = projects.stream()
                 .collect(Collectors.toMap(Project::getId, p -> p));
 
