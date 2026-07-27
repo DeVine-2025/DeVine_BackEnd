@@ -17,24 +17,35 @@ import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
     // PM용: 본인 프로젝트를 상태별로 조회 (페이징)
-    // 작성자 본인의 목록이므로 비노출 처리된 프로젝트도 포함한다. 소유자는 자기 글을 확인할 수 있어야 한다.
+    // 비노출 프로젝트는 제외한다. 제3자에게 보이는 경로에서도 쓰일 수 있으므로 안전한 쪽을 기본값으로 둔다.
     @Query(value = "SELECT p FROM Project p " +
             "JOIN FETCH p.category " +
             "WHERE p.member = :member " +
             "AND p.status IN :statuses " +
+            "AND p.hidden = false " +
             "ORDER BY p.createdAt DESC",
             countQuery = "SELECT COUNT(p) FROM Project p " +
             "WHERE p.member = :member " +
-            "AND p.status IN :statuses")
+            "AND p.status IN :statuses " +
+            "AND p.hidden = false")
     Page<Project> findByMemberAndStatusIn(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses,
             Pageable pageable);
 
-    // 내가 등록한 프로젝트를 상태별로 전체 조회 (비페이징, 내 프로젝트 통합 조회용)
-    // 위와 같은 이유로 비노출 프로젝트도 포함한다.
-    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses ORDER BY p.createdAt DESC")
+    // 회원의 프로젝트를 상태별로 전체 조회 (비페이징)
+    // 비노출 프로젝트는 제외한다. 공개 프로필(GET /members/{nickname}/projects)처럼 제3자가 보는 경로에서
+    // 재사용되므로, 비노출 프로젝트를 포함하려면 아래 IncludingHidden 메서드를 명시적으로 호출해야 한다.
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses AND p.hidden = false ORDER BY p.createdAt DESC")
     List<Project> findAllByMemberAndStatusIn(
+            @Param("member") Member member,
+            @Param("statuses") List<ProjectStatus> statuses);
+
+    // 작성자 본인의 "내 프로젝트" 목록 전용: 비노출 프로젝트까지 포함한다.
+    // 소유자는 자기 글이 비노출됐는지 확인할 수 있어야 하므로 이 경로에서만 사용한다.
+    // 제3자에게 노출되는 경로에서 절대 호출하면 안 된다.
+    @Query("SELECT p FROM Project p JOIN FETCH p.category WHERE p.member = :member AND p.status IN :statuses ORDER BY p.createdAt DESC")
+    List<Project> findAllByMemberAndStatusInIncludingHidden(
             @Param("member") Member member,
             @Param("statuses") List<ProjectStatus> statuses);
 

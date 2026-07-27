@@ -198,8 +198,8 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("작성자 본인의 목록이므로 비노출 프로젝트도 포함된다")
-        void findByMemberAndStatusIn_includeHidden() {
+        @DisplayName("비노출 프로젝트는 제외된다 (제3자 노출 경로에서도 재사용되므로 안전한 쪽이 기본값)")
+        void findByMemberAndStatusIn_excludeHidden() {
             // given
             createProject("모집 중", ProjectStatus.RECRUITING);
             createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
@@ -209,7 +209,8 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
                     testMember, List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
 
             // then
-            assertThat(result.getContent()).hasSize(2);
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getName()).isEqualTo("모집 중");
         }
     }
 
@@ -218,14 +219,30 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
     class FindAllByMemberAndStatusInTest {
 
         @Test
-        @DisplayName("작성자 본인의 목록이므로 비노출 프로젝트도 포함된다")
-        void findAllByMemberAndStatusIn_includeHidden() {
+        @DisplayName("비노출 프로젝트는 제외된다 (공개 프로필 등 제3자 경로에서 재사용됨)")
+        void findAllByMemberAndStatusIn_excludeHidden() {
             // given
             createProject("모집 중", ProjectStatus.RECRUITING);
             createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
 
             // when
             List<Project> result = projectRepository.findAllByMemberAndStatusIn(
+                    testMember, List.of(ProjectStatus.RECRUITING));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result).noneMatch(Project::isHidden);
+        }
+
+        @Test
+        @DisplayName("IncludingHidden 변형은 작성자 본인 목록용이므로 비노출 프로젝트도 포함한다")
+        void findAllByMemberAndStatusInIncludingHidden() {
+            // given
+            createProject("모집 중", ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findAllByMemberAndStatusInIncludingHidden(
                     testMember, List.of(ProjectStatus.RECRUITING));
 
             // then

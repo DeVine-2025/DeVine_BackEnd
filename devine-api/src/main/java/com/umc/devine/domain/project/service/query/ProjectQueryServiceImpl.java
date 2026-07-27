@@ -180,10 +180,25 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        // 작성자 본인이 자기 목록을 보는 경로이므로 비노출 프로젝트도 포함한다.
+        return buildProjectsOf(member, statuses, pageable, true);
+    }
+
+    @Override
+    public ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member owner, List<ProjectStatus> statuses, Pageable pageable) {
+        // 공개 프로필은 제3자가 보는 경로다. 비노출 프로젝트가 나가면 제재 사실이 노출된다.
+        return buildProjectsOf(owner, statuses, pageable, false);
+    }
+
+    private ProjectResDTO.MyProjectsRes buildProjectsOf(
+            Member member, List<ProjectStatus> statuses, Pageable pageable, boolean includeHidden
+    ) {
         // 내가 등록한 프로젝트
-        List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
-                .findAllByMemberAndStatusIn(member, statuses)
-                .stream()
+        List<Project> createdProjects = includeHidden
+                ? projectRepository.findAllByMemberAndStatusInIncludingHidden(member, statuses)
+                : projectRepository.findAllByMemberAndStatusIn(member, statuses);
+
+        List<ProjectResDTO.MyProjectInfo> createdInfos = createdProjects.stream()
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
