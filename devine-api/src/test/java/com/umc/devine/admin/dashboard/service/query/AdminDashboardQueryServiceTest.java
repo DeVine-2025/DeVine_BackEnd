@@ -27,10 +27,14 @@ import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
 class AdminDashboardQueryServiceTest extends IntegrationTestSupport {
+
+    /** paidAt은 서버 타임존과 무관하게 한국 시간으로 저장되므로, 테스트 데이터도 KST로 만든다. */
+    private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
 
     @Autowired
     private AdminDashboardQueryService adminDashboardQueryService;
@@ -81,8 +85,8 @@ class AdminDashboardQueryServiceTest extends IntegrationTestSupport {
         createCoupon(100, 30);
         createCoupon(100, 5);
 
-        createPaidTransaction(LocalDateTime.now());
-        createPaidTransaction(LocalDate.now().atStartOfDay());
+        createPaidTransaction(LocalDateTime.now(SERVICE_ZONE));
+        createPaidTransaction(LocalDate.now(SERVICE_ZONE).atStartOfDay());
 
         // when
         AdminDashboardResDTO.DashboardDTO result = adminDashboardQueryService.getDashboard();
@@ -118,7 +122,7 @@ class AdminDashboardQueryServiceTest extends IntegrationTestSupport {
     @DisplayName("어제 결제와 내일 결제는 오늘 결제 건수에 포함되지 않는다")
     void getDashboard_todayPaymentBoundary() {
         // given
-        LocalDateTime startOfToday = LocalDate.now().atStartOfDay();
+        LocalDateTime startOfToday = LocalDate.now(SERVICE_ZONE).atStartOfDay();
         createPaidTransaction(startOfToday.minusSeconds(1));
         createPaidTransaction(startOfToday.plusDays(1));
         createPaidTransaction(startOfToday.plusDays(1).minusSeconds(1));
