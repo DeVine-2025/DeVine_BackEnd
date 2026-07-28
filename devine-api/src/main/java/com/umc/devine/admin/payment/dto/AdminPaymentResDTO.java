@@ -33,9 +33,6 @@ public class AdminPaymentResDTO {
             @Schema(description = "결제 ID", example = "1")
             Long paymentId,
 
-            @Schema(description = "유저 ID", example = "1")
-            Long memberId,
-
             @Schema(description = "유저 닉네임", example = "홍길동")
             String memberNickname,
 
@@ -60,9 +57,6 @@ public class AdminPaymentResDTO {
 
             @Schema(description = "PortOne 결제 ID", example = "payment_1234567890")
             String portonePaymentId,
-
-            @Schema(description = "유저 ID", example = "1")
-            Long memberId,
 
             @Schema(description = "유저 닉네임", example = "홍길동")
             String memberNickname,

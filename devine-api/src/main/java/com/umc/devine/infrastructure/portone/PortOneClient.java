@@ -67,8 +67,8 @@ public class PortOneClient {
     /**
      * 결제를 전액 취소(환불)
      *
-     * <p>예외를 던지지 않고 {@link CancelOutcome}로 변환해 반환한다. 이중 환불 방지를 위해
-     * 타임아웃/IO/모호한 PG 응답은 {@link CancelOutcome.Unknown}으로 떨어뜨리고(절대 실패로 단정하지 않음),
+     * 예외를 던지지 않고 CancelOutcome으로 변환해 반환한다. 이중 환불 방지를 위해
+     * 타임아웃/IO/모호한 PG 응답은 CancelOutcome.Unknown으로 떨어뜨리고(절대 실패로 단정하지 않음),
      * 이미 취소된 결제는 성공으로 흡수한다(재시도 안전망).
      */
     public CancelOutcome cancelPayment(String paymentId, String reason) {

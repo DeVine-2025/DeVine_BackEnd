@@ -20,7 +20,6 @@ public class AdminPaymentConverter {
     ) {
         return AdminPaymentResDTO.PaymentSummaryDTO.builder()
                 .paymentId(summary.paymentId())
-                .memberId(summary.memberId())
                 .memberNickname(summary.memberNickname())
                 .orderName(summary.orderName())
                 .amount(summary.amount())
@@ -41,7 +40,6 @@ public class AdminPaymentConverter {
         return AdminPaymentResDTO.PaymentDetailDTO.builder()
                 .paymentId(payment.getId())
                 .portonePaymentId(payment.getPortonePaymentId())
-                .memberId(payment.getMember().getId())
                 .memberNickname(payment.getMember().getNickname())
                 .orderName(payment.getOrderName())
                 .amount(payment.getAmount())

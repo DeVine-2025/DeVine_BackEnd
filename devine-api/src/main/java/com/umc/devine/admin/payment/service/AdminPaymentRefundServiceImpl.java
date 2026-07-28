@@ -11,9 +11,9 @@ import org.springframework.stereotype.Service;
 
 /**
  * 환불 오케스트레이터(트랜잭션 없음). 외부 취소 호출을 트랜잭션 밖에서 수행하고,
- * 그 결과({@link CancelOutcome})에 따라 트랜잭션 경계 빈({@link RefundTxService})에 반영을 위임한다.
+ * 그 결과(CancelOutcome)에 따라 트랜잭션 경계 빈(RefundTxService)에 반영을 위임한다.
  *
- * <p>핵심: 타임아웃/결과 불명은 절대 FAILED로 종료하지 않는다(UNKNOWN, 대사 대상). 이것이 이중 환불 방지의 실질이다.
+ * 핵심: 타임아웃/결과 불명은 절대 FAILED로 종료하지 않는다(UNKNOWN, 대사 대상). 이것이 이중 환불 방지의 실질이다.
  */
 @Slf4j
 @Service
