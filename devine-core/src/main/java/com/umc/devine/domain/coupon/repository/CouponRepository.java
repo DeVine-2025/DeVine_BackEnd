@@ -24,4 +24,14 @@ public interface CouponRepository extends JpaRepository<Coupon, Long> {
     @Modifying
     @Query("UPDATE Coupon c SET c.usedCount = c.usedCount + 1 WHERE c.id = :couponId")
     int incrementUsedCountById(@Param("couponId") Long couponId);
+
+    /** 전체 쿠폰의 발급/사용 수 총합. 대시보드의 전체 쿠폰 사용률 계산에 쓰인다. */
+    @Query("SELECT COALESCE(SUM(c.issuedCount), 0) AS issuedCount, COALESCE(SUM(c.usedCount), 0) AS usedCount FROM Coupon c")
+    UsageSum sumIssuedAndUsedCount();
+
+    interface UsageSum {
+        long getIssuedCount();
+
+        long getUsedCount();
+    }
 }
