@@ -4,11 +4,13 @@ import com.umc.devine.admin.dashboard.dto.AdminDashboardResDTO;
 import com.umc.devine.admin.dashboard.exception.code.AdminDashboardSuccessCode;
 import com.umc.devine.admin.dashboard.service.query.AdminDashboardQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
+import io.swagger.v3.oas.annotations.Hidden;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
 
+@Hidden
 @RestController
 @RequiredArgsConstructor
 @RequestMapping("/admin/v1/dashboard")
