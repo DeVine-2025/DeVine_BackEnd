@@ -23,3 +23,10 @@ executor:
     core-pool-size: 5
     max-pool-size: 10
     queue-capacity: 100
+
+# FastAPI (prod 프로파일에만 선언돼 있어 dev에서는 헬스체크가 대상 URL을 못 찾는다)
+fastapi:
+  callback:
+    base-url: ${FASTAPI_CALLBACK_URL:http://localhost:8080}
+  report:
+    base-url: ${FASTAPI_URL:http://localhost:8000}
