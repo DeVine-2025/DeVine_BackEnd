@@ -49,6 +49,16 @@ github:
 cors:
   allowed-origins: ${CORS_ALLOWED_ORIGINS:http://localhost:5173}
 
+# Admin (관리자 인증/인가)
+# bootstrap-clerk-ids: 최초 관리자 부트스트랩용 Clerk user id(user_xxx) 목록(콤마 구분).
+#   이 clerk_id로 처음 /admin 접근 시 admin 테이블에 자동 등록된다.
+#   판정은 clerk_id(sub, 위조 불가)만 신뢰하므로 Clerk 세션 토큰 커스터마이즈(email 등)는 관리자용으론 불필요하다.
+#   최초 관리자의 user id 확보: 로그인 후 /admin 접근 시 403 감사 로그의 clerkId, 또는 Clerk Dashboard → Users → User ID.
+#   운영 주의(회수): 관리자를 회수(is_active=false)할 때는 이 목록에서도 해당 clerk_id를 반드시 제거한다.
+#     목록에 남아 있어도 회수 우선 정책상 재활성화되지는 않지만, 목록 정리가 부트스트랩 백도어를 최소화한다.
+admin:
+  bootstrap-clerk-ids: ${ADMIN_BOOTSTRAP_CLERK_IDS:}
+
 # PortOne
 portone:
   store-id: ${PORTONE_STORE_ID:}
