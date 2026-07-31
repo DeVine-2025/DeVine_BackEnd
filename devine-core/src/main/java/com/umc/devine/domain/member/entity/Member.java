@@ -169,12 +169,12 @@ public class Member extends BaseEntity {
         this.scheduledWithdrawalAt = null;
     }
 
-    /**
-     * 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정.
-     */
+    /** 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정. 자진탈퇴와 마찬가지로 즉시 PII를 익명화한다. */
     public void finalizeWithdrawal() {
         this.used = MemberStatus.DELETED;
         this.scheduledWithdrawalAt = null;
+        this.deletedAt = LocalDateTime.now();
+        anonymizePersonalInfo();
     }
 
     /**
