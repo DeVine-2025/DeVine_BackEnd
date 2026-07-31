@@ -81,7 +81,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("정책 위반")
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus("no-such-nickname", admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus("no-such-nickname", admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
     }
@@ -99,7 +99,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .notifyRequested(true)
                     .build();
 
-            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request);
+            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request);
 
             assertThat(result.status()).isEqualTo(MemberStatus.SUSPENDED);
         }
@@ -111,7 +111,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .action(MemberStatusAction.SUSPEND)
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
 
@@ -124,7 +124,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("커뮤니티 이용규칙 위반")
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
 
@@ -136,7 +136,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("커뮤니티 이용규칙 위반")
                     .build();
 
-            adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request);
+            adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request);
 
             List<MemberStatusHistory> histories = memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(target.getId());
             assertThat(histories).hasSize(1);
@@ -157,7 +157,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .action(MemberStatusAction.UNSUSPEND)
                     .build();
 
-            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request);
+            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request);
 
             assertThat(result.status()).isEqualTo(MemberStatus.ACTIVE);
         }
@@ -169,7 +169,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .action(MemberStatusAction.UNSUSPEND)
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
     }
@@ -186,7 +186,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("중대한 규정 위반")
                     .build();
 
-            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request);
+            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request);
 
             assertThat(result.status()).isEqualTo(MemberStatus.PENDING_WITHDRAWAL);
             assertThat(result.scheduledWithdrawalAt()).isAfter(LocalDateTime.now().plusDays(29));
@@ -200,7 +200,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .action(MemberStatusAction.FORCE_WITHDRAW)
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
 
@@ -213,7 +213,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("중대한 규정 위반")
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
     }
@@ -231,7 +231,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .reason("소명 완료")
                     .build();
 
-            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request);
+            AdminMemberResDTO.ChangeStatusRes result = adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request);
 
             assertThat(result.status()).isEqualTo(MemberStatus.ACTIVE);
             assertThat(result.scheduledWithdrawalAt()).isNull();
@@ -244,7 +244,7 @@ class AdminMemberCommandServiceTest extends IntegrationTestSupport {
                     .action(MemberStatusAction.CANCEL_WITHDRAWAL)
                     .build();
 
-            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getId(), request))
+            assertThatThrownBy(() -> adminMemberCommandService.changeStatus(target.getNickname(), admin.getClerkId(), request))
                     .isInstanceOf(MemberAdminException.class);
         }
     }
