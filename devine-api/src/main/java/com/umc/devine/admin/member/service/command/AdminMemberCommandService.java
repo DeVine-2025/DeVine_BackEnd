@@ -5,5 +5,5 @@ import com.umc.devine.admin.member.dto.AdminMemberResDTO;
 
 public interface AdminMemberCommandService {
 
-    AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, Long processorMemberId, AdminMemberReqDTO.ChangeStatusReq request);
+    AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, String processorClerkId, AdminMemberReqDTO.ChangeStatusReq request);
 }

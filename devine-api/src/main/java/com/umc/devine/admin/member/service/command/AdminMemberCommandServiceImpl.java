@@ -37,13 +37,13 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
     private final ApplicationEventPublisher eventPublisher;
 
     @Override
-    public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, Long processorMemberId, AdminMemberReqDTO.ChangeStatusReq request) {
+    public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, String processorClerkId, AdminMemberReqDTO.ChangeStatusReq request) {
         Member member = memberRepository.findByNicknameIncludingInactive(nickname)
                 .orElseThrow(() -> new MemberAdminException(MemberAdminErrorReason.MEMBER_NOT_FOUND));
 
         applyAction(member, request);
 
-        Member processor = processorMemberId != null ? memberRepository.findById(processorMemberId).orElse(null) : null;
+        Member processor = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         memberStatusHistoryRepository.save(MemberStatusHistory.builder()
                 .member(member)

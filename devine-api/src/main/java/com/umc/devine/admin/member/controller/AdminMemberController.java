@@ -1,17 +1,17 @@
 package com.umc.devine.admin.member.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
 import com.umc.devine.admin.member.exception.code.AdminMemberSuccessCode;
 import com.umc.devine.admin.member.service.command.AdminMemberCommandService;
 import com.umc.devine.admin.member.service.query.AdminMemberQueryService;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,12 +43,11 @@ public class AdminMemberController implements AdminMemberControllerDocs {
     @Override
     @PatchMapping("/{nickname}/status")
     public ApiResponse<AdminMemberResDTO.ChangeStatusRes> changeStatus(
-            @CurrentMember(required = false) Member member,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable String nickname,
             @RequestBody @Valid AdminMemberReqDTO.ChangeStatusReq request
     ) {
-        Long processorMemberId = member != null ? member.getId() : null;
-        AdminMemberResDTO.ChangeStatusRes response = adminMemberCommandService.changeStatus(nickname, processorMemberId, request);
+        AdminMemberResDTO.ChangeStatusRes response = adminMemberCommandService.changeStatus(nickname, admin.getClerkId(), request);
         return ApiResponse.onSuccess(AdminMemberSuccessCode.STATUS_CHANGED, response);
     }
 }

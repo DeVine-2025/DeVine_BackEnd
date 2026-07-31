@@ -1,24 +1,21 @@
 package com.umc.devine.admin.member.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.security.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-/**
- * TODO: 관리자 인증/인가 양식이 아직 확정되지 않아 관리자 권한 검증은 미적용. 양식 확정 후 추가 예정.
- */
 @Tag(name = "Admin Member", description = "관리자 유저 관리 API")
 public interface AdminMemberControllerDocs {
 
@@ -46,7 +43,7 @@ public interface AdminMemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "유저를 찾을 수 없음")
     })
     ApiResponse<AdminMemberResDTO.ChangeStatusRes> changeStatus(
-            @Parameter(hidden = true) @CurrentMember(required = false) Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal AdminPrincipal admin,
             @Parameter(description = "닉네임", required = true) @PathVariable String nickname,
             @RequestBody @Valid AdminMemberReqDTO.ChangeStatusReq request
     );
