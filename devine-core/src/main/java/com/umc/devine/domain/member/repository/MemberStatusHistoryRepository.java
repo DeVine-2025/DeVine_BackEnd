@@ -1,6 +1,6 @@
-package com.umc.devine.admin.member.repository;
+package com.umc.devine.domain.member.repository;
 
-import com.umc.devine.admin.member.entity.MemberStatusHistory;
+import com.umc.devine.domain.member.entity.MemberStatusHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

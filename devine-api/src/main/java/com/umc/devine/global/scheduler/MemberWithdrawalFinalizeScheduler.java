@@ -1,11 +1,11 @@
 package com.umc.devine.global.scheduler;
 
-import com.umc.devine.admin.member.entity.MemberStatusHistory;
-import com.umc.devine.admin.member.enums.MemberStatusAction;
-import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.MemberStatusHistory;
 import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberStatusHistoryRepository;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
