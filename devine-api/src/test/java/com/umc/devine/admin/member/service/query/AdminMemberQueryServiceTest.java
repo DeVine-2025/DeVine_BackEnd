@@ -1,5 +1,7 @@
 package com.umc.devine.admin.member.service.query;
 
+import com.umc.devine.admin.complaint.entity.Complaint;
+import com.umc.devine.admin.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
 import com.umc.devine.admin.member.exception.MemberAdminException;
@@ -36,6 +38,9 @@ class AdminMemberQueryServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private PaymentRepository paymentRepository;
+
+    @Autowired
+    private ComplaintRepository complaintRepository;
 
     private Member member;
 
@@ -196,6 +201,46 @@ class AdminMemberQueryServiceTest extends IntegrationTestSupport {
             assertThat(result.paymentSummary().totalCount()).isEqualTo(1);
             assertThat(result.paymentSummary().totalAmount()).isEqualTo(5000L);
             assertThat(result.paymentSummary().recentPayments()).hasSize(1);
+        }
+
+        @Test
+        @DisplayName("신고 이력이 없으면 신고 이력이 빈 목록으로 반환된다")
+        void getMemberDetail_noComplaintHistory() {
+            // when
+            AdminMemberResDTO.MemberDetailRes result = adminMemberQueryService.getMemberDetail(member.getNickname());
+
+            // then
+            assertThat(result.respondentHistory().respondentComplaintCount()).isZero();
+            assertThat(result.respondentHistory().respondentHistory()).isEmpty();
+        }
+
+        @Test
+        @DisplayName("피신고 이력이 있으면 유저 상세에 누적 신고 건수와 이력이 반영된다")
+        void getMemberDetail_withComplaintHistory() {
+            // given
+            Member complainant = memberRepository.save(Member.builder()
+                    .clerkId("clerk_complainant")
+                    .name("신고자")
+                    .nickname("complainant")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+            complaintRepository.save(Complaint.builder()
+                    .complainant(complainant)
+                    .respondentMember(member)
+                    .targetType(com.umc.devine.admin.complaint.enums.ComplaintTargetType.CHAT)
+                    .targetId(1L)
+                    .reason("부적절한 콘텐츠입니다.")
+                    .status(com.umc.devine.admin.complaint.enums.ComplaintStatus.PENDING)
+                    .build());
+
+            // when
+            AdminMemberResDTO.MemberDetailRes result = adminMemberQueryService.getMemberDetail(member.getNickname());
+
+            // then
+            assertThat(result.respondentHistory().respondentComplaintCount()).isEqualTo(1);
+            assertThat(result.respondentHistory().respondentHistory()).hasSize(1);
         }
     }
 }
