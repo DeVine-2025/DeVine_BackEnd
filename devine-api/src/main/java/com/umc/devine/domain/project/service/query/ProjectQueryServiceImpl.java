@@ -59,7 +59,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     @Transactional
     public ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId) {
-        Project project = projectRepository.findByIdWithMemberAndStatusNot(projectId, ProjectStatus.DELETED)
+        Project project = projectRepository.findByIdWithMemberAndStatusNotIn(projectId, ProjectStatus.INVISIBLE_STATUSES)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         // 원자적 조회수 증가 (동시성 안전)
@@ -72,7 +72,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
-        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
+        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.INVISIBLE_STATUSES, isMonday);
 
         List<Project> limitedProjects = projects.stream().limit(WEEKLY_BEST_LIMIT).toList();
         List<Long> projectIds = limitedProjects.stream().map(Project::getId).toList();

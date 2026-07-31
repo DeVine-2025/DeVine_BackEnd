@@ -10,6 +10,8 @@ import com.umc.devine.domain.payment.entity.Transaction;
 import com.umc.devine.domain.payment.enums.PaymentMethod;
 import com.umc.devine.domain.payment.enums.TransactionStatus;
 import com.umc.devine.domain.payment.enums.TransactionType;
+import com.umc.devine.domain.payment.exception.PaymentException;
+import com.umc.devine.domain.payment.exception.code.PaymentErrorReason;
 import com.umc.devine.infrastructure.portone.dto.PortOnePaymentResponse;
 
 import java.time.LocalDateTime;
@@ -29,12 +31,18 @@ public class PaymentConverter {
     }
 
     public static Transaction toTransaction(PortOnePaymentResponse portOneResponse, Payment payment) {
+        PaymentMethod method;
+        try {
+            method = PaymentMethod.fromPortOneType(portOneResponse.method().type());
+        } catch (IllegalArgumentException e) {
+            throw new PaymentException(PaymentErrorReason.UNSUPPORTED_PAYMENT_METHOD);
+        }
         return Transaction.builder()
                 .portoneTransactionId(portOneResponse.transactionId())
                 .payment(payment)
                 .type(TransactionType.PAYMENT)
                 .status(TransactionStatus.PAID)
-                .method(PaymentMethod.fromPortOneType(portOneResponse.method().type()))
+                .method(method)
                 .pgProvider(portOneResponse.pgProvider() != null ? portOneResponse.pgProvider() : "UNKNOWN")
                 .amount(portOneResponse.amount().total())
                 .paidAt(parseDateTime(portOneResponse.paidAt()))

@@ -29,6 +29,18 @@ public interface PaymentControllerDocs {
             @Valid @RequestBody PaymentReqDTO.CompletePaymentDTO request
     );
 
+    @Operation(summary = "0원 결제 완료 API", description = "쿠폰 할인 적용 후 결제 금액이 0원이 되는 경우, PortOne 호출 없이 서버에서 직접 처리하는 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "201", description = "Created, 0원 결제 완료 및 리포트 생성권 지급"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "금액 불일치, 쿠폰 적용 후 금액이 0원이 아님, 사용 불가능한 쿠폰"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "보유 쿠폰을 찾을 수 없음")
+    })
+    ApiResponse<PaymentResDTO.PaymentDTO> freePayment(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Valid @RequestBody PaymentReqDTO.FreePaymentDTO request
+    );
+
     @Operation(summary = "내 결제 목록 조회 API", description = "로그인한 사용자의 결제 내역을 조회하는 API입니다.")
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
