@@ -18,9 +18,6 @@ public class MemberResDTO {
     @Builder
     @Schema(description = "회원가입 응답")
     public record SignupResultDTO(
-            @Schema(description = "회원 ID", example = "1")
-            Long memberId,
-
             @Schema(description = "닉네임", example = "devine")
             String nickname,
 
