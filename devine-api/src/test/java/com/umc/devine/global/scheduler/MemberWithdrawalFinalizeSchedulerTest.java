@@ -166,7 +166,7 @@ class MemberWithdrawalFinalizeSchedulerTest extends IntegrationTestSupport {
             return m;
         });
 
-        // when — 한 회원의 처리가 다른 회원의 확정 처리에 영향을 주지 않는지 검증
+        // when: 한 회원의 처리가 다른 회원의 확정 처리에 영향을 주지 않는지 검증
         scheduler.finalizeExpiredWithdrawals();
 
         // then

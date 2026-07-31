@@ -158,7 +158,7 @@ class MemberWithdrawalCommandServiceTest extends IntegrationTestSupport {
                     .build();
             memberWithdrawalCommandService.selfWithdraw(member, request);
 
-            // when & then — 두 번째 요청은 이미 DELETED로 바뀐 상태를 잠금 조회로 다시 확인하고 거부한다
+            // when & then: 두 번째 요청은 이미 DELETED로 바뀐 상태를 잠금 조회로 다시 확인하고 거부한다
             assertThatThrownBy(() -> memberWithdrawalCommandService.selfWithdraw(member, request))
                     .isInstanceOf(MemberException.class);
         }

@@ -254,7 +254,7 @@ class MemberHardDeleteSchedulerTest extends IntegrationTestSupport {
     @Test
     @DisplayName("실제 가입→자진탈퇴 플로우를 거친 회원도 하드삭제된다 (member_report_credit/member_agreement가 실제로 생성된 상태)")
     void hardDeleteExpiredWithdrawals_deletesRealSignupAndSelfWithdrawnMember() {
-        // given: 실제 회원가입 플로우 — signup 시 member_report_credit, member_agreement가 항상 생성된다
+        // given: 실제 회원가입 플로우. signup 시 member_report_credit, member_agreement가 항상 생성된다
         List<Terms> requiredTerms = termsRepository.findAllByRequired(true);
         Category category = categoryRepository.findByGenre(CategoryGenre.HEALTHCARE).orElseThrow();
         ClerkPrincipal principal = new ClerkPrincipal("clerk_hard_delete_real_flow", "realflow@example.com", "실플로우", null);
@@ -278,7 +278,7 @@ class MemberHardDeleteSchedulerTest extends IntegrationTestSupport {
                 .targetId(1L)
                 .build());
 
-        // 업로드 이미지 — 삭제 대상 아님, 업로더 참조만 끊겨야 함
+        // 업로드 이미지: 삭제 대상 아님, 업로더 참조만 끊겨야 함
         Image image = imageRepository.save(Image.builder()
                 .imageType(ImageType.PROFILE)
                 .imageUrl("https://example.com/real-flow-" + System.nanoTime() + ".png")
@@ -310,7 +310,7 @@ class MemberHardDeleteSchedulerTest extends IntegrationTestSupport {
                 .content("내용")
                 .build());
 
-        // 실제 자진탈퇴 플로우 — member_status_history가 생성된다
+        // 실제 자진탈퇴 플로우: member_status_history가 생성된다
         memberWithdrawalCommandService.selfWithdraw(realFlowMember,
                 MemberReqDTO.SelfWithdrawReq.builder().confirmationText("realflowuser").build());
         assertThat(memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(realFlowMemberId)).isNotEmpty();

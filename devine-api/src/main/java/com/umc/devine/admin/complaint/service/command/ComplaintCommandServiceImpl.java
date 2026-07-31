@@ -104,7 +104,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
                 AdminMemberReqDTO.ChangeStatusReq.builder()
                         .action(MemberStatusAction.SUSPEND)
                         .reason(resolutionReason)
-                        // 신고로 인한 정지는 항상 통지한다 — 관리자가 선택하는 직접 정지 API와 달리
+                        // 신고로 인한 정지는 항상 통지한다. 관리자가 선택하는 직접 정지 API와 달리
                         // 신고 처리 결과를 당사자에게 알리지 않을 이유가 없어 의도적으로 고정했다.
                         .notifyRequested(Boolean.TRUE)
                         .build()
