@@ -7,7 +7,8 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
-import com.umc.devine.global.security.ClerkPrincipal;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -17,6 +18,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
+
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -44,17 +48,14 @@ class AdminMemberControllerTest extends ControllerIntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        Member admin = memberRepository.save(Member.builder()
+        AdminPrincipal principal = AdminPrincipal.builder()
                 .clerkId("clerk_admin")
+                .email("admin@example.com")
                 .name("관리자")
-                .nickname("admin")
-                .mainType(MemberMainType.PM)
-                .disclosure(true)
-                .used(MemberStatus.ACTIVE)
-                .build());
-
-        ClerkPrincipal principal = new ClerkPrincipal("clerk_admin", "admin@example.com", "관리자", null);
-        adminAuth = new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     @Nested
@@ -62,9 +63,10 @@ class AdminMemberControllerTest extends ControllerIntegrationTestSupport {
     class GetMemberListTest {
 
         @Test
-        @DisplayName("인증 없이도 유저 목록을 조회할 수 있다")
+        @DisplayName("관리자는 유저 목록을 조회할 수 있다")
         void getMemberList_success() throws Exception {
-            mockMvc.perform(get("/admin/v1/member"))
+            mockMvc.perform(get("/admin/v1/member")
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.content").isArray());
         }
@@ -77,7 +79,8 @@ class AdminMemberControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하는 닉네임으로 상세를 조회할 수 있다")
         void getMemberDetail_success() throws Exception {
-            mockMvc.perform(get("/admin/v1/member/{nickname}", target.getNickname()))
+            mockMvc.perform(get("/admin/v1/member/{nickname}", target.getNickname())
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.nickname").value(target.getNickname()));
         }
@@ -85,7 +88,8 @@ class AdminMemberControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 닉네임이면 404를 반환한다")
         void getMemberDetail_notFound() throws Exception {
-            mockMvc.perform(get("/admin/v1/member/{nickname}", "no-such-nickname"))
+            mockMvc.perform(get("/admin/v1/member/{nickname}", "no-such-nickname")
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isNotFound());
         }
     }
