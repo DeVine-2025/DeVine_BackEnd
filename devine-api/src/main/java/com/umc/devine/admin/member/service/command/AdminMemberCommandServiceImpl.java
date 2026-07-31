@@ -38,12 +38,16 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
 
     @Override
     public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, String processorClerkId, AdminMemberReqDTO.ChangeStatusReq request) {
+        Member processor = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
+        return changeStatus(nickname, processor, request);
+    }
+
+    @Override
+    public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, Member processor, AdminMemberReqDTO.ChangeStatusReq request) {
         Member member = memberRepository.findByNicknameIncludingInactive(nickname)
                 .orElseThrow(() -> new MemberAdminException(MemberAdminErrorReason.MEMBER_NOT_FOUND));
 
         applyAction(member, request);
-
-        Member processor = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         memberStatusHistoryRepository.save(MemberStatusHistory.builder()
                 .member(member)
