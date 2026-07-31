@@ -73,16 +73,24 @@ public class ComplaintQueryServiceImpl implements ComplaintQueryService {
                 .orElseThrow(() -> new ComplaintException(ComplaintErrorReason.COMPLAINT_NOT_FOUND));
 
         String content = resolveContent(complaint);
+        ComplaintResDTO.RespondentHistoryRes respondentHistory = getRespondentHistory(complaint.getRespondentMember().getId());
 
-        Long respondentMemberId = complaint.getRespondentMember().getId();
-        long respondentComplaintCount = complaintRepository.countByRespondentMemberId(respondentMemberId);
+        return ComplaintConverter.toComplaintDetailRes(
+                complaint, content, respondentHistory.respondentComplaintCount(), respondentHistory.respondentHistory());
+    }
+
+    @Override
+    public ComplaintResDTO.RespondentHistoryRes getRespondentHistory(Long memberId) {
+        long respondentComplaintCount = complaintRepository.countByRespondentMemberId(memberId);
         LocalDateTime now = LocalDateTime.now();
         List<ComplaintResDTO.ComplaintSummaryDTO> history = complaintRepository
-                .findByRespondentMemberIdOrderByCreatedAtDesc(respondentMemberId).stream()
+                .findByRespondentMemberIdOrderByCreatedAtDesc(memberId).stream()
                 .map(r -> ComplaintConverter.toComplaintSummaryDTO(r, ComplaintConverter.isSlaExceeded(r, now)))
                 .toList();
-
-        return ComplaintConverter.toComplaintDetailRes(complaint, content, respondentComplaintCount, history);
+        return ComplaintResDTO.RespondentHistoryRes.builder()
+                .respondentComplaintCount(respondentComplaintCount)
+                .respondentHistory(history)
+                .build();
     }
 
     private String resolveContent(Complaint complaint) {

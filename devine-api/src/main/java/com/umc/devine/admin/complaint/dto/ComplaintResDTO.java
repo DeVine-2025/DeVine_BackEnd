@@ -81,6 +81,15 @@ public class ComplaintResDTO {
     ) {}
 
     @Builder
+    public record RespondentHistoryRes(
+            @Schema(description = "피신고자의 누적 신고 건수", example = "3")
+            long respondentComplaintCount,
+
+            @Schema(description = "피신고자의 과거 신고/제재 이력")
+            List<ComplaintSummaryDTO> respondentHistory
+    ) {}
+
+    @Builder
     public record UpdateStatusRes(
             @Schema(description = "신고 ID", example = "1")
             Long complaintId,

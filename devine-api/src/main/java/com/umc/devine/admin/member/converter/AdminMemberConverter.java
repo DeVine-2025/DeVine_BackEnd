@@ -1,5 +1,6 @@
 package com.umc.devine.admin.member.converter;
 
+import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
 import com.umc.devine.domain.member.entity.MemberLoginHistory;
 import com.umc.devine.domain.member.entity.Member;
@@ -52,7 +53,8 @@ public class AdminMemberConverter {
             Member member,
             String email,
             AdminMemberResDTO.PaymentSummaryDTO paymentSummary,
-            List<AdminMemberResDTO.LoginHistoryDTO> loginHistory
+            List<AdminMemberResDTO.LoginHistoryDTO> loginHistory,
+            ComplaintResDTO.RespondentHistoryRes respondentHistory
     ) {
         return AdminMemberResDTO.MemberDetailRes.builder()
                 .name(member.getName())
@@ -64,6 +66,7 @@ public class AdminMemberConverter {
                 .createdAt(member.getCreatedAt())
                 .paymentSummary(paymentSummary)
                 .loginHistory(loginHistory)
+                .respondentHistory(respondentHistory)
                 .build();
     }
 

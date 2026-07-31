@@ -9,4 +9,6 @@ public interface ComplaintQueryService {
     PagedResponse<ComplaintResDTO.ComplaintSummaryDTO> getComplaintList(ComplaintReqDTO.SearchReq request);
 
     ComplaintResDTO.ComplaintDetailRes getComplaintDetail(Long complaintId);
+
+    ComplaintResDTO.RespondentHistoryRes getRespondentHistory(Long memberId);
 }
