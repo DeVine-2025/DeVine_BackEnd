@@ -103,7 +103,6 @@ public class MemberConverter {
 
     public static MemberResDTO.SignupResultDTO toSignupResultDTO(Member member) {
         return MemberResDTO.SignupResultDTO.builder()
-                .memberId(member.getId())
                 .nickname(member.getNickname())
                 .mainType(member.getMainType())
                 .build();

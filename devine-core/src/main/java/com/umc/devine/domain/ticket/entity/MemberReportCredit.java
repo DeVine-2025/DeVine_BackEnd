@@ -1,6 +1,8 @@
 package com.umc.devine.domain.ticket.entity;
 
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.ticket.exception.TicketException;
+import com.umc.devine.domain.ticket.exception.code.TicketErrorReason;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
@@ -32,8 +34,21 @@ public class MemberReportCredit extends BaseEntity {
                 .build();
     }
 
-    public void addCredits(int amount) {
-        this.remainingCount += amount;
+    /**
+     * 지급분을 회수하되 잔액이 부족하면 0에서 멈춘다(음수 방지).
+     * @return 실제로 회수된 크레딧 수
+     */
+    public int revokeUpTo(int amount) {
+        int revoked = Math.min(this.remainingCount, amount);
+        this.remainingCount -= revoked;
+        return revoked;
+    }
+
+    public void useCredit() {
+        if (this.remainingCount <= 0) {
+            throw new TicketException(TicketErrorReason.INSUFFICIENT_CREDITS);
+        }
+        this.remainingCount--;
     }
 
     public boolean hasCredits() {
