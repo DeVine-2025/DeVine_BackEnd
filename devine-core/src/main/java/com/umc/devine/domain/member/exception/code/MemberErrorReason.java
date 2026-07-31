@@ -26,6 +26,7 @@ public enum MemberErrorReason implements DomainErrorReason {
     CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER400_5", "관심 도메인은 최소 1개 이상 선택해야 합니다."),
     WITHDRAWAL_CONFIRMATION_MISMATCH(HttpStatus.BAD_REQUEST, "MEMBER400_6", "확인 문구가 일치하지 않습니다."),
     INVALID_WITHDRAWAL_STATUS(HttpStatus.BAD_REQUEST, "MEMBER400_7", "현재 계정 상태에서는 탈퇴할 수 없습니다."),
+    FORMER_MEMBER_BLOCKED(HttpStatus.FORBIDDEN, "MEMBER403_3", "이용약관 제5조 3항에 따라 재가입이 제한된 이메일입니다."),
     ;
 
     private final HttpStatus status;
