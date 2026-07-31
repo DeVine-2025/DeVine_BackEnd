@@ -50,11 +50,11 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
     private static final List<MemberResDTO.WithdrawalDataScopeItemDTO> SELF_WITHDRAWAL_DATA_SCOPE = List.of(
             item("회원 프로필", "즉시 삭제"),
             item("GitHub 원본 연동 데이터", "즉시 삭제"),
-            item("GitHub 익명화·벡터화 데이터", "보관 유지"),
+            item("GitHub 익명화 및 벡터화 데이터", "보관 유지"),
             item("채팅 메시지", "발신자 익명 처리 (상대방 대화 내용은 유지)"),
             item("매칭 지원/제안 이력", "탈퇴 후 1년 보관 후 파기"),
-            item("신고·제재 이력 (본인이 신고한 건)", "즉시 삭제"),
-            item("결제·리포트 생성권 구매 내역", "5년 보관"),
+            item("신고 및 제재 이력 (본인이 신고한 건)", "즉시 삭제"),
+            item("결제 및 리포트 생성권 구매 내역", "5년 보관"),
             item("미사용 리포트 생성권", "환불 신청 시 환불, 미신청 시 소멸"),
             item("미사용 쿠폰", "즉시 소멸"),
             item("로그인 이력/접속 IP", "3개월 후 자동 파기")
