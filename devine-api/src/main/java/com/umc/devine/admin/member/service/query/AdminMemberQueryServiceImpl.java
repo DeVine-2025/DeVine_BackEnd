@@ -1,6 +1,8 @@
 package com.umc.devine.admin.member.service.query;
 
 import com.querydsl.core.BooleanBuilder;
+import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
+import com.umc.devine.admin.complaint.service.query.ComplaintQueryService;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
 import com.umc.devine.admin.member.exception.MemberAdminException;
@@ -35,6 +37,7 @@ public class AdminMemberQueryServiceImpl implements AdminMemberQueryService {
     private final ContactRepository contactRepository;
     private final PaymentRepository paymentRepository;
     private final MemberLoginHistoryRepository memberLoginHistoryRepository;
+    private final ComplaintQueryService complaintQueryService;
 
     @Override
     public PagedResponse<AdminMemberResDTO.MemberSummaryDTO> getMemberList(AdminMemberReqDTO.SearchReq request) {
@@ -84,7 +87,6 @@ public class AdminMemberQueryServiceImpl implements AdminMemberQueryService {
                 .findFirst()
                 .orElse(null);
 
-        // TODO: 신고 이력은 [admin.complaint] 기능 병합 후 respondentHistory 연동 필요
         List<Payment> payments = paymentRepository.findAllByMemberWithTransactions(member);
         AdminMemberResDTO.PaymentSummaryDTO paymentSummary = AdminMemberConverter.toPaymentSummaryDTO(payments);
 
@@ -93,6 +95,8 @@ public class AdminMemberQueryServiceImpl implements AdminMemberQueryService {
                 .map(AdminMemberConverter::toLoginHistoryDTO)
                 .toList();
 
-        return AdminMemberConverter.toMemberDetailRes(member, email, paymentSummary, loginHistory);
+        ComplaintResDTO.RespondentHistoryRes respondentHistory = complaintQueryService.getRespondentHistory(member.getId());
+
+        return AdminMemberConverter.toMemberDetailRes(member, email, paymentSummary, loginHistory, respondentHistory);
     }
 }

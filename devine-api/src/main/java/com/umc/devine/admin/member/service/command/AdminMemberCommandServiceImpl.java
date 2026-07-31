@@ -4,16 +4,16 @@ import com.umc.devine.admin.member.converter.AdminMemberConverter;
 import com.umc.devine.admin.member.converter.MemberStatusNotificationComposer;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
-import com.umc.devine.admin.member.entity.MemberStatusHistory;
 import com.umc.devine.admin.member.exception.MemberAdminException;
 import com.umc.devine.admin.member.exception.code.MemberAdminErrorReason;
-import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.domain.member.entity.Contact;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.MemberStatusHistory;
 import com.umc.devine.domain.member.enums.ContactType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.infrastructure.email.EmailNotificationEvent;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
@@ -38,12 +38,16 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
 
     @Override
     public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, String processorClerkId, AdminMemberReqDTO.ChangeStatusReq request) {
+        Member processor = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
+        return changeStatus(nickname, processor, request);
+    }
+
+    @Override
+    public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, Member processor, AdminMemberReqDTO.ChangeStatusReq request) {
         Member member = memberRepository.findByNicknameIncludingInactive(nickname)
                 .orElseThrow(() -> new MemberAdminException(MemberAdminErrorReason.MEMBER_NOT_FOUND));
 
         applyAction(member, request);
-
-        Member processor = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         memberStatusHistoryRepository.save(MemberStatusHistory.builder()
                 .member(member)

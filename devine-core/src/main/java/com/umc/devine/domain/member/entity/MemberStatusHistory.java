@@ -1,7 +1,6 @@
-package com.umc.devine.admin.member.entity;
+package com.umc.devine.domain.member.entity;
 
-import com.umc.devine.admin.member.enums.MemberStatusAction;
-import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;

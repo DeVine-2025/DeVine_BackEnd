@@ -71,6 +71,12 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
     @Autowired
     private MemberReportCreditRepository memberReportCreditRepository;
 
+    @Autowired
+    private com.umc.devine.domain.member.repository.WithdrawnMemberEmailHashRepository withdrawnMemberEmailHashRepository;
+
+    @Autowired
+    private com.umc.devine.domain.member.util.EmailHasher emailHasher;
+
     private Member testMember;
     private Category testCategory;
     private Techstack testTechstack;
@@ -202,6 +208,32 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
                                     .build()
                     ))
                     .nickname("duplicateuser")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .categoryIds(List.of(testCategory.getId()))
+                    .build();
+
+            // when & then
+            assertThatThrownBy(() -> memberCommandService.signup(principal, dto))
+                    .isInstanceOf(MemberException.class);
+        }
+
+        @Test
+        @DisplayName("강제탈퇴로 블랙리스트에 등록된 이메일이면 가입이 차단된다")
+        void signup_blockedByWithdrawnEmailBlacklist() {
+            // given
+            String email = "blacklisted@example.com";
+            withdrawnMemberEmailHashRepository.save(com.umc.devine.domain.member.entity.WithdrawnMemberEmailHash.of(
+                    emailHasher.hash(email), java.time.LocalDateTime.now()));
+
+            ClerkPrincipal principal = new ClerkPrincipal("clerk_blacklisted", email, "차단대상", null);
+            MemberReqDTO.SignupDTO dto = MemberReqDTO.SignupDTO.builder()
+                    .agreements(List.of(
+                            MemberReqDTO.AgreementDTO.builder()
+                                    .termsId(requiredTerms.getId())
+                                    .agreed(true)
+                                    .build()
+                    ))
+                    .nickname("blockeduser")
                     .mainType(MemberMainType.DEVELOPER)
                     .categoryIds(List.of(testCategory.getId()))
                     .build();

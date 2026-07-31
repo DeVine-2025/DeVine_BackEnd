@@ -2,7 +2,7 @@ package com.umc.devine.admin.member.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
-import com.umc.devine.admin.member.enums.MemberStatusAction;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;

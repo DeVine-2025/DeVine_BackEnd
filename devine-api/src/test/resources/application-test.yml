@@ -29,6 +29,10 @@ clerk:
   secret-key: "test-secret-key-for-integration-tests"
   issuer-uri: "https://test-issuer.local"
 
+member:
+  email-hash:
+    secret: "test-email-hash-secret-for-integration-tests"
+
 # Thread Pool Configuration
 executor:
   async:

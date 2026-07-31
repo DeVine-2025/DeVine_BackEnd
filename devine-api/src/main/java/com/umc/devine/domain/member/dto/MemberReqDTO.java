@@ -247,4 +247,19 @@ public class MemberReqDTO {
             return PageRequest.of(page, size).toPageable();
         }
     }
+
+    @Builder
+    @Schema(description = "회원 자진 탈퇴 요청")
+    public record SelfWithdrawReq(
+            @Schema(description = "본인확인 문구 (닉네임 재입력)", requiredMode = Schema.RequiredMode.REQUIRED, example = "devine")
+            @NotBlank(message = "확인 문구는 필수입니다.")
+            String confirmationText,
+
+            @Schema(description = "잔여 리포트 생성권 환불 신청 여부", example = "true", defaultValue = "false")
+            Boolean refundRequested
+    ) {
+        public SelfWithdrawReq {
+            if (refundRequested == null) refundRequested = false;
+        }
+    }
 }

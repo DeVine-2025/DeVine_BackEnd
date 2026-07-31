@@ -26,6 +26,8 @@ import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
+import com.umc.devine.domain.member.repository.WithdrawnMemberEmailHashRepository;
+import com.umc.devine.domain.member.util.EmailHasher;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.domain.techstack.entity.Techstack;
@@ -75,12 +77,22 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
     private final ReportCreditCommandService reportCreditCommandService;
+    private final WithdrawnMemberEmailHashRepository withdrawnMemberEmailHashRepository;
+    private final EmailHasher emailHasher;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
         // 1. 이미 가입된 회원인지 확인
         if (memberRepository.existsByClerkId(principal.getClerkId())) {
             throw new MemberException(MemberErrorReason.ALREADY_REGISTERED);
+        }
+
+        // 1-1. 강제탈퇴자 재가입 제한 대조 (이용약관 제5조 3항)
+        if (principal.getEmail() != null) {
+            String emailHash = emailHasher.hash(principal.getEmail());
+            if (withdrawnMemberEmailHashRepository.existsActiveByEmailHash(emailHash, java.time.LocalDateTime.now())) {
+                throw new MemberException(MemberErrorReason.FORMER_MEMBER_BLOCKED);
+            }
         }
 
         // 2. 프로필 이미지 검증 (선택사항)

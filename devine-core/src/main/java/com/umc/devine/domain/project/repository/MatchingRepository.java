@@ -10,9 +10,11 @@ import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -125,4 +127,10 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("memberId") Long memberId,
             @Param("matchingType") MatchingType matchingType,
             @Param("excludeStatus") MatchingStatus excludeStatus);
+
+    /** 탈퇴 후 1년 지난 매칭 지원/제안 이력을 파기한다. 프로젝트 소유자(PM) 쪽 탈퇴는 다루지 않는다. */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Matching m WHERE m.member.used = com.umc.devine.domain.member.enums.MemberStatus.DELETED " +
+            "AND m.member.deletedAt < :threshold")
+    int bulkDeleteByWithdrawnMemberDeletedAtBefore(@Param("threshold") LocalDateTime threshold);
 }

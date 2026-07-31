@@ -1,6 +1,6 @@
 package com.umc.devine.admin.member.dto;
 
-import com.umc.devine.admin.member.enums.MemberStatusAction;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;

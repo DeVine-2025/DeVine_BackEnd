@@ -207,4 +207,43 @@ public class MemberResDTO {
             @Schema(description = "반환된 개발자 수", example = "10")
             Integer count
     ){}
+
+    @Builder
+    @Schema(description = "탈퇴 시 데이터 처리 범위 안내 항목")
+    public record WithdrawalDataScopeItemDTO(
+            @Schema(description = "데이터 항목", example = "회원 프로필")
+            String item,
+
+            @Schema(description = "처리 내용", example = "즉시 삭제")
+            String treatment
+    ) {}
+
+    @Builder
+    @Schema(description = "탈퇴 안내 미리보기 응답")
+    public record WithdrawalPreviewDTO(
+            @Schema(description = "잔여 리포트 생성권 수", example = "2")
+            int remainingReportCredits,
+
+            @Schema(description = "보유 쿠폰 수 (사용여부 무관)", example = "1")
+            long couponCount,
+
+            @Schema(description = "탈퇴 시 데이터 처리 범위 안내 (자진 탈퇴 기준)")
+            List<WithdrawalDataScopeItemDTO> dataScope
+    ) {}
+
+    @Builder
+    @Schema(description = "회원 자진 탈퇴 결과 응답")
+    public record WithdrawalResultDTO(
+            @Schema(description = "탈퇴 완료 여부", example = "true")
+            boolean withdrawn,
+
+            @Schema(description = "환불 신청 레코드 생성 여부", example = "false")
+            boolean refundRequestCreated,
+
+            @Schema(description = "소멸되었거나 환불 신청된 잔여 생성권 수", example = "2")
+            int creditsForfeitedOrRefunded,
+
+            @Schema(description = "탈퇴 확정 일시")
+            LocalDateTime withdrawnAt
+    ) {}
 }

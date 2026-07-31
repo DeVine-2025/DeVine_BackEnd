@@ -2,14 +2,14 @@ package com.umc.devine.admin.member.service.command;
 
 import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
 import com.umc.devine.admin.member.dto.AdminMemberResDTO;
-import com.umc.devine.admin.member.entity.MemberStatusHistory;
-import com.umc.devine.admin.member.enums.MemberStatusAction;
 import com.umc.devine.admin.member.exception.MemberAdminException;
-import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.MemberStatusHistory;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.support.IntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

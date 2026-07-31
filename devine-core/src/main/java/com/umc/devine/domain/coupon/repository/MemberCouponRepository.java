@@ -7,6 +7,7 @@ import com.umc.devine.domain.member.entity.Member;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,6 +17,8 @@ import java.util.Optional;
 public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long> {
 
     List<MemberCoupon> findByMemberOrderByCreatedAtDesc(Member member);
+
+    long countByMember(Member member);
 
     /**
      * coupon과 (nullable) applicableTicketProduct까지 즉시 로딩한다.
@@ -37,4 +40,9 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
 
     /** 공유 코드(max_uses > 1)를 같은 회원이 두 번 등록하는 것을 막기 위한 중복 체크. */
     boolean existsByMemberAndCouponCode(Member member, CouponCode couponCode);
+
+    /** 회원 탈퇴 시 지급/사용 이력을 포함해 전량 소멸시키기 위한 벌크 삭제. */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM MemberCoupon mc WHERE mc.member = :member")
+    int bulkDeleteByMember(@Param("member") Member member);
 }

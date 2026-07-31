@@ -12,7 +12,11 @@ import com.umc.devine.admin.complaint.exception.ComplaintException;
 import com.umc.devine.admin.complaint.exception.code.ComplaintErrorReason;
 import com.umc.devine.admin.complaint.repository.ComplaintHistoryRepository;
 import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.admin.member.dto.AdminMemberReqDTO;
+import com.umc.devine.admin.member.service.command.AdminMemberCommandService;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.enums.MemberStatusAction;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
@@ -33,6 +37,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
     private final ComplaintHistoryRepository complaintHistoryRepository;
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
+    private final AdminMemberCommandService adminMemberCommandService;
 
     @Override
     public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, String processorClerkId, ComplaintReqDTO.UpdateStatusReq request) {
@@ -53,14 +58,18 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
                 throw new ComplaintException(ComplaintErrorReason.RESOLUTION_REASON_REQUIRED);
             }
             resolvedAt = LocalDateTime.now();
+        }
 
-            // TODO: action == SUSPEND 인 경우 [계정 정지/정지해제/강제탈퇴] 기능 호출 필요 (피신고자 대상). 기능 미구현으로 현재는 신고 상태만 변경.
+        Member resolver = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
+
+        if (request.status() == ComplaintStatus.COMPLETED) {
+            if (action == ComplaintAction.SUSPEND) {
+                suspendRespondent(complaint, resolver, resolutionReason);
+            }
             if (action == ComplaintAction.DELETE && complaint.getTargetType() == ComplaintTargetType.PROJECT) {
                 hideReportedProject(complaint.getTargetId());
             }
         }
-
-        Member resolver = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         complaint.updateStatus(request.status(), action, resolutionReason, resolver, resolvedAt);
 
@@ -79,5 +88,26 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
         projectRepository.findById(projectId)
                 .filter(project -> !ProjectStatus.INVISIBLE_STATUSES.contains(project.getStatus()))
                 .ifPresent(Project::hide);
+    }
+
+    private void suspendRespondent(Complaint complaint, Member resolver, String resolutionReason) {
+        Member respondent = complaint.getRespondentMember();
+        // 이미 정지/탈퇴 등 최종 상태면 멱등 처리(DELETE 액션의 INVISIBLE_STATUSES 필터와 동일한 취지).
+        // 그렇지 않으면 같은 상습 위반자를 두 건째 신고에서 SUSPEND 처리할 때 회원 도메인 예외가
+        // 신고 트랜잭션 전체를 롤백시켜, 신고 상태 변경 자체가 실패한다.
+        if (respondent.getUsed() != MemberStatus.ACTIVE && respondent.getUsed() != MemberStatus.INACTIVE) {
+            return;
+        }
+        adminMemberCommandService.changeStatus(
+                respondent.getNickname(),
+                resolver,
+                AdminMemberReqDTO.ChangeStatusReq.builder()
+                        .action(MemberStatusAction.SUSPEND)
+                        .reason(resolutionReason)
+                        // 신고로 인한 정지는 항상 통지한다. 관리자가 선택하는 직접 정지 API와 달리
+                        // 신고 처리 결과를 당사자에게 알리지 않을 이유가 없어 의도적으로 고정했다.
+                        .notifyRequested(Boolean.TRUE)
+                        .build()
+        );
     }
 }

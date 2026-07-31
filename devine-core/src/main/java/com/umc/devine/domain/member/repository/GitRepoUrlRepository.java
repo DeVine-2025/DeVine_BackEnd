@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.entity.Member;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -20,4 +21,8 @@ public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
     Optional<GitRepoUrl> findByIdWithMember(@Param("id") Long id);
 
     Optional<GitRepoUrl> findByMemberAndGitUrl(Member member, String gitUrl);
+
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM GitRepoUrl g WHERE g.member = :member")
+    int bulkDeleteByMember(@Param("member") Member member);
 }

@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.dto.MemberResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberCommandService;
+import com.umc.devine.domain.member.service.command.MemberWithdrawalCommandService;
 import com.umc.devine.domain.member.service.query.MemberQueryService;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
 import com.umc.devine.global.apiPayload.ApiResponse;
@@ -29,6 +30,7 @@ public class MyProfileController implements MyProfileControllerDocs {
 
     private final MemberCommandService memberCommandService;
     private final MemberQueryService memberQueryService;
+    private final MemberWithdrawalCommandService memberWithdrawalCommandService;
 
     // 이용약관 전체 조회
     @Override
@@ -153,6 +155,29 @@ public class MyProfileController implements MyProfileControllerDocs {
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_GIT_REPOS;
         PagedResponse<MemberResDTO.GitRepoDTO> response = memberCommandService.syncGitHubRepositories(member, dto);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 탈퇴 안내 미리보기
+    @Override
+    @GetMapping("/me/withdrawal/preview")
+    public ApiResponse<MemberResDTO.WithdrawalPreviewDTO> getWithdrawalPreview(
+            @CurrentMember Member member
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.FOUND_WITHDRAWAL_PREVIEW;
+        MemberResDTO.WithdrawalPreviewDTO response = memberWithdrawalCommandService.getWithdrawalPreview(member);
+        return ApiResponse.onSuccess(code, response);
+    }
+
+    // 회원 자진 탈퇴
+    @Override
+    @PostMapping("/me/withdrawal")
+    public ApiResponse<MemberResDTO.WithdrawalResultDTO> withdraw(
+            @CurrentMember Member member,
+            @RequestBody @Valid MemberReqDTO.SelfWithdrawReq dto
+    ) {
+        MemberSuccessCode code = MemberSuccessCode.WITHDRAWN;
+        MemberResDTO.WithdrawalResultDTO response = memberWithdrawalCommandService.selfWithdraw(member, dto);
         return ApiResponse.onSuccess(code, response);
     }
 }

@@ -1,5 +1,6 @@
 package com.umc.devine.admin.member.dto;
 
+import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import io.swagger.v3.oas.annotations.media.Schema;
@@ -88,7 +89,10 @@ public class AdminMemberResDTO {
             PaymentSummaryDTO paymentSummary,
 
             @Schema(description = "최근 로그인 이력 (최대 10건)")
-            List<LoginHistoryDTO> loginHistory
+            List<LoginHistoryDTO> loginHistory,
+
+            @Schema(description = "피신고자 누적 신고/제재 이력")
+            ComplaintResDTO.RespondentHistoryRes respondentHistory
     ) {}
 
     @Builder

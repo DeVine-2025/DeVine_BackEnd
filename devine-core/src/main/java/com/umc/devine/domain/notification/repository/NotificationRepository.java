@@ -1,5 +1,6 @@
 package com.umc.devine.domain.notification.repository;
 
+import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.notification.entity.Notification;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -55,4 +56,13 @@ public interface NotificationRepository extends JpaRepository<Notification, Long
             @Param("lastEventId") Long lastEventId,
             Pageable pageable
     );
+
+    /** Hard Delete 배치용: 내가 받은 알림은 삭제하고, 내가 보낸 알림은 상대방 알림함에 남기고 발신자만 끊는다. */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM Notification n WHERE n.receiver = :member")
+    int bulkDeleteByReceiver(@Param("member") Member member);
+
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Notification n SET n.sender = null WHERE n.sender = :member")
+    int bulkNullifySender(@Param("member") Member member);
 }

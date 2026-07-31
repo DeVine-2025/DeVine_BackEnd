@@ -5,9 +5,11 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.querydsl.MemberQueryDsl;
 import com.umc.devine.domain.techstack.enums.TechName;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -49,9 +51,16 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
 
     List<Member> findByUsedAndScheduledWithdrawalAtBefore(MemberStatus used, LocalDateTime threshold);
 
+    List<Member> findByUsedAndDeletedAtBefore(MemberStatus used, LocalDateTime threshold);
+
     @Query("SELECT m FROM Member m WHERE m.used = 'ACTIVE'")
     List<Member> findAllActive();
 
     @Query("SELECT m FROM Member m WHERE m.nickname IN :nicknames AND m.used = 'ACTIVE'")
     List<Member> findAllByNicknameIn(@Param("nicknames") List<String> nicknames);
+
+    /** 탈퇴 등 동시 요청 경쟁 조건을 막기 위한 행 잠금 조회. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :id")
+    Optional<Member> findByIdForUpdate(@Param("id") Long id);
 }

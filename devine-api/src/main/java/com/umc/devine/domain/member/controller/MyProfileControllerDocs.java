@@ -145,4 +145,24 @@ public interface MyProfileControllerDocs {
             @Parameter(hidden = true) @CurrentMember Member member,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     );
+
+    @Operation(summary = "탈퇴 안내 미리보기 API", description = "탈퇴 시 소멸되는 잔여 리포트 생성권, 쿠폰 수를 조회하는 API입니다. 탈퇴 확인 화면에서 사용합니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+    })
+    ApiResponse<MemberResDTO.WithdrawalPreviewDTO> getWithdrawalPreview(
+            @Parameter(hidden = true) @CurrentMember Member member
+    );
+
+    @Operation(summary = "회원 자진 탈퇴 API", description = "본인확인 문구(닉네임) 검증 후 즉시 탈퇴를 확정합니다. 잔여 리포트 생성권은 환불 신청 여부에 따라 환불 신청 레코드를 생성하거나 소멸시키고, 쿠폰은 전량 소멸시킵니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "탈퇴 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "확인 문구 불일치 또는 탈퇴 불가능한 계정 상태"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
+    })
+    ApiResponse<MemberResDTO.WithdrawalResultDTO> withdraw(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Valid @RequestBody MemberReqDTO.SelfWithdrawReq dto
+    );
 }
