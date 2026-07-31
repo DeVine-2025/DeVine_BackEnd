@@ -35,7 +35,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
     private final ProjectRepository projectRepository;
 
     @Override
-    public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, Long processorMemberId, ComplaintReqDTO.UpdateStatusReq request) {
+    public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, String processorClerkId, ComplaintReqDTO.UpdateStatusReq request) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new ComplaintException(ComplaintErrorReason.COMPLAINT_NOT_FOUND));
 
@@ -60,7 +60,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
             }
         }
 
-        Member resolver = processorMemberId != null ? memberRepository.findById(processorMemberId).orElse(null) : null;
+        Member resolver = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         complaint.updateStatus(request.status(), action, resolutionReason, resolver, resolvedAt);
 

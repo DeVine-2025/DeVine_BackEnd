@@ -20,8 +20,12 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import com.umc.devine.global.security.ClerkPrincipal;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
+
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
@@ -63,17 +67,14 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        Member admin = memberRepository.save(Member.builder()
+        AdminPrincipal principal = AdminPrincipal.builder()
                 .clerkId("clerk_admin")
+                .email("admin@example.com")
                 .name("관리자")
-                .nickname("admin")
-                .mainType(MemberMainType.PM)
-                .disclosure(true)
-                .used(MemberStatus.ACTIVE)
-                .build());
-
-        ClerkPrincipal principal = new ClerkPrincipal("clerk_admin", "admin@example.com", "관리자", null);
-        adminAuth = new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     private Complaint createComplaint(ComplaintStatus status) {
@@ -92,13 +93,14 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
     class GetComplaintListTest {
 
         @Test
-        @DisplayName("인증 없이도 신고 목록을 조회할 수 있다")
+        @DisplayName("관리자는 신고 목록을 조회할 수 있다")
         void getComplaintList_success() throws Exception {
             // given
             createComplaint(ComplaintStatus.PENDING);
 
             // when & then
             mockMvc.perform(get("/admin/v1/complaints")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -119,6 +121,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(get("/admin/v1/complaints/{complaintId}", complaint.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -130,6 +133,7 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("존재하지 않는 신고ID면 404를 반환한다")
         void getComplaintDetail_notFound() throws Exception {
             mockMvc.perform(get("/admin/v1/complaints/{complaintId}", 999999L)
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isNotFound())
