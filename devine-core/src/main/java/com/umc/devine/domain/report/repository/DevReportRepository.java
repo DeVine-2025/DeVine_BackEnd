@@ -67,6 +67,10 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     @Query("SELECT DISTINCT r.gitRepoUrl.id FROM DevReport r WHERE r.gitRepoUrl.id IN :gitRepoIds AND r.errorMessage IS NULL")
     List<Long> findActiveReportGitRepoIds(@Param("gitRepoIds") List<Long> gitRepoIds);
 
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM DevReport r WHERE r.gitRepoUrl.member = :member")
+    int bulkDeleteByMember(@Param("member") Member member);
+
     @Query("SELECT r FROM DevReport r " +
             "JOIN FETCH r.gitRepoUrl g " +
             "WHERE g.member = :member " +

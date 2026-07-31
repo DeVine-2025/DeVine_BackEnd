@@ -54,4 +54,8 @@ public class MemberReportCredit extends BaseEntity {
     public boolean hasCredits() {
         return this.remainingCount > 0;
     }
+
+    public void voidCredits() {
+        this.remainingCount = 0;
+    }
 }

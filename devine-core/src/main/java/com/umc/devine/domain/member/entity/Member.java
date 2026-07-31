@@ -78,6 +78,10 @@ public class Member extends BaseEntity {
     @Column(name = "scheduled_withdrawal_at")
     private LocalDateTime scheduledWithdrawalAt;
 
+    /** 탈퇴(자진/강제 확정) 시각. Hard Delete 배치가 유예기간 경과 여부를 판단하는 기준이 된다. */
+    @Column(name = "deleted_at")
+    private LocalDateTime deletedAt;
+
     @OneToMany(mappedBy = "member", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     private List<MemberCategory> memberCategories = new ArrayList<>();
@@ -171,6 +175,26 @@ public class Member extends BaseEntity {
     public void finalizeWithdrawal() {
         this.used = MemberStatus.DELETED;
         this.scheduledWithdrawalAt = null;
+    }
+
+    /**
+     * 회원 자진 탈퇴. 강제탈퇴(30일 소명 절차)와 달리 즉시 확정되며, PII를 익명화한다.
+     */
+    public void selfWithdraw() {
+        this.used = MemberStatus.DELETED;
+        this.deletedAt = LocalDateTime.now();
+        anonymizePersonalInfo();
+    }
+
+    /** clerkId/nickname은 unique 제약을 회피하기 위해 고유한 값으로 대체한다. */
+    private void anonymizePersonalInfo() {
+        this.clerkId = "deleted-" + java.util.UUID.randomUUID();
+        this.nickname = "deleted-" + this.id;
+        this.name = null;
+        this.address = null;
+        this.image = null;
+        this.body = null;
+        this.githubUsername = null;
     }
 
 }
