@@ -26,7 +26,7 @@ public class MemberWithdrawalFinalizeScheduler {
     private final MemberRepository memberRepository;
     private final MemberStatusHistoryRepository memberStatusHistoryRepository;
 
-    @Scheduled(cron = "0 0 4 * * *")
+    @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     @Transactional
     public void finalizeExpiredWithdrawals() {
         List<Member> expired = memberRepository.findByUsedAndScheduledWithdrawalAtBefore(
