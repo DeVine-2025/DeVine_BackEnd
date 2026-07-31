@@ -309,6 +309,68 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
         }
 
         @Test
+        @DisplayName("신고를 SUSPEND로 처리하면 피신고자 계정이 정지된다")
+        void updateStatus_suspendAction_suspendsRespondent() {
+            // given
+            Complaint complaint = createComplaint(ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.SUSPEND)
+                    .reason("반복적인 규정 위반으로 계정 정지")
+                    .build();
+
+            // when
+            complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
+
+            // then
+            Member updated = memberRepository.findByNicknameIncludingInactive(respondentMember.getNickname()).orElseThrow();
+            assertThat(updated.getUsed()).isEqualTo(MemberStatus.SUSPENDED);
+        }
+
+        @Test
+        @DisplayName("이미 정지된 피신고자를 다른 신고에서 SUSPEND로 처리해도 예외 없이 신고 상태만 변경된다")
+        void updateStatus_suspendAction_alreadySuspendedRespondent_isIdempotent() {
+            // given
+            Complaint firstComplaint = createComplaint(ComplaintStatus.IN_REVIEW);
+            complaintCommandService.updateStatus(firstComplaint.getId(), admin.getClerkId(),
+                    ComplaintReqDTO.UpdateStatusReq.builder()
+                            .status(ComplaintStatus.COMPLETED)
+                            .action(ComplaintAction.SUSPEND)
+                            .reason("첫 번째 신고로 계정 정지")
+                            .build());
+
+            Complaint secondComplaint = createComplaint(ComplaintStatus.IN_REVIEW);
+            ComplaintReqDTO.UpdateStatusReq secondRequest = ComplaintReqDTO.UpdateStatusReq.builder()
+                    .status(ComplaintStatus.COMPLETED)
+                    .action(ComplaintAction.SUSPEND)
+                    .reason("두 번째 신고도 동일 사유로 정지 처리")
+                    .build();
+
+            // when
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(
+                    secondComplaint.getId(), admin.getClerkId(), secondRequest);
+
+            // then: 정지 처리는 스킵되지만, 신고 자체의 상태 변경과 감사 이력은 정상적으로 기록되어야 한다
+            // (이 assertion이 없으면, 조기 반환 분기가 실수로 complaint.updateStatus() 호출까지 건너뛰어도 테스트가 통과해버린다)
+            assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
+            assertThat(result.action()).isEqualTo(ComplaintAction.SUSPEND);
+
+            Complaint updatedComplaint = complaintRepository.findById(secondComplaint.getId()).orElseThrow();
+            assertThat(updatedComplaint.getStatus()).isEqualTo(ComplaintStatus.COMPLETED);
+            assertThat(updatedComplaint.getAction()).isEqualTo(ComplaintAction.SUSPEND);
+            assertThat(updatedComplaint.getResolver()).isNotNull();
+            assertThat(updatedComplaint.getResolver().getId()).isEqualTo(admin.getId());
+
+            List<ComplaintHistory> histories = complaintHistoryRepository.findByComplaintIdOrderByCreatedAtDesc(secondComplaint.getId());
+            assertThat(histories).hasSize(1);
+            assertThat(histories.get(0).getAction()).isEqualTo(ComplaintAction.SUSPEND);
+            assertThat(histories.get(0).getResolver().getId()).isEqualTo(admin.getId());
+
+            Member updated = memberRepository.findByNicknameIncludingInactive(respondentMember.getNickname()).orElseThrow();
+            assertThat(updated.getUsed()).isEqualTo(MemberStatus.SUSPENDED);
+        }
+
+        @Test
         @DisplayName("이미 숨김 처리된 프로젝트를 DELETE로 다시 처리해도 예외 없이 신고 상태만 변경된다")
         void updateStatus_deleteAction_alreadyHiddenProject() {
             // given
