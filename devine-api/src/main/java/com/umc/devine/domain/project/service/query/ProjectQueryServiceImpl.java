@@ -59,7 +59,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     @Transactional
     public ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId) {
-        Project project = projectRepository.findByIdWithMemberAndStatusNot(projectId, ProjectStatus.DELETED)
+        Project project = projectRepository.findByIdWithMemberAndStatusNotIn(projectId, ProjectStatus.INVISIBLE_STATUSES)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         // 원자적 조회수 증가 (동시성 안전)
@@ -72,7 +72,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
-        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
+        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.INVISIBLE_STATUSES, isMonday);
 
         List<Project> limitedProjects = projects.stream().limit(WEEKLY_BEST_LIMIT).toList();
         List<Long> projectIds = limitedProjects.stream().map(Project::getId).toList();
@@ -182,12 +182,14 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
-        // 매칭 수락된 프로젝트
-        List<ProjectResDTO.MyProjectInfo> matchedInfos = matchingRepository
-                .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
-                .stream()
-                .map(ProjectConverter::toMyProjectInfo)
-                .toList();
+        // 매칭 수락된 프로젝트 (모집 중 탭은 내가 생성한 프로젝트만 표시)
+        List<ProjectResDTO.MyProjectInfo> matchedInfos = statuses.contains(ProjectStatus.RECRUITING)
+                ? List.of()
+                : matchingRepository
+                        .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
+                        .stream()
+                        .map(ProjectConverter::toMyProjectInfo)
+                        .toList();
 
         // 중복 제거: 내가 등록한 프로젝트 우선, 매칭 프로젝트 중 중복 제외
         Set<Long> createdProjectIds = createdInfos.stream()

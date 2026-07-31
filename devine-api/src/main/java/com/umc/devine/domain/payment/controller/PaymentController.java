@@ -36,6 +36,18 @@ public class PaymentController implements PaymentControllerDocs {
     }
 
     @Override
+    @PostMapping("/free")
+    public ApiResponse<PaymentResDTO.PaymentDTO> freePayment(
+            @CurrentMember Member member,
+            @Valid @RequestBody PaymentReqDTO.FreePaymentDTO request
+    ) {
+        return ApiResponse.onSuccess(
+                PaymentSuccessCode.FREE_PAYMENT_COMPLETED,
+                paymentCommandService.freePayment(request, member)
+        );
+    }
+
+    @Override
     @GetMapping("/my")
     public ApiResponse<PaymentResDTO.PaymentListDTO> getMyPayments(
             @CurrentMember Member member
