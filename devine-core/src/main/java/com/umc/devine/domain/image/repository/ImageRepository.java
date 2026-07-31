@@ -1,7 +1,9 @@
 package com.umc.devine.domain.image.repository;
 
 import com.umc.devine.domain.image.entity.Image;
+import com.umc.devine.domain.member.entity.Member;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -12,6 +14,11 @@ import java.util.Optional;
 public interface ImageRepository extends JpaRepository<Image, Long> {
 
     Optional<Image> findByImageUrl(String imageUrl);
+
+    /** Hard Delete 배치에서 회원 행을 지우기 전에 호출한다. 이미지 자산은 그대로 두고 업로더 참조만 끊는다. */
+    @Modifying(clearAutomatically = true)
+    @Query("UPDATE Image i SET i.uploader = null WHERE i.uploader = :member")
+    int bulkNullifyUploader(@Param("member") Member member);
 
     @Query("SELECT i FROM Image i " +
             "WHERE i.imageType = com.umc.devine.domain.image.enums.ImageType.PROJECT " +

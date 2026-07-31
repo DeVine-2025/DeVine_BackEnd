@@ -44,6 +44,9 @@ clerk:
 member:
   email-hash:
     secret: ${MEMBER_EMAIL_HASH_SECRET:}
+  hard-delete:
+    enabled: ${MEMBER_HARD_DELETE_ENABLED:false}
+    grace-period-days: ${MEMBER_HARD_DELETE_GRACE_PERIOD_DAYS:30}
 
 # GitHub
 github:

@@ -37,4 +37,9 @@ public interface MemberReportCreditRepository extends JpaRepository<MemberReport
     @Modifying(clearAutomatically = true)
     @Query("UPDATE MemberReportCredit c SET c.remainingCount = c.remainingCount - 1 WHERE c.member = :member AND c.remainingCount > 0")
     int useCreditByMember(@Param("member") Member member);
+
+    /** Hard Delete 배치에서 회원 행을 지우기 전에 호출한다. member_id가 NOT NULL FK라 남겨두면 하드삭제가 막힌다. */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM MemberReportCredit c WHERE c.member = :member")
+    int bulkDeleteByMember(@Param("member") Member member);
 }

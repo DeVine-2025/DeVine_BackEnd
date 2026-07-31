@@ -51,6 +51,8 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
 
     List<Member> findByUsedAndScheduledWithdrawalAtBefore(MemberStatus used, LocalDateTime threshold);
 
+    List<Member> findByUsedAndDeletedAtBefore(MemberStatus used, LocalDateTime threshold);
+
     @Query("SELECT m FROM Member m WHERE m.used = 'ACTIVE'")
     List<Member> findAllActive();
 
