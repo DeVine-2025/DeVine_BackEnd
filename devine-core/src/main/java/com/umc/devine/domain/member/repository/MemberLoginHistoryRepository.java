@@ -20,4 +20,9 @@ public interface MemberLoginHistoryRepository extends JpaRepository<MemberLoginH
     @Modifying(clearAutomatically = true)
     @Query("DELETE FROM MemberLoginHistory h WHERE h.member = :member")
     int bulkDeleteByMember(@Param("member") Member member);
+
+    /** 통신비밀보호법에 따른 독립적인 3개월 보관 정책. 탈퇴 여부와 무관하게 모든 회원에게 적용된다. */
+    @Modifying(clearAutomatically = true)
+    @Query("DELETE FROM MemberLoginHistory h WHERE h.loginAt < :threshold")
+    int bulkDeleteByLoginAtBefore(@Param("threshold") LocalDateTime threshold);
 }
