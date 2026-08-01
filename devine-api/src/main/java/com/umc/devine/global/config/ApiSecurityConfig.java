@@ -121,6 +121,8 @@ public class ApiSecurityConfig {
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects").permitAll()
                         // 프로젝트 상세 조회 (비회원 허용)
                         .requestMatchers(HttpMethod.GET, "/api/v1/projects/{projectId}").permitAll()
+                        // 공지사항 조회 (비회원 허용)
+                        .requestMatchers(HttpMethod.GET, "/api/v1/notices", "/api/v1/notices/*").permitAll()
                         // PortOne 웹훅 (서명 검증으로 인증)
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                         // 개발용 토큰 발급 페이지
