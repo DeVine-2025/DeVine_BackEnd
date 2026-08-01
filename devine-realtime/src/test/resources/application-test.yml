@@ -10,7 +10,10 @@ spring:
     hibernate:
       ddl-auto: none
   flyway:
-    enabled: false
+    # 운영에서는 devine-api가 마이그레이션을 소유하므로 realtime은 flyway를 끈다.
+    # 다만 테스트는 자기 스키마를 스스로 준비해야 한다. 끄면 다른 모듈의 테스트가
+    # 먼저 실행돼 테이블을 만들어 주기를 기대하게 되어 실행 순서에 의존하게 된다.
+    enabled: true
   security:
     oauth2:
       resourceserver:
