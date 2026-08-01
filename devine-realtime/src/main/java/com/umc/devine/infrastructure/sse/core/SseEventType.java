@@ -9,7 +9,8 @@ public enum SseEventType {
     NOTIFICATION(RedisEventConstants.NOTIFICATION),
     CHAT_UNREAD_ROOMS(RedisEventConstants.CHAT_UNREAD_ROOMS),
     HEARTBEAT("heartbeat"),
-    SHUTDOWN("shutdown");
+    SHUTDOWN("shutdown"),
+    MAINTENANCE("maintenance");
 
     private final String eventName;
 

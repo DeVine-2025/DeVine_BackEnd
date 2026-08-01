@@ -1,17 +1,17 @@
 package com.umc.devine.admin.complaint.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.admin.complaint.exception.code.ComplaintSuccessCode;
 import com.umc.devine.admin.complaint.service.command.ComplaintCommandService;
 import com.umc.devine.admin.complaint.service.query.ComplaintQueryService;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.security.CurrentMember;
 import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.validation.annotation.Validated;
 import org.springframework.web.bind.annotation.*;
 
@@ -43,12 +43,11 @@ public class ComplaintController implements ComplaintControllerDocs {
     @Override
     @PatchMapping("/{complaintId}/status")
     public ApiResponse<ComplaintResDTO.UpdateStatusRes> updateStatus(
-            @CurrentMember(required = false) Member member,
+            @AuthenticationPrincipal AdminPrincipal admin,
             @PathVariable Long complaintId,
             @RequestBody @Valid ComplaintReqDTO.UpdateStatusReq request
     ) {
-        Long processorMemberId = member != null ? member.getId() : null;
-        ComplaintResDTO.UpdateStatusRes response = complaintCommandService.updateStatus(complaintId, processorMemberId, request);
+        ComplaintResDTO.UpdateStatusRes response = complaintCommandService.updateStatus(complaintId, admin.getClerkId(), request);
         return ApiResponse.onSuccess(ComplaintSuccessCode.STATUS_UPDATED, response);
     }
 }

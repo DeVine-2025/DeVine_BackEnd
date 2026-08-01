@@ -26,6 +26,9 @@ public enum MatchingErrorReason implements DomainErrorReason {
     PART_REQUIRED(HttpStatus.BAD_REQUEST, "MATCHING400_7", "지원/제안 시 파트 선택은 필수입니다."),
     INVALID_PART(HttpStatus.BAD_REQUEST, "MATCHING400_8", "해당 프로젝트에서 모집하지 않는 파트입니다."),
     PART_ALREADY_FULFILLED(HttpStatus.CONFLICT, "MATCHING409_3", "해당 파트의 모집이 이미 완료되었습니다."),
+    // 제안(propose) 전용. 요청자가 프로젝트 소유자라 비노출 사실을 알려도 제재 정보가 새지 않는다.
+    // 지원(apply)은 제3자가 호출하므로 PROJECT_NOT_RECRUITING으로 응답해 제재 사실을 노출하지 않는다.
+    PROJECT_HIDDEN(HttpStatus.BAD_REQUEST, "MATCHING400_9", "비노출 처리된 프로젝트에는 제안할 수 없습니다."),
     ;
 
     private final HttpStatus status;

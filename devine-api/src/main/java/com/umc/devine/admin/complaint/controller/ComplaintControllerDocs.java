@@ -1,24 +1,21 @@
 package com.umc.devine.admin.complaint.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.security.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-/**
- * TODO: 관리자 인증/인가 기능이 추가되면 관리자 권한 검증을 추가.
- */
 @Tag(name = "Admin Complaint", description = "관리자 신고/제재 관리 API")
 public interface ComplaintControllerDocs {
 
@@ -46,7 +43,7 @@ public interface ComplaintControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "신고를 찾을 수 없음")
     })
     ApiResponse<ComplaintResDTO.UpdateStatusRes> updateStatus(
-            @Parameter(hidden = true) @CurrentMember(required = false) Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal AdminPrincipal admin,
             @Parameter(description = "신고 ID", required = true) @PathVariable Long complaintId,
             @RequestBody @Valid ComplaintReqDTO.UpdateStatusReq request
     );
