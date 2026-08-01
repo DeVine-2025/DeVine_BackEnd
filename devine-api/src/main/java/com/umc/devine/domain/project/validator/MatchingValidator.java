@@ -19,7 +19,9 @@ public class MatchingValidator {
     private final MatchingRepository matchingRepository;
 
     public void validateForApply(Member member, Project project) {
-        if (!project.isRecruiting()) {
+        // 비노출 프로젝트는 유저 화면에 없는 글이므로 새로 지원할 수 없다.
+        // 지원자는 제3자라 제재 사실이 새지 않도록 모집 중이 아닌 것과 동일하게 응답한다.
+        if (!project.isRecruiting() || project.isHidden()) {
             throw new MatchingException(MatchingErrorReason.PROJECT_NOT_RECRUITING);
         }
         if (project.isOwnedBy(member)) {
@@ -36,6 +38,10 @@ public class MatchingValidator {
         }
         if (!project.isRecruiting()) {
             throw new MatchingException(MatchingErrorReason.PROJECT_NOT_RECRUITING);
+        }
+        // 소유권 확인 뒤이므로 요청자는 작성자 본인이다. 비노출 사실을 알려도 제재 정보가 새지 않는다.
+        if (project.isHidden()) {
+            throw new MatchingException(MatchingErrorReason.PROJECT_HIDDEN);
         }
         if (existsActiveMatching(project, target, MatchingType.PROPOSE)) {
             throw new MatchingException(MatchingErrorReason.ALREADY_PROPOSED);

@@ -58,12 +58,17 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     @Transactional
-    public ProjectResDTO.UpdateProjectRes getProjectDetail(Long projectId) {
-        Project project = projectRepository.findByIdWithMemberAndStatusNot(projectId, ProjectStatus.DELETED)
+    public ProjectResDTO.UpdateProjectRes getProjectDetail(Member viewer, Long projectId) {
+        // 비노출 프로젝트는 작성자 본인에게만 보인다. 비로그인이면 viewerId가 null이라 노출된 것만 조회된다.
+        Long viewerId = viewer != null ? viewer.getId() : null;
+        Project project = projectRepository.findByIdWithMemberVisibleTo(projectId, viewerId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
-        // 원자적 조회수 증가 (동시성 안전)
-        projectRepository.incrementViewCount(projectId);
+        // 비노출 프로젝트는 유저 화면에 노출되지 않으므로 조회수를 올리지 않는다.
+        if (!project.isHidden()) {
+            // 원자적 조회수 증가 (동시성 안전)
+            projectRepository.incrementViewCount(projectId);
+        }
 
         Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(List.of(projectId));
         return ProjectConverter.toUpdateProjectRes(project, techstackMap);
@@ -72,7 +77,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
-        List<Project> projects = projectRepository.findWeeklyBestProjects(ProjectStatus.DELETED, isMonday);
+        List<Project> projects = projectRepository.findWeeklyBestProjects(isMonday);
 
         List<Project> limitedProjects = projects.stream().limit(WEEKLY_BEST_LIMIT).toList();
         List<Long> projectIds = limitedProjects.stream().map(Project::getId).toList();
@@ -175,19 +180,36 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
     @Override
     public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
+        // 작성자 본인이 자기 목록을 보는 경로이므로 비노출 프로젝트도 포함한다.
+        return buildProjectsOf(member, statuses, pageable, true);
+    }
+
+    @Override
+    public ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member owner, List<ProjectStatus> statuses, Pageable pageable) {
+        // 공개 프로필은 제3자가 보는 경로다. 비노출 프로젝트가 나가면 제재 사실이 노출된다.
+        return buildProjectsOf(owner, statuses, pageable, false);
+    }
+
+    private ProjectResDTO.MyProjectsRes buildProjectsOf(
+            Member member, List<ProjectStatus> statuses, Pageable pageable, boolean includeHidden
+    ) {
         // 내가 등록한 프로젝트
-        List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
-                .findAllByMemberAndStatusIn(member, statuses)
-                .stream()
+        List<Project> createdProjects = includeHidden
+                ? projectRepository.findAllByMemberAndStatusInIncludingHidden(member, statuses)
+                : projectRepository.findAllByMemberAndStatusIn(member, statuses);
+
+        List<ProjectResDTO.MyProjectInfo> createdInfos = createdProjects.stream()
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
-        // 매칭 수락된 프로젝트
-        List<ProjectResDTO.MyProjectInfo> matchedInfos = matchingRepository
-                .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
-                .stream()
-                .map(ProjectConverter::toMyProjectInfo)
-                .toList();
+        // 매칭 수락된 프로젝트 (모집 중 탭은 내가 생성한 프로젝트만 표시)
+        List<ProjectResDTO.MyProjectInfo> matchedInfos = statuses.contains(ProjectStatus.RECRUITING)
+                ? List.of()
+                : matchingRepository
+                        .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
+                        .stream()
+                        .map(ProjectConverter::toMyProjectInfo)
+                        .toList();
 
         // 중복 제거: 내가 등록한 프로젝트 우선, 매칭 프로젝트 중 중복 제외
         Set<Long> createdProjectIds = createdInfos.stream()
@@ -228,6 +250,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         List<ProjectResDTO.MyProjectInfo> createdInfos = projectRepository
                 .findAllByMemberAndStatusIn(member, List.of(ProjectStatus.RECRUITING))
                 .stream()
+                // 개발자 추천 대상을 고르는 목록이므로 비노출 프로젝트는 제외한다.
+                // 확인용인 "내 프로젝트" 목록과 달리, 제재로 숨겨진 글로 개발자를 모집하게 두면 안 된다.
+                .filter(project -> !project.isHidden())
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
@@ -304,7 +329,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .map(row -> ((Number) row[0]).longValue())
                 .toList();
 
-        List<Project> projects = projectRepository.findAllByIdIn(projectIds);
+        List<Project> projects = projectRepository.findVisibleByIdIn(projectIds);
         Map<Long, Project> projectMap = projects.stream()
                 .collect(Collectors.toMap(Project::getId, p -> p));
 

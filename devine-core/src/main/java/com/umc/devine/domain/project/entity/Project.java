@@ -12,6 +12,7 @@ import lombok.*;
 import org.hibernate.annotations.BatchSize;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -83,6 +84,20 @@ public class Project extends BaseEntity {
     @Column(name = "last_view_reset_date")
     private LocalDate lastViewResetDate;
 
+    // 유저 화면 노출 여부 (신고 처리 등으로 관리자가 비노출 전환). status와 독립적으로 관리된다.
+    @Column(name = "is_hidden", nullable = false)
+    @Builder.Default
+    private boolean hidden = false;
+
+    // 노출 상태를 마지막으로 변경한 처리자
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "visibility_changed_by")
+    private Member visibilityChangedBy;
+
+    // 노출 상태를 마지막으로 변경한 시각
+    @Column(name = "visibility_changed_at")
+    private LocalDateTime visibilityChangedAt;
+
     @Builder.Default
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -118,6 +133,24 @@ public class Project extends BaseEntity {
 
     public void delete() {
         this.status = ProjectStatus.DELETED;
+    }
+
+    /**
+     * 유저 화면 노출 상태를 전환한다. 라이프사이클 상태({@code status})는 건드리지 않으므로
+     * 비노출 후 다시 노출로 되돌려도 원래 상태가 그대로 유지된다.
+     *
+     * <p>이미 동일한 노출 상태여도 예외 없이 처리자·처리시각을 갱신한다(멱등성 보장).
+     *
+     * @return 노출 상태가 실제로 바뀌었으면 true, 이미 동일한 상태였으면 false
+     */
+    public boolean changeVisibility(boolean visible, Member processor, LocalDateTime changedAt) {
+        boolean willHide = !visible;
+        boolean changed = this.hidden != willHide;
+
+        this.hidden = willHide;
+        this.visibilityChangedBy = processor;
+        this.visibilityChangedAt = changedAt;
+        return changed;
     }
 
     public void updateStatus(ProjectStatus status) {

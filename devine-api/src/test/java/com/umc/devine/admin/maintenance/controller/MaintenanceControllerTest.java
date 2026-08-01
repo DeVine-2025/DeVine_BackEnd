@@ -1,9 +1,10 @@
 package com.umc.devine.admin.maintenance.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.domain.maintenance.dto.MaintenanceState;
 import com.umc.devine.domain.maintenance.service.MaintenanceModeService;
-import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
@@ -13,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static org.assertj.core.api.Assertions.assertThat;
@@ -39,8 +41,14 @@ class MaintenanceControllerTest extends ControllerIntegrationTestSupport {
         // 서비스 캐시는 싱글턴이라 테스트 롤백을 따라가지 않는다. DB(초기 OFF)로 동기화한다.
         maintenanceModeService.refresh();
 
-        ClerkPrincipal principal = new ClerkPrincipal("clerk_admin", "admin@example.com", "관리자", null);
-        auth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+        AdminPrincipal principal = AdminPrincipal.builder()
+                .clerkId("clerk_admin")
+                .email("admin@example.com")
+                .name("관리자")
+                .level(AdminLevel.ADMIN)
+                .build();
+        auth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     /**

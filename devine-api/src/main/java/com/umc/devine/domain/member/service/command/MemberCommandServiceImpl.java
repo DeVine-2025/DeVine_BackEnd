@@ -35,11 +35,12 @@ import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
-import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.global.dto.PagedResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.infrastructure.github.GitHubService;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
+import com.umc.devine.domain.report.repository.DevReportRepository;
+import com.umc.devine.domain.ticket.service.command.ReportCreditCommandService;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
@@ -73,6 +74,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final GitHubService gitHubService;
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
+    private final ReportCreditCommandService reportCreditCommandService;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -146,6 +148,9 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (!contacts.isEmpty()) {
             contactRepository.saveAll(contacts);
         }
+
+        // 11. 초기 리포트 생성권 지급
+        reportCreditCommandService.initializeCredit(member);
 
         return MemberConverter.toSignupResultDTO(member);
     }

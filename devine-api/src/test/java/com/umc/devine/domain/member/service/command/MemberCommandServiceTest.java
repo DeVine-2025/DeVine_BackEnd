@@ -23,6 +23,7 @@ import com.umc.devine.domain.techstack.enums.TechstackSource;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.techstack.exception.TechstackException;
+import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.global.security.ClerkPrincipal;
@@ -66,6 +67,9 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
 
     @Autowired
     private ImageRepository imageRepository;
+
+    @Autowired
+    private MemberReportCreditRepository memberReportCreditRepository;
 
     private Member testMember;
     private Category testCategory;
@@ -128,6 +132,11 @@ class MemberCommandServiceTest extends IntegrationTestSupport {
 
             Member savedMember = memberRepository.findByNickname("newuser").orElseThrow();
             assertThat(savedMember.getClerkId()).isEqualTo("clerk_new_user");
+            assertThat(memberReportCreditRepository.findByMember(savedMember))
+                    .isPresent()
+                    .get()
+                    .extracting("remainingCount")
+                    .isEqualTo(1);
         }
 
         @Test
