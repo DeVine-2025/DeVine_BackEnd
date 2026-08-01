@@ -391,7 +391,8 @@ public class MemberQueryServiceImpl implements MemberQueryService {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
-        return projectQueryService.getMyProjects(member, statuses, pageable);
+        // 비회원도 볼 수 있는 공개 프로필이므로 비노출 프로젝트가 나가면 안 된다.
+        return projectQueryService.getPublicProjectsOf(member, statuses, pageable);
     }
 
     @Override

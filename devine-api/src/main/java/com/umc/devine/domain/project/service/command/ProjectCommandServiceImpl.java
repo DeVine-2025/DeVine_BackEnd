@@ -95,7 +95,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
-        Project project = projectRepository.findByIdAndStatusNotIn(projectId, ProjectStatus.INVISIBLE_STATUSES)
+        Project project = projectRepository.findVisibleById(projectId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         validateOwner(project, member.getId());
@@ -165,7 +165,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public void deleteProject(Member member, Long projectId) {
-        Project project = projectRepository.findByIdAndStatusNotIn(projectId, ProjectStatus.INVISIBLE_STATUSES)
+        Project project = projectRepository.findVisibleById(projectId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         validateOwner(project, member.getId());
@@ -240,7 +240,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public void changeProjectStatus(Member member, Long projectId, ProjectStatus status) {
-        Project project = projectRepository.findByIdAndStatusNotIn(projectId, ProjectStatus.INVISIBLE_STATUSES)
+        Project project = projectRepository.findVisibleById(projectId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
 
         validateOwner(project, member.getId());

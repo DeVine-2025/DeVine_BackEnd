@@ -20,6 +20,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
 
@@ -73,19 +74,24 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
                 .build());
     }
 
+    private Project createHiddenProject(String name, ProjectStatus status) {
+        Project project = createProject(name, status);
+        project.changeVisibility(false, testMember, LocalDateTime.now());
+        return projectRepository.save(project);
+    }
+
     @Nested
-    @DisplayName("findByIdAndStatusNot")
-    class FindByIdAndStatusNotTest {
+    @DisplayName("findVisibleById")
+    class FindVisibleByIdTest {
 
         @Test
         @DisplayName("삭제되지 않은 프로젝트를 조회한다")
-        void findByIdAndStatusNot_success() {
+        void findVisibleById_success() {
             // given
             Project project = createProject("정상 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
-                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
+            Optional<Project> result = projectRepository.findVisibleById(project.getId());
 
             // then
             assertThat(result).isPresent();
@@ -94,27 +100,25 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
 
         @Test
         @DisplayName("삭제된 프로젝트는 조회되지 않는다")
-        void findByIdAndStatusNot_deleted() {
+        void findVisibleById_deleted() {
             // given
             Project project = createProject("삭제된 프로젝트", ProjectStatus.DELETED);
 
             // when
-            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
-                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
+            Optional<Project> result = projectRepository.findVisibleById(project.getId());
 
             // then
             assertThat(result).isEmpty();
         }
 
         @Test
-        @DisplayName("숨김 처리된 프로젝트는 조회되지 않는다")
-        void findByIdAndStatusNot_hidden() {
+        @DisplayName("비노출 처리된 프로젝트는 상태가 모집중이어도 조회되지 않는다")
+        void findVisibleById_hidden() {
             // given
-            Project project = createProject("숨김 처리된 프로젝트", ProjectStatus.HIDDEN);
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            Optional<Project> result = projectRepository.findByIdAndStatusNotIn(
-                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
+            Optional<Project> result = projectRepository.findVisibleById(project.getId());
 
             // then
             assertThat(result).isEmpty();
@@ -122,23 +126,35 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findByIdWithMemberAndStatusNotIn")
-    class FindByIdWithMemberAndStatusNotTest {
+    @DisplayName("findVisibleByIdWithMember")
+    class FindVisibleByIdWithMemberTest {
 
         @Test
         @DisplayName("멤버와 카테고리를 함께 조회한다")
-        void findByIdWithMember_success() {
+        void findVisibleByIdWithMember_success() {
             // given
             Project project = createProject("페치조인 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            Optional<Project> result = projectRepository.findByIdWithMemberAndStatusNotIn(
-                    project.getId(), ProjectStatus.INVISIBLE_STATUSES);
+            Optional<Project> result = projectRepository.findVisibleByIdWithMember(project.getId());
 
             // then
             assertThat(result).isPresent();
             assertThat(result.get().getMember().getNickname()).isEqualTo("repotest");
             assertThat(result.get().getCategory().getGenre()).isEqualTo(CategoryGenre.ECOMMERCE);
+        }
+
+        @Test
+        @DisplayName("비노출 처리된 프로젝트는 조회되지 않는다")
+        void findVisibleByIdWithMember_hidden() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            Optional<Project> result = projectRepository.findVisibleByIdWithMember(project.getId());
+
+            // then
+            assertThat(result).isEmpty();
         }
     }
 
@@ -180,6 +196,142 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             // then
             assertThat(result.getContent()).hasSize(2);
         }
+
+        @Test
+        @DisplayName("비노출 프로젝트는 제외된다 (제3자 노출 경로에서도 재사용되므로 안전한 쪽이 기본값)")
+        void findByMemberAndStatusIn_excludeHidden() {
+            // given
+            createProject("모집 중", ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
+
+            // when
+            Page<Project> result = projectRepository.findByMemberAndStatusIn(
+                    testMember, List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
+
+            // then
+            assertThat(result.getContent()).hasSize(1);
+            assertThat(result.getContent().get(0).getName()).isEqualTo("모집 중");
+        }
+    }
+
+    @Nested
+    @DisplayName("findAllByMemberAndStatusIn")
+    class FindAllByMemberAndStatusInTest {
+
+        @Test
+        @DisplayName("비노출 프로젝트는 제외된다 (공개 프로필 등 제3자 경로에서 재사용됨)")
+        void findAllByMemberAndStatusIn_excludeHidden() {
+            // given
+            createProject("모집 중", ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findAllByMemberAndStatusIn(
+                    testMember, List.of(ProjectStatus.RECRUITING));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result).noneMatch(Project::isHidden);
+        }
+
+        @Test
+        @DisplayName("IncludingHidden 변형은 작성자 본인 목록용이므로 비노출 프로젝트도 포함한다")
+        void findAllByMemberAndStatusInIncludingHidden() {
+            // given
+            createProject("모집 중", ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 모집 중", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findAllByMemberAndStatusInIncludingHidden(
+                    testMember, List.of(ProjectStatus.RECRUITING));
+
+            // then
+            assertThat(result).hasSize(2);
+            assertThat(result).anyMatch(Project::isHidden);
+        }
+
+        @Test
+        @DisplayName("삭제된 프로젝트는 상태 목록에 없으므로 조회되지 않는다")
+        void findAllByMemberAndStatusIn_excludeDeleted() {
+            // given
+            createProject("모집 중", ProjectStatus.RECRUITING);
+            createProject("삭제됨", ProjectStatus.DELETED);
+
+            // when
+            List<Project> result = projectRepository.findAllByMemberAndStatusIn(
+                    testMember, List.of(ProjectStatus.RECRUITING));
+
+            // then
+            assertThat(result).hasSize(1);
+        }
+    }
+
+    @Nested
+    @DisplayName("findByIdWithMemberVisibleTo")
+    class FindByIdWithMemberVisibleToTest {
+
+        @Test
+        @DisplayName("비노출 프로젝트는 작성자 본인에게는 조회된다")
+        void findByIdWithMemberVisibleTo_owner() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            Optional<Project> result = projectRepository.findByIdWithMemberVisibleTo(
+                    project.getId(), testMember.getId());
+
+            // then
+            assertThat(result).isPresent();
+        }
+
+        @Test
+        @DisplayName("비노출 프로젝트는 다른 회원에게는 조회되지 않는다")
+        void findByIdWithMemberVisibleTo_otherMember() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+            Member other = memberRepository.save(Member.builder()
+                    .clerkId("clerk_repo_other")
+                    .name("다른회원")
+                    .nickname("repoother")
+                    .mainType(MemberMainType.DEVELOPER)
+                    .disclosure(true)
+                    .used(MemberStatus.ACTIVE)
+                    .build());
+
+            // when
+            Optional<Project> result = projectRepository.findByIdWithMemberVisibleTo(
+                    project.getId(), other.getId());
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("비로그인(viewerId가 null)이면 비노출 프로젝트는 조회되지 않는다")
+        void findByIdWithMemberVisibleTo_anonymous() {
+            // given
+            Project project = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            Optional<Project> result = projectRepository.findByIdWithMemberVisibleTo(project.getId(), null);
+
+            // then
+            assertThat(result).isEmpty();
+        }
+
+        @Test
+        @DisplayName("삭제된 프로젝트는 작성자에게도 조회되지 않는다")
+        void findByIdWithMemberVisibleTo_deleted() {
+            // given
+            Project project = createProject("삭제된 프로젝트", ProjectStatus.DELETED);
+
+            // when
+            Optional<Project> result = projectRepository.findByIdWithMemberVisibleTo(
+                    project.getId(), testMember.getId());
+
+            // then
+            assertThat(result).isEmpty();
+        }
     }
 
     @Nested
@@ -195,12 +347,26 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             createProject("삭제된 프로젝트", ProjectStatus.DELETED);
 
             // when
-            List<Project> result = projectRepository.findWeeklyBestProjects(
-                    ProjectStatus.INVISIBLE_STATUSES, false);
+            List<Project> result = projectRepository.findWeeklyBestProjects(false);
 
             // then
             assertThat(result).hasSize(2);
             assertThat(result).noneMatch(p -> p.getStatus() == ProjectStatus.DELETED);
+        }
+
+        @Test
+        @DisplayName("비노출 처리된 프로젝트를 제외하고 조회한다")
+        void findWeeklyBestProjects_excludeHidden() {
+            // given
+            createProject("정상 프로젝트", ProjectStatus.RECRUITING);
+            createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findWeeklyBestProjects(false);
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result).noneMatch(Project::isHidden);
         }
     }
 
@@ -229,23 +395,55 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
     }
 
     @Nested
-    @DisplayName("findAllByIdIn")
-    class FindAllByIdInTest {
+    @DisplayName("findVisibleByIdIn")
+    class FindVisibleByIdInTest {
 
         @Test
         @DisplayName("ID 목록으로 프로젝트를 일괄 조회한다")
-        void findAllByIdIn_success() {
+        void findVisibleByIdIn_success() {
             // given
             Project project1 = createProject("프로젝트 1", ProjectStatus.RECRUITING);
             Project project2 = createProject("프로젝트 2", ProjectStatus.RECRUITING);
             createProject("프로젝트 3", ProjectStatus.RECRUITING);
 
             // when
-            List<Project> result = projectRepository.findAllByIdIn(
+            List<Project> result = projectRepository.findVisibleByIdIn(
                     List.of(project1.getId(), project2.getId()));
 
             // then
             assertThat(result).hasSize(2);
+        }
+
+        @Test
+        @DisplayName("비노출 처리된 프로젝트는 제외된다")
+        void findVisibleByIdIn_excludeHidden() {
+            // given
+            Project visible = createProject("노출 프로젝트", ProjectStatus.RECRUITING);
+            Project hidden = createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
+
+            // when
+            List<Project> result = projectRepository.findVisibleByIdIn(
+                    List.of(visible.getId(), hidden.getId()));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getName()).isEqualTo("노출 프로젝트");
+        }
+
+        @Test
+        @DisplayName("삭제된 프로젝트는 제외된다")
+        void findVisibleByIdIn_excludeDeleted() {
+            // given
+            Project visible = createProject("노출 프로젝트", ProjectStatus.RECRUITING);
+            Project deleted = createProject("삭제된 프로젝트", ProjectStatus.DELETED);
+
+            // when
+            List<Project> result = projectRepository.findVisibleByIdIn(
+                    List.of(visible.getId(), deleted.getId()));
+
+            // then
+            assertThat(result).hasSize(1);
+            assertThat(result.get(0).getName()).isEqualTo("노출 프로젝트");
         }
     }
 
