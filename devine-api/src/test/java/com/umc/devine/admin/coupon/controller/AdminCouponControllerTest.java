@@ -1,7 +1,9 @@
 package com.umc.devine.admin.coupon.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.coupon.dto.AdminCouponReqDTO;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.domain.coupon.entity.Coupon;
 import com.umc.devine.domain.coupon.enums.DiscountType;
 import com.umc.devine.domain.coupon.repository.CouponCodeRepository;
@@ -19,10 +21,14 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
@@ -44,9 +50,19 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
     private ObjectMapper objectMapper;
 
     private Coupon coupon;
+    private Authentication adminAuth;
 
     @BeforeEach
     void setUp() {
+        AdminPrincipal principal = AdminPrincipal.builder()
+                .clerkId("clerk_admin")
+                .email("admin@example.com")
+                .name("관리자")
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
+
         coupon = couponRepository.save(Coupon.builder()
                 .name("컨트롤러 테스트 쿠폰")
                 .discountType(DiscountType.FIXED_AMOUNT)
@@ -72,8 +88,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
     class CreateCoupon {
 
         @Test
-        @DisplayName("인증 없이도 쿠폰을 생성할 수 있다")
-        void createsWithoutAuthentication() throws Exception {
+        @DisplayName("관리자는 쿠폰을 생성할 수 있다")
+        void createsCoupon() throws Exception {
             AdminCouponReqDTO.CreateCouponReq request = new AdminCouponReqDTO.CreateCouponReq(
                     "신규 쿠폰", DiscountType.FIXED_RATE, 10L, null,
                     LocalDateTime.now(), LocalDateTime.now().plusDays(30),
@@ -81,6 +97,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
             );
 
             mockMvc.perform(post("/admin/v1/coupon")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -98,6 +115,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
             );
 
             mockMvc.perform(post("/admin/v1/coupon")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest());
@@ -111,7 +129,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("쿠폰 목록을 페이징 조회한다")
         void returnsPagedList() throws Exception {
-            mockMvc.perform(get("/admin/v1/coupon").param("page", "1").param("size", "10"))
+            mockMvc.perform(get("/admin/v1/coupon").param("page", "1").param("size", "10")
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.content").isArray())
                     .andExpect(jsonPath("$.result.totalElements").value(1));
@@ -125,7 +144,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("쿠폰 상세 정보를 조회한다")
         void returnsCouponDetail() throws Exception {
-            mockMvc.perform(get("/admin/v1/coupon/{couponId}", coupon.getId()))
+            mockMvc.perform(get("/admin/v1/coupon/{couponId}", coupon.getId())
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.couponId").value(coupon.getId()))
                     .andExpect(jsonPath("$.result.name").value("컨트롤러 테스트 쿠폰"));
@@ -134,7 +154,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 쿠폰이면 404를 반환한다")
         void returns404WhenNotFound() throws Exception {
-            mockMvc.perform(get("/admin/v1/coupon/{couponId}", 999_999L))
+            mockMvc.perform(get("/admin/v1/coupon/{couponId}", 999_999L)
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isNotFound());
         }
     }
@@ -150,6 +171,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     "수정된 이름", null, null, null, false, false, null);
 
             mockMvc.perform(patch("/admin/v1/coupon/{couponId}", coupon.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -164,6 +186,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     "이름", null, null, null, false, null, null);
 
             mockMvc.perform(patch("/admin/v1/coupon/{couponId}", 999_999L)
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isNotFound());
@@ -188,6 +211,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     AdminCouponReqDTO.IssueType.SPECIFIC, List.of(member.getNickname()), null, null, null, null);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -201,6 +225,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     AdminCouponReqDTO.IssueType.CODE_GEN, null, 8, 3, null, null);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -215,6 +240,7 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
                     AdminCouponReqDTO.IssueType.CODE_GEN, null, null, null, "summer2026", 50);
 
             mockMvc.perform(post("/admin/v1/coupon/{couponId}/issue", coupon.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -230,7 +256,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("쿠폰ID 없이 요청하면 전체 쿠폰 현황을 반환한다")
         void returnsAllStatsWithoutId() throws Exception {
-            mockMvc.perform(get("/admin/v1/coupon/usage"))
+            mockMvc.perform(get("/admin/v1/coupon/usage")
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result").isArray())
                     .andExpect(jsonPath("$.result.length()").value(1));
@@ -239,7 +266,8 @@ class AdminCouponControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("쿠폰ID를 지정하면 해당 쿠폰 현황만 반환한다")
         void returnsSingleStatWithId() throws Exception {
-            mockMvc.perform(get("/admin/v1/coupon/usage").param("couponId", coupon.getId().toString()))
+            mockMvc.perform(get("/admin/v1/coupon/usage").param("couponId", coupon.getId().toString())
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.result.length()").value(1))
                     .andExpect(jsonPath("$.result[0].couponId").value(coupon.getId()));

@@ -29,6 +29,14 @@ clerk:
   secret-key: "test-secret-key-for-integration-tests"
   issuer-uri: "https://test-issuer.local"
 
+# 외부 연동 헬스체크
+# 스케줄러를 끄지 않으면 CI가 실제 외부 API(Clerk, GitHub, OpenAI 등)를 호출하게 된다.
+integration:
+  health:
+    enabled: false
+    connect-timeout: 500
+    read-timeout: 500
+
 # Thread Pool Configuration
 executor:
   async:

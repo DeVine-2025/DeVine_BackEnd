@@ -24,6 +24,13 @@ public class RestClientConfig {
     @Value("${fastapi.report.sync-read-timeout:180000}")
     private int syncReadTimeout;
 
+    // 외부 연동 헬스체크 커넥션 (짧은 타임아웃 필수)
+    @Value("${integration.health.connect-timeout:2000}")
+    private int healthConnectTimeout;
+
+    @Value("${integration.health.read-timeout:3000}")
+    private int healthReadTimeout;
+
     @Bean
     @Primary
     public RestClient restClient() {
@@ -51,6 +58,22 @@ public class RestClientConfig {
 
         return RestClient.builder()
                 .baseUrl(fastApiBaseUrl)
+                .requestFactory(factory)
+                .build();
+    }
+
+    /**
+     * 외부 연동 헬스체크 전용 클라이언트.
+     * @Primary restClient()는 타임아웃이 없어 응답하지 않는 외부 API에 무한정 매달리므로
+     * 헬스체크에는 반드시 이 빈을 사용한다.
+     */
+    @Bean
+    public RestClient healthCheckRestClient() {
+        SimpleClientHttpRequestFactory factory = new SimpleClientHttpRequestFactory();
+        factory.setConnectTimeout(healthConnectTimeout);
+        factory.setReadTimeout(healthReadTimeout);
+
+        return RestClient.builder()
                 .requestFactory(factory)
                 .build();
     }

@@ -1,6 +1,8 @@
 package com.umc.devine.admin.notice.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.admin.notice.dto.AdminNoticeReqDTO;
 import com.umc.devine.domain.notice.entity.Notice;
 import com.umc.devine.domain.notice.repository.NoticeRepository;
@@ -11,17 +13,18 @@ import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
+import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDateTime;
+import java.util.List;
 import java.util.Map;
 
+import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.*;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-/**
- * TODO: 관리자 인증/인가가 머지되면 permitAll이 걷히므로,
- * AdminPrincipal + ROLE_ADMIN 을 주입하도록 전환해야 한다(docs/admin-integration-guide.md 참고).
- */
 class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired
@@ -30,9 +33,20 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
     @Autowired
     private ObjectMapper objectMapper;
 
+    private Authentication adminAuth;
+
     @BeforeEach
     void setUp() {
         noticeRepository.deleteAll();
+
+        AdminPrincipal principal = AdminPrincipal.builder()
+                .clerkId("clerk_admin")
+                .email("admin@example.com")
+                .name("관리자")
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     private Notice saveNotice() {
@@ -56,6 +70,7 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(post("/admin/v1/notices")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isOk())
@@ -73,6 +88,7 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(post("/admin/v1/notices")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -87,6 +103,7 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(post("/admin/v1/notices")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isBadRequest())
@@ -102,6 +119,7 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(post("/admin/v1/notices")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(objectMapper.writeValueAsString(request)))
                     .andExpect(status().isBadRequest())
@@ -121,7 +139,9 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
                     .title("비노출 공지").content("내용").isExposed(false).build());
 
             // when & then
-            mockMvc.perform(get("/admin/v1/notices").param("page", "1").param("size", "10"))
+            mockMvc.perform(get("/admin/v1/notices")
+                            .with(authentication(adminAuth))
+                            .param("page", "1").param("size", "10"))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value("ADMINNOTICE200_1"))
                     .andExpect(jsonPath("$.result.totalElements").value(1))
@@ -136,7 +156,8 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 공지를 조회하면 404를 반환한다")
         void returns404WhenNotFound() throws Exception {
-            mockMvc.perform(get("/admin/v1/notices/{noticeId}", 999_999L))
+            mockMvc.perform(get("/admin/v1/notices/{noticeId}", 999_999L)
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("NOTICE404_1"));
         }
@@ -155,6 +176,7 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(patch("/admin/v1/notices/{noticeId}", notice.getId())
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON)
                             .content(body))
                     .andExpect(status().isOk())
@@ -175,7 +197,8 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
             Notice notice = saveNotice();
 
             // when & then
-            mockMvc.perform(delete("/admin/v1/notices/{noticeId}", notice.getId()))
+            mockMvc.perform(delete("/admin/v1/notices/{noticeId}", notice.getId())
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isOk())
                     .andExpect(jsonPath("$.code").value("ADMINNOTICE200_4"));
         }
@@ -183,7 +206,8 @@ class AdminNoticeControllerTest extends ControllerIntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 공지를 삭제하면 404를 반환한다")
         void returns404WhenNotFound() throws Exception {
-            mockMvc.perform(delete("/admin/v1/notices/{noticeId}", 999_999L))
+            mockMvc.perform(delete("/admin/v1/notices/{noticeId}", 999_999L)
+                            .with(authentication(adminAuth)))
                     .andExpect(status().isNotFound())
                     .andExpect(jsonPath("$.code").value("NOTICE404_1"));
         }

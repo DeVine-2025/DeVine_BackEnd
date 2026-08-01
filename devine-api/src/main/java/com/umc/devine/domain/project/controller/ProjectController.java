@@ -76,10 +76,11 @@ public class ProjectController implements ProjectControllerDocs {
     @Override
     @GetMapping("/{projectId}")
     public ApiResponse<ProjectResDTO.UpdateProjectRes> getProjectDetail(
+            @CurrentMember(required = false) Member member,
             @PathVariable("projectId") Long projectId
     ) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        ProjectResDTO.UpdateProjectRes response = projectQueryService.getProjectDetail(projectId);
+        ProjectResDTO.UpdateProjectRes response = projectQueryService.getProjectDetail(member, projectId);
         return ApiResponse.onSuccess(code, response);
     }
 

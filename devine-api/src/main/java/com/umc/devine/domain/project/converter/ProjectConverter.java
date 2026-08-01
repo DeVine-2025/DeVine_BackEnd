@@ -117,6 +117,7 @@ public class ProjectConverter {
                 .creatorClerkId(project.getMember().getClerkId())
                 .recruitments(toRecruitmentInfoList(project.getRequirements(), techstackMap))
                 .images(toImageInfoList(project.getImages()))
+                .visible(!project.isHidden())
                 .build();
     }
 
@@ -291,6 +292,7 @@ public class ProjectConverter {
                 .myPartName(myPart != null ? myPart.getDisplayName() : null)
                 .projectStatus(project.getStatus())
                 .projectStatusName(project.getStatus().getDisplayName())
+                .visible(!project.isHidden())
                 .build();
     }
 }

@@ -9,8 +9,7 @@
 - **Base path**: 관리자 `/admin/v1/notices`, 일반 유저 `/api/v1/notices`
 - **인증**
   - 유저 조회 API 2개는 **비회원 허용**(`ApiSecurityConfig`에서 `GET /api/v1/notices`, `GET /api/v1/notices/*` permitAll).
-  - 관리자 API는 관리자 인증/인가가 아직 없어 인증을 강제하지 않습니다(`ApiSecurityConfig`에 permitAll 처리).
-    - TODO: 관리자 인증/인가(#294)가 머지되면 `/admin/v1/**`를 담당하는 admin SecurityFilterChain이 `ROLE_ADMIN`을 강제하므로, `ApiSecurityConfig`의 `/admin/v1/notices/**` permitAll 한 줄을 제거해야 합니다.
+  - 관리자 API는 `/admin/**`를 담당하는 admin SecurityFilterChain(#294)이 `ROLE_ADMIN`을 강제합니다. 별도 permitAll 없이 관리자 인증을 통과해야 호출할 수 있습니다.
 - **응답 포맷**: 공통 `ApiResponse` 봉투 사용
 
   ```json
@@ -281,6 +280,5 @@ AND (display_end_at   IS NULL OR display_end_at   >= now)
 
 ## 미구현 영역 (TODO)
 
-- **관리자 인증/인가**: `/admin/v1/notices/**`가 현재 permitAll입니다. #294 머지 후 permitAll 제거 및 컨트롤러 테스트의 `ROLE_ADMIN` 주입 전환이 필요합니다.
-- **작성자 기록**: `created_by`/`updated_by`는 `BaseEntity`의 JPA Auditing으로 채워지며, 관리자 인증이 붙기 전까지는 관리자 주체가 기록되지 않습니다.
+- **작성자 기록**: `created_by`/`updated_by`는 `BaseEntity`의 JPA Auditing으로 채워지며, 관리자 주체(`AdminPrincipal`)를 기록하려면 별도 연동이 필요합니다.
 - **부가 속성**: 상단 고정(pinned), 카테고리, 조회수는 이번 범위에서 제외했습니다. 필요해지면 컬럼 추가 마이그레이션으로 확장하세요.
