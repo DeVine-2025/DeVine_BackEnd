@@ -1,17 +1,23 @@
 package com.umc.devine.global.config;
 
+import com.umc.devine.admin.auth.security.AdminAccessDeniedHandler;
+import com.umc.devine.admin.auth.security.AdminAccessLogger;
+import com.umc.devine.admin.auth.security.AdminAccessLoggingFilter;
+import com.umc.devine.admin.auth.security.AdminJwtAuthenticationConverter;
 import com.umc.devine.global.security.ClerkJwtAuthenticationConverter;
 import com.umc.devine.global.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.core.annotation.Order;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
 import org.springframework.security.config.http.SessionCreationPolicy;
 import org.springframework.security.web.SecurityFilterChain;
+import org.springframework.security.web.access.intercept.AuthorizationFilter;
 import org.springframework.web.cors.CorsConfiguration;
 import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
@@ -25,12 +31,45 @@ import java.util.List;
 public class ApiSecurityConfig {
 
     private final ClerkJwtAuthenticationConverter clerkJwtAuthenticationConverter;
+    private final AdminJwtAuthenticationConverter adminJwtAuthenticationConverter;
+    private final AdminAccessDeniedHandler adminAccessDeniedHandler;
+    private final AdminAccessLogger adminAccessLogger;
     private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
 
     @Value("${cors.allowed-origins}")
     private String allowedOrigins;
 
+    /**
+     * 관리자 전용 체인. /admin/** 경로만 담당하며 ROLE_ADMIN을 요구한다.
+     * 일반 유저와 동일한 Clerk JWT로 인증하되, 인가(관리자 판정)만 분리한다.
+     */
     @Bean
+    @Order(1)
+    public SecurityFilterChain adminSecurityFilterChain(HttpSecurity http) throws Exception {
+        return http
+                .securityMatcher("/admin/**")
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+                .csrf(AbstractHttpConfigurer::disable)
+                .sessionManagement(session ->
+                        session.sessionCreationPolicy(SessionCreationPolicy.STATELESS)
+                )
+                .authorizeHttpRequests(auth -> auth
+                        .anyRequest().hasRole("ADMIN")
+                )
+                .oauth2ResourceServer(oauth2 -> oauth2
+                        .jwt(jwt -> jwt.jwtAuthenticationConverter(adminJwtAuthenticationConverter))
+                        .authenticationEntryPoint(customAuthenticationEntryPoint)
+                )
+                .exceptionHandling(ex -> ex.accessDeniedHandler(adminAccessDeniedHandler))
+                // 인가를 통과한 관리자 요청을 감사 로그로 남긴다 (거절은 AdminAccessDeniedHandler가 기록)
+                .addFilterAfter(new AdminAccessLoggingFilter(adminAccessLogger), AuthorizationFilter.class)
+                .formLogin(AbstractHttpConfigurer::disable)
+                .httpBasic(AbstractHttpConfigurer::disable)
+                .build();
+    }
+
+    @Bean
+    @Order(2)
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         return http
                 .cors(cors -> cors.configurationSource(corsConfigurationSource()))
@@ -80,12 +119,6 @@ public class ApiSecurityConfig {
                         .requestMatchers(HttpMethod.POST, "/api/v1/payments/webhook").permitAll()
                         // 개발용 토큰 발급 페이지
                         .requestMatchers("/dev", "/dev/**").permitAll()
-                        // 관리자 쿠폰 관리 (관리자 인증/인가 미구현 - TODO: 인증 붙으면 permitAll 제거)
-                        .requestMatchers("/admin/v1/coupon/**").permitAll()
-                        // 관리자 신고/제재 관리 (관리자 인증/인가 미구현 - TODO: 인증 붙으면 permitAll 제거)
-                        .requestMatchers("/admin/v1/complaints/**").permitAll()
-                        // 관리자 프로젝트 노출 관리 (관리자 인증/인가 미구현 - TODO: 인증 붙으면 permitAll 제거)
-                        .requestMatchers("/admin/v1/projects/**").permitAll()
                         // 그 외 모든 요청은 인증 필요
                         .anyRequest().authenticated()
                 )

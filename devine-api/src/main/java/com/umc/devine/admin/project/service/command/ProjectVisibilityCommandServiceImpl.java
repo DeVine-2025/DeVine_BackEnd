@@ -24,11 +24,11 @@ public class ProjectVisibilityCommandServiceImpl implements ProjectVisibilityCom
     private final MemberRepository memberRepository;
 
     @Override
-    public AdminProjectResDTO.UpdateVisibilityRes changeVisibility(Long projectId, boolean visible, Long processorMemberId) {
+    public AdminProjectResDTO.UpdateVisibilityRes changeVisibility(Long projectId, boolean visible, String processorClerkId) {
         Project project = findChangeableProject(projectId)
                 .orElseThrow(() -> new ProjectException(ProjectErrorReason.PROJECT_NOT_FOUND));
 
-        Member processor = findProcessor(processorMemberId);
+        Member processor = findProcessor(processorClerkId);
         LocalDateTime changedAt = LocalDateTime.now();
         boolean changed = project.changeVisibility(visible, processor, changedAt);
 
@@ -42,13 +42,13 @@ public class ProjectVisibilityCommandServiceImpl implements ProjectVisibilityCom
     }
 
     @Override
-    public boolean hideForModeration(Long projectId, Long processorMemberId) {
+    public boolean hideForModeration(Long projectId, String processorClerkId) {
         Optional<Project> target = findChangeableProject(projectId);
         if (target.isEmpty()) {
             return false;
         }
 
-        target.get().changeVisibility(false, findProcessor(processorMemberId), LocalDateTime.now());
+        target.get().changeVisibility(false, findProcessor(processorClerkId), LocalDateTime.now());
         return true;
     }
 
@@ -61,10 +61,10 @@ public class ProjectVisibilityCommandServiceImpl implements ProjectVisibilityCom
                 .filter(project -> project.getStatus() != ProjectStatus.DELETED);
     }
 
-    // 관리자 인증/인가 미구현 상태라 처리자가 없을 수 있다. (TODO: 인증 도입 시 필수로 전환)
-    private Member findProcessor(Long processorMemberId) {
-        return processorMemberId != null
-                ? memberRepository.findById(processorMemberId).orElse(null)
+    // 관리자 계정에 대응하는 member 레코드가 없을 수 있으므로 처리자는 없을 수 있다.
+    private Member findProcessor(String processorClerkId) {
+        return processorClerkId != null
+                ? memberRepository.findByClerkId(processorClerkId).orElse(null)
                 : null;
     }
 }

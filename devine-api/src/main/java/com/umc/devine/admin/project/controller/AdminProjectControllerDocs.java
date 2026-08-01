@@ -1,24 +1,21 @@
 package com.umc.devine.admin.project.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.project.dto.AdminProjectReqDTO;
 import com.umc.devine.admin.project.dto.AdminProjectResDTO;
-import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
-import com.umc.devine.global.security.CurrentMember;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import jakarta.validation.Valid;
 import org.springdoc.core.annotations.ParameterObject;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.ModelAttribute;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
-/**
- * TODO: 관리자 인증/인가 기능이 추가되면 관리자 권한 검증을 추가.
- */
 @Tag(name = "Admin Project", description = "관리자 프로젝트 노출 관리 API")
 public interface AdminProjectControllerDocs {
 
@@ -46,7 +43,7 @@ public interface AdminProjectControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "프로젝트를 찾을 수 없거나 이미 삭제됨")
     })
     ApiResponse<AdminProjectResDTO.UpdateVisibilityRes> updateVisibility(
-            @Parameter(hidden = true) @CurrentMember(required = false) Member member,
+            @Parameter(hidden = true) @AuthenticationPrincipal AdminPrincipal admin,
             @Parameter(description = "프로젝트 ID", required = true) @PathVariable Long projectId,
             @RequestBody @Valid AdminProjectReqDTO.UpdateVisibilityReq request
     );

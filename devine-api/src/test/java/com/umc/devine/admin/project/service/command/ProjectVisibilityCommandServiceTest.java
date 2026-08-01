@@ -97,7 +97,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
 
             // when
             AdminProjectResDTO.UpdateVisibilityRes result =
-                    projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId());
+                    projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId());
 
             // then
             assertThat(result.visible()).isFalse();
@@ -113,11 +113,11 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
         void changeVisibility_restore() {
             // given
             Project project = createProject(ProjectStatus.COMPLETED);
-            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId());
+            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId());
 
             // when
             AdminProjectResDTO.UpdateVisibilityRes result =
-                    projectVisibilityCommandService.changeVisibility(project.getId(), true, admin.getId());
+                    projectVisibilityCommandService.changeVisibility(project.getId(), true, admin.getClerkId());
 
             // then
             assertThat(result.visible()).isTrue();
@@ -133,11 +133,11 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
         void changeVisibility_idempotent() {
             // given
             Project project = createProject(ProjectStatus.RECRUITING);
-            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId());
+            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId());
 
             // when
             AdminProjectResDTO.UpdateVisibilityRes result =
-                    projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId());
+                    projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId());
 
             // then
             assertThat(result.changed()).isFalse();
@@ -156,7 +156,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
             Project project = createProject(ProjectStatus.RECRUITING);
 
             // when
-            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId());
+            projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId());
 
             // then
             Project updated = projectRepository.findById(project.getId()).orElseThrow();
@@ -182,7 +182,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 프로젝트면 예외가 발생한다")
         void changeVisibility_notFound() {
-            assertThatThrownBy(() -> projectVisibilityCommandService.changeVisibility(999999L, false, admin.getId()))
+            assertThatThrownBy(() -> projectVisibilityCommandService.changeVisibility(999999L, false, admin.getClerkId()))
                     .isInstanceOf(ProjectException.class);
         }
 
@@ -193,7 +193,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
             Project project = createProject(ProjectStatus.DELETED);
 
             // when & then
-            assertThatThrownBy(() -> projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getId()))
+            assertThatThrownBy(() -> projectVisibilityCommandService.changeVisibility(project.getId(), false, admin.getClerkId()))
                     .isInstanceOf(ProjectException.class);
         }
     }
@@ -209,7 +209,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
             Project project = createProject(ProjectStatus.RECRUITING);
 
             // when
-            boolean result = projectVisibilityCommandService.hideForModeration(project.getId(), admin.getId());
+            boolean result = projectVisibilityCommandService.hideForModeration(project.getId(), admin.getClerkId());
 
             // then
             assertThat(result).isTrue();
@@ -221,10 +221,10 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
         void hideForModeration_alreadyHidden() {
             // given
             Project project = createProject(ProjectStatus.RECRUITING);
-            projectVisibilityCommandService.hideForModeration(project.getId(), admin.getId());
+            projectVisibilityCommandService.hideForModeration(project.getId(), admin.getClerkId());
 
             // when
-            boolean result = projectVisibilityCommandService.hideForModeration(project.getId(), admin.getId());
+            boolean result = projectVisibilityCommandService.hideForModeration(project.getId(), admin.getClerkId());
 
             // then
             assertThat(result).isTrue();
@@ -234,13 +234,13 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
         @Test
         @DisplayName("존재하지 않는 프로젝트면 예외 없이 false를 반환한다")
         void hideForModeration_notFound() {
-            assertThat(projectVisibilityCommandService.hideForModeration(999999L, admin.getId())).isFalse();
+            assertThat(projectVisibilityCommandService.hideForModeration(999999L, admin.getClerkId())).isFalse();
         }
 
         @Test
         @DisplayName("targetId가 null이어도 예외 없이 false를 반환한다")
         void hideForModeration_nullTargetId() {
-            assertThat(projectVisibilityCommandService.hideForModeration(null, admin.getId())).isFalse();
+            assertThat(projectVisibilityCommandService.hideForModeration(null, admin.getClerkId())).isFalse();
         }
 
         @Test
@@ -250,7 +250,7 @@ class ProjectVisibilityCommandServiceTest extends IntegrationTestSupport {
             Project project = createProject(ProjectStatus.DELETED);
 
             // when & then
-            assertThat(projectVisibilityCommandService.hideForModeration(project.getId(), admin.getId())).isFalse();
+            assertThat(projectVisibilityCommandService.hideForModeration(project.getId(), admin.getClerkId())).isFalse();
         }
     }
 }

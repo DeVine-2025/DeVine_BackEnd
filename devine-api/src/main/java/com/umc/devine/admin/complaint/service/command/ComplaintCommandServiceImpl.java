@@ -33,7 +33,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
     private final ProjectVisibilityCommandService projectVisibilityCommandService;
 
     @Override
-    public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, Long processorMemberId, ComplaintReqDTO.UpdateStatusReq request) {
+    public ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, String processorClerkId, ComplaintReqDTO.UpdateStatusReq request) {
         Complaint complaint = complaintRepository.findById(complaintId)
                 .orElseThrow(() -> new ComplaintException(ComplaintErrorReason.COMPLAINT_NOT_FOUND));
 
@@ -56,13 +56,13 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
             //       기능 미구현으로 현재는 신고 상태만 변경. 연동 시 아래와 동일하게 markLinkedActionCompleted() 호출.
             if (action == ComplaintAction.DELETE && complaint.getTargetType() == ComplaintTargetType.PROJECT) {
                 // 대상 프로젝트가 없거나 이미 삭제된 경우 조치할 대상이 없으므로 연동 미완료로 남긴다.
-                if (projectVisibilityCommandService.hideForModeration(complaint.getTargetId(), processorMemberId)) {
+                if (projectVisibilityCommandService.hideForModeration(complaint.getTargetId(), processorClerkId)) {
                     complaint.markLinkedActionCompleted(LocalDateTime.now());
                 }
             }
         }
 
-        Member resolver = processorMemberId != null ? memberRepository.findById(processorMemberId).orElse(null) : null;
+        Member resolver = processorClerkId != null ? memberRepository.findByClerkId(processorClerkId).orElse(null) : null;
 
         complaint.updateStatus(request.status(), action, resolutionReason, resolver, resolvedAt);
 

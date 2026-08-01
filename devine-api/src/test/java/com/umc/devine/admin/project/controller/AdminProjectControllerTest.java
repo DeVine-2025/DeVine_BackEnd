@@ -1,6 +1,8 @@
 package com.umc.devine.admin.project.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.admin.project.dto.AdminProjectReqDTO;
 import com.umc.devine.admin.project.service.command.ProjectVisibilityCommandService;
 import com.umc.devine.domain.category.entity.Category;
@@ -16,7 +18,6 @@ import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectMode;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.ProjectRepository;
-import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -26,6 +27,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
 import java.time.LocalDate;
 
@@ -82,8 +84,14 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
                 .genre(CategoryGenre.ECOMMERCE)
                 .build());
 
-        ClerkPrincipal principal = new ClerkPrincipal("clerk_project_admin", "admin@example.com", "관리자", null);
-        adminAuth = new UsernamePasswordAuthenticationToken(principal, null, java.util.Collections.emptyList());
+        AdminPrincipal principal = AdminPrincipal.builder()
+                .clerkId("clerk_project_admin")
+                .email("admin@example.com")
+                .name("관리자")
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, java.util.List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     private Project createProject(ProjectStatus status) {
@@ -113,6 +121,7 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(get("/admin/v1/projects")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())
@@ -134,6 +143,7 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
 
             // when & then
             mockMvc.perform(get("/admin/v1/projects")
+                            .with(authentication(adminAuth))
                             .param("visible", "false")
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
@@ -147,6 +157,7 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
         @DisplayName("결과가 없어도 에러가 아니라 빈 목록을 반환한다")
         void getProjectList_empty() throws Exception {
             mockMvc.perform(get("/admin/v1/projects")
+                            .with(authentication(adminAuth))
                             .contentType(MediaType.APPLICATION_JSON))
                     .andDo(print())
                     .andExpect(status().isOk())

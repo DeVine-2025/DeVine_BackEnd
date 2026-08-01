@@ -143,7 +143,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when & then
-            assertThatThrownBy(() -> complaintCommandService.updateStatus(999999L, admin.getId(), request))
+            assertThatThrownBy(() -> complaintCommandService.updateStatus(999999L, admin.getClerkId(), request))
                     .isInstanceOf(ComplaintException.class);
         }
 
@@ -157,7 +157,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.IN_REVIEW);
@@ -175,7 +175,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when & then
-            assertThatThrownBy(() -> complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request))
+            assertThatThrownBy(() -> complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request))
                     .isInstanceOf(ComplaintException.class);
         }
 
@@ -190,7 +190,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when & then
-            assertThatThrownBy(() -> complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request))
+            assertThatThrownBy(() -> complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request))
                     .isInstanceOf(ComplaintException.class);
         }
 
@@ -206,7 +206,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
@@ -228,7 +228,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.reprocessWarning()).isTrue();
@@ -244,7 +244,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             List<ComplaintHistory> histories = complaintHistoryRepository.findByComplaintIdOrderByCreatedAtDesc(complaint.getId());
@@ -260,9 +260,9 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
             Complaint complaint = createComplaint(ComplaintStatus.PENDING);
 
             // when
-            complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+            complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
                     ComplaintReqDTO.UpdateStatusReq.builder().status(ComplaintStatus.IN_REVIEW).build());
-            complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+            complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
                     ComplaintReqDTO.UpdateStatusReq.builder()
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.WARNING)
@@ -289,7 +289,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             Project updated = projectRepository.findById(project.getId()).orElseThrow();
@@ -308,7 +308,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
             //        복구는 관리자가 노출 관리 API로 명시적으로 수행하도록 설계했다.
             Project project = createProject(ProjectStatus.RECRUITING);
             Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
-            complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+            complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
                     ComplaintReqDTO.UpdateStatusReq.builder()
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.DELETE)
@@ -316,7 +316,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                             .build());
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(),
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
                     ComplaintReqDTO.UpdateStatusReq.builder()
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.DISMISS)
@@ -343,7 +343,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
@@ -363,7 +363,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);
@@ -384,7 +384,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getId(), request);
+            ComplaintResDTO.UpdateStatusRes result = complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(), request);
 
             // then
             assertThat(result.status()).isEqualTo(ComplaintStatus.COMPLETED);

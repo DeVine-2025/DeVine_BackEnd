@@ -5,5 +5,5 @@ import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 
 public interface ComplaintCommandService {
 
-    ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, Long processorMemberId, ComplaintReqDTO.UpdateStatusReq request);
+    ComplaintResDTO.UpdateStatusRes updateStatus(Long complaintId, String processorClerkId, ComplaintReqDTO.UpdateStatusReq request);
 }

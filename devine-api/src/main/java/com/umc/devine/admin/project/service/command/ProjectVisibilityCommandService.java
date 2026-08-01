@@ -10,7 +10,7 @@ public interface ProjectVisibilityCommandService {
      *
      * @throws com.umc.devine.domain.project.exception.ProjectException 프로젝트가 없거나 이미 삭제된 경우
      */
-    AdminProjectResDTO.UpdateVisibilityRes changeVisibility(Long projectId, boolean visible, Long processorMemberId);
+    AdminProjectResDTO.UpdateVisibilityRes changeVisibility(Long projectId, boolean visible, String processorClerkId);
 
     /**
      * 신고 처리 연동용 비노출 전환.
@@ -21,5 +21,5 @@ public interface ProjectVisibilityCommandService {
      *
      * @return 비노출 처리가 실제로 수행됐으면 true, 조치 대상이 없으면 false
      */
-    boolean hideForModeration(Long projectId, Long processorMemberId);
+    boolean hideForModeration(Long projectId, String processorClerkId);
 }

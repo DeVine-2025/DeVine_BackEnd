@@ -57,6 +57,22 @@ public enum PaymentErrorReason implements DomainErrorReason {
             "PAYMENT400_7",
             "쿠폰 적용 후 결제 금액이 0원이 아닙니다. 일반 결제를 이용해주세요.",
             false),
+    PAYMENT_ALREADY_REFUNDED(HttpStatus.BAD_REQUEST,
+            "PAYMENT400_7",
+            "이미 환불되었거나 환불 처리 중인 결제입니다.",
+            false),
+    REFUND_REJECTED(HttpStatus.BAD_GATEWAY,
+            "PAYMENT502_2",
+            "결제 취소가 거절되었습니다.",
+            false),
+    REFUND_RESULT_UNKNOWN(HttpStatus.GATEWAY_TIMEOUT,
+            "PAYMENT504_1",
+            "결제 취소 결과를 확인할 수 없습니다. 잠시 후 상태가 확정됩니다.",
+            false),
+    REFUND_SETTLEMENT_FAILED(HttpStatus.INTERNAL_SERVER_ERROR,
+            "PAYMENT500_2",
+            "환불 반영에 실패했습니다. 잠시 후 상태가 확정됩니다.",
+            false),
     ;
 
     private final HttpStatus status;
