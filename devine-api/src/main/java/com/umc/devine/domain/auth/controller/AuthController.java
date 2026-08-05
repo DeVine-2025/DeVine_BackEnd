@@ -4,6 +4,7 @@ import com.umc.devine.domain.auth.dto.AuthResDTO;
 import com.umc.devine.domain.auth.exception.code.AuthSuccessCode;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.service.command.MemberLoginHistoryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
 import lombok.RequiredArgsConstructor;
@@ -20,6 +21,7 @@ import java.util.Optional;
 public class AuthController implements AuthControllerDocs {
 
     private final MemberRepository memberRepository;
+    private final MemberLoginHistoryService memberLoginHistoryService;
 
     @Override
     @GetMapping("/health")
@@ -39,6 +41,7 @@ public class AuthController implements AuthControllerDocs {
         String email = principal.getEmail();
 
         Optional<Member> memberOptional = memberRepository.findByClerkId(clerkId);
+        memberOptional.ifPresent(member -> memberLoginHistoryService.recordLoginIfNeeded(member.getId()));
 
         AuthResDTO.MeDTO response = AuthResDTO.MeDTO.builder()
                 .clerkId(clerkId)

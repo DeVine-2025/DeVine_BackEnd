@@ -23,3 +23,21 @@ executor:
     core-pool-size: 5
     max-pool-size: 10
     queue-capacity: 100
+
+# FastAPI (prod 프로파일에만 선언돼 있어 dev에서는 헬스체크가 대상 URL을 못 찾는다)
+fastapi:
+  callback:
+    base-url: ${FASTAPI_CALLBACK_URL:http://localhost:8080}
+  report:
+    base-url: ${FASTAPI_URL:http://localhost:8000}
+
+# 외부 연동 헬스체크
+# 로컬에서는 스케줄러를 끈다. dev 프로파일은 로컬 전용이고(컨테이너는 Dockerfile에서 prod로 고정),
+# 로컬은 .env의 실제 운영 키를 그대로 읽으므로 켜두면 개발자가 API를 띄워둔 동안
+# 5분마다 Clerk/GitHub/OpenAI/Gemini/PortOne 운영 환경을 호출하게 된다.
+# 특히 PortOne은 base-url이 https://api.portone.io로 고정이라 샌드박스가 아니다.
+# 로컬에서 동작을 확인할 때는 POST /admin/v1/integrations/health/refresh로 직접 호출하면 되고,
+# 주기 실행까지 보고 싶으면 이 값을 true로 바꾼다.
+integration:
+  health:
+    enabled: false
