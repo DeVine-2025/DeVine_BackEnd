@@ -43,6 +43,7 @@ public class ComplaintConverter {
                 .resolutionReason(complaint.getResolutionReason())
                 .createdAt(complaint.getCreatedAt())
                 .resolvedAt(complaint.getResolvedAt())
+                .linkedActionCompleted(complaint.isLinkedActionCompleted())
                 .content(content)
                 .respondentComplaintCount(respondentComplaintCount)
                 .respondentHistory(respondentHistory)
@@ -57,6 +58,7 @@ public class ComplaintConverter {
                 .resolutionReason(complaint.getResolutionReason())
                 .resolvedAt(complaint.getResolvedAt())
                 .reprocessWarning(reprocessWarning)
+                .linkedActionCompleted(complaint.isLinkedActionCompleted())
                 .build();
     }
 }

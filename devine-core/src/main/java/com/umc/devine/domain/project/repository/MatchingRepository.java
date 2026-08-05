@@ -86,12 +86,14 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             "WHERE m.member = :developer " +
             "AND m.decision = :decision " +
             "AND p.status IN :projectStatuses " +
+            "AND p.hidden = false " +
             "ORDER BY m.createdAt DESC",
             countQuery = "SELECT COUNT(m) FROM Matching m " +
             "JOIN m.project p " +
             "WHERE m.member = :developer " +
             "AND m.decision = :decision " +
-            "AND p.status IN :projectStatuses")
+            "AND p.status IN :projectStatuses " +
+            "AND p.hidden = false")
     Page<Matching> findByMemberAndDecisionAndProjectStatusIn(
             @Param("developer") Member developer,
             @Param("decision") MatchingDecision decision,
@@ -106,6 +108,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             "WHERE m.member = :developer " +
             "AND m.decision = :decision " +
             "AND p.status IN :projectStatuses " +
+            "AND p.hidden = false " +
             "ORDER BY m.createdAt DESC")
     List<Matching> findAllByMemberAndDecisionAndProjectStatusIn(
             @Param("developer") Member developer,
