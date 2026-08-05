@@ -1,10 +1,11 @@
 package com.umc.devine.admin.dashboard.controller;
 
+import com.umc.devine.admin.auth.security.AdminPrincipal;
+import com.umc.devine.admin.enums.AdminLevel;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
-import com.umc.devine.global.security.ClerkPrincipal;
 import com.umc.devine.support.ControllerIntegrationTestSupport;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -13,8 +14,9 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.authority.SimpleGrantedAuthority;
 
-import java.util.Collections;
+import java.util.List;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.get;
@@ -39,8 +41,14 @@ class AdminDashboardControllerTest extends ControllerIntegrationTestSupport {
                 .used(MemberStatus.ACTIVE)
                 .build());
 
-        ClerkPrincipal principal = new ClerkPrincipal("clerk_admin", "admin@example.com", "관리자", null);
-        adminAuth = new UsernamePasswordAuthenticationToken(principal, null, Collections.emptyList());
+        AdminPrincipal principal = AdminPrincipal.builder()
+                .clerkId("clerk_admin")
+                .email("admin@example.com")
+                .name("관리자")
+                .level(AdminLevel.ADMIN)
+                .build();
+        adminAuth = new UsernamePasswordAuthenticationToken(
+                principal, null, List.of(new SimpleGrantedAuthority("ROLE_ADMIN")));
     }
 
     @Test
