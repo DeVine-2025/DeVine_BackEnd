@@ -96,6 +96,18 @@ public interface MatchingControllerDocs {
             @Valid @RequestBody MatchingReqDTO.DecisionReqDTO dto
     );
 
+    @Operation(summary = "보낸 제안 취소 (PM)", description = "PM이 보낸 제안 중 개발자가 아직 답하지 않은 제안을 취소합니다. 개발자에게 취소 알림이 갑니다.")
+    @ApiResponses(value = {
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "제안 취소 성공"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "이미 처리된 매칭"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "본인 프로젝트의 제안이 아님"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "매칭 정보를 찾을 수 없음 / 제안 매칭 정보를 찾을 수 없음")
+    })
+    ApiResponse<MatchingResDTO.ProposeResDTO> cancelProposal(
+            @Parameter(hidden = true) @CurrentMember Member member,
+            @Parameter(description = "매칭 ID", required = true) @PathVariable Long matchingId
+    );
+
     @Operation(summary = "PM - 제안한 개발자 목록", description = "PM이 프로젝트에 제안한 개발자 목록을 조회합니다.")
     @ApiResponses(value = {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),

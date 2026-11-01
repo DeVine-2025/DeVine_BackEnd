@@ -14,6 +14,7 @@ import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
 import com.umc.devine.domain.project.exception.code.MatchingErrorReason;
 import com.umc.devine.domain.project.helper.MatchingNotificationHelper;
+import com.umc.devine.domain.project.helper.ProjectLifecycleHelper;
 import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
@@ -33,6 +34,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private final MemberRepository memberRepository;
     private final MatchingValidator matchingValidator;
     private final MatchingNotificationHelper notificationHelper;
+    private final ProjectLifecycleHelper lifecycleHelper;
 
     @Override
     public MatchingResDTO.ProposeResDTO applyToProject(Member member, Long projectId, ProjectPart part) {
@@ -58,6 +60,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
                 .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
 
         matching.cancel();
+        lifecycleHelper.closeIfDeadlinePassedAndNoPending(project);
 
         return MatchingConverter.toMatchingResDTO(matching);
     }
@@ -91,6 +94,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         }
 
         notificationHelper.notifyApplicationDecision(matching, decision);
+        lifecycleHelper.closeIfDeadlinePassedAndNoPending(matching.getProject());
 
         return MatchingConverter.toMatchingResDTO(matching);
     }
@@ -108,6 +112,25 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
         }
 
         notificationHelper.notifyProposalDecision(matching, decision);
+        lifecycleHelper.closeIfDeadlinePassedAndNoPending(matching.getProject());
+
+        return MatchingConverter.toMatchingResDTO(matching);
+    }
+
+    @Override
+    public MatchingResDTO.ProposeResDTO cancelProposal(Member pm, Long matchingId) {
+        Matching matching = getMatching(matchingId);
+
+        if (!matching.isProposeType()) {
+            throw new MatchingException(MatchingErrorReason.PROPOSE_MATCHING_NOT_FOUND);
+        }
+        if (!matching.getProject().isOwnedBy(pm)) {
+            throw new MatchingException(MatchingErrorReason.NOT_PROPOSAL_OWNER);
+        }
+
+        matching.cancel();
+        notificationHelper.notifyProposalCancelled(matching);
+        lifecycleHelper.closeIfDeadlinePassedAndNoPending(matching.getProject());
 
         return MatchingConverter.toMatchingResDTO(matching);
     }

@@ -72,6 +72,18 @@ public class MatchingNotificationHelper {
         );
     }
 
+    public void notifyProposalCancelled(Matching matching) {
+        Project project = matching.getProject();
+
+        send(
+                NotificationType.MATCHING_PROPOSAL_CANCELLED,
+                matching.getMember().getId(),
+                project.getMember().getId(),
+                "'%s' 프로젝트 제안이 취소됐어요.".formatted(project.getName()),
+                matching.getId()
+        );
+    }
+
     private NotificationType getNotificationType(MatchingDecision decision) {
         return decision == MatchingDecision.ACCEPT
                 ? NotificationType.MATCHING_ACCEPTED
