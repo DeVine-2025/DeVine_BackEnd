@@ -11,6 +11,10 @@ public interface ProjectCommandService {
 
     ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request);
 
+    void closeProject(Member member, Long projectId);
+
+    void changeVisibility(Member member, Long projectId, boolean hidden);
+
     void deleteProject(Member member, Long projectId);
 
     void changeProjectStatus(Member member, Long projectId, ProjectStatus status);

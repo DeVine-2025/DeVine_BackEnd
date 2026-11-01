@@ -11,6 +11,7 @@ import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.DurationRange;
 import com.umc.devine.domain.project.enums.ProjectField;
 import com.umc.devine.domain.project.enums.ProjectStatus;
+import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.techstack.entity.mapping.ProjectRequirementTechstack;
 import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
@@ -39,6 +40,7 @@ import java.util.Optional;
 import java.util.Set;
 import java.util.stream.Collectors;
 
+import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.FORBIDDEN_PROJECT_ACCESS;
 import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.PROJECT_NOT_FOUND;
 
 @Slf4j
@@ -72,6 +74,39 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
 
         Map<Long, List<ProjectRequirementTechstack>> techstackMap = buildTechstackMap(List.of(projectId));
         return ProjectConverter.toUpdateProjectRes(project, techstackMap);
+    }
+
+    @Override
+    public ProjectResDTO.ManageRes getManageInfo(Member member, Long projectId) {
+        Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
+                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        if (!project.isOwnedBy(member)) {
+            throw new ProjectException(FORBIDDEN_PROJECT_ACCESS);
+        }
+
+        List<ProjectResDTO.PendingMatchingInfo> pending = matchingRepository
+                .findAllByProjectAndStatusWithMember(project, MatchingStatus.PENDING).stream()
+                .map(m -> ProjectResDTO.PendingMatchingInfo.builder()
+                        .matchingId(m.getId())
+                        .matchingType(m.getMatchingType())
+                        .nickname(m.getMember().getNickname())
+                        .part(m.getPart())
+                        .build())
+                .toList();
+        boolean noPending = pending.isEmpty();
+
+        return ProjectResDTO.ManageRes.builder()
+                .projectId(project.getId())
+                .status(project.getStatus())
+                .statusName(project.getStatus().getDisplayName())
+                .hidden(project.isHidden())
+                .hiddenByAdmin(project.isHiddenByAdmin())
+                .pendingCount(pending.size())
+                .pendingMatchings(pending)
+                .canClose(project.isInRecruitingPhase() && noPending)
+                .canDelete(project.isRecruitmentFinished() && noPending)
+                .canToggleHidden(!project.isHiddenByAdmin())
+                .build();
     }
 
     @Override

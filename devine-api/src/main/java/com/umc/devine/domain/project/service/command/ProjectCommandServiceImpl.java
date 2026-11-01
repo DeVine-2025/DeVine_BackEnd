@@ -1,5 +1,7 @@
 package com.umc.devine.domain.project.service.command;
 
+import com.umc.devine.domain.bookmark.enums.BookmarkType;
+import com.umc.devine.domain.bookmark.repository.BookmarkRepository;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.exception.CategoryException;
 import com.umc.devine.domain.category.repository.CategoryRepository;
@@ -17,6 +19,9 @@ import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.helper.ProjectLifecycleHelper;
+import com.umc.devine.domain.project.repository.MatchingRepository;
+import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
@@ -26,6 +31,7 @@ import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
+import com.umc.devine.domain.techstack.repository.ProjectTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.project.event.ProjectEmbeddingEvent;
 import lombok.RequiredArgsConstructor;
@@ -40,6 +46,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static com.umc.devine.domain.category.exception.code.CategoryErrorReason.CATEGORY_NOT_FOUND;
 import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.*;
@@ -58,6 +65,11 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final MatchingRepository matchingRepository;
+    private final ProjectTechstackRepository projectTechstackRepository;
+    private final ProjectEmbeddingRepository projectEmbeddingRepository;
+    private final BookmarkRepository bookmarkRepository;
+    private final ProjectLifecycleHelper lifecycleHelper;
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
@@ -103,7 +115,15 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        validateRecruitmentDeadline(request.recruitmentDeadline());
+        // 마감일을 바꾼 경우에만 검사한다. 마감일이 지난 프로젝트의 소개만 고치는 것은 허용한다.
+        boolean deadlineChanged = !request.recruitmentDeadline().equals(project.getRecruitmentDeadline());
+        if (deadlineChanged) {
+            validateRecruitmentDeadline(request.recruitmentDeadline());
+            // 마감일을 오늘 이후로 늘리면 다시 모집한다
+            if (project.getStatus() == ProjectStatus.DEADLINE_PASSED || project.getStatus() == ProjectStatus.CLOSED) {
+                project.startRecruiting();
+            }
+        }
 
         project.updateProjectInfo(
                 request.projectField(),
@@ -164,13 +184,65 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
+    public void closeProject(Member member, Long projectId) {
+        Project project = getOwnedProject(member, projectId);
+
+        if (project.getStatus() == ProjectStatus.CLOSED) {
+            return;
+        }
+        if (!project.isInRecruitingPhase()) {
+            throw new ProjectException(NOT_CLOSABLE);
+        }
+        validateNoPending(project);
+
+        project.close();
+    }
+
+    @Override
+    public void changeVisibility(Member member, Long projectId, boolean hidden) {
+        Project project = getOwnedProject(member, projectId);
+
+        // 관리자 숨김은 신고 처리 결과라 PM이 풀 수 없다. 숨김 요청도 처리자를 PM으로 덮어쓰지 않도록 그대로 둔다.
+        if (project.isHiddenByAdmin()) {
+            if (!hidden) {
+                throw new ProjectException(HIDDEN_BY_ADMIN);
+            }
+            return;
+        }
+
+        project.changeVisibility(!hidden, member, LocalDateTime.now());
+    }
+
+    @Override
     public void deleteProject(Member member, Long projectId) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        Project project = getOwnedProject(member, projectId);
 
-        validateOwner(project, member.getId());
+        if (!project.isRecruitmentFinished()) {
+            throw new ProjectException(NOT_DELETABLE);
+        }
+        validateNoPending(project);
 
-        project.delete();
+        // 이미지 파일(S3)은 ImageCleanupScheduler가 연결이 끊긴 프로젝트 이미지로 보고 정리한다
+        projectImageRepository.deleteAllByProject(project);
+        project.clearImages();
+
+        List<ProjectRequirementMember> requirements = projectRequirementMemberRepository.findAllByProject(project);
+        if (!requirements.isEmpty()) {
+            projectRequirementTechstackRepository.deleteAllByRequirementIn(requirements);
+        }
+        projectRequirementMemberRepository.deleteAllByProject(project);
+        project.clearRequirements();
+
+        projectTechstackRepository.deleteAllByProject(project);
+        projectEmbeddingRepository.findByProjectId(project.getId()).ifPresent(projectEmbeddingRepository::delete);
+        bookmarkRepository.deleteAllByTargetTypeAndTargetId(BookmarkType.PROJECT, project.getId());
+
+        // 매칭 이력이 있으면 상대 회원의 지원 이력에 이름을 남겨야 하므로 행을 유지한다
+        if (matchingRepository.existsByProject(project)) {
+            project.eraseForDeletion();
+        } else {
+            projectRepository.delete(project);
+        }
     }
 
     private void saveTechstacks(Project project, List<ProjectReqDTO.RecruitmentDTO> recruitments) {
@@ -240,16 +312,36 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public void changeProjectStatus(Member member, Long projectId, ProjectStatus status) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        Project project = getOwnedProject(member, projectId);
 
-        validateOwner(project, member.getId());
+        // 모집 단계를 벗어나는 전환은 마감과 같은 조건(대기 건 0건)을 따른다
+        if (project.isInRecruitingPhase() && status != ProjectStatus.RECRUITING) {
+            validateNoPending(project);
+        }
+
+        // 마감일이 지났으면 상태만 되돌려 모집할 수 없다. 마감일 수정으로 다시 모집한다.
+        if (status == ProjectStatus.RECRUITING) {
+            validateRecruitmentDeadline(project.getRecruitmentDeadline());
+        }
 
         switch (status) {
             case RECRUITING -> project.startRecruiting();
             case IN_PROGRESS -> project.startProgress();
             case COMPLETED -> project.complete();
             default -> throw new ProjectException(INVALID_STATUS_TRANSITION);
+        }
+    }
+
+    private Project getOwnedProject(Member member, Long projectId) {
+        Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
+                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        validateOwner(project, member.getId());
+        return project;
+    }
+
+    private void validateNoPending(Project project) {
+        if (lifecycleHelper.countPending(project) > 0) {
+            throw new ProjectException(PENDING_MATCHINGS_EXIST);
         }
     }
 
@@ -260,7 +352,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     private void validateRecruitmentDeadline(LocalDate recruitmentDeadline) {
-        if (recruitmentDeadline.isBefore(LocalDate.now())) {
+        if (recruitmentDeadline.isBefore(ProjectLifecycleHelper.today())) {
             throw new ProjectException(INVALID_RECRUITMENT_DEADLINE);
         }
     }
