@@ -53,6 +53,9 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     @Query("SELECT p FROM Project p WHERE p.id = :id AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED AND p.hidden = false")
     Optional<Project> findVisibleById(@Param("id") Long id);
 
+    // 작성자 관리용: 본인이 숨긴 프로젝트도 관리해야 하므로 비노출 여부는 보지 않는다
+    Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
+
     // 프로젝트 상세 조회용 (Member, Category fetch join)
     @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category " +
             "WHERE p.id = :id AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED AND p.hidden = false")
@@ -134,4 +137,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY p.createdAt DESC")
     List<Project> findByStatusOrderByCreatedAtDesc(@Param("status") ProjectStatus status);
+
+    // 자동 마감 배치용
+    List<Project> findAllByStatusAndRecruitmentDeadline(ProjectStatus status, java.time.LocalDate deadline);
+
+    List<Project> findAllByStatusAndRecruitmentDeadlineBefore(ProjectStatus status, java.time.LocalDate date);
+
+    List<Project> findAllByStatus(ProjectStatus status);
 }

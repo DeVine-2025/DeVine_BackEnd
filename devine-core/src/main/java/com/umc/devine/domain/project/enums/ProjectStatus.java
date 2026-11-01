@@ -9,6 +9,8 @@ import lombok.Getter;
 @Getter
 public enum ProjectStatus {
     RECRUITING("모집 중"),
+    DEADLINE_PASSED("마감일 지남"), // 마감일이 지났지만 대기 중인 지원·제안이 남아 있음
+    CLOSED("마감"),
     IN_PROGRESS("진행 중"),
     COMPLETED("완료"),
     DELETED("삭제됨");

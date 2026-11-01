@@ -128,4 +128,16 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("memberId") Long memberId,
             @Param("matchingType") MatchingType matchingType,
             @Param("excludeStatus") MatchingStatus excludeStatus);
+
+    // 프로젝트 관리용: 대기 건(PENDING) 수와 목록. 마감·삭제 가능 여부 판단에 쓴다.
+    long countByProjectAndStatus(Project project, MatchingStatus status);
+
+    @Query("SELECT m FROM Matching m JOIN FETCH m.member " +
+            "WHERE m.project = :project AND m.status = :status ORDER BY m.createdAt ASC")
+    List<Matching> findAllByProjectAndStatusWithMember(
+            @Param("project") Project project,
+            @Param("status") MatchingStatus status);
+
+    // 삭제 시 매칭 이력이 있으면 프로젝트 행(이름)을 남긴다
+    boolean existsByProject(Project project);
 }
