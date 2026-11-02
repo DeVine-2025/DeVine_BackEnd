@@ -149,7 +149,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     }
 
     private Project getProject(Long projectId) {
-        return projectRepository.findById(projectId)
+        return projectRepository.findByIdForUpdate(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
     }
 
@@ -159,6 +159,10 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     }
 
     private Matching getMatching(Long matchingId) {
+        // 프로젝트를 먼저 잠그고 매칭을 읽어, 같은 매칭을 동시에 수락·취소해도 뒤 요청이 앞 요청의 결과를 보고 판단하게 한다
+        Long projectId = matchingRepository.findProjectIdById(matchingId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
+        projectRepository.findByIdForUpdate(projectId);
         return matchingRepository.findByIdWithDetails(matchingId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND));
     }

@@ -4,7 +4,9 @@ import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.repository.querydsl.ProjectQueryDsl;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
@@ -55,6 +57,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 
     // 작성자 관리용: 본인이 숨긴 프로젝트도 관리해야 하므로 비노출 여부는 보지 않는다
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
+
+    /** 같은 프로젝트의 지원·제안, 매칭 처리, 마감·삭제, 마감 배치를 차례로 처리하기 위한 잠금 조회. 대기 건 확인 뒤 상태를 바꾸는 경합과 lost update를 막는다. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Project p WHERE p.id = :id")
+    Optional<Project> findByIdForUpdate(@Param("id") Long id);
 
     // 프로젝트 상세 조회용 (Member, Category fetch join)
     @Query("SELECT p FROM Project p JOIN FETCH p.member JOIN FETCH p.category " +

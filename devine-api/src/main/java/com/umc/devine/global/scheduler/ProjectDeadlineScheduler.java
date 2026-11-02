@@ -60,7 +60,7 @@ public class ProjectDeadlineScheduler {
         for (Project target : targets) {
             try {
                 transactionTemplate.executeWithoutResult(status ->
-                        projectRepository.findById(target.getId()).ifPresent(action));
+                        projectRepository.findByIdForUpdate(target.getId()).ifPresent(action));
                 success++;
             } catch (Exception e) {
                 log.warn("[ProjectDeadline] 처리 실패 - projectId: {}", target.getId(), e);

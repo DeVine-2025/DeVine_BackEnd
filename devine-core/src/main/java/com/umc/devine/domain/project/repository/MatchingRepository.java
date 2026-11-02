@@ -18,6 +18,9 @@ import java.util.Optional;
 
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
 
+    @Query("SELECT m.project.id FROM Matching m WHERE m.id = :id")
+    Optional<Long> findProjectIdById(@Param("id") Long id);
+
     @Query("SELECT m FROM Matching m JOIN FETCH m.project JOIN FETCH m.member " +
             "WHERE m.project = :project AND m.member = :member AND m.matchingType = :matchingType AND m.status <> :excludeStatus")
     Optional<Matching> findByProjectAndMemberAndMatchingTypeAndStatusNot(

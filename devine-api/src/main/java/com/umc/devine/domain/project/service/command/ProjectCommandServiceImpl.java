@@ -331,7 +331,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     private Project getOwnedProject(Member member, Long projectId) {
-        Project project = projectRepository.findByIdAndStatusNot(projectId, ProjectStatus.DELETED)
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .filter(p -> p.getStatus() != ProjectStatus.DELETED)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
         validateOwner(project, member.getId());
         return project;
