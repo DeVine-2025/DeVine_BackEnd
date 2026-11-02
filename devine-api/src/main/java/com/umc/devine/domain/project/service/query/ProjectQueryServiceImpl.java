@@ -104,7 +104,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .pendingCount(pending.size())
                 .pendingMatchings(pending)
                 .canClose(project.isInRecruitingPhase() && noPending)
-                .canDelete(project.isRecruitmentFinished() && noPending)
+                .canDelete(project.getStatus() == ProjectStatus.CLOSED && noPending)
                 .canToggleHidden(!project.isHiddenByAdmin())
                 .build();
     }

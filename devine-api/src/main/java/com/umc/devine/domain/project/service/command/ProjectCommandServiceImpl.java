@@ -107,10 +107,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
-
-        validateOwner(project, member.getId());
+        // 숨긴 프로젝트도 작성자는 수정할 수 있다(숨김 중 마감일 연장 포함)
+        Project project = getOwnedProject(member, projectId);
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
@@ -217,7 +215,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     public void deleteProject(Member member, Long projectId) {
         Project project = getOwnedProject(member, projectId);
 
-        if (!project.isRecruitmentFinished()) {
+        if (project.getStatus() != ProjectStatus.CLOSED) {
             throw new ProjectException(NOT_DELETABLE);
         }
         validateNoPending(project);

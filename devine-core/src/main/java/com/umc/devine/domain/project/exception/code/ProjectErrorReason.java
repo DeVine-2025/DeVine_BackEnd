@@ -26,7 +26,7 @@ public enum ProjectErrorReason implements DomainErrorReason {
     HIDDEN_BY_ADMIN(HttpStatus.FORBIDDEN, "PROJECT403_3", "운영 정책에 따라 비공개된 프로젝트예요. 문의: projectdevine2025@gmail.com"),
     PENDING_MATCHINGS_EXIST(HttpStatus.CONFLICT, "PROJECT409_1", "대기 중인 지원·제안을 먼저 처리해 주세요."),
     NOT_CLOSABLE(HttpStatus.CONFLICT, "PROJECT409_2", "모집 중인 프로젝트만 마감할 수 있어요."),
-    NOT_DELETABLE(HttpStatus.CONFLICT, "PROJECT409_3", "모집을 마친 프로젝트만 삭제할 수 있어요."),
+    NOT_DELETABLE(HttpStatus.CONFLICT, "PROJECT409_3", "마감한 프로젝트만 삭제할 수 있어요."),
     ;
 
     private final HttpStatus status;

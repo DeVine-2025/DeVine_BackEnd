@@ -213,13 +213,6 @@ public class Project extends BaseEntity {
         return this.status == ProjectStatus.RECRUITING || this.status == ProjectStatus.DEADLINE_PASSED;
     }
 
-    /** 모집을 마친 상태(삭제 가능 후보). 대기 건 0건 조건은 호출하는 쪽에서 확인한다. */
-    public boolean isRecruitmentFinished() {
-        return this.status == ProjectStatus.CLOSED
-                || this.status == ProjectStatus.IN_PROGRESS
-                || this.status == ProjectStatus.COMPLETED;
-    }
-
     /** 작성자가 아닌 처리자(관리자)가 숨긴 프로젝트. 처리자 기록이 없으면 관리자 처리로 본다. */
     public boolean isHiddenByAdmin() {
         return this.hidden && (this.visibilityChangedBy == null || !isOwnedBy(this.visibilityChangedBy));

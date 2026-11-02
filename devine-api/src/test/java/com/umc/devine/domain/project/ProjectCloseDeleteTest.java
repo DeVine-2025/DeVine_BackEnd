@@ -146,13 +146,16 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("진행 중이어도 대기 건이 있으면 삭제할 수 없다")
-    void delete_inProgressWithPending_rejected() {
-        Project project = saveProject(ProjectStatus.IN_PROGRESS, LocalDate.now().plusDays(10));
-        saveMatching(project, MatchingType.APPLY, MatchingStatus.PENDING);
+    @DisplayName("마감이 아니면 진행 중·완료라도 삭제할 수 없다")
+    void delete_notClosed_rejected() {
+        Project inProgress = saveProject(ProjectStatus.IN_PROGRESS, LocalDate.now().plusDays(10));
+        Project completed = saveProject(ProjectStatus.COMPLETED, LocalDate.now().minusDays(10));
 
-        assertErrorReason(() -> projectCommandService.deleteProject(pm, project.getId()),
-                ProjectErrorReason.PENDING_MATCHINGS_EXIST);
+        assertErrorReason(() -> projectCommandService.deleteProject(pm, inProgress.getId()),
+                ProjectErrorReason.NOT_DELETABLE);
+        assertErrorReason(() -> projectCommandService.deleteProject(pm, completed.getId()),
+                ProjectErrorReason.NOT_DELETABLE);
+        assertThat(projectQueryService.getManageInfo(pm, completed.getId()).canDelete()).isFalse();
     }
 
     @Test
@@ -248,6 +251,23 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
 
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.CLOSED);
         assertThat(project.getContent()).isEqualTo("고친 소개");
+    }
+
+    @Test
+    @DisplayName("숨긴 프로젝트도 작성자는 수정할 수 있다(PM 숨김, 관리자 숨김)")
+    void hiddenProject_ownerCanUpdate() {
+        Project pmHidden = saveProject(ProjectStatus.DEADLINE_PASSED, LocalDate.now().minusDays(1));
+        Project adminHidden = saveProject(ProjectStatus.RECRUITING, LocalDate.now().plusDays(10));
+        projectCommandService.changeVisibility(pm, pmHidden.getId(), true);
+        projectVisibilityCommandService.hideForModeration(adminHidden.getId(), null);
+
+        projectCommandService.updateProject(pm, pmHidden.getId(), updateReq(LocalDate.now().plusDays(14), "고친 소개"));
+        projectCommandService.updateProject(pm, adminHidden.getId(), updateReq(LocalDate.now().plusDays(10), "고친 소개"));
+
+        assertThat(pmHidden.getStatus()).isEqualTo(ProjectStatus.RECRUITING);
+        assertThat(pmHidden.isHidden()).isTrue();
+        assertThat(adminHidden.getContent()).isEqualTo("고친 소개");
+        assertThat(adminHidden.isHiddenByAdmin()).isTrue();
     }
 
     @Test
