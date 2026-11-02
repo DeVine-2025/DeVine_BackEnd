@@ -146,7 +146,7 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("마감이 아니면 진행 중·완료라도 삭제할 수 없다")
+    @DisplayName("진행 중·완료는 마감하기 전에는 삭제할 수 없고, 마감하면 삭제할 수 있다")
     void delete_notClosed_rejected() {
         Project inProgress = saveProject(ProjectStatus.IN_PROGRESS, LocalDate.now().plusDays(10));
         Project completed = saveProject(ProjectStatus.COMPLETED, LocalDate.now().minusDays(10));
@@ -156,6 +156,14 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
         assertErrorReason(() -> projectCommandService.deleteProject(pm, completed.getId()),
                 ProjectErrorReason.NOT_DELETABLE);
         assertThat(projectQueryService.getManageInfo(pm, completed.getId()).canDelete()).isFalse();
+        assertThat(projectQueryService.getManageInfo(pm, completed.getId()).canClose()).isTrue();
+
+        projectCommandService.closeProject(pm, inProgress.getId());
+        projectCommandService.closeProject(pm, completed.getId());
+        assertThat(inProgress.getStatus()).isEqualTo(ProjectStatus.CLOSED);
+        assertThat(completed.getStatus()).isEqualTo(ProjectStatus.CLOSED);
+        projectCommandService.deleteProject(pm, inProgress.getId());
+        projectCommandService.deleteProject(pm, completed.getId());
     }
 
     @Test

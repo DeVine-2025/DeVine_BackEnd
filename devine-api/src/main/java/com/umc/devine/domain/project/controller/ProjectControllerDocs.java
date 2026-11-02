@@ -58,13 +58,13 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @PathVariable("projectId") Long projectId);
 
-        @Operation(summary = "프로젝트 모집 마감 API", description = "대기 중인 지원·제안이 0건일 때 모집을 마감(CLOSED)합니다. 이미 마감된 프로젝트면 그대로 성공합니다.")
+        @Operation(summary = "프로젝트 모집 마감 API", description = "대기 중인 지원·제안이 0건일 때 프로젝트를 마감(CLOSED)합니다. 모집 중·마감일 지남·진행 중·완료 상태에서 마감할 수 있고, 이미 마감된 프로젝트면 그대로 성공합니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 마감 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아닙니다."),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다."),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "대기 중인 지원·제안이 있거나 모집 중인 프로젝트가 아닙니다.")
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "대기 중인 지원·제안이 있습니다.")
         })
         ApiResponse<Void> closeProject(
                         @Parameter(hidden = true) @CurrentMember Member member,

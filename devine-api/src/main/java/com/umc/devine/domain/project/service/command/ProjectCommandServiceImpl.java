@@ -188,9 +188,6 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         if (project.getStatus() == ProjectStatus.CLOSED) {
             return;
         }
-        if (!project.isInRecruitingPhase()) {
-            throw new ProjectException(NOT_CLOSABLE);
-        }
         validateNoPending(project);
 
         project.close();
