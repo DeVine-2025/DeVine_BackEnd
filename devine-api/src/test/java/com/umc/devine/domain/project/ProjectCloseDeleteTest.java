@@ -133,6 +133,8 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
         projectCommandService.closeProject(pm, project.getId());
 
         assertThat(project.getStatus()).isEqualTo(ProjectStatus.CLOSED);
+        assertThat(project.getClosedBy()).isEqualTo(pm);
+        assertThat(project.getClosedAt()).isNotNull();
         assertThat(projectQueryService.getManageInfo(pm, project.getId()).canDelete()).isTrue();
     }
 

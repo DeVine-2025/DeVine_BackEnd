@@ -190,7 +190,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
         validateNoPending(project);
 
-        project.close();
+        project.close(member, LocalDateTime.now());
     }
 
     @Override

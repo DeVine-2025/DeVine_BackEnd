@@ -13,6 +13,7 @@ import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.List;
 import java.util.function.Consumer;
 
@@ -87,7 +88,7 @@ public class ProjectDeadlineScheduler {
 
         long pending = lifecycleHelper.countPending(project);
         if (pending == 0) {
-            project.close();
+            project.close(null, LocalDateTime.now());
             return;
         }
 

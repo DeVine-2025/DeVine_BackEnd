@@ -8,6 +8,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.time.ZoneId;
 
 @Component
@@ -31,7 +32,7 @@ public class ProjectLifecycleHelper {
     // 마감 확인 훅: 대기 건 상태가 바뀌는 모든 경로에서 호출한다. 빠진 경로는 자동 마감 배치가 다음 날 정리한다.
     public void closeIfDeadlinePassedAndNoPending(Project project) {
         if (project.getStatus() == ProjectStatus.DEADLINE_PASSED && countPending(project) == 0) {
-            project.close();
+            project.close(null, LocalDateTime.now());
         }
     }
 }
