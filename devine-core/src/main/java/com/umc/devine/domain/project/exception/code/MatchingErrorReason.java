@@ -21,6 +21,7 @@ public enum MatchingErrorReason implements DomainErrorReason {
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "MATCHING400_4", "이미 취소된 매칭입니다."),
     INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "MATCHING400_5", "이미 처리된 매칭입니다."),
     NOT_TARGET_MEMBER(HttpStatus.FORBIDDEN, "MATCHING403_5", "해당 매칭의 응답 대상이 아닙니다."),
+    NOT_PROPOSAL_OWNER(HttpStatus.FORBIDDEN, "MATCHING403_6", "본인 프로젝트에서 보낸 제안만 취소할 수 있습니다."),
     APPLY_MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_4", "지원 매칭 정보를 찾을 수 없습니다."),
     PROPOSE_MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_5", "제안 매칭 정보를 찾을 수 없습니다."),
     PART_REQUIRED(HttpStatus.BAD_REQUEST, "MATCHING400_7", "지원/제안 시 파트 선택은 필수입니다."),

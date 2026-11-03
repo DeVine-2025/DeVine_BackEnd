@@ -45,6 +45,9 @@ public enum MatchingSuccessCode implements BaseSuccessCode {
     UPDATE_APPLICATION_SUCCESS(HttpStatus.OK,
             "MATCHING200_10",
             "지원 파트가 수정되었습니다."),
+    PROPOSAL_CANCELLED(HttpStatus.OK,
+            "MATCHING200_11",
+            "제안을 취소했습니다."),
     ;
 
     private final HttpStatus status;

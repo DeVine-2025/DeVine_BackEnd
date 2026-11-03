@@ -12,10 +12,13 @@ public enum NotificationType {
     MATCHING_PROPOSED("프로젝트 제안이 도착했습니다", "matching"),
     MATCHING_ACCEPTED("지원이 수락되었습니다", "matching"),
     MATCHING_REJECTED("지원이 거절되었습니다", "matching"),
+    MATCHING_PROPOSAL_CANCELLED("프로젝트 제안이 취소되었습니다", "matching"),
 
     // 프로젝트 관련
     PROJECT_STATUS_CHANGED("프로젝트 상태가 변경되었습니다", "project"),
     PROJECT_MEMBER_JOINED("새 팀원이 합류했습니다", "project"),
+    PROJECT_DEADLINE_TODAY("오늘 모집이 마감됩니다", "project"),
+    PROJECT_DEADLINE_PASSED("모집 마감일이 지났습니다", "project"),
 
     // 리포트 관련
     REPORT_COMPLETED("리포트 생성이 완료되었습니다", "report"),

@@ -63,6 +63,36 @@ public class ProjectController implements ProjectControllerDocs {
     }
 
     @Override
+    @GetMapping("/{projectId}/manage")
+    public ApiResponse<ProjectResDTO.ManageRes> getManageInfo(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId
+    ) {
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, projectQueryService.getManageInfo(member, projectId));
+    }
+
+    @Override
+    @PostMapping("/{projectId}/close")
+    public ApiResponse<Void> closeProject(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId
+    ) {
+        projectCommandService.closeProject(member, projectId);
+        return ApiResponse.onSuccess(ProjectSuccessCode.CLOSED, null);
+    }
+
+    @Override
+    @PatchMapping("/{projectId}/visibility")
+    public ApiResponse<Void> changeVisibility(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId,
+            @RequestBody @Valid ProjectReqDTO.ChangeVisibilityReq request
+    ) {
+        projectCommandService.changeVisibility(member, projectId, request.hidden());
+        return ApiResponse.onSuccess(ProjectSuccessCode.VISIBILITY_CHANGED, null);
+    }
+
+    @Override
     @DeleteMapping("/{projectId}")
     public ApiResponse<Void> deleteProject(
             @CurrentMember Member member,
@@ -135,7 +165,7 @@ public class ProjectController implements ProjectControllerDocs {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
-                member, List.of(ProjectStatus.RECRUITING), pageable
+                member, List.of(ProjectStatus.RECRUITING, ProjectStatus.DEADLINE_PASSED), pageable
         );
         return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }
@@ -172,7 +202,7 @@ public class ProjectController implements ProjectControllerDocs {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
-                member, List.of(ProjectStatus.COMPLETED), pageable
+                member, List.of(ProjectStatus.COMPLETED, ProjectStatus.CLOSED), pageable
         );
         return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }

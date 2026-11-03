@@ -98,6 +98,15 @@ public class Project extends BaseEntity {
     @Column(name = "visibility_changed_at")
     private LocalDateTime visibilityChangedAt;
 
+    // 마감 처리자. 비어 있으면 자동 마감(배치·마감 확인 훅)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "closed_by")
+    private Member closedBy;
+
+    // 마감 처리 시각
+    @Column(name = "closed_at")
+    private LocalDateTime closedAt;
+
     @Builder.Default
     @BatchSize(size = 100)
     @OneToMany(mappedBy = "project", cascade = CascadeType.ALL, orphanRemoval = true)
@@ -177,6 +186,8 @@ public class Project extends BaseEntity {
 
     public void startRecruiting() {
         this.status = ProjectStatus.RECRUITING;
+        this.closedBy = null;
+        this.closedAt = null;
     }
 
     public void startProgress() {
@@ -187,7 +198,39 @@ public class Project extends BaseEntity {
         this.status = ProjectStatus.COMPLETED;
     }
 
+    /** @param processor 수동 마감한 회원. 자동 마감이면 null */
+    public void close(Member processor, LocalDateTime closedAt) {
+        this.status = ProjectStatus.CLOSED;
+        this.closedBy = processor;
+        this.closedAt = closedAt;
+    }
+
+    public void markDeadlinePassed() {
+        this.status = ProjectStatus.DEADLINE_PASSED;
+    }
+
+    /**
+     * 매칭 이력 때문에 행을 남겨야 하는 삭제: 이름만 남기고 내용을 비운다.
+     * 이미지·모집 정보 등 연관 행은 호출하는 쪽에서 지운다.
+     */
+    public void eraseForDeletion() {
+        this.content = "";
+        this.location = "";
+        this.status = ProjectStatus.DELETED;
+        this.hidden = true;
+    }
+
     // ==================== 도메인 검증 메서드 ====================
+
+    /** 모집 단계(모집 중·마감일 지남)인지. 이 단계를 벗어나려면 대기 건을 모두 처리해야 한다. */
+    public boolean isInRecruitingPhase() {
+        return this.status == ProjectStatus.RECRUITING || this.status == ProjectStatus.DEADLINE_PASSED;
+    }
+
+    /** 작성자가 아닌 처리자(관리자)가 숨긴 프로젝트. 처리자 기록이 없으면 관리자 처리로 본다. */
+    public boolean isHiddenByAdmin() {
+        return this.hidden && (this.visibilityChangedBy == null || !isOwnedBy(this.visibilityChangedBy));
+    }
 
     public boolean isRecruiting() {
         return this.status == ProjectStatus.RECRUITING;

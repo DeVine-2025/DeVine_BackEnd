@@ -384,13 +384,13 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
     class DeleteProjectTest {
 
         @Test
-        @DisplayName("프로젝트 삭제(소프트 삭제)에 성공한다")
+        @DisplayName("매칭 이력이 없는 마감 프로젝트는 행까지 삭제된다")
         void deleteProject_success() {
             // given
             Project project = projectRepository.save(Project.builder()
                     .name("삭제할 프로젝트")
                     .content("삭제할 내용")
-                    .status(ProjectStatus.RECRUITING)
+                    .status(ProjectStatus.CLOSED)
                     .projectField(ProjectField.WEB)
                     .mode(ProjectMode.ONLINE)
                     .durationRange(DurationRange.ONE_TO_THREE)
@@ -404,8 +404,8 @@ class ProjectCommandServiceTest extends IntegrationTestSupport {
             projectCommandService.deleteProject(pmMember, project.getId());
 
             // then
-            Project deleted = projectRepository.findById(project.getId()).orElseThrow();
-            assertThat(deleted.getStatus()).isEqualTo(ProjectStatus.DELETED);
+            projectRepository.flush();
+            assertThat(projectRepository.findById(project.getId())).isEmpty();
         }
 
         @Test
