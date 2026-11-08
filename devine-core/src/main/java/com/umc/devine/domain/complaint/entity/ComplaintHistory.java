@@ -1,7 +1,7 @@
-package com.umc.devine.admin.complaint.entity;
+package com.umc.devine.domain.complaint.entity;
 
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;

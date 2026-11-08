@@ -1,9 +1,10 @@
-package com.umc.devine.admin.complaint.repository;
+package com.umc.devine.domain.complaint.repository;
 
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.entity.QComplaint;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.QComplaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
 import com.querydsl.core.BooleanBuilder;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
@@ -60,7 +61,8 @@ class ComplaintRepositoryTest extends CoreIntegrationTestSupport {
                 .respondentMember(respondentMember)
                 .targetType(targetType)
                 .targetId(targetId)
-                .reason("부적절한 콘텐츠입니다.")
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(status)
                 .build());
     }

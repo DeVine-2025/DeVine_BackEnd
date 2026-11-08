@@ -1,8 +1,9 @@
-package com.umc.devine.admin.complaint.entity;
+package com.umc.devine.domain.complaint.entity;
 
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -38,8 +39,12 @@ public class Complaint extends BaseEntity {
     @Column(name = "target_id")
     private Long targetId;
 
-    @Column(name = "reason", nullable = false, columnDefinition = "TEXT")
-    private String reason;
+    @Enumerated(EnumType.STRING)
+    @Column(name = "reason_code", nullable = false, length = 30)
+    private ComplaintReasonCode reasonCode;
+
+    @Column(name = "detail", columnDefinition = "TEXT")
+    private String detail;
 
     @Enumerated(EnumType.STRING)
     @Column(name = "status", nullable = false, length = 20)
@@ -52,6 +57,9 @@ public class Complaint extends BaseEntity {
 
     @Column(name = "resolution_reason", columnDefinition = "TEXT")
     private String resolutionReason;
+
+    @Column(name = "notify_summary", columnDefinition = "TEXT")
+    private String notifySummary;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "resolver_member_id")
@@ -83,11 +91,21 @@ public class Complaint extends BaseEntity {
         this.linkedActionAt = completedAt;
     }
 
-    public void updateStatus(ComplaintStatus status, ComplaintAction action, String resolutionReason, Member resolver, LocalDateTime resolvedAt) {
+    public void updateStatus(ComplaintStatus status, ComplaintAction action, String resolutionReason,
+                             String notifySummary, Member resolver, LocalDateTime resolvedAt) {
         this.status = status;
         this.action = action;
         this.resolutionReason = resolutionReason;
+        this.notifySummary = notifySummary;
         this.resolver = resolver;
         this.resolvedAt = resolvedAt;
+    }
+
+    public boolean isCompleted() {
+        return this.status == ComplaintStatus.COMPLETED;
+    }
+
+    public boolean blindsForComplainant() {
+        return !isCompleted() || this.action != ComplaintAction.DISMISS;
     }
 }

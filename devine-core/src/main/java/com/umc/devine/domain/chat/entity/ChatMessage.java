@@ -38,10 +38,22 @@ public class ChatMessage extends BaseEntity {
     @Column(name = "read_at")
     private LocalDateTime readAt;
 
+    @Column(name = "hidden_by_policy", nullable = false)
+    @Builder.Default
+    private Boolean hiddenByPolicy = false;
+
     public void markAsRead() {
         if (!this.isRead) {
             this.isRead = true;
             this.readAt = LocalDateTime.now();
         }
+    }
+
+    public void hideByPolicy() {
+        this.hiddenByPolicy = true;
+    }
+
+    public boolean isHiddenByPolicy() {
+        return Boolean.TRUE.equals(this.hiddenByPolicy);
     }
 }

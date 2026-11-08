@@ -24,6 +24,7 @@ public enum ProjectErrorReason implements DomainErrorReason {
     EMBEDDING_INVALID_DIMENSION(HttpStatus.BAD_REQUEST, "PROJECT400_14", "임베딩 벡터 차원이 올바르지 않습니다."),
     INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "PROJECT400_15", "유효하지 않은 프로젝트 상태 전환입니다."),
     HIDDEN_BY_ADMIN(HttpStatus.FORBIDDEN, "PROJECT403_3", "운영 정책에 따라 비공개된 프로젝트예요. 문의: projectdevine2025@gmail.com"),
+    LOCKED_BY_COMPLAINT(HttpStatus.CONFLICT, "PROJECT409_4", "신고 검토 중에는 수정·삭제할 수 없어요. 대신 숨길 수 있어요."),
     PENDING_MATCHINGS_EXIST(HttpStatus.CONFLICT, "PROJECT409_1", "대기 중인 지원·제안을 먼저 처리해 주세요."),
     NOT_DELETABLE(HttpStatus.CONFLICT, "PROJECT409_3", "마감한 프로젝트만 삭제할 수 있어요."),
     ;

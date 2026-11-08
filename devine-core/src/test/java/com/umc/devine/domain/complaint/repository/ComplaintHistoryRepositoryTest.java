@@ -1,10 +1,11 @@
-package com.umc.devine.admin.complaint.repository;
+package com.umc.devine.domain.complaint.repository;
 
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.entity.ComplaintHistory;
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.ComplaintHistory;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
@@ -68,7 +69,8 @@ class ComplaintHistoryRepositoryTest extends CoreIntegrationTestSupport {
                 .respondentMember(respondentMember)
                 .targetType(ComplaintTargetType.CHAT)
                 .targetId(1L)
-                .reason("부적절한 콘텐츠입니다.")
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(ComplaintStatus.PENDING)
                 .build());
     }

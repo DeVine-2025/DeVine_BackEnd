@@ -1,6 +1,6 @@
-package com.umc.devine.admin.complaint.repository;
+package com.umc.devine.domain.complaint.repository;
 
-import com.umc.devine.admin.complaint.entity.ComplaintHistory;
+import com.umc.devine.domain.complaint.entity.ComplaintHistory;
 import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;

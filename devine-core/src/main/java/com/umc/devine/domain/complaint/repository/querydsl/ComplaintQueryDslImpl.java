@@ -1,9 +1,9 @@
-package com.umc.devine.admin.complaint.repository.querydsl;
+package com.umc.devine.domain.complaint.repository.querydsl;
 
 import com.querydsl.core.types.Predicate;
 import com.querydsl.jpa.impl.JPAQueryFactory;
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.entity.QComplaint;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.QComplaint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageImpl;

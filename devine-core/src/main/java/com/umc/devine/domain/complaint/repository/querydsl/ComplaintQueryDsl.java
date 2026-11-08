@@ -1,7 +1,7 @@
-package com.umc.devine.admin.complaint.repository.querydsl;
+package com.umc.devine.domain.complaint.repository.querydsl;
 
 import com.querydsl.core.types.Predicate;
-import com.umc.devine.admin.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.Complaint;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 

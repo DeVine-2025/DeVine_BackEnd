@@ -76,7 +76,7 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
 
     private Project createHiddenProject(String name, ProjectStatus status) {
         Project project = createProject(name, status);
-        project.changeVisibility(false, testMember, LocalDateTime.now());
+        project.changeVisibilityByOwner(true, testMember, LocalDateTime.now());
         return projectRepository.save(project);
     }
 
