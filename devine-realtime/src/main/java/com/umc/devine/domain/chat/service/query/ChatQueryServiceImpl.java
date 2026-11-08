@@ -7,7 +7,11 @@ import com.umc.devine.domain.chat.entity.ChatRoom;
 import com.umc.devine.domain.chat.exception.ChatException;
 import com.umc.devine.domain.chat.exception.code.ChatErrorReason;
 import com.umc.devine.domain.chat.repository.ChatMessageRepository;
+import com.umc.devine.domain.chat.helper.ChatMessageBlindPolicy;
 import com.umc.devine.domain.chat.repository.ChatRoomRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Slice;
@@ -27,6 +31,7 @@ public class ChatQueryServiceImpl implements ChatQueryService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final ComplaintRepository complaintRepository;
 
     @Override
     public ChatResDTO.ChatRoomList getRoomList(Long memberId) {
@@ -56,6 +61,9 @@ public class ChatQueryServiceImpl implements ChatQueryService {
         Map<Long, ChatMessage> lastMsgMap = chatMessageRepository.findLastMessagesByRoomIds(roomIds).stream()
                 .collect(Collectors.toMap(cm -> cm.getChatRoom().getId(), Function.identity()));
 
+        Set<Long> reportedByViewer = findReportedByViewer(memberId,
+                lastMsgMap.values().stream().map(ChatMessage::getId).toList());
+
         List<ChatResDTO.ChatRoomDetail> rooms = roomIds.stream()
                 .map(roomId -> {
                     ChatRoom room = roomMap.get(roomId);
@@ -63,7 +71,9 @@ public class ChatQueryServiceImpl implements ChatQueryService {
                     ChatMessage lastMsg = lastMsgMap.get(roomId);
                     return ChatConverter.toChatRoomDetail(
                             room, memberId,
-                            lastMsg != null ? lastMsg.getContent() : null,
+                            lastMsg != null
+                                    ? ChatMessageBlindPolicy.resolveContent(lastMsg, reportedByViewer)
+                                    : null,
                             lastActivityMap.get(roomId),
                             unreadMap.getOrDefault(roomId, 0L)
                     );
@@ -93,7 +103,21 @@ public class ChatQueryServiceImpl implements ChatQueryService {
                     roomId, leftAt, pageable);
         }
 
-        return ChatConverter.toMessageList(messages, pageable.getPageNumber());
+        Set<Long> reportedByViewer = findReportedByViewer(memberId,
+                messages.getContent().stream().map(ChatMessage::getId).toList());
+
+        return ChatConverter.toMessageList(messages, pageable.getPageNumber(), reportedByViewer);
+    }
+
+    private Set<Long> findReportedByViewer(Long memberId, List<Long> messageIds) {
+        if (messageIds.isEmpty()) {
+            return Set.of();
+        }
+        return complaintRepository
+                .findByComplainantIdAndTargetTypeAndTargetIdIn(memberId, ComplaintTargetType.CHAT, messageIds).stream()
+                .filter(Complaint::blindsForComplainant)
+                .map(Complaint::getTargetId)
+                .collect(Collectors.toSet());
     }
 
     @Override
