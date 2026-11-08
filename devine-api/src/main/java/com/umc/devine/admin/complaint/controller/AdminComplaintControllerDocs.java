@@ -17,7 +17,7 @@ import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
 
 @Tag(name = "Admin Complaint", description = "관리자 신고/제재 관리 API")
-public interface ComplaintControllerDocs {
+public interface AdminComplaintControllerDocs {
 
     @Operation(summary = "신고 목록 조회", description = "채팅/프로젝트/개발자 유형별, 상태별, 날짜별로 신고 목록을 조회합니다. 접수 후 48시간 초과 미처리 건은 slaExceeded로 표시됩니다.")
     @ApiResponses(value = {

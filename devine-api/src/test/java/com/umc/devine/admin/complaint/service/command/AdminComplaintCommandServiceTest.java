@@ -2,14 +2,15 @@ package com.umc.devine.admin.complaint.service.command;
 
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.entity.ComplaintHistory;
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.exception.ComplaintException;
-import com.umc.devine.admin.complaint.repository.ComplaintHistoryRepository;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.ComplaintHistory;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.exception.ComplaintException;
+import com.umc.devine.domain.complaint.repository.ComplaintHistoryRepository;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.CategoryRepository;
@@ -37,10 +38,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ComplaintCommandServiceTest extends IntegrationTestSupport {
+class AdminComplaintCommandServiceTest extends IntegrationTestSupport {
 
     @Autowired
-    private ComplaintCommandService complaintCommandService;
+    private AdminComplaintCommandService complaintCommandService;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -101,7 +102,8 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                 .respondentMember(respondentMember)
                 .targetType(targetType)
                 .targetId(targetId)
-                .reason("부적절한 콘텐츠입니다.")
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(status)
                 .build());
     }
@@ -126,7 +128,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
 
     private Project createHiddenProject() {
         Project project = createProject(ProjectStatus.RECRUITING);
-        project.changeVisibility(false, admin, LocalDateTime.now());
+        project.changeVisibilityByAdmin(false, admin, LocalDateTime.now());
         return projectRepository.save(project);
     }
 
@@ -172,6 +174,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
             ComplaintReqDTO.UpdateStatusReq request = ComplaintReqDTO.UpdateStatusReq.builder()
                     .status(ComplaintStatus.COMPLETED)
                     .reason("확인 결과 규정 위반")
+                    .notifySummary("확인 결과 규정 위반")
                     .build();
 
             // when & then
@@ -203,6 +206,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.WARNING)
                     .reason("확인 결과 규정 위반")
+                    .notifySummary("확인 결과 규정 위반")
                     .build();
 
             // when
@@ -225,6 +229,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DISMISS)
                     .reason("재검토 결과 기각")
+                    .notifySummary("재검토 결과 기각")
                     .build();
 
             // when
@@ -267,6 +272,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.WARNING)
                             .reason("확인 결과 규정 위반")
+                    .notifySummary("확인 결과 규정 위반")
                             .build());
 
             // then
@@ -286,6 +292,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
                     .reason("확인 결과 저작권 침해로 비노출 처리")
+                    .notifySummary("확인 결과 저작권 침해로 비노출 처리")
                     .build();
 
             // when
@@ -296,16 +303,14 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
             assertThat(updated.isHidden()).isTrue();
             // 라이프사이클 상태는 보존돼야 다시 노출로 되돌릴 수 있다
             assertThat(updated.getStatus()).isEqualTo(ProjectStatus.RECRUITING);
-            assertThat(updated.getVisibilityChangedBy().getId()).isEqualTo(admin.getId());
+            assertThat(updated.isReportBlinded()).isTrue();
             assertThat(updated.getVisibilityChangedAt()).isNotNull();
             assertThat(result.linkedActionCompleted()).isTrue();
         }
 
         @Test
-        @DisplayName("DELETE로 비노출된 신고를 DISMISS로 재처리해도 비노출은 자동 해제되지 않는다")
-        void updateStatus_reprocessToDismiss_keepsProjectHidden() {
-            // given: 어떤 신고가 비노출을 유발했는지 추적하지 않으므로 자동 해제 시 다른 신고의 제재까지 풀릴 수 있어,
-            //        복구는 관리자가 노출 관리 API로 명시적으로 수행하도록 설계했다.
+        @DisplayName("DELETE로 가려진 신고를 재검토해 DISMISS로 바꾸면 신고 가림이 풀린다")
+        void updateStatus_reprocessToDismiss_restoresProject() {
             Project project = createProject(ProjectStatus.RECRUITING);
             Complaint complaint = createComplaint(ComplaintTargetType.PROJECT, project.getId(), ComplaintStatus.IN_REVIEW);
             complaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
@@ -313,6 +318,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.DELETE)
                             .reason("저작권 침해로 비노출 처리")
+                    .notifySummary("저작권 침해로 비노출 처리")
                             .build());
 
             // when
@@ -321,12 +327,13 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                             .status(ComplaintStatus.COMPLETED)
                             .action(ComplaintAction.DISMISS)
                             .reason("재검토 결과 기각")
+                    .notifySummary("재검토 결과 기각")
                             .build());
 
             // then
             assertThat(result.action()).isEqualTo(ComplaintAction.DISMISS);
             assertThat(result.reprocessWarning()).isTrue();
-            assertThat(projectRepository.findById(project.getId()).orElseThrow().isHidden()).isTrue();
+            assertThat(projectRepository.findById(project.getId()).orElseThrow().isHidden()).isFalse();
             // 실행 이력이므로 이후 조치가 바뀌어도 true로 남는다
             assertThat(result.linkedActionCompleted()).isTrue();
         }
@@ -340,6 +347,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
                     .reason("대상이 이미 사라졌지만 신고는 처리")
+                    .notifySummary("대상이 이미 사라졌지만 신고는 처리")
                     .build();
 
             // when
@@ -360,6 +368,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
                     .reason("이미 삭제된 프로젝트지만 신고는 처리")
+                    .notifySummary("이미 삭제된 프로젝트지만 신고는 처리")
                     .build();
 
             // when
@@ -381,6 +390,7 @@ class ComplaintCommandServiceTest extends IntegrationTestSupport {
                     .status(ComplaintStatus.COMPLETED)
                     .action(ComplaintAction.DELETE)
                     .reason("이미 비노출 처리된 프로젝트지만 신고는 처리")
+                    .notifySummary("이미 비노출 처리된 프로젝트지만 신고는 처리")
                     .build();
 
             // when

@@ -2,11 +2,12 @@ package com.umc.devine.admin.complaint.controller;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
@@ -32,7 +33,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultHandlers.print;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.*;
 
-class ComplaintControllerTest extends ControllerIntegrationTestSupport {
+class AdminComplaintControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -83,7 +84,8 @@ class ComplaintControllerTest extends ControllerIntegrationTestSupport {
                 .respondentMember(respondentMember)
                 .targetType(ComplaintTargetType.CHAT)
                 .targetId(1L)
-                .reason("부적절한 콘텐츠입니다.")
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(status)
                 .build());
     }

@@ -1,7 +1,9 @@
 package com.umc.devine.admin.complaint.converter;
 
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
-import com.umc.devine.admin.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.member.enums.MemberStatus;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -14,14 +16,17 @@ public class ComplaintConverter {
                 .targetType(complaint.getTargetType())
                 .complainantNickname(complaint.getComplainant().getNickname())
                 .respondentNickname(complaint.getRespondentMember().getNickname())
+                .reasonCode(complaint.getReasonCode())
                 .createdAt(complaint.getCreatedAt())
                 .status(complaint.getStatus())
+                .action(complaint.getAction())
+                .respondentWithdrawn(isWithdrawn(complaint))
                 .slaExceeded(slaExceeded)
                 .build();
     }
 
     public static boolean isSlaExceeded(Complaint complaint, LocalDateTime now) {
-        return complaint.getStatus() != com.umc.devine.admin.complaint.enums.ComplaintStatus.COMPLETED
+        return complaint.getStatus() != ComplaintStatus.COMPLETED
                 && complaint.getCreatedAt().plusHours(48).isBefore(now);
     }
 
@@ -37,10 +42,13 @@ public class ComplaintConverter {
                 .targetId(complaint.getTargetId())
                 .complainantNickname(complaint.getComplainant().getNickname())
                 .respondentNickname(complaint.getRespondentMember().getNickname())
-                .reason(complaint.getReason())
+                .reasonCode(complaint.getReasonCode())
+                .detail(complaint.getDetail())
                 .status(complaint.getStatus())
                 .action(complaint.getAction())
                 .resolutionReason(complaint.getResolutionReason())
+                .notifySummary(complaint.getNotifySummary())
+                .respondentWithdrawn(isWithdrawn(complaint))
                 .createdAt(complaint.getCreatedAt())
                 .resolvedAt(complaint.getResolvedAt())
                 .linkedActionCompleted(complaint.isLinkedActionCompleted())
@@ -60,5 +68,9 @@ public class ComplaintConverter {
                 .reprocessWarning(reprocessWarning)
                 .linkedActionCompleted(complaint.isLinkedActionCompleted())
                 .build();
+    }
+
+    private static boolean isWithdrawn(Complaint complaint) {
+        return complaint.getRespondentMember().getUsed() == MemberStatus.DELETED;
     }
 }

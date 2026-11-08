@@ -3,9 +3,9 @@ package com.umc.devine.admin.complaint.controller;
 import com.umc.devine.admin.auth.security.AdminPrincipal;
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
-import com.umc.devine.admin.complaint.exception.code.ComplaintSuccessCode;
-import com.umc.devine.admin.complaint.service.command.ComplaintCommandService;
-import com.umc.devine.admin.complaint.service.query.ComplaintQueryService;
+import com.umc.devine.domain.complaint.exception.code.ComplaintSuccessCode;
+import com.umc.devine.admin.complaint.service.command.AdminComplaintCommandService;
+import com.umc.devine.admin.complaint.service.query.AdminComplaintQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PagedResponse;
 import jakarta.validation.Valid;
@@ -19,10 +19,10 @@ import org.springframework.web.bind.annotation.*;
 @RequiredArgsConstructor
 @RequestMapping("/admin/v1/complaints")
 @Validated
-public class ComplaintController implements ComplaintControllerDocs {
+public class AdminComplaintController implements AdminComplaintControllerDocs {
 
-    private final ComplaintQueryService complaintQueryService;
-    private final ComplaintCommandService complaintCommandService;
+    private final AdminComplaintQueryService complaintQueryService;
+    private final AdminComplaintCommandService complaintCommandService;
 
     @Override
     @GetMapping

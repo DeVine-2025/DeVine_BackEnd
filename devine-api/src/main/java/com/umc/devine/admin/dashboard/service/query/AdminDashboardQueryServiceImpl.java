@@ -1,7 +1,7 @@
 package com.umc.devine.admin.dashboard.service.query;
 
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.dashboard.dto.AdminDashboardResDTO;
 import com.umc.devine.domain.coupon.repository.CouponRepository;
 import com.umc.devine.domain.payment.enums.TransactionStatus;

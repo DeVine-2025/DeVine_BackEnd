@@ -1,13 +1,14 @@
 package com.umc.devine.admin.complaint.dto;
 
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
 import com.umc.devine.global.dto.PageRequest;
 import io.swagger.v3.oas.annotations.media.Schema;
 import jakarta.validation.constraints.Max;
 import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotNull;
+import jakarta.validation.constraints.Size;
 import lombok.Builder;
 import org.springframework.data.domain.Pageable;
 
@@ -59,7 +60,12 @@ public class ComplaintReqDTO {
             @Schema(description = "세부 액션 (WARNING, DELETE, SUSPEND, DISMISS). 처리완료 시 필수", nullable = true)
             ComplaintAction action,
 
-            @Schema(description = "처리 사유. 처리완료 시 필수", nullable = true)
-            String reason
+            @Schema(description = "내부 처리 사유. 처리완료 시 필수. 알림·이메일에는 쓰이지 않는다", nullable = true)
+            String reason,
+
+            @Schema(description = "통보용 사유 요약. 처리완료 시 필수. 신고자·피신고자 알림에 그대로 들어가므로 "
+                    + "신고자를 짐작할 내용과 제재 내용은 쓰지 않는다", nullable = true)
+            @Size(max = 500, message = "통보용 사유 요약은 500자 이하여야 합니다.")
+            String notifySummary
     ) {}
 }

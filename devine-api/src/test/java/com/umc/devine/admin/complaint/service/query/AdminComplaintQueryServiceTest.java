@@ -2,11 +2,12 @@ package com.umc.devine.admin.complaint.service.query;
 
 import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.exception.ComplaintException;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.exception.ComplaintException;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.CategoryRepository;
@@ -40,10 +41,10 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-class ComplaintQueryServiceTest extends IntegrationTestSupport {
+class AdminComplaintQueryServiceTest extends IntegrationTestSupport {
 
     @Autowired
-    private ComplaintQueryService complaintQueryService;
+    private AdminComplaintQueryService complaintQueryService;
 
     @Autowired
     private ComplaintRepository complaintRepository;
@@ -104,7 +105,8 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
                 .respondentMember(respondentMember)
                 .targetType(targetType)
                 .targetId(targetId)
-                .reason("부적절한 콘텐츠입니다.")
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(status)
                 .build());
     }
@@ -284,7 +286,7 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
         }
 
         @Test
-        @DisplayName("CHAT 유형 신고는 신고당한 그 메시지의 원문을 반환한다")
+        @DisplayName("CHAT 유형 신고는 신고된 메시지를 표시와 함께 반환한다")
         void getComplaintDetail_chat() {
             // given
             ChatMessage message = createChatMessage("이 프로젝트 진짜 별로네");
@@ -294,7 +296,9 @@ class ComplaintQueryServiceTest extends IntegrationTestSupport {
             ComplaintResDTO.ComplaintDetailRes result = complaintQueryService.getComplaintDetail(complaint.getId());
 
             // then
-            assertThat(result.content()).isEqualTo("이 프로젝트 진짜 별로네");
+            assertThat(result.content())
+                    .contains("이 프로젝트 진짜 별로네")
+                    .contains("(신고된 메시지)");
         }
 
         @Test

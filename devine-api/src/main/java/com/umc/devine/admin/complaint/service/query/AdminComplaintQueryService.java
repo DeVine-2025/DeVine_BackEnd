@@ -4,7 +4,7 @@ import com.umc.devine.admin.complaint.dto.ComplaintReqDTO;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.global.dto.PagedResponse;
 
-public interface ComplaintQueryService {
+public interface AdminComplaintQueryService {
 
     PagedResponse<ComplaintResDTO.ComplaintSummaryDTO> getComplaintList(ComplaintReqDTO.SearchReq request);
 
