@@ -417,8 +417,14 @@ public class ProjectResDTO {
             @Schema(description = "숨김 여부", example = "false")
             boolean hidden,
 
-            @Schema(description = "관리자가 숨긴 프로젝트인지 (PM이 다시 보이게 할 수 없음)", example = "false")
+            @Schema(description = "관리자 비노출 또는 신고 가림 상태인지 (PM이 다시 보이게 할 수 없음)", example = "false")
             boolean hiddenByAdmin,
+
+            @Schema(description = "신고 접수로 가려진 상태인지 (검토 중 배너 조건)", example = "false")
+            boolean reportBlinded,
+
+            @Schema(description = "삭제·정지로 끝난 신고가 있는지 (위반 확정 배너 조건)", example = "false")
+            boolean reportViolationConfirmed,
 
             @Schema(description = "대기 중인 지원·제안 수", example = "2")
             long pendingCount,

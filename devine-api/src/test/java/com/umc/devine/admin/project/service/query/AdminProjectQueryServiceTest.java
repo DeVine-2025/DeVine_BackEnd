@@ -108,7 +108,7 @@ class AdminProjectQueryServiceTest extends IntegrationTestSupport {
         // given
         createProject("노출 프로젝트", ProjectStatus.RECRUITING);
         Project hidden = createProject("비노출 프로젝트", ProjectStatus.RECRUITING);
-        projectVisibilityCommandService.hideForModeration(hidden.getId(), null);
+        projectVisibilityCommandService.changeVisibility(hidden.getId(), false, null);
 
         // when
         PagedResponse<AdminProjectResDTO.ProjectSummaryDTO> result =
@@ -124,7 +124,7 @@ class AdminProjectQueryServiceTest extends IntegrationTestSupport {
         // given
         createProject("노출 프로젝트", ProjectStatus.RECRUITING);
         Project hidden = createProject("비노출 프로젝트", ProjectStatus.RECRUITING);
-        projectVisibilityCommandService.hideForModeration(hidden.getId(), null);
+        projectVisibilityCommandService.changeVisibility(hidden.getId(), false, null);
 
         // when
         PagedResponse<AdminProjectResDTO.ProjectSummaryDTO> result =
@@ -142,7 +142,7 @@ class AdminProjectQueryServiceTest extends IntegrationTestSupport {
         // given
         createProject("노출 프로젝트", ProjectStatus.RECRUITING);
         Project hidden = createProject("비노출 프로젝트", ProjectStatus.RECRUITING);
-        projectVisibilityCommandService.hideForModeration(hidden.getId(), null);
+        projectVisibilityCommandService.changeVisibility(hidden.getId(), false, null);
 
         // when
         PagedResponse<AdminProjectResDTO.ProjectSummaryDTO> result =

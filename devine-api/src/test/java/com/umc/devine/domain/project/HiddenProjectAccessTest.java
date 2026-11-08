@@ -117,7 +117,7 @@ class HiddenProjectAccessTest extends IntegrationTestSupport {
 
     private Project createHiddenProject() {
         Project project = createRecruitingProject();
-        projectVisibilityCommandService.hideForModeration(project.getId(), null);
+        projectVisibilityCommandService.changeVisibility(project.getId(), false, null);
         return project;
     }
 

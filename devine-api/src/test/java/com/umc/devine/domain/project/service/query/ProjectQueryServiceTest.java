@@ -85,7 +85,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
 
     private Project createHiddenProject(String name, ProjectStatus status) {
         Project project = createProject(name, ProjectField.WEB, ecommerceCategory, status);
-        project.changeVisibility(false, pmMember, java.time.LocalDateTime.now());
+        project.changeVisibilityByOwner(true, pmMember, java.time.LocalDateTime.now());
         return projectRepository.save(project);
     }
 

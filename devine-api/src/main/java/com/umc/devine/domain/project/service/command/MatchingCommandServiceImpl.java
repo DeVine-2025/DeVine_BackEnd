@@ -85,7 +85,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     public MatchingResDTO.ProposeResDTO respondToApplication(Member pm, Long matchingId, MatchingDecision decision) {
         Matching matching = getMatching(matchingId);
 
-        matchingValidator.validateForApplicationResponse(pm, matching);
+        matchingValidator.validateForApplicationResponse(pm, matching, decision);
 
         matching.applyDecision(decision);
 
@@ -103,7 +103,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     public MatchingResDTO.ProposeResDTO respondToProposal(Member developer, Long matchingId, MatchingDecision decision) {
         Matching matching = getMatching(matchingId);
 
-        matchingValidator.validateForProposalResponse(developer, matching);
+        matchingValidator.validateForProposalResponse(developer, matching, decision);
 
         matching.applyDecision(decision);
 

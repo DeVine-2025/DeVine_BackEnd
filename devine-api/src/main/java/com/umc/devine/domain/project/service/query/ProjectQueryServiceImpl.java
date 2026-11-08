@@ -1,6 +1,7 @@
 package com.umc.devine.domain.project.service.query;
 
 import com.querydsl.core.types.Predicate;
+import com.umc.devine.domain.complaint.service.command.ComplaintModerationService;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
@@ -57,6 +58,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
     private final ProjectRecommendRepository projectRecommendRepository;
     private final ReportEmbeddingRepository reportEmbeddingRepository;
+    private final ComplaintModerationService complaintModerationService;
 
     @Override
     @Transactional
@@ -95,17 +97,21 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 .toList();
         boolean noPending = pending.isEmpty();
 
+        boolean editLocked = complaintModerationService.isOwnerEditLocked(project.getId());
+
         return ProjectResDTO.ManageRes.builder()
                 .projectId(project.getId())
                 .status(project.getStatus())
                 .statusName(project.getStatus().getDisplayName())
                 .hidden(project.isHidden())
-                .hiddenByAdmin(project.isHiddenByAdmin())
+                .hiddenByAdmin(project.isHiddenByModeration())
+                .reportBlinded(project.isReportBlinded())
+                .reportViolationConfirmed(complaintModerationService.hasConfirmedViolation(project.getId()))
                 .pendingCount(pending.size())
                 .pendingMatchings(pending)
                 .canClose(project.getStatus() != ProjectStatus.CLOSED && noPending)
-                .canDelete(project.getStatus() == ProjectStatus.CLOSED && noPending)
-                .canToggleHidden(!project.isHiddenByAdmin())
+                .canDelete(project.getStatus() == ProjectStatus.CLOSED && noPending && !editLocked)
+                .canToggleHidden(!project.isHiddenByModeration())
                 .build();
     }
 

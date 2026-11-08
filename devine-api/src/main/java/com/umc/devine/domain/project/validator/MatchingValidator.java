@@ -3,6 +3,7 @@ package com.umc.devine.domain.project.validator;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
@@ -48,7 +49,8 @@ public class MatchingValidator {
         }
     }
 
-    public void validateForApplicationResponse(Member pm, Matching matching) {
+    public void validateForApplicationResponse(Member pm, Matching matching, MatchingDecision decision) {
+        validateAcceptableVisibility(matching, decision);
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorReason.INVALID_STATUS_TRANSITION);
         }
@@ -60,7 +62,8 @@ public class MatchingValidator {
         }
     }
 
-    public void validateForProposalResponse(Member developer, Matching matching) {
+    public void validateForProposalResponse(Member developer, Matching matching, MatchingDecision decision) {
+        validateAcceptableVisibility(matching, decision);
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorReason.INVALID_STATUS_TRANSITION);
         }
@@ -69,6 +72,12 @@ public class MatchingValidator {
         }
         if (!matching.isTargetMember(developer)) {
             throw new MatchingException(MatchingErrorReason.NOT_TARGET_MEMBER);
+        }
+    }
+
+    private void validateAcceptableVisibility(Matching matching, MatchingDecision decision) {
+        if (decision == MatchingDecision.ACCEPT && matching.getProject().isHidden()) {
+            throw new MatchingException(MatchingErrorReason.CANNOT_ACCEPT_WHILE_HIDDEN);
         }
     }
 
