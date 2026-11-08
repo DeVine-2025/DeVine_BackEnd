@@ -33,7 +33,7 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @Valid @RequestBody ProjectReqDTO.CreateProjectReq request);
 
-        @Operation(summary = "프로젝트 수정 API", description = "기존 프로젝트 정보를 수정하는 API입니다. 작성자 본인만 수정 가능합니다.")
+        @Operation(summary = "프로젝트 수정 API", description = "기존 프로젝트 정보를 수정하는 API입니다. 작성자 본인만 수정 가능하며, 숨긴 프로젝트도 수정할 수 있습니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
@@ -46,13 +46,51 @@ public interface ProjectControllerDocs {
                         @PathVariable("projectId") Long projectId,
                         @Valid @RequestBody ProjectReqDTO.UpdateProjectReq request);
 
-        @Operation(summary = "프로젝트 삭제 API", description = "기존 프로젝트를 삭제하는 API입니다. 작성자 본인만 삭제 가능합니다.")
+        @Operation(summary = "프로젝트 관리 정보 조회 API (PM 본인)", description = "상태, 숨김 여부, 대기 중인 지원·제안 목록과 마감·삭제·숨기기 가능 여부를 반환합니다. "
+                        + "받은 지원(APPLY)은 지원 응답 API로 수락·거절, 보낸 제안(PROPOSE)은 제안 취소 API로 처리합니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아닙니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
+        })
+        ApiResponse<ProjectResDTO.ManageRes> getManageInfo(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @PathVariable("projectId") Long projectId);
+
+        @Operation(summary = "프로젝트 모집 마감 API", description = "대기 중인 지원·제안이 0건일 때 프로젝트를 마감(CLOSED)합니다. 모집 중·마감일 지남·진행 중·완료 상태에서 마감할 수 있고, 이미 마감된 프로젝트면 그대로 성공합니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 마감 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아닙니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "대기 중인 지원·제안이 있습니다.")
+        })
+        ApiResponse<Void> closeProject(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @PathVariable("projectId") Long projectId);
+
+        @Operation(summary = "프로젝트 숨기기 API (PM 본인)", description = "상태와 상관없이 프로젝트를 숨기거나 다시 보이게 합니다. 숨긴 프로젝트는 작성자에게만 보이고 새 지원·제안을 받지 않습니다. "
+                        + "관리자가 숨긴 프로젝트는 다시 보이게 할 수 없습니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "작성자가 아니거나 관리자가 숨긴 프로젝트입니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
+        })
+        ApiResponse<Void> changeVisibility(
+                        @Parameter(hidden = true) @CurrentMember Member member,
+                        @PathVariable("projectId") Long projectId,
+                        @Valid @RequestBody ProjectReqDTO.ChangeVisibilityReq request);
+
+        @Operation(summary = "프로젝트 삭제 API", description = "마감한 프로젝트를 대기 중인 지원·제안이 없을 때 삭제합니다. 작성자 본인만 삭제 가능합니다. "
+                        + "지원·제안 이력이 있으면 상대 회원의 지원 이력에 프로젝트 이름만 남고, 없으면 완전히 삭제됩니다. 되살릴 수 없습니다.")
+        @ApiResponses({
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
-                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다.")
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 프로젝트를 찾을 수 없습니다."),
+                        @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "마감한 프로젝트가 아니거나 대기 중인 지원·제안이 있습니다.")
         })
         ApiResponse<Void> deleteProject(
                         @Parameter(hidden = true) @CurrentMember Member member,
@@ -123,7 +161,7 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @ParameterObject @Valid @ModelAttribute ProjectReqDTO.RecommendProjectsReq request);
 
-        @Operation(summary = "프로젝트 상태 변경 API", description = "프로젝트 상태를 변경합니다. 모집 중 → 진행 중 → 완료 순서로만 전환 가능합니다. 작성자 본인만 변경 가능합니다.")
+        @Operation(summary = "프로젝트 상태 변경 API", description = "프로젝트 상태를 변경합니다. 작성자 본인만 변경 가능합니다. 모집 중·마감일 지남 상태에서 다른 상태로 바꾸려면 대기 중인 지원·제안이 0건이어야 합니다(409).")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 상태 변경 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 상태 전환입니다."),
@@ -145,7 +183,7 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @Parameter(hidden = true) Pageable pageable);
 
-        @Operation(summary = "내 프로젝트 - 모집 중", description = "내 프로젝트 중 모집 중인 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
+        @Operation(summary = "내 프로젝트 - 모집 중", description = "내 프로젝트 중 모집 중인 프로젝트 목록을 조회합니다. 마감일이 지났지만 대기 건이 남은 프로젝트(DEADLINE_PASSED)도 포함됩니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")
@@ -163,7 +201,7 @@ public interface ProjectControllerDocs {
                         @Parameter(hidden = true) @CurrentMember Member member,
                         @Parameter(hidden = true) Pageable pageable);
 
-        @Operation(summary = "내 프로젝트 - 완료", description = "내 프로젝트 중 완료된 프로젝트 목록을 조회합니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
+        @Operation(summary = "내 프로젝트 - 완료", description = "내 프로젝트 중 완료된 프로젝트 목록을 조회합니다. 모집을 마감한 프로젝트(CLOSED)도 포함됩니다. PM은 본인이 생성한 프로젝트, 개발자는 수락된 프로젝트가 조회됩니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "조회 성공"),
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다.")

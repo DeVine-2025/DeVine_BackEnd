@@ -15,4 +15,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     Optional<Bookmark> findByMemberAndTargetTypeAndTargetId(Member member, BookmarkType targetType, Long targetId);
 
     boolean existsByMemberAndTargetTypeAndTargetId(Member member, BookmarkType targetType, Long targetId);
+
+    void deleteAllByTargetTypeAndTargetId(BookmarkType targetType, Long targetId);
 }

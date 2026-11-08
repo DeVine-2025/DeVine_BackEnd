@@ -129,6 +129,9 @@ public class MatchingResDTO {
             @Schema(description = "수락/거절 상태", example = "PENDING")
             MatchingDecision decision,
 
+            @Schema(description = "삭제된 프로젝트 여부. true면 이름만 남아 있고 상세로 이동할 수 없음", example = "false")
+            boolean projectDeleted,
+
             @Schema(description = "생성 일시")
             LocalDateTime createdAt
     ) {}

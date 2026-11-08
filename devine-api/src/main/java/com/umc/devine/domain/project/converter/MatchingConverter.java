@@ -4,6 +4,7 @@ import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
@@ -124,6 +125,7 @@ public class MatchingConverter {
                 .content(matching.getContent())
                 .matchingType(matching.getMatchingType())
                 .decision(matching.getDecision())
+                .projectDeleted(project.getStatus() == ProjectStatus.DELETED)
                 .createdAt(matching.getCreatedAt())
                 .build();
     }

@@ -27,7 +27,15 @@ public enum ProjectSuccessCode implements BaseSuccessCode {
 
     STATUS_CHANGED(HttpStatus.OK,
             "PROJECT200_4",
-            "프로젝트 상태가 변경되었습니다.");
+            "프로젝트 상태가 변경되었습니다."),
+
+    CLOSED(HttpStatus.OK,
+            "PROJECT200_5",
+            "프로젝트 모집이 마감되었습니다."),
+
+    VISIBILITY_CHANGED(HttpStatus.OK,
+            "PROJECT200_6",
+            "프로젝트 숨김 상태가 변경되었습니다.");
 
     private final HttpStatus status;
     private final String code;

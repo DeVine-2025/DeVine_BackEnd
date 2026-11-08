@@ -18,6 +18,8 @@ public interface ProjectQueryService {
      */
     ProjectResDTO.UpdateProjectRes getProjectDetail(Member viewer, Long projectId);
 
+    ProjectResDTO.ManageRes getManageInfo(Member member, Long projectId);
+
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
     ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects();
 
