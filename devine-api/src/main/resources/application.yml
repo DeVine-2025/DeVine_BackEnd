@@ -105,3 +105,7 @@ portone:
 devine:
   credit:
     initial-count: ${DEVINE_CREDIT_INITIAL_COUNT:1}
+
+complaint:
+  evidence:
+    enabled: ${COMPLAINT_EVIDENCE_ENABLED:false}
