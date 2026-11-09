@@ -24,11 +24,11 @@ public class Complaint extends BaseEntity {
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "complainant_member_id", nullable = false)
+    @JoinColumn(name = "complainant_member_id")
     private Member complainant;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "respondent_member_id", nullable = false)
+    @JoinColumn(name = "respondent_member_id")
     private Member respondentMember;
 
     @Enumerated(EnumType.STRING)

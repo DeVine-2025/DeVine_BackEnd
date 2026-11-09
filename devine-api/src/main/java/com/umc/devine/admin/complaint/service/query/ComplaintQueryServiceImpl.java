@@ -74,6 +74,10 @@ public class ComplaintQueryServiceImpl implements ComplaintQueryService {
 
         String content = resolveContent(complaint);
 
+        if (complaint.getRespondentMember() == null) {
+            return ComplaintConverter.toComplaintDetailRes(complaint, content, 0, List.of());
+        }
+
         Long respondentMemberId = complaint.getRespondentMember().getId();
         long respondentComplaintCount = complaintRepository.countByRespondentMemberId(respondentMemberId);
         LocalDateTime now = LocalDateTime.now();

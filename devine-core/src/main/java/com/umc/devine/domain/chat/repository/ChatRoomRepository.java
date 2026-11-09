@@ -7,8 +7,12 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import com.umc.devine.domain.member.entity.Member;
 
 public interface ChatRoomRepository extends JpaRepository<ChatRoom, Long> {
+
+    @Query("SELECT r FROM ChatRoom r WHERE r.member1 = :member OR r.member2 = :member")
+    List<ChatRoom> findAllByParticipant(@Param("member") Member member);
 
     Optional<ChatRoom> findByMember1IdAndMember2Id(Long member1Id, Long member2Id);
 

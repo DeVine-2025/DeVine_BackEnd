@@ -165,6 +165,41 @@ public class Member extends BaseEntity {
         this.scheduledWithdrawalAt = null;
     }
 
+    public static final String WITHDRAWN_NICKNAME_PREFIX = "deleted#";
+
+    public void anonymizeForWithdrawal() {
+        this.name = null;
+        this.nickname = WITHDRAWN_NICKNAME_PREFIX + this.id;
+        this.address = null;
+        this.body = null;
+        this.image = null;
+        this.githubUsername = null;
+        this.clerkId = null;
+        this.scheduledWithdrawalAt = null;
+        this.disclosure = false;
+        this.proposalAlarm = false;
+        this.memberCategories.clear();
+        this.used = MemberStatus.DELETED;
+    }
+
+    public boolean isWithdrawn() {
+        return this.used == MemberStatus.DELETED;
+    }
+
+    public boolean isSanctioned() {
+        return this.used == MemberStatus.SUSPENDED || this.scheduledWithdrawalAt != null;
+    }
+
+    public static final String WITHDRAWN_DISPLAY_NAME = "탈퇴한 회원";
+
+    public String getDisplayNickname() {
+        return isWithdrawn() ? WITHDRAWN_DISPLAY_NAME : this.nickname;
+    }
+
+    public String getDisplayImage() {
+        return isWithdrawn() ? null : this.image;
+    }
+
     /**
      * 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정.
      */

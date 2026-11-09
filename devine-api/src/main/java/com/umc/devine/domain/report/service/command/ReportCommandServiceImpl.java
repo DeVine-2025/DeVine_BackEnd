@@ -97,6 +97,12 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             return;
         }
 
+        if (mainReport.getGitRepoUrl().getMember().isWithdrawn()) {
+            log.warn("탈퇴한 회원의 리포트 콜백 - 결과 폐기, 생성권 미반환 - mainReportId: {}, detailReportId: {}",
+                    request.mainReportId(), request.detailReportId());
+            return;
+        }
+
         switch (request.status()) {
             case SUCCESS -> handleCallbackSuccess(mainReport, detailReport, request);
             case FAILED -> handleCallbackFailed(mainReport, detailReport, request);

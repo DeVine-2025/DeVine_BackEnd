@@ -1,7 +1,10 @@
 package com.umc.devine.domain.payment.repository;
 
 import com.umc.devine.domain.payment.entity.PaymentRefund;
+import com.umc.devine.domain.payment.enums.RefundStatus;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -16,4 +19,10 @@ public interface PaymentRefundRepository extends JpaRepository<PaymentRefund, Lo
     List<PaymentRefund> findAllByPaymentIdIn(@Param("paymentIds") Collection<Long> paymentIds);
 
     Optional<PaymentRefund> findTopByPaymentIdOrderByIdDesc(Long paymentId);
+
+    boolean existsByPaymentIdAndStatus(Long paymentId, RefundStatus status);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT r FROM PaymentRefund r WHERE r.id = :id")
+    Optional<PaymentRefund> findByIdForUpdate(@Param("id") Long id);
 }

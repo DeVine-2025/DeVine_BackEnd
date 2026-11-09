@@ -4,17 +4,20 @@ import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -22,12 +25,20 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
-@RequiredArgsConstructor
 public class GitHubApiClient {
 
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
 
     private final RestClient restClient;
+    private final RestClient externalApiRestClient;
+
+    public GitHubApiClient(
+            RestClient restClient,
+            @Qualifier("externalApiRestClient") RestClient externalApiRestClient
+    ) {
+        this.restClient = restClient;
+        this.externalApiRestClient = externalApiRestClient;
+    }
 
     /**
      * GitHub 사용자 정보 조회
@@ -472,5 +483,25 @@ public class GitHubApiClient {
         }
 
         return null;
+    }
+
+    public void revokeGrant(String clientId, String clientSecret, String accessToken) {
+        String url = GITHUB_API_BASE_URL + "/applications/" + clientId + "/grant";
+        String basic = Base64.getEncoder()
+                .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
+
+        externalApiRestClient.method(HttpMethod.DELETE)
+                .uri(url)
+                .header("Authorization", "Basic " + basic)
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .body(Map.of("access_token", accessToken))
+                .exchange((request, response) -> {
+                    int status = response.getStatusCode().value();
+                    if (response.getStatusCode().is2xxSuccessful() || status == 404 || status == 422) {
+                        return null;
+                    }
+                    throw new IllegalStateException("GitHub 권한 회수 실패: HTTP " + status);
+                });
     }
 }

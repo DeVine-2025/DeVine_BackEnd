@@ -7,8 +7,15 @@ import org.springframework.data.jpa.repository.JpaRepository;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Modifying;
+import org.springframework.data.jpa.repository.Query;
+import org.springframework.data.repository.query.Param;
 
 public interface MemberAgreementRepository extends JpaRepository<MemberAgreement, Long> {
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM MemberAgreement ma WHERE ma.member = :member")
+    int deleteAllByMemberBulk(@Param("member") Member member);
 
     List<MemberAgreement> findAllByMember(Member member);
 

@@ -45,8 +45,9 @@ public class NotificationConverter {
     public static NotificationResDTO.SenderInfo toSenderInfo(Member member) {
         return NotificationResDTO.SenderInfo.builder()
                 .id(member.getId())
-                .nickname(member.getNickname())
-                .profileImageUrl(member.getImage())
+                .nickname(member.getDisplayNickname())
+                .profileImageUrl(member.getDisplayImage())
+                .withdrawn(member.isWithdrawn())
                 .build();
     }
 

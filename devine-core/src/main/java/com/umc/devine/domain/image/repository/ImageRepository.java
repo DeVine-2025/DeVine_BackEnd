@@ -8,8 +8,11 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.umc.devine.domain.member.entity.Member;
 
 public interface ImageRepository extends JpaRepository<Image, Long> {
+
+    List<Image> findAllByUploader(Member uploader);
 
     Optional<Image> findByImageUrl(String imageUrl);
 
