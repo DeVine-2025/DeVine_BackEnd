@@ -23,12 +23,12 @@ public class Complaint extends BaseEntity {
     @Column(name = "complaint_id")
     private Long id;
 
-    // 탈퇴한 회원이면 null이다(행은 신고 처리·통계용으로 남긴다).
+    // 탈퇴한 회원이면 null이다(행은 신고 처리/통계용으로 남긴다).
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "complainant_member_id")
     private Member complainant;
 
-    // 탈퇴한 회원이면 null이다(행은 신고 처리·통계용으로 남긴다).
+    // 탈퇴한 회원이면 null이다(행은 신고 처리/통계용으로 남긴다).
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "respondent_member_id")
     private Member respondentMember;

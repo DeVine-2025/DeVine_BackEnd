@@ -55,8 +55,8 @@ import java.util.List;
 import static org.assertj.core.api.Assertions.assertThat;
 
 /**
- * 01-1 회원 탈퇴 FUNC-MEM-001(미리보기)·FUNC-MEM-002(대기 건 일괄 취소).
- * 시나리오 T2·T3, 03 문서 P18.
+ * 01-1 회원 탈퇴 FUNC-MEM-001(미리보기), FUNC-MEM-002(대기 건 일괄 취소).
+ * 시나리오 T2, T3, 03 문서 P18.
  */
 class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
 
@@ -127,7 +127,7 @@ class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("미리보기: 보낸 지원·받은 제안(개발자 쪽)과 받은 지원·보낸 제안(PM 쪽)을 대기 건으로 보여 주고, 처리된 건은 뺀다")
+    @DisplayName("미리보기: 보낸 지원/받은 제안(개발자 쪽)과 받은 지원/보낸 제안(PM 쪽)을 대기 건으로 보여 주고, 처리된 건은 뺀다")
     void preview_pendingDirections() {
         Project applied = saveProject("지원한 프로젝트", ProjectStatus.RECRUITING);
         Project proposed = saveProject("제안받은 프로젝트", ProjectStatus.RECRUITING);
@@ -178,7 +178,7 @@ class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("미리보기 T4: 3개 묶음(9,900원) 사서 1개 사용, 20일 뒤 → 환불 가능 2개 · 6,600원")
+    @DisplayName("미리보기 T4: 3개 묶음(9,900원) 사서 1개 사용, 20일 뒤 → 환불 가능 2개, 6,600원")
     void preview_refund_t4() {
         memberReportCreditRepository.save(MemberReportCredit.of(dev, 2));
         savePayment(dev, "pay_wd_t4", 9_900L, bundle(), 1, LocalDateTime.now().minusDays(20));
@@ -233,7 +233,7 @@ class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("개발자가 일괄 취소하면 보낸 지원과 받은 제안이 취소되고 PM에게 각각 지원·제안 취소 알림이 간다")
+    @DisplayName("개발자가 일괄 취소하면 보낸 지원과 받은 제안이 취소되고 PM에게 각각 지원/제안 취소 알림이 간다")
     void developerCancelsSentApplicationAndReceivedProposal() {
         Project applied = saveProject("지원한 프로젝트", ProjectStatus.RECRUITING);
         Project proposed = saveProject("제안받은 프로젝트", ProjectStatus.RECRUITING);
@@ -283,7 +283,7 @@ class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("탈퇴 API용 회원 조회는 정지·강제탈퇴 예정 회원을 찾고, 탈퇴 회원은 찾지 않는다")
+    @DisplayName("탈퇴 API용 회원 조회는 정지/강제탈퇴 예정 회원을 찾고, 탈퇴 회원은 찾지 않는다")
     void sanctionedMembersResolvableForWithdrawal() {
         Member suspended = saveMember("clerk_wd_suspended", "wdsusp", MemberMainType.DEVELOPER, MemberStatus.SUSPENDED);
         Member pending = saveMember("clerk_wd_pending", "wdpend", MemberMainType.DEVELOPER, MemberStatus.PENDING_WITHDRAWAL);

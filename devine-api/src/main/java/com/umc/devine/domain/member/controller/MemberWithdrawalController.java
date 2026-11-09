@@ -42,7 +42,7 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 대기 지원·제안 일괄 취소
+    // 대기 지원/제안 일괄 취소
     @Override
     @PostMapping("/matchings/cancel-pending")
     public ApiResponse<WithdrawalResDTO.CancelPendingResultDTO> cancelPendingMatchings(

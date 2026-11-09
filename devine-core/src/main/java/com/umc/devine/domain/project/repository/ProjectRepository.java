@@ -68,7 +68,7 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
 
     /**
      * 회원 탈퇴용: 이 회원이 PM인 삭제되지 않은 프로젝트(숨긴 프로젝트 포함)를 잠가서 조회한다.
-     * 탈퇴 중에 새 지원·제안이나 매칭 처리가 끼어들지 않도록 매칭 처리와 같은 행 잠금을 쓴다. ID 순으로 잠가 교착을 피한다.
+     * 탈퇴 중에 새 지원/제안이나 매칭 처리가 끼어들지 않도록 매칭 처리와 같은 행 잠금을 쓴다. ID 순으로 잠가 교착을 피한다.
      */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Project p WHERE p.member = :member " +

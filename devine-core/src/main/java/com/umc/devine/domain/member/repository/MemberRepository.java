@@ -45,7 +45,7 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Member> findByClerkId(@Param("clerkId") String clerkId);
 
-    /** 회원 탈퇴 API용 조회. 정지·강제탈퇴 예정 회원도 탈퇴할 수 있어야 하므로 허용 상태를 직접 받는다. */
+    /** 회원 탈퇴 API용 조회. 정지/강제탈퇴 예정 회원도 탈퇴할 수 있어야 하므로 허용 상태를 직접 받는다. */
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used IN :statuses")
     Optional<Member> findByClerkIdAndUsedIn(@Param("clerkId") String clerkId,
                                             @Param("statuses") Collection<MemberStatus> statuses);

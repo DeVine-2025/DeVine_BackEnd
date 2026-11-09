@@ -11,10 +11,10 @@ public class WithdrawalResDTO {
     @Builder
     @Schema(description = "탈퇴 미리보기 응답(FUNC-MEM-001). 탈퇴 화면을 띄울 때마다 다시 조회합니다.")
     public record PreviewDTO(
-            @Schema(description = "수락·거절 전인 지원·제안 목록. 1건 이상이면 정리해야 탈퇴할 수 있습니다.")
+            @Schema(description = "수락/거절 전인 지원/제안 목록. 1건 이상이면 정리해야 탈퇴할 수 있습니다.")
             List<PendingMatchingDTO> pendingMatchings,
 
-            @Schema(description = "대기 중인 지원·제안 수", example = "2")
+            @Schema(description = "대기 중인 지원/제안 수", example = "2")
             int pendingCount,
 
             @Schema(description = "지워질 리포트 수(완료된 리포트, 생성권 1개당 1개)", example = "3")
@@ -40,7 +40,7 @@ public class WithdrawalResDTO {
     ) {}
 
     @Builder
-    @Schema(description = "대기 중인 지원·제안")
+    @Schema(description = "대기 중인 지원/제안")
     public record PendingMatchingDTO(
             @Schema(description = "매칭 ID", example = "10")
             Long matchingId,
@@ -75,12 +75,12 @@ public class WithdrawalResDTO {
     @Builder
     @Schema(description = "탈퇴 409 응답의 result: 남은 대기 건 수. 화면은 SCR-MEM-01로 돌아갑니다.")
     public record PendingMatchingsRemainDTO(
-            @Schema(description = "대기 중인 지원·제안 수", example = "2")
+            @Schema(description = "대기 중인 지원/제안 수", example = "2")
             int pendingCount
     ) {}
 
     @Builder
-    @Schema(description = "대기 지원·제안 일괄 취소 응답(FUNC-MEM-002)")
+    @Schema(description = "대기 지원/제안 일괄 취소 응답(FUNC-MEM-002)")
     public record CancelPendingResultDTO(
             @Schema(description = "취소한 건수. 대기 건이 없으면 0", example = "2")
             int canceledCount

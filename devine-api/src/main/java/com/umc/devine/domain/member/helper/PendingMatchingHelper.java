@@ -11,7 +11,7 @@ import org.springframework.stereotype.Component;
 import java.util.List;
 
 /**
- * 탈퇴할 회원이 보냈거나 받은 대기(수락·거절 전) 지원·제안을 찾는다(FUNC-MEM-001 1번).
+ * 탈퇴할 회원이 보냈거나 받은 대기(수락/거절 전) 지원/제안을 찾는다(FUNC-MEM-001 1번).
  * 대기 건 기준은 프로젝트 관리와 같다(status = PENDING).
  *
  * <ul>

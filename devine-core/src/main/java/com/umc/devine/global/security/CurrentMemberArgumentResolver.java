@@ -21,7 +21,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResolver {
 
-    // 회원 탈퇴 API에서만 허용하는 상태. 탈퇴(DELETED)·INACTIVE는 포함하지 않는다.
+    // 회원 탈퇴 API에서만 허용하는 상태. 탈퇴(DELETED)/INACTIVE는 포함하지 않는다.
     private static final List<MemberStatus> SANCTIONED_INCLUDED_STATUSES =
             List.of(MemberStatus.ACTIVE, MemberStatus.SUSPENDED, MemberStatus.PENDING_WITHDRAWAL);
 

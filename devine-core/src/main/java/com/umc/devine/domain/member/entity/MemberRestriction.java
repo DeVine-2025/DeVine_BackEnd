@@ -7,7 +7,7 @@ import lombok.*;
 import java.time.LocalDateTime;
 
 /**
- * 정지·소명 중 탈퇴자의 최소식별정보(결정 C, FUNC-MEM-006).
+ * 정지/소명 중 탈퇴자의 최소식별정보(결정 C, FUNC-MEM-006).
  * 만료 전이면 같은 이메일 해시로 가입할 수 없다. 만료되면 FUNC-MEM-007 배치가 지운다.
  */
 @Entity

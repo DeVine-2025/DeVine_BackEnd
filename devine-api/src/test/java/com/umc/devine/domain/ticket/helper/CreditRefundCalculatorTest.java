@@ -22,7 +22,7 @@ class CreditRefundCalculatorTest {
     }
 
     @Test
-    @DisplayName("T4: 3개 묶음(9,900원) 사서 1개 사용, 구매 20일 뒤 → 환불 가능 2개 · 6,600원")
+    @DisplayName("T4: 3개 묶음(9,900원) 사서 1개 사용, 구매 20일 뒤 → 환불 가능 2개, 6,600원")
     void t4_bundlePartiallyUsed() {
         Result result = CreditRefundCalculator.calculate(2,
                 List.of(purchase(1, NOW.minusDays(20), 9_900, 3, 0, false)), NOW);
@@ -80,7 +80,7 @@ class CreditRefundCalculatorTest {
     }
 
     @Test
-    @DisplayName("T6-1: 관리자 지급 1개 + 5일 전 1개 구매(4,900원), 1개 사용 → 무상분을 먼저 쓴 것으로 보고 환불 가능 1개 · 4,900원")
+    @DisplayName("T6-1: 관리자 지급 1개 + 5일 전 1개 구매(4,900원), 1개 사용 → 무상분을 먼저 쓴 것으로 보고 환불 가능 1개, 4,900원")
     void t6_1_freeCreditsUsedFirst() {
         Result result = CreditRefundCalculator.calculate(1,
                 List.of(purchase(1, NOW.minusDays(5), 4_900, 1, 0, false)), NOW);
@@ -91,7 +91,7 @@ class CreditRefundCalculatorTest {
     }
 
     @Test
-    @DisplayName("T6-2: 3개 묶음 중 2개 부분 환불 완료, 남은 1개 → 환불 가능 1개 · 3,300원(이력이 있으면 개수 × 단가)")
+    @DisplayName("T6-2: 3개 묶음 중 2개 부분 환불 완료, 남은 1개 → 환불 가능 1개, 3,300원(이력이 있으면 개수 × 단가)")
     void t6_2_partialRefundHistory() {
         Result result = CreditRefundCalculator.calculate(1,
                 List.of(purchase(1, NOW.minusDays(10), 9_900, 3, 2, true)), NOW);

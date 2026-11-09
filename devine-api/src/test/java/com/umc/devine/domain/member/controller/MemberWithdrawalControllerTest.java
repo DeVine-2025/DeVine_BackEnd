@@ -43,7 +43,7 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 /**
  * 회원 탈퇴 API를 HTTP 계층(보안 필터, 요청 검증, 예외 응답 JSON)까지 확인한다.
- * 테스트 트랜잭션이 커밋되지 않으므로 아웃박스 외부 작업(Clerk·S3)은 실행되지 않는다.
+ * 테스트 트랜잭션이 커밋되지 않으므로 아웃박스 외부 작업(Clerk/S3)은 실행되지 않는다.
  */
 class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
 
@@ -71,7 +71,7 @@ class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("미리보기 200: 대기 건·생성권·환불 연락 이메일 기본값을 돌려준다")
+    @DisplayName("미리보기 200: 대기 건, 생성권, 환불 연락 이메일 기본값을 돌려준다")
     void preview() throws Exception {
         var auth = saveMemberAndAuth("clerk_wc_preview", "wcpreview", MemberStatus.ACTIVE);
 
@@ -121,7 +121,7 @@ class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("T1·T9: 탈퇴 200 뒤 같은 토큰으로 다른 API를 부르면 막힌다(403 AUTH403_1)")
+    @DisplayName("T1, T9: 탈퇴 200 뒤 같은 토큰으로 다른 API를 부르면 막힌다(403 AUTH403_1)")
     void withdrawThenBlocked() throws Exception {
         var auth = saveMemberAndAuth("clerk_wc_done", "wcdone", MemberStatus.ACTIVE);
 
@@ -140,7 +140,7 @@ class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("T1·T8: 탈퇴하면 공개 프로필과 공개 리포트 URL이 비로그인으로 열리지 않는다(404)")
+    @DisplayName("T1, T8: 탈퇴하면 공개 프로필과 공개 리포트 URL이 비로그인으로 열리지 않는다(404)")
     void publicLinksGoneAfterWithdrawal() throws Exception {
         var auth = saveMemberAndAuth("clerk_wc_public", "wcpublic", MemberStatus.ACTIVE);
         Member member = memberRepository.findByClerkId("clerk_wc_public").orElseThrow();

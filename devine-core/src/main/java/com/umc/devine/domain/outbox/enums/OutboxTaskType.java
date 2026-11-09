@@ -9,7 +9,7 @@ public enum OutboxTaskType {
     GITHUB_GRANT_REVOKE,
     /** Clerk 사용자 삭제. */
     CLERK_USER_DELETE,
-    /** 프로필·프로젝트 이미지 S3 객체 삭제. */
+    /** 프로필/프로젝트 이미지 S3 객체 삭제. */
     S3_OBJECT_DELETE,
     /** 운영자 탈퇴 환불 신청 알림 메일(FUNC-MEM-004 2번). */
     WITHDRAWAL_REFUND_MAIL

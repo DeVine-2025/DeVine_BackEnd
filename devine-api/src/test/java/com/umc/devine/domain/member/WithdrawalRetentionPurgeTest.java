@@ -207,7 +207,7 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("결제 5년: 탈퇴 회원의 결제일·환불 완료일이 모두 5년 지난 건만 지우고, 활동 회원 결제와 최근 환불 건은 남긴다")
+    @DisplayName("결제 5년: 탈퇴 회원의 결제일/환불 완료일이 모두 5년 지난 건만 지우고, 활동 회원 결제와 최근 환불 건은 남긴다")
     void expiredPaymentsPurged() {
         Member withdrawn = withdrawnMember(now.minusYears(5));
         Payment old = payment(withdrawn, now.minusYears(6));

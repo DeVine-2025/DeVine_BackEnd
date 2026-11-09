@@ -39,7 +39,7 @@ public class WithdrawalRetentionPurgeScheduler {
         });
         run("이름만 남은 프로젝트", failures, () -> "삭제 %d건".formatted(purgeService.purgeOrphanDeletedProjects()));
         run("최소식별정보", failures, () -> "삭제 %d건".formatted(purgeService.purgeExpiredRestrictions(now)));
-        run("결제·환불 기록(5년)", failures, () -> "삭제 %d건".formatted(purgeService.purgeExpiredPayments(now)));
+        run("결제/환불 기록(5년)", failures, () -> "삭제 %d건".formatted(purgeService.purgeExpiredPayments(now)));
 
         if (!failures.isEmpty()) {
             emailSender.send(withdrawalProperties.getOperatorEmail(),

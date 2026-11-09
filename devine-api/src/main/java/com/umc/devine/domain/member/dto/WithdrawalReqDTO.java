@@ -16,7 +16,7 @@ public class WithdrawalReqDTO {
             @Schema(description = "남은 생성권 환불 신청 여부. 환불 가능 생성권이 없으면 무시됩니다.", example = "true", defaultValue = "false")
             Boolean refundRequested,
 
-            @Schema(description = "환불 연락 이메일(SCR-MEM-03에서 확인·수정한 값). 환불을 신청하면 필수", example = "user@example.com", nullable = true)
+            @Schema(description = "환불 연락 이메일(SCR-MEM-03에서 확인/수정한 값). 환불을 신청하면 필수", example = "user@example.com", nullable = true)
             @Email(message = "환불 연락 이메일 형식이 올바르지 않습니다.")
             @Size(max = 255, message = "환불 연락 이메일은 255자 이하여야 합니다.")
             String refundContactEmail,

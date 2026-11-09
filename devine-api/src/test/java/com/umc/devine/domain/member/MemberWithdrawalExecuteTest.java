@@ -101,8 +101,8 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 /**
- * 01-1 회원 탈퇴 FUNC-MEM-003(탈퇴 실행)·FUNC-MEM-004 1번(환불 신청 기록)과 기능명세서 5장 테이블별 처리.
- * 시나리오 T1·T2·T4·T6-3·T6-4·T13.
+ * 01-1 회원 탈퇴 FUNC-MEM-003(탈퇴 실행), FUNC-MEM-004 1번(환불 신청 기록)과 기능명세서 5장 테이블별 처리.
+ * 시나리오 T1, T2, T4, T6-3, T6-4, T13.
  */
 class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
 
@@ -172,7 +172,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("T1: 회원 행은 익명화해 남기고, 프로필·GitHub 데이터·약관 동의·기술스택·연락처를 지운다")
+    @DisplayName("T1: 회원 행은 익명화해 남기고, 프로필, GitHub 데이터, 약관 동의, 기술스택, 연락처를 지운다")
     void t1_anonymizesMemberAndDeletesProfileData() {
         me.addCategories(List.of(category));
         contactRepository.save(Contact.builder().member(me).contactType(ContactType.EMAIL).value("me@example.com").build());
@@ -253,7 +253,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("T2: 대기 지원·제안이 있으면 409와 대기 건 수를 돌려주고 아무것도 바꾸지 않는다")
+    @DisplayName("T2: 대기 지원/제안이 있으면 409와 대기 건 수를 돌려주고 아무것도 바꾸지 않는다")
     void t2_pendingMatchingsBlockWithdrawal() {
         Project project = saveProject(other, "남의 프로젝트");
         saveMatching(project, me, MatchingStatus.PENDING);
@@ -381,7 +381,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("FUNC-MEM-008: 상대가 받은 알림 본문의 닉네임을 바꾸고, 보낸 사람은 '탈퇴한 회원'·기본 이미지·withdrawn=true로 보인다")
+    @DisplayName("FUNC-MEM-008: 상대가 받은 알림 본문의 닉네임을 바꾸고, 보낸 사람은 '탈퇴한 회원', 기본 이미지, withdrawn=true로 보인다")
     void notificationSenderDisplayedAsWithdrawn() {
         Notification sent = notificationRepository.save(Notification.builder()
                 .receiver(other).sender(me).type(NotificationType.MATCHING_APPLIED)
@@ -403,7 +403,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("FUNC-MEM-008: PM의 지원 현황(매칭 이력)에서 탈퇴한 개발자는 '탈퇴한 회원'·기본 이미지·withdrawn=true로 보인다")
+    @DisplayName("FUNC-MEM-008: PM의 지원 현황(매칭 이력)에서 탈퇴한 개발자는 '탈퇴한 회원', 기본 이미지, withdrawn=true로 보인다")
     void matchingHistoryShowsWithdrawnDeveloper() {
         Project project = saveProject(other, "PM 프로젝트");
         Matching history = saveMatching(project, me, MatchingStatus.COMPLETED);
@@ -423,7 +423,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("신고 기록은 행을 남기고 신고자·피신고자 칸을 비우며, 관리자 화면에는 '탈퇴한 회원'으로 보인다")
+    @DisplayName("신고 기록은 행을 남기고 신고자/피신고자 칸을 비우며, 관리자 화면에는 '탈퇴한 회원'으로 보인다")
     void complaintsAnonymized() {
         Complaint asComplainant = complaintRepository.save(Complaint.builder().complainant(me).respondentMember(other)
                 .targetType(ComplaintTargetType.DEVELOPER).targetId(other.getId()).reason("신고").build());

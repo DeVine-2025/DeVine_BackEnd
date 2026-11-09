@@ -6,7 +6,7 @@ import java.util.Comparator;
 import java.util.List;
 
 /**
- * 탈퇴 시 남은 생성권의 환불 가능 개수·금액을 추정한다(01-1 기능명세서 3장, 결정 A).
+ * 탈퇴 시 남은 생성권의 환불 가능 개수/금액을 추정한다(01-1 기능명세서 3장, 결정 A).
  *
  * <p>{@code member_report_credit.remaining_count}는 숫자 하나뿐이라 어느 결제분이 남았는지 알 수 없다.
  * 대표 결정(10-28)에 따라 무상분을 먼저 쓰고, 유료분은 먼저 산 것부터 쓴 것으로 본다.
@@ -82,7 +82,7 @@ public final class CreditRefundCalculator {
      * 유료 결제 건 하나.
      *
      * @param grantedCredits         지급 개수(quantity × unit_credit_amount의 합)
-     * @param alreadyRefundedCredits 이미 환불했거나 환불 진행·신청 중인 개수
+     * @param alreadyRefundedCredits 이미 환불했거나 환불 진행/신청 중인 개수
      * @param hasRefundHistory       FAILED가 아닌 환불 행이 하나라도 있는지
      */
     public record Purchase(
@@ -99,7 +99,7 @@ public final class CreditRefundCalculator {
         }
     }
 
-    /** 환불 가능으로 계산된 결제 건별 수량·금액. */
+    /** 환불 가능으로 계산된 결제 건별 수량/금액. */
     public record Allocation(Purchase purchase, int credits, long amount) {
     }
 

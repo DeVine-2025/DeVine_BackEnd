@@ -84,7 +84,7 @@ class SanctionedMemberRetentionTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("T12: 정지 회원이 탈퇴하면 이메일 해시·사유·제재 요약을 1년 보관하고, 기존 이력과 신고 식별 칸을 남긴다")
+    @DisplayName("T12: 정지 회원이 탈퇴하면 이메일 해시, 사유, 제재 요약을 1년 보관하고, 기존 이력과 신고 식별 칸을 남긴다")
     void retainsSanctionInfo() {
         given(clerkApiClient.getPrimaryEmail("clerk_sr_suspended")).willReturn(Optional.of("Banned@Example.com"));
 

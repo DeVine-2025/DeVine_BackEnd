@@ -42,7 +42,7 @@ public class WithdrawalRetentionPurgeService {
     static final int MATCHING_RETENTION_YEARS = 1;
     static final int PAYMENT_RETENTION_YEARS = 5;
 
-    // 끝난(더 바뀌지 않는) 환불만 5년 기산 대상이다. 신청·진행·불명은 아직 처리 중이다
+    // 끝난(더 바뀌지 않는) 환불만 5년 기산 대상이다. 신청, 진행, 불명은 아직 처리 중이다
     private static final Set<RefundStatus> TERMINAL_REFUND = EnumSet.of(RefundStatus.COMPLETED, RefundStatus.FAILED);
 
     private final MemberStatusHistoryRepository memberStatusHistoryRepository;
@@ -98,7 +98,7 @@ public class WithdrawalRetentionPurgeService {
 
     /**
      * 3. 만료된 최소식별정보(결정 C)를 지운다. 같은 회원에 대해 남겨 둔 상태 변경 이력(자진 탈퇴 행 제외)을 지우고
-     * 신고 기록의 신고자·피신고자 칸을 비운다.
+     * 신고 기록의 신고자/피신고자 칸을 비운다.
      */
     @Transactional
     public int purgeExpiredRestrictions(LocalDateTime now) {
@@ -113,7 +113,7 @@ public class WithdrawalRetentionPurgeService {
         return expired.size();
     }
 
-    /** 4. 탈퇴 회원의 결제·환불 기록을 결제일과 환불 완료일이 모두 5년이 지나면 지운다(방침 3조 6)·9)). */
+    /** 4. 탈퇴 회원의 결제/환불 기록을 결제일과 환불 완료일이 모두 5년이 지나면 지운다(방침 3조 6), 9)). */
     @Transactional
     public int purgeExpiredPayments(LocalDateTime now) {
         LocalDateTime threshold = now.minusYears(PAYMENT_RETENTION_YEARS);

@@ -9,7 +9,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class EmailHasherTest {
 
     @Test
-    @DisplayName("소문자·공백 정리 후 HMAC-SHA256 hex(64자)로 해시하고, 같은 이메일은 같은 값이다")
+    @DisplayName("소문자/공백 정리 후 HMAC-SHA256 hex(64자)로 해시하고, 같은 이메일은 같은 값이다")
     void normalizesAndHashes() {
         EmailHasher hasher = new EmailHasher("pepper", false);
 

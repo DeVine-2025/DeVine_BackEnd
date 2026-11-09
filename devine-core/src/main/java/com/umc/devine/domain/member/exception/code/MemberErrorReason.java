@@ -26,7 +26,7 @@ public enum MemberErrorReason implements DomainErrorReason {
     GITHUB_USERNAME_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_5", "GitHub 사용자명이 등록되지 않았습니다."),
     CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER400_5", "관심 도메인은 최소 1개 이상 선택해야 합니다."),
     REFUND_CONTACT_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER400_6", "환불을 신청하려면 환불 연락 이메일이 필요합니다."),
-    WITHDRAWAL_PENDING_MATCHINGS_EXIST(HttpStatus.CONFLICT, "MEMBER409_3", "진행 중인 지원·제안이 있어요. 정리한 뒤 탈퇴할 수 있어요."),
+    WITHDRAWAL_PENDING_MATCHINGS_EXIST(HttpStatus.CONFLICT, "MEMBER409_3", "진행 중인 지원이나 제안이 있어요. 정리한 뒤 탈퇴할 수 있어요."),
     ;
 
     private final HttpStatus status;

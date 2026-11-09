@@ -88,7 +88,7 @@ public class MemberCommandServiceImpl implements MemberCommandService {
             throw new MemberException(MemberErrorReason.ALREADY_REGISTERED);
         }
 
-        // 정지·소명 중 탈퇴자의 재가입 제한(01-1 FUNC-MEM-006 3번). 항상 켜 둔다(관리자 강제탈퇴에서도 쓴다).
+        // 정지/소명 중 탈퇴자의 재가입 제한(01-1 FUNC-MEM-006 3번). 항상 켜 둔다(관리자 강제탈퇴에서도 쓴다).
         // pepper나 토큰의 email이 없으면 해시를 만들 수 없어 검사를 건너뛴다
         emailHasher.hash(principal.getEmail())
                 .filter(hash -> memberRestrictionRepository.existsByEmailHashAndExpiresAtAfter(hash, LocalDateTime.now()))

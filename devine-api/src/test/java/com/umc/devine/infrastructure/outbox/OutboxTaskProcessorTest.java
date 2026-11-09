@@ -50,7 +50,7 @@ import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 /**
- * 01-1 FUNC-MEM-005(외부 정리)·FUNC-MEM-004 2번(운영자 메일) 아웃박스 실행. 시나리오 T9.
+ * 01-1 FUNC-MEM-005(외부 정리), FUNC-MEM-004 2번(운영자 메일) 아웃박스 실행. 시나리오 T9.
  * 실행기는 작업마다 새 트랜잭션을 쓰므로 이 테스트는 데이터를 커밋하고 끝나면 직접 지운다.
  */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
@@ -173,7 +173,7 @@ class OutboxTaskProcessorTest extends IntegrationTestSupport {
     }
 
     @Test
-    @DisplayName("운영자 환불 메일: 제목에 건수와 총액, 본문에 결제·환불 정보와 연락 이메일을 넣고 닉네임은 넣지 않는다")
+    @DisplayName("운영자 환불 메일: 제목에 건수와 총액, 본문에 결제/환불 정보와 연락 이메일을 넣고 닉네임은 넣지 않는다")
     void refundMailSent() {
         Long refundId = saveWithdrawalRefund("pay_ob_mail", 6_600L, 2, "refund@example.com");
         enqueue(OutboxTaskType.WITHDRAWAL_REFUND_MAIL, new WithdrawalRefundMailPayload(List.of(refundId)));

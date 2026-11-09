@@ -107,7 +107,7 @@ public class ClerkApiClient {
     }
 
     /**
-     * Clerk 사용자 삭제(회원 탈퇴 FUNC-MEM-005). 소셜 이메일·프로필 사진이 Clerk에 남지 않도록 지우고, 세션도 함께 끝난다.
+     * Clerk 사용자 삭제(회원 탈퇴 FUNC-MEM-005). 소셜 이메일/프로필 사진이 Clerk에 남지 않도록 지우고, 세션도 함께 끝난다.
      * 이미 지워진 사용자(404)는 성공으로 본다(재시도 멱등).
      *
      * @throws IllegalStateException 그 밖의 실패. 아웃박스가 재시도한다

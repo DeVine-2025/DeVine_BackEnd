@@ -109,12 +109,12 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
 
     @Override
     public WithdrawalResDTO.CancelPendingResultDTO cancelPendingMatchings(Member member) {
-        // 매칭 처리·마감과 같은 순서로 프로젝트를 먼저 잠근다. ID 순으로 잠가 교착을 피한다.
+        // 매칭 처리/마감과 같은 순서로 프로젝트를 먼저 잠근다. ID 순으로 잠가 교착을 피한다.
         pendingMatchingHelper.findPendingProjectIds(member).stream()
                 .sorted()
                 .forEach(projectRepository::findByIdForUpdate);
 
-        // 잠근 뒤 다시 읽어, 그사이 상대가 수락·거절한 건은 건드리지 않는다
+        // 잠근 뒤 다시 읽어, 그사이 상대가 수락/거절한 건은 건드리지 않는다
         List<Matching> pending = pendingMatchingHelper.findPending(member);
 
         Map<Long, Project> touchedProjects = new LinkedHashMap<>();
@@ -164,7 +164,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         // 아웃박스에 담을 값은 회원 행을 비우기 전에 읽어 둔다
         String clerkId = member.getClerkId();
 
-        // 3. 한 트랜잭션: 결정 C 보관(FUNC-MEM-006 2번). 사유·이력은 아래에서 지우기 전에 읽는다
+        // 3. 한 트랜잭션: 결정 C 보관(FUNC-MEM-006 2번). 사유/이력은 아래에서 지우기 전에 읽는다
         if (retainSanctionRecords) {
             retainSanctionInfo(member, preparation.emailHash(), now);
         }
@@ -246,7 +246,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         return refundIds;
     }
 
-    /** 회원·채팅·알림·쿠폰 그룹. 지울 S3 키를 돌려준다. */
+    /** 회원, 채팅, 알림, 쿠폰 그룹. 지울 S3 키를 돌려준다. */
     private List<String> deleteMemberData(Member member) {
         contactRepository.deleteAllByMember(member);
         memberAgreementRepository.deleteAllByMemberBulk(member);
@@ -256,7 +256,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         bookmarkRepository.deleteAllByMemberBulk(member);
         bookmarkRepository.deleteAllByTarget(BookmarkType.DEVELOPER, member.getId());
 
-        // 프로필·프로젝트·에디터 이미지. 행은 지우고 S3 객체는 커밋 뒤 아웃박스로 지운다
+        // 프로필, 프로젝트, 에디터 이미지. 행은 지우고 S3 객체는 커밋 뒤 아웃박스로 지운다
         List<Image> images = imageRepository.findAllByUploader(member);
         List<String> s3Keys = images.stream()
                 .map(Image::getS3Key)
@@ -297,7 +297,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         complaintHistoryRepository.clearResolver(member);
     }
 
-    /** 결정 C(FUNC-MEM-006 2번): 이메일 해시, 사유(정지·자격상실 사유), 신고·제재 이력 요약, 만료일(탈퇴일 + 1년). */
+    /** 결정 C(FUNC-MEM-006 2번): 이메일 해시, 사유(정지/자격상실 사유), 신고/제재 이력 요약, 만료일(탈퇴일 + 1년). */
     private void retainSanctionInfo(Member member, String emailHash, LocalDateTime now) {
         List<MemberStatusHistory> histories = memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(member.getId());
         String reason = histories.stream()
@@ -334,7 +334,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         log.warn("[MemberWithdrawal] 결정 C 대상인데 이메일 해시가 없어 일반 탈퇴로 처리 - memberId: {}", member.getId());
         eventPublisher.publishEvent(EmailNotificationEvent.builder()
                 .to(withdrawalProperties.getOperatorEmail())
-                .subject("[탈퇴] 정지·소명 중 회원의 재가입 제한 정보를 남기지 못했습니다")
+                .subject("[탈퇴] 정지 또는 소명 중인 회원의 재가입 제한 정보를 남기지 못했습니다")
                 .body("""
                         정지 또는 자격상실 예정 회원이 탈퇴했지만 가입 이메일을 받지 못해 재가입 제한 정보를 남기지 못했습니다.<br>
                         탈퇴는 일반 탈퇴로 처리됐습니다(약관 제7조 8항).<br>
