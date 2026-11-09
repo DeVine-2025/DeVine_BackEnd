@@ -17,6 +17,10 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long>, MemberQueryDsl {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :firstId OR m.id = :secondId ORDER BY m.id")
+    List<Member> lockPair(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
     @Query("SELECT m FROM Member m WHERE m.nickname = :nickname AND m.used = 'ACTIVE'")
     Optional<Member> findByNickname(@Param("nickname") String nickname);
 
