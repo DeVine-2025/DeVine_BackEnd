@@ -379,6 +379,48 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("FUNC-MEM-008: 상대가 받은 알림 본문의 닉네임을 바꾸고, 보낸 사람은 '탈퇴한 회원'·기본 이미지·withdrawn=true로 보인다")
+    void notificationSenderDisplayedAsWithdrawn() {
+        Notification sent = notificationRepository.save(Notification.builder()
+                .receiver(other).sender(me).type(NotificationType.MATCHING_APPLIED)
+                .title("새로운 지원자가 있습니다").content("wxme님이 'DeVine' 프로젝트에 지원했습니다.").referenceId(1L)
+                .build());
+
+        withdrawalService.withdraw(me, confirmed());
+        em.flush();
+        em.clear();
+
+        Notification kept = notificationRepository.findById(sent.getId()).orElseThrow();
+        assertThat(kept.getContent()).isEqualTo("탈퇴한 회원님이 'DeVine' 프로젝트에 지원했습니다.");
+        assertThat(com.umc.devine.domain.notification.converter.NotificationConverter.toSenderInfo(kept.getSender()))
+                .satisfies(sender -> {
+                    assertThat(sender.nickname()).isEqualTo("탈퇴한 회원");
+                    assertThat(sender.profileImageUrl()).isNull();
+                    assertThat(sender.withdrawn()).isTrue();
+                });
+    }
+
+    @Test
+    @DisplayName("FUNC-MEM-008: PM의 지원 현황(매칭 이력)에서 탈퇴한 개발자는 '탈퇴한 회원'·기본 이미지·withdrawn=true로 보인다")
+    void matchingHistoryShowsWithdrawnDeveloper() {
+        Project project = saveProject(other, "PM 프로젝트");
+        Matching history = saveMatching(project, me, MatchingStatus.COMPLETED);
+
+        withdrawalService.withdraw(me, confirmed());
+        em.flush();
+        em.clear();
+
+        Matching kept = matchingRepository.findByIdWithDetails(history.getId()).orElseThrow();
+        assertThat(com.umc.devine.domain.project.converter.MatchingConverter.toDeveloperMatchingInfo(kept, List.of(), List.of()))
+                .satisfies(info -> {
+                    assertThat(info.developerNickname()).isEqualTo("탈퇴한 회원");
+                    assertThat(info.developerImageUrl()).isNull();
+                    assertThat(info.developerWithdrawn()).isTrue();
+                    assertThat(info.body()).isNull();
+                });
+    }
+
+    @Test
     @DisplayName("신고 기록은 행을 남기고 신고자·피신고자 칸을 비우며, 관리자 화면에는 '탈퇴한 회원'으로 보인다")
     void complaintsAnonymized() {
         Complaint asComplainant = complaintRepository.save(Complaint.builder().complainant(me).respondentMember(other)
