@@ -14,6 +14,6 @@ public interface ReportQueryService {
 
     ReportResDTO.ReportSummaryListDTO getMyReports(Member member, ReportType reportType);
 
-    PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(String nickname, ReportType reportType, Pageable pageable);
+    PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(Member viewer, String nickname, ReportType reportType, Pageable pageable);
 }
 

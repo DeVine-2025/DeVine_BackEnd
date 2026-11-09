@@ -1,5 +1,6 @@
 package com.umc.devine.domain.report.service.query;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -31,6 +32,7 @@ import java.util.List;
 @Transactional(readOnly = true)
 public class ReportQueryServiceImpl implements ReportQueryService {
 
+    private final MemberBlockRepository blockRepository;
     private final DevReportRepository reportRepository;
     private final MemberRepository memberRepository;
     private final ObjectMapper objectMapper;
@@ -58,6 +60,9 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     }
 
     private void validateVisibility(DevReport report, Long memberId) {
+        if (memberId != null && blockRepository.existsBetween(memberId, report.getGitRepoUrl().getMember().getId())) {
+            throw new ReportException(ReportErrorReason.REPORT_NOT_FOUND);
+        }
         if (report.getVisibility() == ReportVisibility.PRIVATE) {
             Long ownerId = report.getGitRepoUrl().getMember().getId();
             if (!ownerId.equals(memberId)) {
@@ -73,10 +78,13 @@ public class ReportQueryServiceImpl implements ReportQueryService {
     }
 
     @Override
-    public PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(String nickname, ReportType reportType, Pageable pageable) {
+    public PagedResponse<ReportResDTO.ReportSummaryDTO> getReportsByNickname(Member viewer, String nickname, ReportType reportType, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }

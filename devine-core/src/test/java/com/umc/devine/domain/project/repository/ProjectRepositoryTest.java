@@ -347,7 +347,7 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             createProject("삭제된 프로젝트", ProjectStatus.DELETED);
 
             // when
-            List<Project> result = projectRepository.findWeeklyBestProjects(false);
+            List<Project> result = projectRepository.findWeeklyBestProjects(false, null);
 
             // then
             assertThat(result).hasSize(2);
@@ -362,7 +362,7 @@ class ProjectRepositoryTest extends CoreIntegrationTestSupport {
             createHiddenProject("비노출 프로젝트", ProjectStatus.RECRUITING);
 
             // when
-            List<Project> result = projectRepository.findWeeklyBestProjects(false);
+            List<Project> result = projectRepository.findWeeklyBestProjects(false, null);
 
             // then
             assertThat(result).hasSize(1);

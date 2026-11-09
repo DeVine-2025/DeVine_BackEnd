@@ -17,14 +17,14 @@ public interface MemberQueryService {
     MemberResDTO.TermsDTO findTermById(Long id);
     MemberResDTO.MemberProfileDTO findMemberProfile(Member member);
     TechstackResDTO.DevTechstackListDTO findMemberTechstacks(Member member);
-    TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname);
-    MemberResDTO.MemberProfileDTO findMemberByNickname(String nickname);
+    TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(Member viewer, String nickname);
+    MemberResDTO.MemberProfileDTO findMemberByNickname(Member viewer, String nickname);
     MemberResDTO.NicknameDuplicateDTO checkNicknameDuplicate(String nickname);
     MemberResDTO.ContributionListDTO findMyContributions(Member member, LocalDate from, LocalDate to);
-    MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname, LocalDate from, LocalDate to);
+    MemberResDTO.ContributionListDTO findContributionsByNickname(Member viewer, String nickname, LocalDate from, LocalDate to);
     PagedResponse<MemberResDTO.RecommendedDeveloperDTO> findRecommendedDevelopers(Member member, MemberReqDTO.RecommendDeveloperDTO dto);
     List<MemberResDTO.RecommendedDeveloperDTO> findRecommendedDevelopersPreview(Member member, Long projectId, int limit);
-    PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO dto);
-    ProjectResDTO.MyProjectsRes findProjectsByNickname(String nickname, List<ProjectStatus> statuses, Pageable pageable);
-    PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(String nickname, Pageable pageable);
+    PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(Member viewer, MemberReqDTO.SearchDeveloperDTO dto);
+    ProjectResDTO.MyProjectsRes findProjectsByNickname(Member viewer, String nickname, List<ProjectStatus> statuses, Pageable pageable);
+    PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(Member viewer, String nickname, Pageable pageable);
 }

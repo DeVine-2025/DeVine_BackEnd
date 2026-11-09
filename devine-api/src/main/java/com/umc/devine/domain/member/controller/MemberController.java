@@ -59,10 +59,11 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}")
     public ApiResponse<MemberResDTO.MemberProfileDTO> getMemberByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        MemberResDTO.MemberProfileDTO response = memberQueryService.findMemberByNickname(nickname);
+        MemberResDTO.MemberProfileDTO response = memberQueryService.findMemberByNickname(viewer, nickname);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -70,10 +71,11 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/search")
     public ApiResponse<PagedResponse<MemberResDTO.MemberListItemDTO>> searchDevelopers(
+            @CurrentMember(required = false) Member viewer,
             @ParameterObject @ModelAttribute MemberReqDTO.SearchDeveloperDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        PagedResponse<MemberResDTO.MemberListItemDTO> response = memberQueryService.searchDevelopers(dto);
+        PagedResponse<MemberResDTO.MemberListItemDTO> response = memberQueryService.searchDevelopers(viewer, dto);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -81,12 +83,13 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/contributions")
     public ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_CONTRIBUTIONS;
-        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(nickname, from, to);
+        MemberResDTO.ContributionListDTO response = memberQueryService.findContributionsByNickname(viewer, nickname, from, to);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -94,10 +97,11 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/techstacks")
     public ApiResponse<TechstackResDTO.DevTechstackListDTO> getTechstacksByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") String nickname
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND_TECHSTACK;
-        TechstackResDTO.DevTechstackListDTO response = memberQueryService.findTechstacksByNickname(nickname);
+        TechstackResDTO.DevTechstackListDTO response = memberQueryService.findTechstacksByNickname(viewer, nickname);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -105,11 +109,12 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/projects")
     public ApiResponse<ProjectResDTO.MyProjectsRes> getProjectsByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.MemberProjectSearchDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        ProjectResDTO.MyProjectsRes response = memberQueryService.findProjectsByNickname(nickname, dto.statuses(), dto.toPageable());
+        ProjectResDTO.MyProjectsRes response = memberQueryService.findProjectsByNickname(viewer, nickname, dto.statuses(), dto.toPageable());
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -117,11 +122,12 @@ public class MemberController implements MemberControllerDocs {
     @Override
     @GetMapping("/{nickname}/git-repos")
     public ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> getReposByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     ) {
         MemberSuccessCode code = MemberSuccessCode.FOUND;
-        PagedResponse<MemberResDTO.GitRepoDTO> response = memberQueryService.findReposByNickname(nickname, dto.toPageable());
+        PagedResponse<MemberResDTO.GitRepoDTO> response = memberQueryService.findReposByNickname(viewer, nickname, dto.toPageable());
         return ApiResponse.onSuccess(code, response);
     }
 

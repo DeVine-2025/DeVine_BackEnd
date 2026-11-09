@@ -111,13 +111,14 @@ public interface ProjectControllerDocs {
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "이번 주 주목 프로젝트 조회 성공", content = @Content(schema = @Schema(implementation = ProjectResDTO.WeeklyBestProjectsRes.class)))
         })
-        ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects();
+        ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects(@CurrentMember(required = false) Member viewer);
 
         @Operation(summary = "프로젝트 필터링 조회 (프로젝트/개발자 보기 탭 하단)", description = "다양한 필터 조건으로 프로젝트를 검색합니다.")
         @ApiResponses({
                         @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "프로젝트 검색 성공", content = @Content(schema = @Schema(implementation = ProjectResDTO.SearchProjectsRes.class)))
         })
         ApiResponse<ProjectResDTO.SearchProjectsRes> searchProjects(
+            @CurrentMember(required = false) Member viewer,
                         @ParameterObject @Valid @ModelAttribute ProjectReqDTO.SearchProjectReq request);
 
         @Operation(
