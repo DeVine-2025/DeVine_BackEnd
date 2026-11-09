@@ -1,7 +1,5 @@
 package com.umc.devine.domain.project.service.command;
 
-import com.umc.devine.domain.bookmark.enums.BookmarkType;
-import com.umc.devine.domain.bookmark.repository.BookmarkRepository;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.exception.CategoryException;
 import com.umc.devine.domain.category.repository.CategoryRepository;
@@ -19,9 +17,8 @@ import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.helper.ProjectDeletionHelper;
 import com.umc.devine.domain.project.helper.ProjectLifecycleHelper;
-import com.umc.devine.domain.project.repository.MatchingRepository;
-import com.umc.devine.domain.project.repository.ProjectEmbeddingRepository;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
@@ -31,7 +28,6 @@ import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.techstack.exception.TechstackException;
 import com.umc.devine.domain.techstack.exception.code.TechstackErrorReason;
 import com.umc.devine.domain.techstack.repository.ProjectRequirementTechstackRepository;
-import com.umc.devine.domain.techstack.repository.ProjectTechstackRepository;
 import com.umc.devine.domain.techstack.repository.TechstackRepository;
 import com.umc.devine.domain.project.event.ProjectEmbeddingEvent;
 import lombok.RequiredArgsConstructor;
@@ -65,11 +61,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final ApplicationEventPublisher eventPublisher;
-    private final MatchingRepository matchingRepository;
-    private final ProjectTechstackRepository projectTechstackRepository;
-    private final ProjectEmbeddingRepository projectEmbeddingRepository;
-    private final BookmarkRepository bookmarkRepository;
     private final ProjectLifecycleHelper lifecycleHelper;
+    private final ProjectDeletionHelper projectDeletionHelper;
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
@@ -217,27 +210,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
         }
         validateNoPending(project);
 
-        // 이미지 파일(S3)은 ImageCleanupScheduler가 연결이 끊긴 프로젝트 이미지로 보고 정리한다
-        projectImageRepository.deleteAllByProject(project);
-        project.clearImages();
-
-        List<ProjectRequirementMember> requirements = projectRequirementMemberRepository.findAllByProject(project);
-        if (!requirements.isEmpty()) {
-            projectRequirementTechstackRepository.deleteAllByRequirementIn(requirements);
-        }
-        projectRequirementMemberRepository.deleteAllByProject(project);
-        project.clearRequirements();
-
-        projectTechstackRepository.deleteAllByProject(project);
-        projectEmbeddingRepository.findByProjectId(project.getId()).ifPresent(projectEmbeddingRepository::delete);
-        bookmarkRepository.deleteAllByTargetTypeAndTargetId(BookmarkType.PROJECT, project.getId());
-
-        // 매칭 이력이 있으면 상대 회원의 지원 이력에 이름을 남겨야 하므로 행을 유지한다
-        if (matchingRepository.existsByProject(project)) {
-            project.eraseForDeletion();
-        } else {
-            projectRepository.delete(project);
-        }
+        projectDeletionHelper.delete(project);
     }
 
     private void saveTechstacks(Project project, List<ProjectReqDTO.RecruitmentDTO> recruitments) {
