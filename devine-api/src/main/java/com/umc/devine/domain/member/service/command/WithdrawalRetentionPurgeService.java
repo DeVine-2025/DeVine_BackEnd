@@ -1,6 +1,6 @@
 package com.umc.devine.domain.member.service.command;
 
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.member.enums.MemberStatusAction;
 import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.domain.member.entity.Member;

@@ -105,6 +105,9 @@ public class MemberRecommendRepository {
                   AND m.disclosure = true
                   AND m.used = 'ACTIVE'
                   AND m.member_id != :currentMemberId
+                  AND NOT EXISTS (SELECT 1 FROM member_block b
+                      WHERE (b.blocker_id = :currentMemberId AND b.target_id = m.member_id)
+                         OR (b.target_id = :currentMemberId AND b.blocker_id = m.member_id))
                   -- 개발자의 루트 포지션이 프로젝트 모집 포지션과 일치
                   AND EXISTS (
                     SELECT 1 FROM dev_techstack dt
@@ -182,6 +185,9 @@ public class MemberRecommendRepository {
               AND m.disclosure = true
               AND m.used = 'ACTIVE'
               AND m.member_id != :currentMemberId
+                  AND NOT EXISTS (SELECT 1 FROM member_block b
+                      WHERE (b.blocker_id = :currentMemberId AND b.target_id = m.member_id)
+                         OR (b.target_id = :currentMemberId AND b.blocker_id = m.member_id))
               AND EXISTS (
                 SELECT 1 FROM dev_techstack dt
                 JOIN techstack t ON dt.techstack_id = t.techstack_id

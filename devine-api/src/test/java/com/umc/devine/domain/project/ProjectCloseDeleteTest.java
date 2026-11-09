@@ -269,7 +269,7 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
         Project pmHidden = saveProject(ProjectStatus.DEADLINE_PASSED, LocalDate.now().minusDays(1));
         Project adminHidden = saveProject(ProjectStatus.RECRUITING, LocalDate.now().plusDays(10));
         projectCommandService.changeVisibility(pm, pmHidden.getId(), true);
-        projectVisibilityCommandService.hideForModeration(adminHidden.getId(), null);
+        projectVisibilityCommandService.changeVisibility(adminHidden.getId(), false, null);
 
         projectCommandService.updateProject(pm, pmHidden.getId(), updateReq(LocalDate.now().plusDays(14), "고친 소개"));
         projectCommandService.updateProject(pm, adminHidden.getId(), updateReq(LocalDate.now().plusDays(10), "고친 소개"));
@@ -297,7 +297,7 @@ class ProjectCloseDeleteTest extends IntegrationTestSupport {
     @DisplayName("P13: 관리자가 숨긴 프로젝트는 PM이 다시 보이게 할 수 없고, 숨김 요청으로 처리자를 덮어쓰지도 못한다")
     void adminHidden_pmCannotUnhide() {
         Project project = saveProject(ProjectStatus.RECRUITING, LocalDate.now().plusDays(10));
-        projectVisibilityCommandService.hideForModeration(project.getId(), null);
+        projectVisibilityCommandService.changeVisibility(project.getId(), false, null);
 
         projectCommandService.changeVisibility(pm, project.getId(), true);
         assertErrorReason(() -> projectCommandService.changeVisibility(pm, project.getId(), false),

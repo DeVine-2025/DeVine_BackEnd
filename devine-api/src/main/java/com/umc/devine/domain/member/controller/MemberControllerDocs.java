@@ -62,6 +62,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "잘못된 요청입니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.MemberListItemDTO>> searchDevelopers(
+            @CurrentMember(required = false) Member viewer,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.SearchDeveloperDTO dto
     );
 
@@ -73,7 +74,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "접근 권한이 없습니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<MemberResDTO.MemberProfileDTO> getMemberByNickname(@ValidNickname String nickname);
+    ApiResponse<MemberResDTO.MemberProfileDTO> getMemberByNickname(@CurrentMember(required = false) Member viewer, @ValidNickname String nickname);
 
     @Operation(summary = "특정 회원 깃허브 기록 조회 API", description = "특정 회원의 깃허브 기록(잔디)을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. 해당 회원의 GitHub username이 등록되어 있어야 조회 가능합니다. from/to 파라미터로 조회 기간을 지정할 수 있습니다.")
     @ApiResponses({
@@ -82,6 +83,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<MemberResDTO.ContributionListDTO> getContributionByNickname(
+            @CurrentMember(required = false) Member viewer,
             @ValidNickname String nickname,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate from,
             @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate to
@@ -93,7 +95,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "비공개 프로필입니다."),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
-    ApiResponse<TechstackResDTO.DevTechstackListDTO> getTechstacksByNickname(@ValidNickname String nickname);
+    ApiResponse<TechstackResDTO.DevTechstackListDTO> getTechstacksByNickname(@CurrentMember(required = false) Member viewer, @ValidNickname String nickname);
 
     @Operation(summary = "특정 회원 프로젝트 목록 조회 API", description = "특정 회원의 프로젝트 목록을 조회하는 API입니다. 닉네임(nickname)을 path variable로 전달해주세요. statuses 파라미터로 프로젝트 상태를 필터링할 수 있습니다. page, size 파라미터로 페이지네이션을 지정할 수 있습니다. 비회원도 조회 가능합니다.")
     @ApiResponses({
@@ -102,6 +104,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<ProjectResDTO.MyProjectsRes> getProjectsByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.MemberProjectSearchDTO dto
     );
@@ -113,6 +116,7 @@ public interface MemberControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "해당 회원을 찾을 수 없습니다.")
     })
     ApiResponse<PagedResponse<MemberResDTO.GitRepoDTO>> getReposByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable("nickname") @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid MemberReqDTO.GitRepoSyncDTO dto
     );

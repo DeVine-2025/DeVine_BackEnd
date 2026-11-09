@@ -117,9 +117,9 @@ public class ProjectController implements ProjectControllerDocs {
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
     @Override
     @GetMapping("/weekly-best")
-    public ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects() {
+    public ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects(@CurrentMember(required = false) Member viewer) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        ProjectResDTO.WeeklyBestProjectsRes response = projectQueryService.getWeeklyBestProjects();
+        ProjectResDTO.WeeklyBestProjectsRes response = projectQueryService.getWeeklyBestProjects(viewer);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -127,10 +127,11 @@ public class ProjectController implements ProjectControllerDocs {
     @Override
     @GetMapping
     public ApiResponse<ProjectResDTO.SearchProjectsRes> searchProjects(
+            @CurrentMember(required = false) Member viewer,
             @ParameterObject @ModelAttribute @Valid ProjectReqDTO.SearchProjectReq request
     ) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, projectQueryService.searchProjects(request));
+        return ApiResponse.onSuccess(code, projectQueryService.searchProjects(viewer, request));
     }
 
     // 추천 프로젝트 미리보기 (메인 하단 / 프로젝트·개발자 보기 탭 상단)

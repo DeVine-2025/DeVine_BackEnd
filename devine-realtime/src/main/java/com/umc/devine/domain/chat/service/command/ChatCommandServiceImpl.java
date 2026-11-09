@@ -10,6 +10,8 @@ import com.umc.devine.domain.chat.exception.code.ChatErrorReason;
 import com.umc.devine.domain.chat.repository.ChatMessageRepository;
 import com.umc.devine.domain.chat.repository.ChatRoomRepository;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.infrastructure.chat.presence.ChatPresenceManager;
 import com.umc.devine.infrastructure.redis.ChatEventType;
@@ -35,6 +37,7 @@ public class ChatCommandServiceImpl implements ChatCommandService {
 
     private final ChatRoomRepository chatRoomRepository;
     private final ChatMessageRepository chatMessageRepository;
+    private final MemberBlockRepository blockRepository;
     private final MemberRepository memberRepository;
     private final ChatPresenceManager chatPresenceManager;
     private final StringRedisTemplate redisTemplate;
@@ -52,6 +55,12 @@ public class ChatCommandServiceImpl implements ChatCommandService {
 
         if (memberId.equals(target.getId())) {
             throw new ChatException(ChatErrorReason.CANNOT_CHAT_SELF);
+        }
+
+        memberRepository.lockPair(memberId, target.getId());
+        if (sender.getUsed() != MemberStatus.ACTIVE || target.getUsed() != MemberStatus.ACTIVE
+                || blockRepository.existsBetween(memberId, target.getId())) {
+            throw new ChatException(ChatErrorReason.TARGET_MEMBER_NOT_FOUND);
         }
 
         Long m1Id = Math.min(memberId, target.getId());
@@ -108,6 +117,11 @@ public class ChatCommandServiceImpl implements ChatCommandService {
             throw new ChatException(ChatErrorReason.RECEIVER_WITHDRAWN);
         }
 
+        memberRepository.lockPair(memberId, receiverId);
+        if (sender.getUsed() != MemberStatus.ACTIVE || receiver.getUsed() != MemberStatus.ACTIVE
+                || blockRepository.existsBetween(memberId, receiverId)) {
+            throw new ChatException(ChatErrorReason.MESSAGING_UNAVAILABLE);
+        }
         room.rejoin(receiverId);
 
         ChatMessage message = ChatMessage.builder()

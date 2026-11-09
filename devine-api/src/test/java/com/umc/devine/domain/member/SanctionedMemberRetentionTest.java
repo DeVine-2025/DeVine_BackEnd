@@ -1,8 +1,9 @@
 package com.umc.devine.domain.member;
 
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.member.entity.MemberStatusHistory;
 import com.umc.devine.admin.member.enums.MemberStatusAction;
 import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
@@ -72,7 +73,7 @@ class SanctionedMemberRetentionTest extends IntegrationTestSupport {
         memberStatusHistoryRepository.save(MemberStatusHistory.builder().member(suspended)
                 .action(MemberStatusAction.SUSPEND).status(MemberStatus.SUSPENDED).reason("욕설 신고 누적").build());
         complaint = complaintRepository.save(Complaint.builder().complainant(reporter).respondentMember(suspended)
-                .targetType(ComplaintTargetType.DEVELOPER).targetId(suspended.getId()).reason("욕설").build());
+                .targetType(ComplaintTargetType.DEVELOPER).targetId(suspended.getId()).reasonCode(ComplaintReasonCode.ABUSE).build());
         em.flush();
     }
 

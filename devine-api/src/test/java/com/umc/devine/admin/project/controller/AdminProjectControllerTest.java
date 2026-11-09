@@ -139,7 +139,7 @@ class AdminProjectControllerTest extends ControllerIntegrationTestSupport {
             // given
             createProject(ProjectStatus.RECRUITING);
             Project hidden = createProject(ProjectStatus.RECRUITING);
-            projectVisibilityCommandService.hideForModeration(hidden.getId(), null);
+            projectVisibilityCommandService.changeVisibility(hidden.getId(), false, null);
 
             // when & then
             mockMvc.perform(get("/admin/v1/projects")

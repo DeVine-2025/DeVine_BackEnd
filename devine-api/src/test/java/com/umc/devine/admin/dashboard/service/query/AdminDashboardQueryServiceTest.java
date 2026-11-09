@@ -1,9 +1,10 @@
 package com.umc.devine.admin.dashboard.service.query;
 
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.dashboard.dto.AdminDashboardResDTO;
 import com.umc.devine.domain.coupon.entity.Coupon;
 import com.umc.devine.domain.coupon.enums.DiscountType;
@@ -134,13 +135,16 @@ class AdminDashboardQueryServiceTest extends IntegrationTestSupport {
         assertThat(result.todayPaymentCount()).isEqualTo(1L);
     }
 
+    private long nextChatMessageId = 1L;
+
     private void createComplaint(ComplaintStatus status) {
         complaintRepository.save(Complaint.builder()
                 .complainant(member)
                 .respondentMember(member)
                 .targetType(ComplaintTargetType.CHAT)
-                .targetId(1L)
-                .reason("부적절한 콘텐츠입니다.")
+                .targetId(nextChatMessageId++)
+                .reasonCode(ComplaintReasonCode.ABUSE)
+                .detail("부적절한 콘텐츠입니다.")
                 .status(status)
                 .build());
     }

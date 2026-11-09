@@ -1,8 +1,9 @@
 package com.umc.devine.domain.member;
 
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.member.entity.MemberStatusHistory;
 import com.umc.devine.admin.member.enums.MemberStatusAction;
 import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
@@ -101,7 +102,7 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
                 .recruitmentDeadline(LocalDate.now().plusDays(10)).category(category).member(pm)
                 .build());
         if (hidden) {
-            project.changeVisibility(false, pm, now);
+            project.changeVisibilityByAdmin(false, pm, now);
         }
         return project;
     }
@@ -229,7 +230,7 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
         memberStatusHistoryRepository.save(MemberStatusHistory.builder().member(sanctioned)
                 .action(MemberStatusAction.SUSPEND).status(MemberStatus.SUSPENDED).reason("정지").build());
         Complaint complaint = complaintRepository.save(Complaint.builder().complainant(reporter).respondentMember(sanctioned)
-                .targetType(ComplaintTargetType.DEVELOPER).targetId(sanctioned.getId()).reason("신고").build());
+                .targetType(ComplaintTargetType.DEVELOPER).targetId(sanctioned.getId()).reasonCode(ComplaintReasonCode.ABUSE).build());
         MemberRestriction expired = memberRestrictionRepository.save(MemberRestriction.builder()
                 .member(sanctioned).emailHash("a".repeat(64)).expiresAt(now.minusDays(1)).build());
         MemberRestriction valid = memberRestrictionRepository.save(MemberRestriction.builder()

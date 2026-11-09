@@ -75,7 +75,8 @@ public class MatchingResDTO {
             MatchingDecision decision,
 
             @Schema(description = "생성 일시")
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean canViewDetail
     ) {}
 
     // 개발자용: 제안받은/지원한 프로젝트 정보
@@ -136,7 +137,8 @@ public class MatchingResDTO {
             boolean projectDeleted,
 
             @Schema(description = "생성 일시")
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean canViewDetail
     ) {}
 
     @Builder

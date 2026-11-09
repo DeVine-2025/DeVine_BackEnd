@@ -8,6 +8,7 @@ import com.umc.devine.domain.image.enums.ImageType;
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import com.umc.devine.domain.image.repository.ImageRepository;
+import com.umc.devine.domain.complaint.service.command.ComplaintModerationService;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
@@ -54,6 +55,7 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.*;
 public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     private final ProjectRepository projectRepository;
+    private final ComplaintModerationService complaintModerationService;
     private final ProjectImageRepository projectImageRepository;
     private final ProjectRequirementMemberRepository projectRequirementMemberRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
@@ -102,6 +104,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
         // 숨긴 프로젝트도 작성자는 수정할 수 있다(숨김 중 마감일 연장 포함)
         Project project = getOwnedProject(member, projectId);
+        validateNotLockedByComplaint(projectId);
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
@@ -190,20 +193,17 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     public void changeVisibility(Member member, Long projectId, boolean hidden) {
         Project project = getOwnedProject(member, projectId);
 
-        // 관리자 숨김은 신고 처리 결과라 PM이 풀 수 없다. 숨김 요청도 처리자를 PM으로 덮어쓰지 않도록 그대로 둔다.
-        if (project.isHiddenByAdmin()) {
-            if (!hidden) {
-                throw new ProjectException(HIDDEN_BY_ADMIN);
-            }
-            return;
+        if (project.isHiddenByModeration() && !hidden) {
+            throw new ProjectException(HIDDEN_BY_ADMIN);
         }
 
-        project.changeVisibility(!hidden, member, LocalDateTime.now());
+        project.changeVisibilityByOwner(hidden, member, LocalDateTime.now());
     }
 
     @Override
     public void deleteProject(Member member, Long projectId) {
         Project project = getOwnedProject(member, projectId);
+        validateNotLockedByComplaint(projectId);
 
         if (project.getStatus() != ProjectStatus.CLOSED) {
             throw new ProjectException(NOT_DELETABLE);
@@ -306,6 +306,13 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
         validateOwner(project, member.getId());
         return project;
+    }
+
+    // PM의 수정·삭제 요청에서만 검사한다. 공통 삭제 로직에 넣으면 회원 탈퇴까지 막힌다.
+    private void validateNotLockedByComplaint(Long projectId) {
+        if (complaintModerationService.isOwnerEditLocked(projectId)) {
+            throw new ProjectException(LOCKED_BY_COMPLAINT);
+        }
     }
 
     private void validateNoPending(Project project) {

@@ -23,7 +23,11 @@ public enum NotificationType {
 
     // 리포트 관련
     REPORT_COMPLETED("리포트 생성이 완료되었습니다", "report"),
-    REPORT_FAILED("리포트 생성에 실패했습니다", "report");
+    REPORT_FAILED("리포트 생성에 실패했습니다", "report"),
+
+    COMPLAINT_PROJECT_BLINDED("신고가 접수돼 프로젝트를 가렸습니다", "complaint"),
+    COMPLAINT_RESOLVED_COMPLAINANT("신고 검토 결과를 알려드립니다", "complaint"),
+    COMPLAINT_RESOLVED_RESPONDENT("운영 정책 관련 안내입니다", "complaint");
 
     private final String defaultTitle;
     private final String category;

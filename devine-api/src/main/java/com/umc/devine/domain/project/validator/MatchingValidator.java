@@ -1,8 +1,10 @@
 package com.umc.devine.domain.project.validator;
 
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
+import com.umc.devine.domain.project.enums.mapping.MatchingDecision;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.domain.project.exception.MatchingException;
@@ -16,9 +18,13 @@ import org.springframework.stereotype.Component;
 @RequiredArgsConstructor
 public class MatchingValidator {
 
+    private final MemberBlockRepository blockRepository;
     private final MatchingRepository matchingRepository;
 
     public void validateForApply(Member member, Project project) {
+        if (blockRepository.existsBetween(member.getId(), project.getMember().getId())) {
+            throw new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND);
+        }
         // 비노출 프로젝트는 유저 화면에 없는 글이므로 새로 지원할 수 없다.
         // 지원자는 제3자라 제재 사실이 새지 않도록 모집 중이 아닌 것과 동일하게 응답한다.
         if (!project.isRecruiting() || project.isHidden()) {
@@ -36,6 +42,9 @@ public class MatchingValidator {
         if (!project.isOwnedBy(pm)) {
             throw new MatchingException(MatchingErrorReason.NOT_PROJECT_OWNER);
         }
+        if (blockRepository.existsBetween(pm.getId(), target.getId())) {
+            throw new MatchingException(MatchingErrorReason.MEMBER_NOT_FOUND);
+        }
         if (!project.isRecruiting()) {
             throw new MatchingException(MatchingErrorReason.PROJECT_NOT_RECRUITING);
         }
@@ -48,7 +57,8 @@ public class MatchingValidator {
         }
     }
 
-    public void validateForApplicationResponse(Member pm, Matching matching) {
+    public void validateForApplicationResponse(Member pm, Matching matching, MatchingDecision decision) {
+        validateAcceptableVisibility(matching, decision);
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorReason.INVALID_STATUS_TRANSITION);
         }
@@ -60,7 +70,8 @@ public class MatchingValidator {
         }
     }
 
-    public void validateForProposalResponse(Member developer, Matching matching) {
+    public void validateForProposalResponse(Member developer, Matching matching, MatchingDecision decision) {
+        validateAcceptableVisibility(matching, decision);
         if (!matching.isPending()) {
             throw new MatchingException(MatchingErrorReason.INVALID_STATUS_TRANSITION);
         }
@@ -69,6 +80,16 @@ public class MatchingValidator {
         }
         if (!matching.isTargetMember(developer)) {
             throw new MatchingException(MatchingErrorReason.NOT_TARGET_MEMBER);
+        }
+    }
+
+    private void validateAcceptableVisibility(Matching matching, MatchingDecision decision) {
+        if (decision == MatchingDecision.ACCEPT && blockRepository.existsBetween(
+                matching.getMember().getId(), matching.getProject().getMember().getId())) {
+            throw new MatchingException(MatchingErrorReason.MATCHING_NOT_FOUND);
+        }
+        if (decision == MatchingDecision.ACCEPT && matching.getProject().isHidden()) {
+            throw new MatchingException(MatchingErrorReason.CANNOT_ACCEPT_WHILE_HIDDEN);
         }
     }
 

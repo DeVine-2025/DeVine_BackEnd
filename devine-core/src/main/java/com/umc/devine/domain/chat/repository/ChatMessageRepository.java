@@ -83,6 +83,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
 
     Optional<ChatMessage> findTopByChatRoomIdOrderByCreatedAtDesc(Long chatRoomId);
 
+    List<ChatMessage> findTop5ByChatRoomIdAndIdLessThanOrderByIdDesc(Long chatRoomId, Long id);
+
+    List<ChatMessage> findTop6ByChatRoomIdAndIdGreaterThanEqualOrderByIdAsc(Long chatRoomId, Long id);
+
     @Query("""
             SELECT cm FROM ChatMessage cm
             JOIN FETCH cm.sender

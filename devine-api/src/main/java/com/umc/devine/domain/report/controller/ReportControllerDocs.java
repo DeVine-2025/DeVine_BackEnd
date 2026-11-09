@@ -110,6 +110,7 @@ public interface ReportControllerDocs {
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "회원을 찾을 수 없음")
     })
     ApiResponse<PagedResponse<ReportResDTO.ReportSummaryDTO>> getReportsByNickname(
+            @CurrentMember(required = false) Member viewer,
             @Parameter(description = "조회할 회원의 닉네임", required = true) @PathVariable @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid ReportReqDTO.ReportSearchDTO dto
     );

@@ -103,10 +103,11 @@ public class ReportController implements ReportControllerDocs {
     @Override
     @GetMapping("/members/{nickname}")
     public ApiResponse<PagedResponse<ReportResDTO.ReportSummaryDTO>> getReportsByNickname(
+            @CurrentMember(required = false) Member viewer,
             @PathVariable @ValidNickname String nickname,
             @ParameterObject @ModelAttribute @Valid ReportReqDTO.ReportSearchDTO dto
     ) {
-        PagedResponse<ReportResDTO.ReportSummaryDTO> response = reportQueryService.getReportsByNickname(nickname, dto.type(), dto.toPageable());
+        PagedResponse<ReportResDTO.ReportSummaryDTO> response = reportQueryService.getReportsByNickname(viewer, nickname, dto.type(), dto.toPageable());
         return ApiResponse.onSuccess(ReportSuccessCode.REPORT_FOUND, response);
     }
 }

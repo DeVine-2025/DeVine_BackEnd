@@ -1,10 +1,11 @@
 package com.umc.devine.domain.member;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.umc.devine.admin.complaint.entity.Complaint;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
-import com.umc.devine.admin.complaint.repository.ComplaintRepository;
-import com.umc.devine.admin.complaint.service.query.ComplaintQueryService;
+import com.umc.devine.domain.complaint.entity.Complaint;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.repository.ComplaintRepository;
+import com.umc.devine.admin.complaint.service.query.AdminComplaintQueryService;
 import com.umc.devine.admin.member.entity.MemberStatusHistory;
 import com.umc.devine.admin.member.enums.MemberStatusAction;
 import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
@@ -122,7 +123,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     @Autowired private ChatMessageRepository chatMessageRepository;
     @Autowired private NotificationRepository notificationRepository;
     @Autowired private ComplaintRepository complaintRepository;
-    @Autowired private ComplaintQueryService complaintQueryService;
+    @Autowired private AdminComplaintQueryService adminComplaintQueryService;
     @Autowired private MemberStatusHistoryRepository memberStatusHistoryRepository;
     @Autowired private MemberReportCreditRepository memberReportCreditRepository;
     @Autowired private TicketProductRepository ticketProductRepository;
@@ -406,7 +407,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         em.clear();
 
         Matching kept = matchingRepository.findByIdWithDetails(history.getId()).orElseThrow();
-        assertThat(com.umc.devine.domain.project.converter.MatchingConverter.toDeveloperMatchingInfo(kept, List.of(), List.of()))
+        assertThat(com.umc.devine.domain.project.converter.MatchingConverter.toDeveloperMatchingInfo(kept, List.of(), List.of(), true))
                 .satisfies(info -> {
                     assertThat(info.developerNickname()).isEqualTo("탈퇴한 회원");
                     assertThat(info.developerImageUrl()).isNull();
@@ -419,9 +420,9 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     @DisplayName("신고 기록은 행을 남기고 신고자/피신고자 칸을 비우며, 관리자 화면에는 '탈퇴한 회원'으로 보인다")
     void complaintsAnonymized() {
         Complaint asComplainant = complaintRepository.save(Complaint.builder().complainant(me).respondentMember(other)
-                .targetType(ComplaintTargetType.DEVELOPER).targetId(other.getId()).reason("신고").build());
+                .targetType(ComplaintTargetType.DEVELOPER).targetId(other.getId()).reasonCode(ComplaintReasonCode.ABUSE).build());
         Complaint asRespondent = complaintRepository.save(Complaint.builder().complainant(other).respondentMember(me)
-                .targetType(ComplaintTargetType.DEVELOPER).targetId(me.getId()).reason("신고").build());
+                .targetType(ComplaintTargetType.DEVELOPER).targetId(me.getId()).reasonCode(ComplaintReasonCode.ABUSE).build());
 
         withdrawalService.withdraw(me, confirmed());
         em.flush();
@@ -429,7 +430,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
 
         assertThat(complaintRepository.findById(asComplainant.getId()).orElseThrow().getComplainant()).isNull();
         assertThat(complaintRepository.findById(asRespondent.getId()).orElseThrow().getRespondentMember()).isNull();
-        assertThat(complaintQueryService.getComplaintDetail(asRespondent.getId()))
+        assertThat(adminComplaintQueryService.getComplaintDetail(asRespondent.getId()))
                 .satisfies(detail -> {
                     assertThat(detail.respondentNickname()).isEqualTo("탈퇴한 회원");
                     assertThat(detail.complainantNickname()).isEqualTo("wxother");
@@ -475,7 +476,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     void t1_goneFromSearch() {
         Project project = saveProject(me, "공개 프로젝트");
         em.flush();
-        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+        assertThat(memberRepository.findDevelopersByFilters(null, null, null, org.springframework.data.domain.Pageable.unpaged()))
                 .extracting(Member::getId).contains(me.getId());
         assertThat(projectRepository.findVisibleById(project.getId())).isPresent();
 
@@ -483,7 +484,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         em.flush();
         em.clear();
 
-        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+        assertThat(memberRepository.findDevelopersByFilters(null, null, null, org.springframework.data.domain.Pageable.unpaged()))
                 .extracting(Member::getId).doesNotContain(me.getId());
         assertThat(projectRepository.findVisibleById(project.getId())).isEmpty();
         assertThat(memberRepository.findByNickname("wxme")).isEmpty();
