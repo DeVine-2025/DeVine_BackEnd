@@ -10,7 +10,7 @@ import java.util.List;
 public class ComplaintConverter {
 
     private static String nicknameOf(Member member) {
-        return member == null ? Member.WITHDRAWN_DISPLAY_NAME : member.getNickname();
+        return member == null ? Member.WITHDRAWN_DISPLAY_NAME : member.getDisplayNickname();
     }
 
     public static ComplaintResDTO.ComplaintSummaryDTO toComplaintSummaryDTO(Complaint complaint, boolean slaExceeded) {

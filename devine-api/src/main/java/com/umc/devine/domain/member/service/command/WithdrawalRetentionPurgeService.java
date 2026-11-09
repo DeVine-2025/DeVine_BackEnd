@@ -8,16 +8,15 @@ import com.umc.devine.domain.member.entity.MemberRestriction;
 import com.umc.devine.domain.member.repository.MemberRestrictionRepository;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.entity.PaymentRefund;
-import com.umc.devine.domain.payment.entity.Transaction;
 import com.umc.devine.domain.payment.enums.RefundStatus;
-import com.umc.devine.domain.payment.enums.TransactionStatus;
-import com.umc.devine.domain.payment.enums.TransactionType;
 import com.umc.devine.domain.payment.repository.PaymentRefundRepository;
 import com.umc.devine.domain.payment.repository.PaymentRepository;
 import com.umc.devine.domain.project.entity.Project;
 import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
+import com.umc.devine.domain.coupon.repository.MemberCouponRepository;
+import com.umc.devine.domain.project.helper.ProjectDeletionHelper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
@@ -47,6 +46,8 @@ public class WithdrawalRetentionPurgeService {
     private final ComplaintRepository complaintRepository;
     private final PaymentRepository paymentRepository;
     private final PaymentRefundRepository paymentRefundRepository;
+    private final MemberCouponRepository memberCouponRepository;
+    private final ProjectDeletionHelper projectDeletionHelper;
 
     @Transactional
     public int[] purgeMatchingHistory(LocalDateTime now) {
@@ -80,7 +81,7 @@ public class WithdrawalRetentionPurgeService {
     @Transactional
     public int purgeOrphanDeletedProjects() {
         List<Project> projects = projectRepository.findDeletedWithoutMatching();
-        projectRepository.deleteAll(projects);
+        projects.forEach(projectDeletionHelper::delete);
         return projects.size();
     }
 
@@ -103,7 +104,7 @@ public class WithdrawalRetentionPurgeService {
         int deleted = 0;
         for (Long paymentId : paymentRepository.findIdsOfWithdrawnMembersCreatedBefore(threshold)) {
             Payment payment = paymentRepository.findById(paymentId).orElse(null);
-            if (payment == null || paidAt(payment).isAfter(threshold)) {
+            if (payment == null || payment.paidAtOrCreatedAt().isAfter(threshold)) {
                 continue;
             }
             List<PaymentRefund> refunds = paymentRefundRepository.findAllByPaymentIdIn(List.of(paymentId));
@@ -113,6 +114,7 @@ public class WithdrawalRetentionPurgeService {
                 continue;
             }
             paymentRefundRepository.deleteAll(refunds);
+            memberCouponRepository.detachPayment(payment);
             paymentRepository.delete(payment);
             deleted++;
         }
@@ -129,15 +131,6 @@ public class WithdrawalRetentionPurgeService {
 
     private static LocalDateTime withdrawnAtOf(Member member, Map<Long, LocalDateTime> withdrawnAt) {
         return member.isWithdrawn() ? withdrawnAt.get(member.getId()) : null;
-    }
-
-    private static LocalDateTime paidAt(Payment payment) {
-        return payment.getTransactions().stream()
-                .filter(t -> t.getType() == TransactionType.PAYMENT && t.getStatus() == TransactionStatus.PAID)
-                .map(Transaction::getPaidAt)
-                .filter(java.util.Objects::nonNull)
-                .findFirst()
-                .orElse(payment.getCreatedAt());
     }
 
     private static LocalDateTime lastChangedAt(PaymentRefund refund) {

@@ -36,6 +36,11 @@ import jakarta.persistence.EntityManager;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
+import com.umc.devine.domain.coupon.entity.Coupon;
+import com.umc.devine.domain.coupon.entity.MemberCoupon;
+import com.umc.devine.domain.coupon.enums.DiscountType;
+import com.umc.devine.domain.coupon.repository.CouponRepository;
+import com.umc.devine.domain.coupon.repository.MemberCouponRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 
 import java.time.LocalDate;
@@ -55,6 +60,8 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
     @Autowired private MatchingRepository matchingRepository;
     @Autowired private PaymentRepository paymentRepository;
     @Autowired private PaymentRefundRepository paymentRefundRepository;
+    @Autowired private CouponRepository couponRepository;
+    @Autowired private MemberCouponRepository memberCouponRepository;
     @Autowired private EntityManager em;
 
     private final LocalDateTime now = LocalDateTime.now();
@@ -173,6 +180,45 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
         assertThat(projectRepository.findById(orphan.getId())).isEmpty();
         assertThat(projectRepository.findById(hiddenActive.getId())).isPresent();
         assertThat(projectRepository.findById(deletedWithHistory.getId())).isPresent();
+    }
+
+    @Test
+    @DisplayName("예전 방식으로 상태만 DELETED가 된 프로젝트는 임베딩이 남아 있어도 하위 데이터와 함께 지운다")
+    void legacyDeletedProjectWithEmbedding_isPurged() {
+        Member pm = activeMember();
+        Project legacy = project(pm, ProjectStatus.DELETED, false);
+        em.createNativeQuery("INSERT INTO project_embedding (project_id, status, retry_count, created_at, updated_at) "
+                        + "VALUES (:id, 'PENDING', 0, now(), now())")
+                .setParameter("id", legacy.getId()).executeUpdate();
+        flushAndClear();
+
+        assertThat(purgeService.purgeOrphanDeletedProjects()).isEqualTo(1);
+        flushAndClear();
+
+        assertThat(projectRepository.findById(legacy.getId())).isEmpty();
+    }
+
+    @Test
+    @DisplayName("결제 5년: 쿠폰이 연결된 결제도 쿠폰의 결제 연결만 끊고 지운다")
+    void expiredPaymentWithCoupon_detachesCoupon() {
+        Member withdrawn = withdrawnMember(now.minusYears(5));
+        Payment old = payment(withdrawn, now.minusYears(6));
+        Coupon coupon = couponRepository.save(Coupon.builder()
+                .name("퍼지 테스트 쿠폰").discountType(DiscountType.FIXED_AMOUNT).discountValue(1000L)
+                .issuedCount(1).usedCount(1)
+                .validFrom(now.minusYears(7)).validUntil(now.minusYears(6)).isActive(false).build());
+        MemberCoupon memberCoupon = MemberCoupon.issueTo(withdrawn, coupon);
+        memberCoupon.use(old);
+        memberCouponRepository.save(memberCoupon);
+        em.flush();
+        setCreatedAt("payment", "payment_id", old.getId(), now.minusYears(6));
+        flushAndClear();
+
+        assertThat(purgeService.purgeExpiredPayments(now)).isEqualTo(1);
+        flushAndClear();
+
+        assertThat(paymentRepository.findById(old.getId())).isEmpty();
+        assertThat(memberCouponRepository.findById(memberCoupon.getId())).isPresent();
     }
 
     @Test

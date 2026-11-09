@@ -44,6 +44,7 @@ import com.umc.devine.domain.project.helper.ProjectDeletionHelper;
 import com.umc.devine.domain.project.helper.ProjectLifecycleHelper;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
+import com.umc.devine.domain.ticket.entity.MemberReportCredit;
 import com.umc.devine.domain.ticket.helper.CreditRefundCalculator;
 import com.umc.devine.domain.ticket.helper.WithdrawalRefundPlanner;
 import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
@@ -66,6 +67,7 @@ import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Optional;
 
 @Slf4j
 @Service
@@ -149,6 +151,8 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
             alertSanctionHashMissing(member);
         }
 
+        paymentRepository.findAllByMemberForUpdate(member);
+        Optional<MemberReportCredit> lockedCredit = memberReportCreditRepository.findByMemberForUpdate(member);
         CreditRefundCalculator.Result refundPlan = withdrawalRefundPlanner.plan(member, now);
         boolean refundRequested = Boolean.TRUE.equals(request.refundRequested()) && refundPlan.refundableCredits() > 0;
         if (refundRequested && !StringUtils.hasText(request.refundContactEmail())) {
@@ -164,8 +168,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         List<Long> refundIds = refundRequested
                 ? requestRefunds(refundPlan, request.refundContactEmail().trim())
                 : List.of();
-        memberReportCreditRepository.findByMemberForUpdate(member)
-                .ifPresent(credit -> credit.forfeitAll());
+        lockedCredit.ifPresent(MemberReportCredit::forfeitAll);
 
         ownedProjects.forEach(projectDeletionHelper::delete);
         githubDataCleanupHelper.deleteAll(member);

@@ -37,7 +37,7 @@ public class RefundTxService {
      */
     @Transactional
     public RefundClaim claim(Long paymentId, String reason) {
-        Payment payment = paymentRepository.findById(paymentId)
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
         findPaidTransaction(payment);
         if (paymentRefundRepository.existsByPaymentIdAndStatus(paymentId, RefundStatus.REQUESTED)) {

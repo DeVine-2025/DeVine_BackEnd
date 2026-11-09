@@ -108,7 +108,7 @@ class OutboxTaskProcessorTest extends IntegrationTestSupport {
     @Test
     @DisplayName("GitHub 권한 회수 → Clerk 삭제 → S3 삭제를 순서대로 실행하고, 성공한 작업 행은 지운다")
     void runsCleanupChainInOrder() {
-        given(clerkApiClient.getGitHubAccessToken("clerk_ob")).willReturn("gho_token");
+        given(clerkApiClient.findGitHubAccessToken("clerk_ob")).willReturn(java.util.Optional.of("gho_token"));
         enqueue(OutboxTaskType.GITHUB_GRANT_REVOKE, new MemberExternalCleanupPayload("clerk_ob", List.of("a.png", "b.png")));
 
         processor.processDue();
@@ -149,7 +149,7 @@ class OutboxTaskProcessorTest extends IntegrationTestSupport {
     @Test
     @DisplayName("재시도 한도를 넘기면 FAILED로 남기고 운영자에게 알리며, GitHub 회수가 최종 실패해도 Clerk 삭제는 이어서 기록한다")
     void finalFailure_alertsAndContinues() {
-        given(clerkApiClient.getGitHubAccessToken("clerk_ob")).willReturn("gho_token");
+        given(clerkApiClient.findGitHubAccessToken("clerk_ob")).willReturn(java.util.Optional.of("gho_token"));
         willThrow(new IllegalStateException("GitHub 권한 회수 실패: HTTP 500"))
                 .given(gitHubApiClient).revokeGrant(anyString(), anyString(), anyString());
         enqueue(OutboxTaskType.GITHUB_GRANT_REVOKE, new MemberExternalCleanupPayload("clerk_ob", List.of()));

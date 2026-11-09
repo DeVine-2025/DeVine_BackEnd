@@ -1,9 +1,8 @@
 package com.umc.devine.infrastructure.outbox.handler;
 
-import com.umc.devine.domain.auth.exception.AuthException;
-import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.domain.outbox.entity.OutboxTask;
 import com.umc.devine.domain.outbox.enums.OutboxTaskType;
+import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.infrastructure.clerk.ClerkApiClient;
 import com.umc.devine.infrastructure.github.GitHubApiClient;
 import com.umc.devine.infrastructure.outbox.OutboxTaskHandler;
@@ -14,6 +13,8 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
+import java.util.Optional;
+
 @Slf4j
 @Component
 public class GithubGrantRevokeHandler implements OutboxTaskHandler {
@@ -21,6 +22,7 @@ public class GithubGrantRevokeHandler implements OutboxTaskHandler {
     private final ClerkApiClient clerkApiClient;
     private final GitHubApiClient gitHubApiClient;
     private final OutboxTaskWriter outboxTaskWriter;
+    private final MemberRepository memberRepository;
     private final String clientId;
     private final String clientSecret;
 
@@ -28,12 +30,14 @@ public class GithubGrantRevokeHandler implements OutboxTaskHandler {
             ClerkApiClient clerkApiClient,
             GitHubApiClient gitHubApiClient,
             OutboxTaskWriter outboxTaskWriter,
+            MemberRepository memberRepository,
             @Value("${github.oauth.client-id:}") String clientId,
             @Value("${github.oauth.client-secret:}") String clientSecret
     ) {
         this.clerkApiClient = clerkApiClient;
         this.gitHubApiClient = gitHubApiClient;
         this.outboxTaskWriter = outboxTaskWriter;
+        this.memberRepository = memberRepository;
         this.clientId = clientId;
         this.clientSecret = clientSecret;
     }
@@ -49,6 +53,8 @@ public class GithubGrantRevokeHandler implements OutboxTaskHandler {
 
         if (!StringUtils.hasText(clientId) || !StringUtils.hasText(clientSecret)) {
             log.info("[Outbox] GitHub OAuth 앱 설정이 없어 권한 회수를 건너뜀 - taskId: {}", task.getId());
+        } else if (memberRepository.existsByClerkIdInAnyStatus(payload.clerkId())) {
+            log.warn("[Outbox] 같은 Clerk 계정으로 다시 가입한 회원이 있어 권한 회수를 건너뜀 - taskId: {}", task.getId());
         } else {
             revoke(payload, task.getId());
         }
@@ -57,17 +63,12 @@ public class GithubGrantRevokeHandler implements OutboxTaskHandler {
     }
 
     private void revoke(MemberExternalCleanupPayload payload, Long taskId) {
-        String token;
-        try {
-            token = clerkApiClient.getGitHubAccessToken(payload.clerkId());
-        } catch (AuthException e) {
-            if (e.getReason() == AuthErrorReason.GITHUB_TOKEN_NOT_FOUND) {
-                log.info("[Outbox] GitHub 연동 토큰이 없어 회수할 권한 없음 - taskId: {}", taskId);
-                return;
-            }
-            throw e;
+        Optional<String> token = clerkApiClient.findGitHubAccessToken(payload.clerkId());
+        if (token.isEmpty()) {
+            log.info("[Outbox] GitHub 연동 토큰이 없어 회수할 권한 없음 - taskId: {}", taskId);
+            return;
         }
-        gitHubApiClient.revokeGrant(clientId, clientSecret, token);
+        gitHubApiClient.revokeGrant(clientId, clientSecret, token.get());
     }
 
     @Override

@@ -3,7 +3,7 @@ package com.umc.devine.infrastructure.clerk;
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.clerk.dto.ClerkOAuthTokenResponse;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.core.env.Environment;
 import org.springframework.http.HttpStatusCode;
@@ -15,13 +15,23 @@ import java.util.Map;
 import java.util.Optional;
 
 @Component
-@RequiredArgsConstructor
 public class ClerkApiClient {
 
     private static final String CLERK_API_BASE_URL = "https://api.clerk.com/v1";
 
     private final RestClient restClient;
+    private final RestClient externalApiRestClient;
     private final Environment env;
+
+    public ClerkApiClient(
+            RestClient restClient,
+            @Qualifier("externalApiRestClient") RestClient externalApiRestClient,
+            Environment env
+    ) {
+        this.restClient = restClient;
+        this.externalApiRestClient = externalApiRestClient;
+        this.env = env;
+    }
 
     /**
      * Clerk API를 통해 사용자의 GitHub OAuth Access Token 조회
@@ -66,6 +76,31 @@ public class ClerkApiClient {
         }
     }
 
+    public Optional<String> findGitHubAccessToken(String clerkUserId) {
+        String clerkSecretKey = env.getProperty("clerk.secret-key");
+        String url = CLERK_API_BASE_URL + "/users/" + clerkUserId + "/oauth_access_tokens/oauth_github";
+
+        List<ClerkOAuthTokenResponse> tokens = externalApiRestClient.get()
+                .uri(url)
+                .header("Authorization", "Bearer " + clerkSecretKey)
+                .exchange((request, response) -> {
+                    int status = response.getStatusCode().value();
+                    if (status == 404) {
+                        return List.of();
+                    }
+                    if (!response.getStatusCode().is2xxSuccessful()) {
+                        throw new IllegalStateException("Clerk GitHub 토큰 조회 실패: HTTP " + status);
+                    }
+                    List<ClerkOAuthTokenResponse> body = response.bodyTo(new ParameterizedTypeReference<>() {});
+                    return body == null ? List.of() : body;
+                });
+
+        return tokens.stream()
+                .map(ClerkOAuthTokenResponse::getToken)
+                .filter(token -> token != null && !token.isEmpty())
+                .findFirst();
+    }
+
     @SuppressWarnings("unchecked")
     public Optional<String> getPrimaryEmail(String clerkUserId) {
         String clerkSecretKey = env.getProperty("clerk.secret-key");
@@ -73,7 +108,7 @@ public class ClerkApiClient {
 
         Map<String, Object> user;
         try {
-            user = restClient.get()
+            user = externalApiRestClient.get()
                     .uri(url)
                     .header("Authorization", "Bearer " + clerkSecretKey)
                     .retrieve()
@@ -104,7 +139,7 @@ public class ClerkApiClient {
         String clerkSecretKey = env.getProperty("clerk.secret-key");
         String url = CLERK_API_BASE_URL + "/users/" + clerkUserId;
 
-        restClient.delete()
+        externalApiRestClient.delete()
                 .uri(url)
                 .header("Authorization", "Bearer " + clerkSecretKey)
                 .exchange((request, response) -> {

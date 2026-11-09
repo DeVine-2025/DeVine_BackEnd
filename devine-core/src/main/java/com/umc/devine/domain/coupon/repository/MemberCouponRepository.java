@@ -4,6 +4,7 @@ import com.umc.devine.domain.coupon.entity.Coupon;
 import com.umc.devine.domain.coupon.entity.CouponCode;
 import com.umc.devine.domain.coupon.entity.MemberCoupon;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.payment.entity.Payment;
 import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
 import org.springframework.data.jpa.repository.Lock;
@@ -19,6 +20,10 @@ public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM MemberCoupon mc WHERE mc.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);
+
+    @Modifying(flushAutomatically = true, clearAutomatically = true)
+    @Query("UPDATE MemberCoupon mc SET mc.payment = null WHERE mc.payment = :payment")
+    int detachPayment(@Param("payment") Payment payment);
 
     List<MemberCoupon> findByMemberOrderByCreatedAtDesc(Member member);
 

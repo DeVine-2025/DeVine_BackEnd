@@ -4,7 +4,7 @@ import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
-import lombok.RequiredArgsConstructor;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
@@ -25,12 +25,20 @@ import java.util.Optional;
 import java.util.Set;
 
 @Component
-@RequiredArgsConstructor
 public class GitHubApiClient {
 
     private static final String GITHUB_API_BASE_URL = "https://api.github.com";
 
     private final RestClient restClient;
+    private final RestClient externalApiRestClient;
+
+    public GitHubApiClient(
+            RestClient restClient,
+            @Qualifier("externalApiRestClient") RestClient externalApiRestClient
+    ) {
+        this.restClient = restClient;
+        this.externalApiRestClient = externalApiRestClient;
+    }
 
     /**
      * GitHub 사용자 정보 조회
@@ -482,7 +490,7 @@ public class GitHubApiClient {
         String basic = Base64.getEncoder()
                 .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
 
-        restClient.method(HttpMethod.DELETE)
+        externalApiRestClient.method(HttpMethod.DELETE)
                 .uri(url)
                 .header("Authorization", "Basic " + basic)
                 .header("Accept", "application/vnd.github+json")

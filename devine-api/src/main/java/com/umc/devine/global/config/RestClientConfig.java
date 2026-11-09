@@ -4,8 +4,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.Primary;
+import org.springframework.http.client.JdkClientHttpRequestFactory;
 import org.springframework.http.client.SimpleClientHttpRequestFactory;
 import org.springframework.web.client.RestClient;
+
+import java.net.http.HttpClient;
+import java.time.Duration;
 
 @Configuration
 public class RestClientConfig {
@@ -31,10 +35,29 @@ public class RestClientConfig {
     @Value("${integration.health.read-timeout:3000}")
     private int healthReadTimeout;
 
+    @Value("${external-api.connect-timeout:3000}")
+    private int externalApiConnectTimeout;
+
+    @Value("${external-api.read-timeout:10000}")
+    private int externalApiReadTimeout;
+
     @Bean
     @Primary
     public RestClient restClient() {
         return RestClient.builder()
+                .build();
+    }
+
+    @Bean
+    public RestClient externalApiRestClient() {
+        HttpClient httpClient = HttpClient.newBuilder()
+                .connectTimeout(Duration.ofMillis(externalApiConnectTimeout))
+                .build();
+        JdkClientHttpRequestFactory factory = new JdkClientHttpRequestFactory(httpClient);
+        factory.setReadTimeout(Duration.ofMillis(externalApiReadTimeout));
+
+        return RestClient.builder()
+                .requestFactory(factory)
                 .build();
     }
 

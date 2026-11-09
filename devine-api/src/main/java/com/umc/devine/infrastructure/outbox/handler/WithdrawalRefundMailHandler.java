@@ -4,9 +4,6 @@ import com.umc.devine.domain.outbox.entity.OutboxTask;
 import com.umc.devine.domain.outbox.enums.OutboxTaskType;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.entity.PaymentRefund;
-import com.umc.devine.domain.payment.entity.Transaction;
-import com.umc.devine.domain.payment.enums.TransactionStatus;
-import com.umc.devine.domain.payment.enums.TransactionType;
 import com.umc.devine.domain.payment.repository.PaymentRefundRepository;
 import com.umc.devine.infrastructure.email.EmailSender;
 import com.umc.devine.infrastructure.outbox.OutboxTaskHandler;
@@ -76,7 +73,7 @@ public class WithdrawalRefundMailHandler implements OutboxTaskHandler {
                     """.formatted(
                     payment.getId(),
                     escape(payment.getPortonePaymentId()),
-                    format(paidAt(payment)),
+                    format(payment.paidAtOrCreatedAt()),
                     refund.getRefundCreditCount() == null ? 0 : refund.getRefundCreditCount(),
                     won(refund.getRefundAmount() == null ? 0 : refund.getRefundAmount()),
                     format(refund.getCreatedAt()),
@@ -90,14 +87,6 @@ public class WithdrawalRefundMailHandler implements OutboxTaskHandler {
                 <tr><th>결제 ID</th><th>포트원 결제 ID</th><th>결제일</th><th>환불 수량</th><th>환불 금액</th><th>신청일</th><th>환불 연락 이메일</th></tr>
                 %s</table>
                 """.formatted(rows);
-    }
-
-    private static LocalDateTime paidAt(Payment payment) {
-        return payment.getTransactions().stream()
-                .filter(t -> t.getType() == TransactionType.PAYMENT && t.getStatus() == TransactionStatus.PAID)
-                .map(Transaction::getPaidAt)
-                .findFirst()
-                .orElse(payment.getCreatedAt());
     }
 
     private static String format(LocalDateTime dateTime) {

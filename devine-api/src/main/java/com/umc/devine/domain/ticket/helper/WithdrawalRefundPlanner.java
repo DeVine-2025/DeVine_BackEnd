@@ -78,7 +78,7 @@ public class WithdrawalRefundPlanner {
             alreadyRefunded += refund.getRefundCreditCount() != null ? refund.getRefundCreditCount() : granted;
         }
 
-        LocalDateTime paidAt = paid.get().getPaidAt() != null ? paid.get().getPaidAt() : payment.getCreatedAt();
+        LocalDateTime paidAt = payment.paidAtOrCreatedAt();
 
         return Optional.of(new CreditRefundCalculator.Purchase(
                 payment.getId(),
