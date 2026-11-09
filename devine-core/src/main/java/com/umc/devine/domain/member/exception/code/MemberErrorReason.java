@@ -15,6 +15,7 @@ public enum MemberErrorReason implements DomainErrorReason {
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "MEMBER401_1", "로그인이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "MEMBER403_1", "접근 권한이 없습니다."),
     PROFILE_NOT_PUBLIC(HttpStatus.FORBIDDEN, "MEMBER403_2", "비공개 프로필입니다."),
+    RESTRICTED_FROM_SIGNUP(HttpStatus.FORBIDDEN, "MEMBER403_3", "이용이 제한된 계정이에요. 문의: projectdevine2025@gmail.com"),
     NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_1", "해당 사용자를 찾지 못했습니다."),
     TECHSTACK_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER409_1", "이미 보유한 기술 스택입니다."),
     ALREADY_REGISTERED(HttpStatus.CONFLICT, "MEMBER409_2", "이미 가입된 회원입니다."),

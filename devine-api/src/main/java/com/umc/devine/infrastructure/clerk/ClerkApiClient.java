@@ -11,6 +11,8 @@ import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
 import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 
 @Component
 @RequiredArgsConstructor
@@ -62,6 +64,46 @@ public class ClerkApiClient {
         } catch (Exception e) {
             throw new AuthException(AuthErrorReason.GITHUB_TOKEN_FETCH_FAILED);
         }
+    }
+
+    /**
+     * Clerk 사용자의 가입(기본) 이메일 조회(회원 탈퇴 FUNC-MEM-006 1번).
+     *
+     * @return 기본 이메일. 없으면 empty
+     * @throws IllegalStateException Clerk API 호출 실패
+     */
+    @SuppressWarnings("unchecked")
+    public Optional<String> getPrimaryEmail(String clerkUserId) {
+        String clerkSecretKey = env.getProperty("clerk.secret-key");
+        String url = CLERK_API_BASE_URL + "/users/" + clerkUserId;
+
+        Map<String, Object> user;
+        try {
+            user = restClient.get()
+                    .uri(url)
+                    .header("Authorization", "Bearer " + clerkSecretKey)
+                    .retrieve()
+                    .body(new ParameterizedTypeReference<Map<String, Object>>() {});
+        } catch (Exception e) {
+            throw new IllegalStateException("Clerk 사용자 조회 실패: " + e.getMessage(), e);
+        }
+        if (user == null) {
+            return Optional.empty();
+        }
+
+        Object primaryId = user.get("primary_email_address_id");
+        Object addresses = user.get("email_addresses");
+        if (!(addresses instanceof List<?> list)) {
+            return Optional.empty();
+        }
+        return list.stream()
+                .filter(Map.class::isInstance)
+                .map(entry -> (Map<String, Object>) entry)
+                .filter(entry -> primaryId == null || primaryId.equals(entry.get("id")))
+                .map(entry -> entry.get("email_address"))
+                .filter(String.class::isInstance)
+                .map(String.class::cast)
+                .findFirst();
     }
 
     /**

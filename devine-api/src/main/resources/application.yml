@@ -54,6 +54,11 @@ github:
 withdrawal:
   # 탈퇴 환불 신청 알림, 외부 정리 최종 실패 알림을 받는 운영자 메일
   operator-email: ${WITHDRAWAL_OPERATOR_EMAIL:projectdevine2025@gmail.com}
+  # 결정 C: 정지·소명 중 탈퇴자의 이메일 해시·사유·제재 이력을 1년 보관하고 재가입을 막는다(FUNC-MEM-006).
+  # 개인정보처리방침 개정안 시행 후 대표 요청이 있을 때만 켠다. 켜려면 email-hash-pepper가 필요하다.
+  retain-sanctioned-member: ${WITHDRAWAL_RETAIN_SANCTIONED_MEMBER:false}
+  # 이메일 해시 비밀값. 한 번 정하면 바꾸지 않는다(바꾸면 기존 해시와 대조할 수 없다)
+  email-hash-pepper: ${WITHDRAWAL_EMAIL_HASH_PEPPER:}
 
 # 커밋 뒤 외부 작업 아웃박스
 outbox:

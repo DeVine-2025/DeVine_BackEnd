@@ -5,6 +5,7 @@ import com.umc.devine.domain.member.dto.WithdrawalResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.exception.code.MemberSuccessCode;
 import com.umc.devine.domain.member.service.command.MemberWithdrawalCommandService;
+import com.umc.devine.domain.member.service.command.MemberWithdrawalFacade;
 import com.umc.devine.domain.member.service.query.MemberWithdrawalQueryService;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.security.ClerkPrincipal;
@@ -27,6 +28,7 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
 
     private final MemberWithdrawalQueryService memberWithdrawalQueryService;
     private final MemberWithdrawalCommandService memberWithdrawalCommandService;
+    private final MemberWithdrawalFacade memberWithdrawalFacade;
 
     // 탈퇴 미리보기
     @Override
@@ -59,7 +61,7 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
             @RequestBody @Valid WithdrawalReqDTO.WithdrawReq request
     ) {
         MemberSuccessCode code = MemberSuccessCode.WITHDRAWN;
-        WithdrawalResDTO.WithdrawResultDTO response = memberWithdrawalCommandService.withdraw(member, request);
+        WithdrawalResDTO.WithdrawResultDTO response = memberWithdrawalFacade.withdraw(member, request);
         return ApiResponse.onSuccess(code, response);
     }
 }

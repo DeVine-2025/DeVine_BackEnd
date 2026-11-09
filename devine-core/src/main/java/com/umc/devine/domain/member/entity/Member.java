@@ -192,6 +192,11 @@ public class Member extends BaseEntity {
         return this.used == MemberStatus.DELETED;
     }
 
+    /** 결정 C 대상: 정지 중이거나 강제탈퇴(자격상실) 예정인 회원(01-1 FUNC-MEM-006). */
+    public boolean isSanctioned() {
+        return this.used == MemberStatus.SUSPENDED || this.scheduledWithdrawalAt != null;
+    }
+
     /** 남은 기록(채팅·지원 현황·알림)에 보여 줄 탈퇴 회원 이름(01-1 FUNC-MEM-008). */
     public static final String WITHDRAWN_DISPLAY_NAME = "탈퇴한 회원";
 

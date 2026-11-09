@@ -24,7 +24,9 @@ import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
+import com.umc.devine.domain.member.helper.EmailHasher;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberRestrictionRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
@@ -47,6 +49,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -75,6 +78,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
     private final ReportCreditCommandService reportCreditCommandService;
+    private final EmailHasher emailHasher;
+    private final MemberRestrictionRepository memberRestrictionRepository;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -82,6 +87,14 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (memberRepository.existsByClerkId(principal.getClerkId())) {
             throw new MemberException(MemberErrorReason.ALREADY_REGISTERED);
         }
+
+        // 정지·소명 중 탈퇴자의 재가입 제한(01-1 FUNC-MEM-006 3번). 항상 켜 둔다(관리자 강제탈퇴에서도 쓴다).
+        // pepper나 토큰의 email이 없으면 해시를 만들 수 없어 검사를 건너뛴다
+        emailHasher.hash(principal.getEmail())
+                .filter(hash -> memberRestrictionRepository.existsByEmailHashAndExpiresAtAfter(hash, LocalDateTime.now()))
+                .ifPresent(hash -> {
+                    throw new MemberException(MemberErrorReason.RESTRICTED_FROM_SIGNUP);
+                });
 
         // 2. 프로필 이미지 검증 (선택사항)
         validateProfileImage(dto.imageUrl());

@@ -1,5 +1,7 @@
 package com.umc.devine.domain.member.service.command;
 
+import com.umc.devine.admin.complaint.entity.Complaint;
+import com.umc.devine.admin.complaint.enums.ComplaintStatus;
 import com.umc.devine.admin.complaint.repository.ComplaintHistoryRepository;
 import com.umc.devine.admin.complaint.repository.ComplaintRepository;
 import com.umc.devine.admin.member.entity.MemberStatusHistory;
@@ -18,14 +20,17 @@ import com.umc.devine.domain.image.repository.ImageRepository;
 import com.umc.devine.domain.member.dto.WithdrawalReqDTO;
 import com.umc.devine.domain.member.dto.WithdrawalResDTO;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.entity.MemberRestriction;
 import com.umc.devine.domain.member.entity.WithdrawalReasonStat;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.helper.GithubDataCleanupHelper;
 import com.umc.devine.domain.member.helper.PendingMatchingHelper;
+import com.umc.devine.domain.member.helper.WithdrawalProperties;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberRestrictionRepository;
 import com.umc.devine.domain.member.repository.WithdrawalReasonStatRepository;
 import com.umc.devine.domain.notification.repository.NotificationRepository;
 import com.umc.devine.domain.outbox.enums.OutboxTaskType;
@@ -42,12 +47,14 @@ import com.umc.devine.domain.techstack.repository.DevTechstackRepository;
 import com.umc.devine.domain.ticket.helper.CreditRefundCalculator;
 import com.umc.devine.domain.ticket.helper.WithdrawalRefundPlanner;
 import com.umc.devine.domain.ticket.repository.MemberReportCreditRepository;
+import com.umc.devine.infrastructure.email.EmailNotificationEvent;
 import com.umc.devine.infrastructure.outbox.OutboxTaskWriter;
 import com.umc.devine.infrastructure.outbox.payload.MemberExternalCleanupPayload;
 import com.umc.devine.infrastructure.outbox.payload.WithdrawalRefundMailPayload;
 import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.util.StringUtils;
@@ -67,6 +74,7 @@ import java.util.Map;
 public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalCommandService {
 
     private static final ZoneId SERVICE_ZONE = ZoneId.of("Asia/Seoul");
+    private static final int SANCTION_RETENTION_YEARS = 1;
 
     private final PendingMatchingHelper pendingMatchingHelper;
     private final ProjectRepository projectRepository;
@@ -94,6 +102,9 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
     private final ComplaintRepository complaintRepository;
     private final ComplaintHistoryRepository complaintHistoryRepository;
     private final WithdrawalReasonStatRepository withdrawalReasonStatRepository;
+    private final MemberRestrictionRepository memberRestrictionRepository;
+    private final WithdrawalProperties withdrawalProperties;
+    private final ApplicationEventPublisher eventPublisher;
     private final EntityManager entityManager;
 
     @Override
@@ -123,6 +134,12 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
 
     @Override
     public WithdrawalResDTO.WithdrawResultDTO withdraw(Member current, WithdrawalReqDTO.WithdrawReq request) {
+        return withdraw(current, request, WithdrawalPreparation.none());
+    }
+
+    @Override
+    public WithdrawalResDTO.WithdrawResultDTO withdraw(Member current, WithdrawalReqDTO.WithdrawReq request,
+                                                       WithdrawalPreparation preparation) {
         LocalDateTime now = LocalDateTime.now();
 
         // 1. 사전 확인. 회원 행을 잠가 중복 요청을 차례로 처리하고, 잠근 뒤의 상태로 판단한다
@@ -130,8 +147,14 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         List<Project> ownedProjects = projectRepository.findAllOwnedNotDeletedForUpdate(member);
         validateNoPending(member);
 
-        // 2. 트랜잭션 전 준비: 환불 계산은 화면에서 받은 값을 믿지 않고 다시 한다
-        // TODO(FUNC-MEM-006): 결정 C 대상·플래그 ON이면 Clerk에서 가입 이메일을 받아 해시를 만들어 둔다
+        // 결정 C(FUNC-MEM-006): 대상이고 플래그가 켜져 있고 해시를 만들었으면 1년 보관한다. 해시가 없으면 일반 탈퇴로 처리한다
+        boolean sanctionedTarget = withdrawalProperties.isRetainSanctionedMember() && member.isSanctioned();
+        boolean retainSanctionRecords = sanctionedTarget && preparation.emailHash() != null;
+        if (sanctionedTarget && !retainSanctionRecords) {
+            alertSanctionHashMissing(member);
+        }
+
+        // 2. 환불 계산은 화면에서 받은 값을 믿지 않고 다시 한다
         CreditRefundCalculator.Result refundPlan = withdrawalRefundPlanner.plan(member, now);
         boolean refundRequested = Boolean.TRUE.equals(request.refundRequested()) && refundPlan.refundableCredits() > 0;
         if (refundRequested && !StringUtils.hasText(request.refundContactEmail())) {
@@ -140,6 +163,11 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
 
         // 아웃박스에 담을 값은 회원 행을 비우기 전에 읽어 둔다
         String clerkId = member.getClerkId();
+
+        // 3. 한 트랜잭션: 결정 C 보관(FUNC-MEM-006 2번). 사유·이력은 아래에서 지우기 전에 읽는다
+        if (retainSanctionRecords) {
+            retainSanctionInfo(member, preparation.emailHash(), now);
+        }
 
         // 3. 한 트랜잭션: 환불 신청(FUNC-MEM-004 1번)과 생성권 소멸
         List<Long> refundIds = refundRequested
@@ -152,7 +180,7 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         ownedProjects.forEach(projectDeletionHelper::delete);
         githubDataCleanupHelper.deleteAll(member);
         List<String> s3Keys = deleteMemberData(member);
-        clearOperationalRecords(member);
+        clearOperationalRecords(member, retainSanctionRecords);
 
         member.anonymizeForWithdrawal();
         memberStatusHistoryRepository.save(MemberStatusHistory.builder()
@@ -253,15 +281,65 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         }
     }
 
-    /** 운영 그룹: 상태 변경 이력, 신고 기록의 식별 칸. */
-    private void clearOperationalRecords(Member member) {
-        // TODO(FUNC-MEM-006): 결정 C 대상·플래그 ON이면 1년 동안 기존 이력과 신고 식별 칸을 남긴다
-        memberStatusHistoryRepository.deleteAllByMemberBulk(member);
+    /**
+     * 운영 그룹: 상태 변경 이력, 신고 기록의 식별 칸.
+     * 결정 C로 보관하면 이 회원의 기존 이력과 신고 식별 칸을 1년 남기고, 만료되면 FUNC-MEM-007 배치가 정리한다.
+     * 이 회원이 처리자(관리자)로 남은 칸은 보관과 상관없이 비운다.
+     */
+    private void clearOperationalRecords(Member member, boolean retainSanctionRecords) {
+        if (!retainSanctionRecords) {
+            memberStatusHistoryRepository.deleteAllByMemberBulk(member);
+            complaintRepository.clearComplainant(member);
+            complaintRepository.clearRespondent(member);
+        }
         memberStatusHistoryRepository.clearProcessor(member);
-
-        complaintRepository.clearComplainant(member);
-        complaintRepository.clearRespondent(member);
         complaintRepository.clearResolver(member);
         complaintHistoryRepository.clearResolver(member);
+    }
+
+    /** 결정 C(FUNC-MEM-006 2번): 이메일 해시, 사유(정지·자격상실 사유), 신고·제재 이력 요약, 만료일(탈퇴일 + 1년). */
+    private void retainSanctionInfo(Member member, String emailHash, LocalDateTime now) {
+        List<MemberStatusHistory> histories = memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(member.getId());
+        String reason = histories.stream()
+                .filter(h -> h.getAction() == MemberStatusAction.SUSPEND || h.getAction() == MemberStatusAction.FORCE_WITHDRAW)
+                .map(MemberStatusHistory::getReason)
+                .filter(StringUtils::hasText)
+                .findFirst()
+                .orElse(null);
+
+        memberRestrictionRepository.save(MemberRestriction.builder()
+                .member(member)
+                .emailHash(emailHash)
+                .reason(reason)
+                .sanctionSummary(sanctionSummary(member, histories))
+                .expiresAt(now.plusYears(SANCTION_RETENTION_YEARS))
+                .build());
+    }
+
+    private String sanctionSummary(Member member, List<MemberStatusHistory> histories) {
+        String sanctions = histories.stream()
+                .map(h -> "%s(%s)".formatted(h.getAction(), h.getCreatedAt() == null ? "-" : h.getCreatedAt().toLocalDate()))
+                .collect(java.util.stream.Collectors.joining(", "));
+        Map<ComplaintStatus, Long> complaints = complaintRepository.findByRespondentMemberIdOrderByCreatedAtDesc(member.getId())
+                .stream()
+                .collect(java.util.stream.Collectors.groupingBy(Complaint::getStatus, java.util.stream.Collectors.counting()));
+        return "제재 이력: [%s] / 피신고: %d건 %s".formatted(
+                sanctions,
+                complaints.values().stream().mapToLong(Long::longValue).sum(),
+                complaints);
+    }
+
+    // 탈퇴를 늦추지 않는다(약관 제7조 8항): 해시 없이 일반 탈퇴로 진행하고 커밋 뒤 운영자에게 알린다
+    private void alertSanctionHashMissing(Member member) {
+        log.warn("[MemberWithdrawal] 결정 C 대상인데 이메일 해시가 없어 일반 탈퇴로 처리 - memberId: {}", member.getId());
+        eventPublisher.publishEvent(EmailNotificationEvent.builder()
+                .to(withdrawalProperties.getOperatorEmail())
+                .subject("[탈퇴] 정지·소명 중 회원의 재가입 제한 정보를 남기지 못했습니다")
+                .body("""
+                        정지 또는 자격상실 예정 회원이 탈퇴했지만 가입 이메일을 받지 못해 재가입 제한 정보를 남기지 못했습니다.<br>
+                        탈퇴는 일반 탈퇴로 처리됐습니다(약관 제7조 8항).<br>
+                        회원 ID: %d
+                        """.formatted(member.getId()))
+                .build());
     }
 }

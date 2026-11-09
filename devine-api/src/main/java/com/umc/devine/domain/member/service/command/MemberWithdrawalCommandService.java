@@ -14,4 +14,7 @@ public interface MemberWithdrawalCommandService {
      * 커밋 뒤 할 외부 작업(환불 메일, GitHub 권한 회수·Clerk 삭제·S3 삭제)은 아웃박스에 기록한다.
      */
     WithdrawalResDTO.WithdrawResultDTO withdraw(Member member, WithdrawalReqDTO.WithdrawReq request);
+
+    /** 트랜잭션 전 준비(결정 C 이메일 해시)를 받아 실행한다. {@link MemberWithdrawalFacade}가 부른다. */
+    WithdrawalResDTO.WithdrawResultDTO withdraw(Member member, WithdrawalReqDTO.WithdrawReq request, WithdrawalPreparation preparation);
 }
