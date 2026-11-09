@@ -100,7 +100,6 @@ public class ClerkApiClient {
                 .findFirst();
     }
 
-    /** 이미 지워진 사용자(404)는 성공으로 본다. */
     public void deleteUser(String clerkUserId) {
         String clerkSecretKey = env.getProperty("clerk.secret-key");
         String url = CLERK_API_BASE_URL + "/users/" + clerkUserId;

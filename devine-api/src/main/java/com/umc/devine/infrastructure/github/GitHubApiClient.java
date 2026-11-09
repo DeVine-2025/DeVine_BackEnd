@@ -477,7 +477,6 @@ public class GitHubApiClient {
         return null;
     }
 
-    /** OAuth 앱 client_id/secret으로 Basic 인증한다. 토큰이 이미 무효(404, 422)면 성공으로 본다. */
     public void revokeGrant(String clientId, String clientSecret, String accessToken) {
         String url = GITHUB_API_BASE_URL + "/applications/" + clientId + "/grant";
         String basic = Base64.getEncoder()

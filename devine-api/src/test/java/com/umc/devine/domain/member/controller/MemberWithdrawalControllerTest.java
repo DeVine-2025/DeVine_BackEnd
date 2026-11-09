@@ -41,7 +41,6 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/** 테스트 트랜잭션이 커밋되지 않으므로 아웃박스 외부 작업은 실행되지 않는다. */
 class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired private MemberRepository memberRepository;

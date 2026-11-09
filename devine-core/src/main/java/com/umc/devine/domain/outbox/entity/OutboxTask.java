@@ -9,7 +9,6 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-/** created_by에 탈퇴 회원의 clerk_id가 남지 않도록 BaseEntity를 상속하지 않는다. */
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -29,7 +28,6 @@ public class OutboxTask {
     @Column(name = "task_type", nullable = false, length = 40)
     private OutboxTaskType taskType;
 
-    // 작업 입력(JSON). 토큰 같은 비밀값은 넣지 않는다.
     @Column(name = "payload", nullable = false, columnDefinition = "TEXT")
     private String payload;
 

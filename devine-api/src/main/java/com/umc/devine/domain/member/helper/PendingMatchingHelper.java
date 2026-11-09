@@ -10,7 +10,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/** 탈퇴할 회원이 개발자 쪽(matching.member)이나 PM 쪽(project.member)으로 걸린 대기 건 */
 @Component
 @RequiredArgsConstructor
 public class PendingMatchingHelper {
@@ -31,7 +30,6 @@ public class PendingMatchingHelper {
 
     public static WithdrawalResDTO.Direction directionOf(Matching matching, Member member) {
         boolean developerSide = isDeveloperSide(matching, member);
-        // 지원은 개발자가 보내고, 제안은 PM이 보낸다
         boolean sent = matching.isApplyType() == developerSide;
         return sent ? WithdrawalResDTO.Direction.SENT : WithdrawalResDTO.Direction.RECEIVED;
     }

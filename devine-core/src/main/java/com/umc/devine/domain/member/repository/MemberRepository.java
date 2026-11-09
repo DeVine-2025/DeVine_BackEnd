@@ -45,7 +45,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Member> findByClerkId(@Param("clerkId") String clerkId);
 
-    /** 정지/강제탈퇴 예정 회원도 탈퇴할 수 있어야 해서 허용 상태를 직접 받는다. */
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used IN :statuses")
     Optional<Member> findByClerkIdAndUsedIn(@Param("clerkId") String clerkId,
                                             @Param("statuses") Collection<MemberStatus> statuses);
@@ -54,10 +53,6 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.id = :id")
     Optional<Member> findByIdForUpdate(@Param("id") Long id);
 
-    /**
-     * created_by는 JPA로 갱신되지 않고, updated_by는 flush 때 요청자의 clerk_id로 다시 채워진다.
-     * 그래서 회원 행의 마지막 변경을 flush한 뒤 native로 비운다.
-     */
     @Modifying(flushAutomatically = true)
     @Query(value = "UPDATE member SET created_by = NULL, updated_by = NULL WHERE member_id = :id", nativeQuery = true)
     int clearAuditColumns(@Param("id") Long id);

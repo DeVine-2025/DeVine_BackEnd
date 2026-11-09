@@ -109,12 +109,10 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
 
     @Override
     public WithdrawalResDTO.CancelPendingResultDTO cancelPendingMatchings(Member member) {
-        // 매칭 처리/마감과 같은 순서로 프로젝트를 먼저 잠근다. ID 순으로 잠가 교착을 피한다.
         pendingMatchingHelper.findPendingProjectIds(member).stream()
                 .sorted()
                 .forEach(projectRepository::findByIdForUpdate);
 
-        // 잠근 뒤 다시 읽어, 그사이 상대가 수락/거절한 건은 건드리지 않는다
         List<Matching> pending = pendingMatchingHelper.findPending(member);
 
         Map<Long, Project> touchedProjects = new LinkedHashMap<>();
@@ -124,7 +122,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
             touchedProjects.putIfAbsent(matching.getProject().getId(), matching.getProject());
         }
 
-        // 마감일 지남 상태에서 대기 건이 0이 되면 마감한다
         touchedProjects.values().forEach(lifecycleHelper::closeIfDeadlinePassedAndNoPending);
 
         return WithdrawalResDTO.CancelPendingResultDTO.builder()
@@ -142,29 +139,24 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
                                                        WithdrawalPreparation preparation) {
         LocalDateTime now = LocalDateTime.now();
 
-        // 회원 행을 잠가 중복 요청을 차례로 처리한다
         Member member = lockMember(current);
         List<Project> ownedProjects = projectRepository.findAllOwnedNotDeletedForUpdate(member);
         validateNoPending(member);
 
-        // 이메일 해시를 못 만들었으면 보관하지 않고 일반 탈퇴로 처리한다
         boolean sanctionedTarget = withdrawalProperties.isRetainSanctionedMember() && member.isSanctioned();
         boolean retainSanctionRecords = sanctionedTarget && preparation.emailHash() != null;
         if (sanctionedTarget && !retainSanctionRecords) {
             alertSanctionHashMissing(member);
         }
 
-        // 환불 금액은 화면에서 받은 값을 믿지 않고 다시 계산한다
         CreditRefundCalculator.Result refundPlan = withdrawalRefundPlanner.plan(member, now);
         boolean refundRequested = Boolean.TRUE.equals(request.refundRequested()) && refundPlan.refundableCredits() > 0;
         if (refundRequested && !StringUtils.hasText(request.refundContactEmail())) {
             throw new MemberException(MemberErrorReason.REFUND_CONTACT_EMAIL_REQUIRED);
         }
 
-        // 아웃박스에 담을 값은 회원 행을 비우기 전에 읽어 둔다
         String clerkId = member.getClerkId();
 
-        // 사유와 이력은 아래에서 지우기 전에 읽어야 한다
         if (retainSanctionRecords) {
             retainSanctionInfo(member, preparation.emailHash(), now);
         }
@@ -192,7 +184,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         }
         outboxTaskWriter.enqueue(OutboxTaskType.GITHUB_GRANT_REVOKE, new MemberExternalCleanupPayload(clerkId, s3Keys));
 
-        // 탈퇴 사유는 회원과 연결하지 않고 통계로만 남긴다
         if (request.reason() != null) {
             withdrawalReasonStatRepository.save(WithdrawalReasonStat.builder()
                     .reason(request.reason())
@@ -200,7 +191,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
                     .build());
         }
 
-        // 감사 칼럼의 clerk_id는 회원 행의 마지막 변경을 flush한 뒤 비운다. 이 뒤로는 회원 행을 바꾸지 않는다
         memberRepository.clearAuditColumns(member.getId());
 
         log.info("[MemberWithdrawal] 탈퇴 완료 - memberId: {}, refundRequests: {}", member.getId(), refundIds.size());
@@ -214,7 +204,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
     private Member lockMember(Member current) {
         Member member = memberRepository.findByIdForUpdate(current.getId())
                 .orElseThrow(() -> new AuthException(AuthErrorReason.NOT_REGISTERED));
-        // 인증 단계에서 읽은 엔티티가 영속성 컨텍스트에 남아 있을 수 있어, 잠근 뒤 다시 읽는다
         entityManager.refresh(member);
         if (member.isWithdrawn()) {
             throw new AuthException(AuthErrorReason.NOT_REGISTERED);
@@ -243,17 +232,14 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         return refundIds;
     }
 
-    /** 지울 S3 키를 돌려준다. */
     private List<String> deleteMemberData(Member member) {
         contactRepository.deleteAllByMember(member);
         memberAgreementRepository.deleteAllByMemberBulk(member);
         devTechstackRepository.deleteAllByMemberBulk(member);
 
-        // 프로젝트 북마크는 프로젝트 삭제 함수가 이미 지웠다
         bookmarkRepository.deleteAllByMemberBulk(member);
         bookmarkRepository.deleteAllByTarget(BookmarkType.DEVELOPER, member.getId());
 
-        // S3 객체는 커밋 뒤 아웃박스에서 지운다
         List<Image> images = imageRepository.findAllByUploader(member);
         List<String> s3Keys = images.stream()
                 .map(Image::getS3Key)
@@ -265,7 +251,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         chatRoomRepository.findAllByParticipant(member).forEach(room -> leave(room, member));
 
         notificationRepository.deleteAllByReceiver(member);
-        // 회원 행을 익명화하기 전에 원래 닉네임으로 찾아 바꾼다
         notificationRepository.replaceSenderNameInContent(member,
                 member.getNickname() + "님", Member.WITHDRAWN_DISPLAY_NAME + "님");
         memberCouponRepository.deleteAllByMemberBulk(member);
@@ -278,7 +263,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         }
     }
 
-    /** 이 회원이 처리자(관리자)로 남은 칸은 보관 여부와 상관없이 비운다. */
     private void clearOperationalRecords(Member member, boolean retainSanctionRecords) {
         if (!retainSanctionRecords) {
             memberStatusHistoryRepository.deleteAllByMemberBulk(member);
@@ -321,7 +305,6 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
                 complaints);
     }
 
-    // 약관 제7조 8항: 탈퇴를 늦추지 않으므로 운영자에게만 알린다
     private void alertSanctionHashMissing(Member member) {
         log.warn("[MemberWithdrawal] 결정 C 대상인데 이메일 해시가 없어 일반 탈퇴로 처리 - memberId: {}", member.getId());
         eventPublisher.publishEvent(EmailNotificationEvent.builder()

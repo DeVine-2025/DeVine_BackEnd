@@ -49,7 +49,6 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/** 실행기는 작업마다 새 트랜잭션을 쓰므로 데이터를 커밋하고 끝나면 직접 지운다. 시나리오 T9 */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @TestPropertySource(properties = {
         "github.oauth.client-id=test-client-id",
@@ -72,7 +71,6 @@ class OutboxTaskProcessorTest extends IntegrationTestSupport {
     @MockitoBean private GitHubApiClient gitHubApiClient;
     @MockitoBean private S3Service s3Service;
     @MockitoBean private EmailSender emailSender;
-    // 커밋 직후 비동기 실행을 끄고, 테스트가 processDue를 직접 불러 순서를 확정한다
     @MockitoBean private OutboxTaskEventListener outboxTaskEventListener;
 
     private final List<Long> paymentIds = new ArrayList<>();

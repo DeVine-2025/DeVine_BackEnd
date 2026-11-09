@@ -6,7 +6,6 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-/** created_by에 clerk_id가 들어가지 않도록 BaseEntity를 상속하지 않고 member_id도 두지 않는다. */
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

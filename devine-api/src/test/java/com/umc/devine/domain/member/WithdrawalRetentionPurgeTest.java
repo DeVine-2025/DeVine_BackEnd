@@ -71,7 +71,6 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
                 .mainType(MemberMainType.DEVELOPER).used(MemberStatus.ACTIVE).build());
     }
 
-    /** 자진 탈퇴한 회원. 탈퇴 시각을 withdrawnAt으로 맞춘다. */
     private Member withdrawnMember(LocalDateTime withdrawnAt) {
         Member member = activeMember();
         member.anonymizeForWithdrawal();
@@ -123,7 +122,6 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
         flushAndClear();
 
         assertThat(matchingRepository.findById(apply.getId()).orElseThrow().getContent()).isNull();
-        // 제안은 활동 중인 PM이 쓴 것이라 남긴다
         assertThat(matchingRepository.findById(propose.getId()).orElseThrow().getContent()).isEqualTo("PM 제안 메시지");
     }
 
@@ -156,7 +154,6 @@ class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
 
         assertThat(matchingRepository.findById(expired.getId())).isEmpty();
         assertThat(matchingRepository.findById(kept.getId())).isPresent()
-                // PM(제안 작성자)은 탈퇴 1년이 지나 내용이 비워진다
                 .get().extracting(Matching::getContent).isNull();
     }
 

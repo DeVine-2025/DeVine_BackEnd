@@ -13,7 +13,6 @@ import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Optional;
 
-/** 이메일을 소문자로 바꾸고 pepper를 키로 HMAC-SHA256 한다. 플래그를 켰는데 pepper가 없으면 앱 시작을 막는다. */
 @Component
 public class EmailHasher {
 

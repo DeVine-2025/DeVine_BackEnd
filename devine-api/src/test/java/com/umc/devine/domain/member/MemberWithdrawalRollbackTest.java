@@ -44,7 +44,6 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
-/** 시나리오 T14. 롤백을 실제 커밋 기준으로 보려고 테스트 트랜잭션을 쓰지 않고, 끝나면 직접 지운다. */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class MemberWithdrawalRollbackTest extends IntegrationTestSupport {
 
@@ -58,7 +57,6 @@ class MemberWithdrawalRollbackTest extends IntegrationTestSupport {
     @Autowired private OutboxTaskRepository outboxTaskRepository;
     @Autowired private PlatformTransactionManager transactionManager;
 
-    // 탈퇴 트랜잭션의 거의 마지막 쓰기(탈퇴 사유 통계)에서 DB 오류를 낸다. 그 앞의 삭제, 익명화, 환불 신청이 모두 롤백돼야 한다
     @MockitoBean private WithdrawalReasonStatRepository withdrawalReasonStatRepository;
 
     private Long memberId;

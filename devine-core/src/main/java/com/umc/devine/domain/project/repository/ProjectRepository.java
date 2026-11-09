@@ -58,12 +58,10 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
     // 작성자 관리용: 본인이 숨긴 프로젝트도 관리해야 하므로 비노출 여부는 보지 않는다
     Optional<Project> findByIdAndStatusNot(Long id, ProjectStatus status);
 
-    /** is_hidden으로 고르면 PM이 숨긴 활성 프로젝트까지 지워지므로 상태로만 고른다. */
     @Query("SELECT p FROM Project p WHERE p.status = com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
             "AND NOT EXISTS (SELECT 1 FROM Matching m WHERE m.project = p)")
     List<Project> findDeletedWithoutMatching();
 
-    /** 탈퇴 중에 새 지원/제안이 끼어들지 않도록 매칭 처리와 같은 행 잠금을 쓴다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT p FROM Project p WHERE p.member = :member " +
             "AND p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED ORDER BY p.id ASC")

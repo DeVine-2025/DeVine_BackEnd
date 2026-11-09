@@ -22,7 +22,6 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-/** 발송에 실패하면 예외를 던져 아웃박스가 재시도한다. 닉네임은 넣지 않는다. */
 @Component
 public class WithdrawalRefundMailHandler implements OutboxTaskHandler {
 

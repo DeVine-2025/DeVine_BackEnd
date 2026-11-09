@@ -54,7 +54,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** 탈퇴 미리보기, 대기 건 일괄 취소. 시나리오 T2, T3, P18 */
 class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
 
     @Autowired private MemberWithdrawalQueryService queryService;
@@ -290,7 +289,6 @@ class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
         assertThat(memberRepository.findByClerkIdAndUsedIn(suspended.getClerkId(), allowed)).isPresent();
         assertThat(memberRepository.findByClerkIdAndUsedIn(pending.getClerkId(), allowed)).isPresent();
         assertThat(memberRepository.findByClerkIdAndUsedIn(deleted.getClerkId(), allowed)).isEmpty();
-        // 일반 API 조회는 기존처럼 ACTIVE만 찾는다
         assertThat(memberRepository.findByClerkId(suspended.getClerkId())).isEmpty();
     }
 

@@ -100,7 +100,6 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 회원 탈퇴 실행. 시나리오 T1, T2, T4, T6-3, T6-4, T13 */
 class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
 
     @Autowired private MemberWithdrawalCommandService withdrawalService;
@@ -289,7 +288,6 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         assertThat(outboxOf(OutboxTaskType.WITHDRAWAL_REFUND_MAIL)).singleElement()
                 .satisfies(t -> assertThat(t.getPayload()).contains(String.valueOf(refunds.get(0).getId())));
 
-        // T13: 결제 기록은 그대로 남는다
         assertThat(paymentRepository.findById(payment.getId())).isPresent();
     }
 
@@ -303,7 +301,6 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
                 .isInstanceOf(MemberException.class)
                 .extracting("reason").isEqualTo(MemberErrorReason.REFUND_CONTACT_EMAIL_REQUIRED);
 
-        // 무상분만 있는 회원
         memberReportCreditRepository.save(MemberReportCredit.of(other, 3));
         WithdrawalResDTO.WithdrawResultDTO result = withdrawalService.withdraw(other, refundRequest(null));
 
@@ -350,7 +347,6 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
                 b.getMember().getId().equals(me.getId())
                         || (b.getTargetType() == BookmarkType.DEVELOPER && b.getTargetId().equals(me.getId()))
                         || (b.getTargetType() == BookmarkType.PROJECT && b.getTargetId().equals(withHistory.getId())));
-        // 매칭 이력은 보관한다
         assertThat(matchingRepository.existsByProject(kept)).isTrue();
     }
 
@@ -500,7 +496,6 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         withdrawalService.withdraw(me, confirmed());
         em.flush();
 
-        // Clerk 사용자가 지워져 새 Clerk ID로 들어온 경우, 그리고 Clerk 삭제가 늦어 같은 Clerk ID로 들어온 경우
         for (String clerkId : List.of("clerk_wx_me_new", "clerk_wx_me")) {
             String nickname = clerkId.endsWith("new") ? "wxme" : "wxme2";
             memberCommandService.signup(

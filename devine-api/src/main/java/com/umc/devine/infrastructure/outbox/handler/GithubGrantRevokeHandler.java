@@ -14,7 +14,6 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/** Clerk에서 토큰을 받아야 하므로 Clerk 사용자 삭제보다 먼저 실행한다. */
 @Slf4j
 @Component
 public class GithubGrantRevokeHandler implements OutboxTaskHandler {
@@ -71,7 +70,6 @@ public class GithubGrantRevokeHandler implements OutboxTaskHandler {
         gitHubApiClient.revokeGrant(clientId, clientSecret, token);
     }
 
-    // 회수가 최종 실패해도 개인정보가 남은 Clerk 사용자는 지워야 하므로 다음 단계로 넘긴다
     @Override
     public void onFinalFailure(OutboxTask task) {
         nextStep(outboxTaskWriter.readPayload(task, MemberExternalCleanupPayload.class));

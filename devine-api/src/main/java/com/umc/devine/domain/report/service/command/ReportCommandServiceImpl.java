@@ -97,7 +97,6 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             return;
         }
 
-        // 탈퇴한 회원이면 결과를 버리고 생성권도 돌려주지 않는다. 보통은 리포트 행이 함께 지워져 위에서 404가 난다
         if (mainReport.getGitRepoUrl().getMember().isWithdrawn()) {
             log.warn("탈퇴한 회원의 리포트 콜백 - 결과 폐기, 생성권 미반환 - mainReportId: {}, detailReportId: {}",
                     request.mainReportId(), request.detailReportId());

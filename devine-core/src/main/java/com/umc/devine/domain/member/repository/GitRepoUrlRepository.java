@@ -15,7 +15,6 @@ import java.util.Optional;
 public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
     List<GitRepoUrl> findAllByMember(Member member);
 
-    /** 리포트를 먼저 지운 뒤 호출한다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM GitRepoUrl g WHERE g.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);

@@ -17,7 +17,6 @@ public interface BookmarkRepository extends JpaRepository<Bookmark, Long> {
     @Query("DELETE FROM Bookmark b WHERE b.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);
 
-    /** 프로젝트 북마크는 프로젝트 삭제 함수가 지운다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM Bookmark b WHERE b.targetType = :targetType AND b.targetId = :targetId")
     int deleteAllByTarget(@Param("targetType") BookmarkType targetType, @Param("targetId") Long targetId);

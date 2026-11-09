@@ -84,7 +84,6 @@ public class MatchingNotificationHelper {
         );
     }
 
-    /** 탈퇴한다는 사실은 알리지 않는다. */
     public void notifyPendingCancelled(Matching matching, Member canceller, Member counterpart) {
         Project project = matching.getProject();
         boolean apply = matching.isApplyType();

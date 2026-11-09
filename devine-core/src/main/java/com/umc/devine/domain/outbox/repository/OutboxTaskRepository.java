@@ -20,7 +20,6 @@ public interface OutboxTaskRepository extends JpaRepository<OutboxTask, Long> {
                           @Param("now") LocalDateTime now,
                           Pageable pageable);
 
-    /** 여러 서버(블루그린 배포)가 같은 작업을 동시에 실행하지 않도록 SKIP LOCKED로 잠근다. */
     @Query(value = "SELECT * FROM outbox_task WHERE outbox_task_id = :id AND status = 'PENDING' AND next_attempt_at <= :now " +
             "FOR UPDATE SKIP LOCKED", nativeQuery = true)
     Optional<OutboxTask> lockDue(@Param("id") Long id, @Param("now") LocalDateTime now);

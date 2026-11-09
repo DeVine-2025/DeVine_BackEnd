@@ -18,10 +18,6 @@ import java.util.EnumMap;
 import java.util.List;
 import java.util.Map;
 
-/**
- * 성공한 행은 지운다(clerk_id 같은 식별값을 남기지 않기 위해).
- * 외부 정리가 실패해도 탈퇴 결과는 바꾸지 않는다.
- */
 @Slf4j
 @Component
 public class OutboxTaskProcessor {
@@ -66,7 +62,6 @@ public class OutboxTaskProcessor {
         try {
             txTemplate.executeWithoutResult(status -> execute(taskId));
         } catch (Exception e) {
-            // 실행기 안의 DB 오류로 트랜잭션이 롤백돼 실패 기록까지 사라진 경우. 새 트랜잭션에서 실패만 기록한다
             log.error("[Outbox] 작업 트랜잭션 롤백 - taskId: {}", taskId, e);
             try {
                 txTemplate.executeWithoutResult(status -> outboxTaskRepository.lockDue(taskId, LocalDateTime.now())
@@ -81,7 +76,7 @@ public class OutboxTaskProcessor {
         LocalDateTime now = LocalDateTime.now();
         OutboxTask task = outboxTaskRepository.lockDue(taskId, now).orElse(null);
         if (task == null) {
-            return; // 다른 서버가 처리했거나 처리 중
+            return;
         }
 
         OutboxTaskHandler handler = handlers.get(task.getTaskType());
@@ -124,7 +119,6 @@ public class OutboxTaskProcessor {
         return Math.min(minutes, MAX_BACKOFF_MINUTES);
     }
 
-    // 메일에는 작업 ID와 오류만 넣는다. clerk_id 같은 식별값은 DB의 outbox_task 행에서 확인한다
     private void alertOperator(OutboxTask task) {
         String subject = "[아웃박스 최종 실패] " + task.getTaskType() + " / 작업 " + task.getId();
         String body = """

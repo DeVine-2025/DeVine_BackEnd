@@ -14,7 +14,6 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/** 한 단계가 실패해도 나머지는 진행하고, 실패하면 운영자에게 알린다. */
 @Slf4j
 @Component
 @RequiredArgsConstructor

@@ -30,7 +30,6 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
     private final MemberWithdrawalCommandService memberWithdrawalCommandService;
     private final MemberWithdrawalFacade memberWithdrawalFacade;
 
-    // 탈퇴 미리보기
     @Override
     @GetMapping("/withdrawal-preview")
     public ApiResponse<WithdrawalResDTO.PreviewDTO> getWithdrawalPreview(
@@ -42,7 +41,6 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 대기 지원/제안 일괄 취소
     @Override
     @PostMapping("/matchings/cancel-pending")
     public ApiResponse<WithdrawalResDTO.CancelPendingResultDTO> cancelPendingMatchings(
@@ -53,7 +51,6 @@ public class MemberWithdrawalController implements MemberWithdrawalControllerDoc
         return ApiResponse.onSuccess(code, response);
     }
 
-    // 탈퇴 실행
     @Override
     @PostMapping("/withdrawal")
     public ApiResponse<WithdrawalResDTO.WithdrawResultDTO> withdraw(

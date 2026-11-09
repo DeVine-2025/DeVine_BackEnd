@@ -10,7 +10,6 @@ import com.umc.devine.domain.payment.enums.TransactionStatus;
 public enum AdminPaymentStatus {
     PAID,
     FAILED,
-    /** 회원 탈퇴 환불 신청이 접수됐고 운영자 부분 취소 전. */
     REFUND_REQUESTED,
     REFUND_IN_PROGRESS,
     REFUNDED,

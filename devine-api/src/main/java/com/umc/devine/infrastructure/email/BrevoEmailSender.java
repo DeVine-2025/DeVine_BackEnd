@@ -29,7 +29,6 @@ public class BrevoEmailSender implements EmailSender {
         try {
             sendOrThrow(to, subject, body);
         } catch (EmailSendException e) {
-            // 기존 동작 유지: 실패는 로그만 남긴다(sendOrThrow에서 이미 남김)
         }
     }
 

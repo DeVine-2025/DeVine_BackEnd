@@ -16,7 +16,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/** 프로젝트 삭제와 회원 탈퇴에서 같이 쓴다. 탈퇴에서는 상태 확인 없이 부른다. */
 @Component
 @RequiredArgsConstructor
 public class ProjectDeletionHelper {
@@ -31,7 +30,6 @@ public class ProjectDeletionHelper {
     private final MatchingRepository matchingRepository;
 
     public void delete(Project project) {
-        // 이미지 파일(S3)은 ImageCleanupScheduler가 연결이 끊긴 프로젝트 이미지로 보고 정리한다
         projectImageRepository.deleteAllByProject(project);
         project.clearImages();
 
@@ -46,7 +44,6 @@ public class ProjectDeletionHelper {
         projectEmbeddingRepository.findByProjectId(project.getId()).ifPresent(projectEmbeddingRepository::delete);
         bookmarkRepository.deleteAllByTargetTypeAndTargetId(BookmarkType.PROJECT, project.getId());
 
-        // 매칭 이력이 있으면 상대 회원의 지원 이력에 이름을 남겨야 하므로 행을 유지한다
         if (matchingRepository.existsByProject(project)) {
             project.eraseForDeletion();
         } else {

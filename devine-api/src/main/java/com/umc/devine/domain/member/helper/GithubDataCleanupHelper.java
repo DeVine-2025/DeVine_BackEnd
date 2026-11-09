@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/** 회원 탈퇴와 GitHub 연동 해제에서 같이 쓴다. 리포트 북마크는 북마크 대상에 없어 지울 것이 없다. */
 @Component
 @RequiredArgsConstructor
 public class GithubDataCleanupHelper {
@@ -22,7 +21,6 @@ public class GithubDataCleanupHelper {
     private final DevTechstackRepository devTechstackRepository;
 
     public void deleteAll(Member member) {
-        // FK 순서대로 임베딩, 리포트, 레포 순으로 지운다
         List<Long> reportIds = devReportRepository.findIdsByMember(member);
         if (!reportIds.isEmpty()) {
             reportEmbeddingRepository.deleteAllByDevReportIdIn(reportIds);

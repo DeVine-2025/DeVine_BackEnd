@@ -14,7 +14,6 @@ import java.util.List;
 public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long> {
     List<DevTechstack> findAllByMember(Member member);
 
-    /** 리포트 분석으로 들어온 AUTO만 지우고 직접 입력한 MANUAL은 남긴다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member AND dt.source = :source")
     int deleteAllByMemberAndSource(@Param("member") Member member, @Param("source") TechstackSource source);

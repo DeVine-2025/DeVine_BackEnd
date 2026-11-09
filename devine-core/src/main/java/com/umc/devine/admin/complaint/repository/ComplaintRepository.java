@@ -13,7 +13,6 @@ import com.umc.devine.domain.member.entity.Member;
 
 public interface ComplaintRepository extends JpaRepository<Complaint, Long>, ComplaintQueryDsl {
 
-    /** 회원 탈퇴용. 행은 신고 처리/통계용으로 남긴다. */
     @Modifying(flushAutomatically = true)
     @Query("UPDATE Complaint c SET c.complainant = NULL WHERE c.complainant = :member")
     int clearComplainant(@Param("member") Member member);

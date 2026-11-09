@@ -43,14 +43,12 @@ public class PaymentRefund extends BaseEntity {
     @Builder.Default
     private RefundSource source = RefundSource.ADMIN;
 
-    /** 탈퇴 환불 금액. 관리자 결제 전체 환불 행은 null이다. */
     @Column(name = "refund_amount")
     private Long refundAmount;
 
     @Column(name = "refund_credit_count")
     private Integer refundCreditCount;
 
-    /** 탈퇴 환불 연락 이메일. 환불이 끝나면 지운다. */
     @Column(name = "contact_email", length = 255)
     private String contactEmail;
 

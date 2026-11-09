@@ -165,13 +165,8 @@ public class Member extends BaseEntity {
         this.scheduledWithdrawalAt = null;
     }
 
-    // 닉네임 규칙(한글, 영문, 숫자, -, _)이 허용하지 않는 '#'을 넣어 실제 회원 닉네임과 겹치지 않게 한다
     public static final String WITHDRAWN_NICKNAME_PREFIX = "deleted#";
 
-    /**
-     * 닉네임은 NOT NULL UNIQUE라 비우지 않고 자리표시값으로 바꾼다.
-     * 상태가 DELETED가 되므로 예정된 강제탈퇴 확정 배치 대상에서도 빠진다.
-     */
     public void anonymizeForWithdrawal() {
         this.name = null;
         this.nickname = WITHDRAWN_NICKNAME_PREFIX + this.id;

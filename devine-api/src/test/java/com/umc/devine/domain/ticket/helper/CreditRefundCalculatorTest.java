@@ -10,7 +10,6 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/** 시나리오 T4~T6-2 */
 class CreditRefundCalculatorTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 9, 12, 0);

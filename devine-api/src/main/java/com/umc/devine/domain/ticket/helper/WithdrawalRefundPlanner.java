@@ -51,7 +51,6 @@ public class WithdrawalRefundPlanner {
     }
 
     private Optional<CreditRefundCalculator.Purchase> toPurchase(Payment payment, List<PaymentRefund> refunds) {
-        // 0원 결제(100% 쿠폰)는 유료 결제가 아니므로 무상분으로 본다
         if (payment.getAmount() == null || payment.getAmount() <= 0) {
             return Optional.empty();
         }
@@ -76,7 +75,6 @@ public class WithdrawalRefundPlanner {
                 continue;
             }
             hasHistory = true;
-            // 수량 칸이 없는 행은 관리자 결제 전체 환불이므로 지급 개수 전부를 환불한 것으로 본다
             alreadyRefunded += refund.getRefundCreditCount() != null ? refund.getRefundCreditCount() : granted;
         }
 

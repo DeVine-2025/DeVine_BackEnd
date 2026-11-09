@@ -30,7 +30,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/** 탈퇴일은 member_status_history의 SELF_WITHDRAW 행 시각이다. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -39,7 +38,6 @@ public class WithdrawalRetentionPurgeService {
     static final int MATCHING_RETENTION_YEARS = 1;
     static final int PAYMENT_RETENTION_YEARS = 5;
 
-    // 끝난(더 바뀌지 않는) 환불만 5년 기산 대상이다. 신청, 진행, 불명은 아직 처리 중이다
     private static final Set<RefundStatus> TERMINAL_REFUND = EnumSet.of(RefundStatus.COMPLETED, RefundStatus.FAILED);
 
     private final MemberStatusHistoryRepository memberStatusHistoryRepository;
@@ -50,10 +48,6 @@ public class WithdrawalRetentionPurgeService {
     private final PaymentRepository paymentRepository;
     private final PaymentRefundRepository paymentRefundRepository;
 
-    /**
-     * 지원은 개발자가, 제안은 PM이 쓴 내용이라 쓴 쪽 기준으로 비운다.
-     * @return [내용을 비운 건수, 지운 건수]
-     */
     @Transactional
     public int[] purgeMatchingHistory(LocalDateTime now) {
         Map<Long, LocalDateTime> withdrawnAt = withdrawnAtByMember();
@@ -133,7 +127,6 @@ public class WithdrawalRetentionPurgeService {
         return result;
     }
 
-    // 자진 탈퇴 행이 없는 탈퇴(관리자 강제탈퇴 확정 등)는 기준일이 없어 이 배치 대상이 아니다
     private static LocalDateTime withdrawnAtOf(Member member, Map<Long, LocalDateTime> withdrawnAt) {
         return member.isWithdrawn() ? withdrawnAt.get(member.getId()) : null;
     }

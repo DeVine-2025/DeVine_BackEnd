@@ -8,7 +8,6 @@ import org.springframework.stereotype.Component;
 @Component
 public class WithdrawalProperties {
 
-    /** 정지/소명 중 탈퇴자 재가입 제한. 개인정보처리방침 개정 전까지 false */
     private final boolean retainSanctionedMember;
 
     private final String operatorEmail;

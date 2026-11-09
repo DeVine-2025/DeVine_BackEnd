@@ -13,7 +13,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
 
-/** 호출하는 쪽 트랜잭션에 참여해야 한다(롤백되면 작업도 사라진다). */
 @Component
 @RequiredArgsConstructor
 public class OutboxTaskWriter {

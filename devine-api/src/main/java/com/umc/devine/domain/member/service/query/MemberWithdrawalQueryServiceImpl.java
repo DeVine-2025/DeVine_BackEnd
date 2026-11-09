@@ -60,7 +60,6 @@ public class MemberWithdrawalQueryServiceImpl implements MemberWithdrawalQuerySe
                 .build();
     }
 
-    // 가입 이메일: 토큰의 email 클레임, 없으면 가입 때 저장한 이메일 연락처
     private String findSignupEmail(Member member, ClerkPrincipal principal) {
         if (principal != null && StringUtils.hasText(principal.getEmail())) {
             return principal.getEmail();

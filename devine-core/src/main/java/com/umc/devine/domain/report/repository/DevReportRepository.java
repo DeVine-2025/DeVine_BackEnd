@@ -61,7 +61,6 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
 
     boolean existsByGitRepoUrlId(Long gitRepoId);
 
-    /** 공개 리포트와 생성 중인 리포트 포함 */
     @Query("SELECT r.id FROM DevReport r WHERE r.gitRepoUrl.member = :member")
     List<Long> findIdsByMember(@Param("member") Member member);
 
@@ -69,7 +68,6 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
     @Query("DELETE FROM DevReport r WHERE r.id IN :ids")
     int deleteAllByIdIn(@Param("ids") List<Long> ids);
 
-    /** 생성권 1개로 MAIN, DETAIL 두 행이 생기므로 MAIN만 센다. */
     @Query("SELECT COUNT(r) FROM DevReport r " +
             "WHERE r.gitRepoUrl.member = :member " +
             "AND r.reportType = com.umc.devine.domain.report.enums.ReportType.MAIN " +

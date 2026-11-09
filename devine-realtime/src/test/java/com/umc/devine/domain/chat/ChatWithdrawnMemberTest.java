@@ -22,7 +22,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/** 시나리오 T7 */
 class ChatWithdrawnMemberTest extends IntegrationTestSupport {
 
     @Autowired private ChatCommandService chatCommandService;

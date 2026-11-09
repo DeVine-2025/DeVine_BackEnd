@@ -16,12 +16,10 @@ import com.umc.devine.domain.member.entity.Member;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
 
-    /** 생성 당시 본문에 들어간 "{닉네임}님"을 바꾼다. */
     @Modifying(flushAutomatically = true)
     @Query("UPDATE Notification n SET n.content = replace(n.content, :from, :to) WHERE n.sender = :member")
     int replaceSenderNameInContent(@Param("member") Member member, @Param("from") String from, @Param("to") String to);
 
-    /** 남에게 보낸 알림과 sender_id는 그대로 둔다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM Notification n WHERE n.receiver = :member")
     int deleteAllByReceiver(@Param("member") Member member);

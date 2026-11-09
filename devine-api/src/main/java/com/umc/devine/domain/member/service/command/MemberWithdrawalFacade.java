@@ -11,7 +11,6 @@ import org.springframework.stereotype.Component;
 
 import java.util.Optional;
 
-/** Clerk 호출이 DB 행 잠금을 오래 잡지 않도록 트랜잭션 밖에서 먼저 한다. */
 @Slf4j
 @Component
 public class MemberWithdrawalFacade {
@@ -49,7 +48,6 @@ public class MemberWithdrawalFacade {
             }
             return new WithdrawalPreparation(hash.get(), false);
         } catch (Exception e) {
-            // 약관 제7조 8항: 실패해도 탈퇴는 진행한다
             log.error("[MemberWithdrawal] 결정 C 이메일 조회 실패 - memberId: {}", member.getId(), e);
             return new WithdrawalPreparation(null, true);
         }
