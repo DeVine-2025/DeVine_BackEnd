@@ -47,8 +47,11 @@ public class MatchingResDTO {
             @Schema(description = "개발자 닉네임", example = "devkim")
             String developerNickname,
 
-            @Schema(description = "개발자 프로필 이미지 URL")
+            @Schema(description = "개발자 프로필 이미지 URL. 탈퇴한 회원이면 null")
             String developerImageUrl,
+
+            @Schema(description = "탈퇴한 회원이면 true. 닉네임은 '탈퇴한 회원'으로 내려가고 프로필 링크를 막는다", example = "false")
+            boolean developerWithdrawn,
 
             @Schema(description = "지원/제안 파트", example = "BACKEND")
             ProjectPart part,

@@ -10,10 +10,8 @@ import java.util.List;
 public class ComplaintConverter {
 
     // 탈퇴로 신고자·피신고자 칸이 비워진 신고(01-1 기능명세서 5장)
-    static final String WITHDRAWN_MEMBER_NICKNAME = "탈퇴한 회원";
-
     private static String nicknameOf(Member member) {
-        return member == null ? WITHDRAWN_MEMBER_NICKNAME : member.getNickname();
+        return member == null ? Member.WITHDRAWN_DISPLAY_NAME : member.getNickname();
     }
 
     public static ComplaintResDTO.ComplaintSummaryDTO toComplaintSummaryDTO(Complaint complaint, boolean slaExceeded) {

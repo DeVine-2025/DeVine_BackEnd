@@ -104,6 +104,11 @@ public class ChatCommandServiceImpl implements ChatCommandService {
         Member receiver = room.getOtherMember(memberId);
         Long receiverId = receiver.getId();
 
+        // 탈퇴한 회원은 방에 다시 들어오게 하지 않고 메시지도 받지 않는다(01-1 FUNC-MEM-008)
+        if (receiver.isWithdrawn()) {
+            throw new ChatException(ChatErrorReason.RECEIVER_WITHDRAWN);
+        }
+
         room.rejoin(receiverId);
 
         ChatMessage message = ChatMessage.builder()

@@ -192,6 +192,19 @@ public class Member extends BaseEntity {
         return this.used == MemberStatus.DELETED;
     }
 
+    /** 남은 기록(채팅·지원 현황·알림)에 보여 줄 탈퇴 회원 이름(01-1 FUNC-MEM-008). */
+    public static final String WITHDRAWN_DISPLAY_NAME = "탈퇴한 회원";
+
+    /** 다른 회원에게 보여 줄 닉네임. 탈퇴했으면 자리표시값 대신 "탈퇴한 회원"이다. */
+    public String getDisplayNickname() {
+        return isWithdrawn() ? WITHDRAWN_DISPLAY_NAME : this.nickname;
+    }
+
+    /** 다른 회원에게 보여 줄 프로필 이미지. 탈퇴했으면 null(기본 이미지)이다. */
+    public String getDisplayImage() {
+        return isWithdrawn() ? null : this.image;
+    }
+
     /**
      * 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정.
      */

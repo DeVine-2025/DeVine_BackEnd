@@ -17,6 +17,7 @@ public enum ChatErrorReason implements DomainErrorReason {
     WEBSOCKET_MEMBER_NOT_FOUND(HttpStatus.UNAUTHORIZED, "CHAT401_2", "등록되지 않은 사용자입니다."),
     WEBSOCKET_AUTH_FAILED(HttpStatus.UNAUTHORIZED, "CHAT401_3", "인증에 실패했습니다."),
     INVALID_MESSAGE_CONTENT(HttpStatus.BAD_REQUEST, "CHAT400_3", "메시지 내용이 유효하지 않습니다."),
+    RECEIVER_WITHDRAWN(HttpStatus.BAD_REQUEST, "CHAT400_4", "탈퇴한 회원과는 대화할 수 없어요."),
     ;
 
     private final HttpStatus status;

@@ -21,7 +21,9 @@ public class ChatResDTO {
             String clerkId,
             String nickname,
             String image,
-            String mainType
+            String mainType,
+            // 탈퇴한 회원이면 true. 화면은 프로필 링크와 입력창을 막는다(01-1 FUNC-MEM-008)
+            boolean withdrawn
     ) {}
 
     @Builder
@@ -32,7 +34,8 @@ public class ChatResDTO {
             String senderImage,
             String content,
             Boolean isRead,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean senderWithdrawn
     ) {}
 
     @Builder

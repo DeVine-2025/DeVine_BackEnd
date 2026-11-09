@@ -240,6 +240,9 @@ public class MemberWithdrawalCommandServiceImpl implements MemberWithdrawalComma
         chatRoomRepository.findAllByParticipant(member).forEach(room -> leave(room, member));
 
         notificationRepository.deleteAllByReceiver(member);
+        // 상대가 받은 알림 본문의 "{닉네임}님"을 바꾼다. 회원 행을 익명화하기 전에 원래 닉네임으로 찾는다
+        notificationRepository.replaceSenderNameInContent(member,
+                member.getNickname() + "님", Member.WITHDRAWN_DISPLAY_NAME + "님");
         memberCouponRepository.deleteAllByMemberBulk(member);
         return s3Keys;
     }
