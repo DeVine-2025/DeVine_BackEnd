@@ -107,6 +107,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
 
     @Autowired private MemberWithdrawalCommandService withdrawalService;
+    @Autowired private com.umc.devine.domain.member.service.command.MemberCommandService memberCommandService;
     @Autowired private MemberRepository memberRepository;
     @Autowired private CategoryRepository categoryRepository;
     @Autowired private ContactRepository contactRepository;
@@ -474,6 +475,57 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         assertThat(memberRestrictionRepository.findAll()).isEmpty();
         assertThat(memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(suspended.getId()))
                 .extracting(MemberStatusHistory::getAction).containsExactly(MemberStatusAction.SELF_WITHDRAW);
+    }
+
+    @Test
+    @DisplayName("T1: 탈퇴 직후 개발자 찾기 목록과 프로젝트 공개 조회에서 사라진다")
+    void t1_goneFromSearch() {
+        Project project = saveProject(me, "공개 프로젝트");
+        em.flush();
+        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+                .extracting(Member::getId).contains(me.getId());
+        assertThat(projectRepository.findVisibleById(project.getId())).isPresent();
+
+        withdrawalService.withdraw(me, confirmed());
+        em.flush();
+        em.clear();
+
+        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+                .extracting(Member::getId).doesNotContain(me.getId());
+        assertThat(projectRepository.findVisibleById(project.getId())).isEmpty();
+        assertThat(memberRepository.findByNickname("wxme")).isEmpty();
+    }
+
+    @Test
+    @DisplayName("T10: 같은 GitHub 계정으로 재가입하면 새 회원으로 가입되고 이전 데이터는 없다(같은 닉네임도 다시 쓸 수 있다)")
+    void t10_resignupAsNewMember() {
+        memberReportCreditRepository.save(MemberReportCredit.of(me, 3));
+        withdrawalService.withdraw(me, confirmed());
+        em.flush();
+
+        // Clerk 사용자가 지워져 새 Clerk ID로 들어온 경우, 그리고 Clerk 삭제가 늦어 같은 Clerk ID로 들어온 경우
+        for (String clerkId : List.of("clerk_wx_me_new", "clerk_wx_me")) {
+            String nickname = clerkId.endsWith("new") ? "wxme" : "wxme2";
+            memberCommandService.signup(
+                    new com.umc.devine.global.security.ClerkPrincipal(clerkId, "me@example.com", "홍길동", null),
+                    com.umc.devine.domain.member.dto.MemberReqDTO.SignupDTO.builder()
+                            .agreements(termsRepository.findAllByRequired(true).stream()
+                                    .map(t -> com.umc.devine.domain.member.dto.MemberReqDTO.AgreementDTO.builder()
+                                            .termsId(t.getId()).agreed(true).build())
+                                    .toList())
+                            .nickname(nickname)
+                            .mainType(MemberMainType.DEVELOPER)
+                            .categoryIds(List.of(category.getId()))
+                            .build());
+            em.flush();
+
+            Member fresh = memberRepository.findByClerkId(clerkId).orElseThrow();
+            assertThat(fresh.getId()).isNotEqualTo(me.getId());
+            assertThat(fresh.getNickname()).isEqualTo(nickname);
+            assertThat(gitRepoUrlRepository.findAllByMember(fresh)).isEmpty();
+            assertThat(paymentRefundRepository.findAll()).noneMatch(r -> r.getPayment().getMember().getId().equals(fresh.getId()));
+        }
+        assertThat(memberRepository.findById(me.getId()).orElseThrow().getUsed()).isEqualTo(MemberStatus.DELETED);
     }
 
     @Test

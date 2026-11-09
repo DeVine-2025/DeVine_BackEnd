@@ -3,7 +3,12 @@ package com.umc.devine.domain.member.controller;
 import com.umc.devine.domain.category.entity.Category;
 import com.umc.devine.domain.category.enums.CategoryGenre;
 import com.umc.devine.domain.category.repository.CategoryRepository;
+import com.umc.devine.domain.member.entity.GitRepoUrl;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
+import com.umc.devine.domain.report.entity.DevReport;
+import com.umc.devine.domain.report.enums.ReportType;
+import com.umc.devine.domain.report.repository.DevReportRepository;
 import com.umc.devine.domain.member.enums.MemberMainType;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
@@ -27,6 +32,7 @@ import org.springframework.http.MediaType;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.Collections;
 
 import static org.springframework.security.test.web.servlet.request.SecurityMockMvcRequestPostProcessors.authentication;
@@ -45,6 +51,8 @@ class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
     @Autowired private ProjectRepository projectRepository;
     @Autowired private MatchingRepository matchingRepository;
     @Autowired private CategoryRepository categoryRepository;
+    @Autowired private GitRepoUrlRepository gitRepoUrlRepository;
+    @Autowired private DevReportRepository devReportRepository;
 
     private UsernamePasswordAuthenticationToken saveMemberAndAuth(String clerkId, String nickname, MemberStatus status) {
         memberRepository.save(Member.builder()
@@ -129,6 +137,31 @@ class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
                 .andExpect(jsonPath("$.code").value("AUTH403_1"));
         mockMvc.perform(get("/api/v1/members/me/withdrawal-preview").with(authentication(auth)))
                 .andExpect(status().isForbidden());
+    }
+
+    @Test
+    @DisplayName("T1·T8: 탈퇴하면 공개 프로필과 공개 리포트 URL이 비로그인으로 열리지 않는다(404)")
+    void publicLinksGoneAfterWithdrawal() throws Exception {
+        var auth = saveMemberAndAuth("clerk_wc_public", "wcpublic", MemberStatus.ACTIVE);
+        Member member = memberRepository.findByClerkId("clerk_wc_public").orElseThrow();
+        GitRepoUrl repo = gitRepoUrlRepository.save(GitRepoUrl.builder().gitUrl("https://github.com/wc/public").member(member).build());
+        devReportRepository.save(DevReport.builder().gitRepoUrl(repo).reportType(ReportType.MAIN)
+                .content("{\"summary\": \"공개 리포트\"}").completedAt(LocalDateTime.now()).build());
+
+        mockMvc.perform(get("/api/v1/reports/{gitRepoId}/main", repo.getId()))
+                .andExpect(status().isOk());
+        mockMvc.perform(get("/api/v1/members/{nickname}", "wcpublic"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(post("/api/v1/members/me/withdrawal").with(authentication(auth))
+                        .contentType(MediaType.APPLICATION_JSON).content("{\"confirmed\": true}"))
+                .andExpect(status().isOk());
+
+        mockMvc.perform(get("/api/v1/reports/{gitRepoId}/main", repo.getId()))
+                .andExpect(status().isNotFound())
+                .andExpect(jsonPath("$.code").value("REPORT404_1"));
+        mockMvc.perform(get("/api/v1/members/{nickname}", "wcpublic"))
+                .andExpect(status().isNotFound());
     }
 
     @Test
