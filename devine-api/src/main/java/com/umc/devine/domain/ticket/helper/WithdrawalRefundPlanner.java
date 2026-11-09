@@ -21,10 +21,6 @@ import java.util.Map;
 import java.util.Optional;
 import java.util.stream.Collectors;
 
-/**
- * 회원의 결제/환불 기록을 읽어 {@link CreditRefundCalculator} 입력을 만든다.
- * 미리보기(FUNC-MEM-001)와 탈퇴 실행(FUNC-MEM-003, 화면 값을 믿지 않고 다시 계산)에서 같이 쓴다.
- */
 @Component
 @RequiredArgsConstructor
 public class WithdrawalRefundPlanner {

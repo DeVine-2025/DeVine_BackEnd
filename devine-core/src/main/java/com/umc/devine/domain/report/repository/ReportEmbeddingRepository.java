@@ -15,7 +15,6 @@ public interface ReportEmbeddingRepository extends JpaRepository<ReportEmbedding
 
     boolean existsByDevReportId(Long devReportId);
 
-    /** GitHub 데이터 삭제(회원 탈퇴, GitHub 연동 해제)용. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM ReportEmbedding e WHERE e.devReport.id IN :devReportIds")
     int deleteAllByDevReportIdIn(@Param("devReportIds") Collection<Long> devReportIds);

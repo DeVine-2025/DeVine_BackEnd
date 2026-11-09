@@ -22,11 +22,7 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Locale;
 
-/**
- * 운영자 탈퇴 환불 신청 알림 메일(01-1 FUNC-MEM-004 2번).
- * 결제 ID, 포트원 결제 ID, 결제일, 환불 수량, 환불 금액, 신청일, 환불 연락 이메일을 넣고 닉네임은 넣지 않는다.
- * 발송에 실패하면 예외를 던져 아웃박스가 재시도한다.
- */
+/** 발송에 실패하면 예외를 던져 아웃박스가 재시도한다. 닉네임은 넣지 않는다. */
 @Component
 public class WithdrawalRefundMailHandler implements OutboxTaskHandler {
 

@@ -49,10 +49,7 @@ import static org.mockito.BDDMockito.willThrow;
 import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
-/**
- * 01-1 FUNC-MEM-005(외부 정리), FUNC-MEM-004 2번(운영자 메일) 아웃박스 실행. 시나리오 T9.
- * 실행기는 작업마다 새 트랜잭션을 쓰므로 이 테스트는 데이터를 커밋하고 끝나면 직접 지운다.
- */
+/** 실행기는 작업마다 새 트랜잭션을 쓰므로 데이터를 커밋하고 끝나면 직접 지운다. 시나리오 T9 */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 @TestPropertySource(properties = {
         "github.oauth.client-id=test-client-id",

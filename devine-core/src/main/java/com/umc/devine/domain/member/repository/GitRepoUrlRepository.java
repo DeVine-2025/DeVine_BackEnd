@@ -15,7 +15,7 @@ import java.util.Optional;
 public interface GitRepoUrlRepository extends JpaRepository<GitRepoUrl, Long> {
     List<GitRepoUrl> findAllByMember(Member member);
 
-    /** GitHub 데이터 삭제(회원 탈퇴, GitHub 연동 해제)용. 리포트를 먼저 지운 뒤 호출한다. */
+    /** 리포트를 먼저 지운 뒤 호출한다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM GitRepoUrl g WHERE g.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);

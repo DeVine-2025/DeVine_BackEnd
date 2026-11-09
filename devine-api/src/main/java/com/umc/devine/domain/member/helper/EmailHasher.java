@@ -13,12 +13,7 @@ import java.util.HexFormat;
 import java.util.Locale;
 import java.util.Optional;
 
-/**
- * 정지/소명 중 탈퇴자의 재가입 제한용 이메일 해시(01-1 FUNC-MEM-006).
- * 이메일을 소문자로 바꾸고 서버 비밀값(pepper)을 키로 HMAC-SHA256 한다. DB가 유출돼도 원래 이메일을 되찾기 어렵다.
- *
- * <p>pepper가 없으면 해시를 만들지 않는다(empty). 플래그(withdrawal.retain-sanctioned-member)를 켰는데 pepper가 없으면 앱 시작을 막는다.
- */
+/** 이메일을 소문자로 바꾸고 pepper를 키로 HMAC-SHA256 한다. 플래그를 켰는데 pepper가 없으면 앱 시작을 막는다. */
 @Component
 public class EmailHasher {
 

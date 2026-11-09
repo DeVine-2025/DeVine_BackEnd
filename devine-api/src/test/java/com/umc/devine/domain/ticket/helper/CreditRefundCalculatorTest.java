@@ -10,9 +10,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * 01-1 기능명세서 3장 "환불 계산 규칙"과 테스트 시나리오 T4~T6-2.
- */
+/** 시나리오 T4~T6-2 */
 class CreditRefundCalculatorTest {
 
     private static final LocalDateTime NOW = LocalDateTime.of(2026, 11, 9, 12, 0);

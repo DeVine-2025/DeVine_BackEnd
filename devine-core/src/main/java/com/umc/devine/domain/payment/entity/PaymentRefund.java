@@ -47,7 +47,6 @@ public class PaymentRefund extends BaseEntity {
     @Column(name = "refund_amount")
     private Long refundAmount;
 
-    /** 탈퇴 환불 생성권 수량. 관리자 결제 전체 환불 행은 null이다. */
     @Column(name = "refund_credit_count")
     private Integer refundCreditCount;
 
@@ -55,7 +54,6 @@ public class PaymentRefund extends BaseEntity {
     @Column(name = "contact_email", length = 255)
     private String contactEmail;
 
-    /** 회원 탈퇴 시 남은 생성권 환불 신청. 운영자가 refundAmount만 부분 취소한 뒤 완료 처리한다. */
     public static PaymentRefund requestForWithdrawal(Payment payment, long refundAmount, int refundCreditCount, String contactEmail) {
         return PaymentRefund.builder()
                 .payment(payment)
@@ -68,7 +66,6 @@ public class PaymentRefund extends BaseEntity {
                 .build();
     }
 
-    /** 탈퇴 환불 신청 완료 처리. 환불이 끝났으므로 연락 이메일을 지운다(결정 F). */
     public void completeWithdrawalRequest() {
         this.status = RefundStatus.COMPLETED;
         this.contactEmail = null;

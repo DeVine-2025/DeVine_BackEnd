@@ -30,10 +30,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-/**
- * 보관 기간이 끝난 탈퇴 데이터를 지운다(01-1 FUNC-MEM-007). 탈퇴일은 member_status_history의 자진 탈퇴 행 시각이다.
- * 단계마다 따로 트랜잭션을 쓰고, 실패한 건은 조건이 그대로라 다음 날 다시 잡힌다.
- */
+/** 탈퇴일은 member_status_history의 SELF_WITHDRAW 행 시각이다. */
 @Slf4j
 @Service
 @RequiredArgsConstructor
@@ -54,9 +51,7 @@ public class WithdrawalRetentionPurgeService {
     private final PaymentRefundRepository paymentRefundRepository;
 
     /**
-     * 1. 매칭 이력(대표 결정 10-28). 한쪽이 탈퇴하고 1년이 지나면 그 탈퇴자가 쓴 content만 비운다
-     * (지원은 개발자가, 제안은 PM이 쓴 것). 양쪽 모두 탈퇴했으면 나중에 탈퇴한 쪽 기준 1년이 지나면 행을 지운다.
-     *
+     * 지원은 개발자가, 제안은 PM이 쓴 내용이라 쓴 쪽 기준으로 비운다.
      * @return [내용을 비운 건수, 지운 건수]
      */
     @Transactional
@@ -88,7 +83,6 @@ public class WithdrawalRetentionPurgeService {
         return new int[]{cleared, deleted};
     }
 
-    /** 2. 이름만 남긴 프로젝트(DELETED)를 가리키는 매칭이 0건이면 행을 지운다. */
     @Transactional
     public int purgeOrphanDeletedProjects() {
         List<Project> projects = projectRepository.findDeletedWithoutMatching();
@@ -96,10 +90,6 @@ public class WithdrawalRetentionPurgeService {
         return projects.size();
     }
 
-    /**
-     * 3. 만료된 최소식별정보(결정 C)를 지운다. 같은 회원에 대해 남겨 둔 상태 변경 이력(자진 탈퇴 행 제외)을 지우고
-     * 신고 기록의 신고자/피신고자 칸을 비운다.
-     */
     @Transactional
     public int purgeExpiredRestrictions(LocalDateTime now) {
         List<MemberRestriction> expired = memberRestrictionRepository.findAllByExpiresAtBefore(now);
@@ -113,7 +103,6 @@ public class WithdrawalRetentionPurgeService {
         return expired.size();
     }
 
-    /** 4. 탈퇴 회원의 결제/환불 기록을 결제일과 환불 완료일이 모두 5년이 지나면 지운다(방침 3조 6), 9)). */
     @Transactional
     public int purgeExpiredPayments(LocalDateTime now) {
         LocalDateTime threshold = now.minusYears(PAYMENT_RETENTION_YEARS);

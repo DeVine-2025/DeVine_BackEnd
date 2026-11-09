@@ -45,20 +45,18 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Member> findByClerkId(@Param("clerkId") String clerkId);
 
-    /** 회원 탈퇴 API용 조회. 정지/강제탈퇴 예정 회원도 탈퇴할 수 있어야 하므로 허용 상태를 직접 받는다. */
+    /** 정지/강제탈퇴 예정 회원도 탈퇴할 수 있어야 해서 허용 상태를 직접 받는다. */
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used IN :statuses")
     Optional<Member> findByClerkIdAndUsedIn(@Param("clerkId") String clerkId,
                                             @Param("statuses") Collection<MemberStatus> statuses);
 
-    /** 회원 탈퇴 실행용 행 잠금. 탈퇴 중복 요청을 차례로 처리한다. */
     @Lock(LockModeType.PESSIMISTIC_WRITE)
     @Query("SELECT m FROM Member m WHERE m.id = :id")
     Optional<Member> findByIdForUpdate(@Param("id") Long id);
 
     /**
-     * 회원 탈퇴용: 감사 칼럼에 남은 clerk_id를 비운다.
-     * created_by는 JPA로 갱신되지 않고(updatable = false), updated_by는 flush 때 요청자(탈퇴 회원)의 clerk_id로 다시 채워지므로
-     * 회원 행의 마지막 변경을 flush한 뒤 native로 비운다.
+     * created_by는 JPA로 갱신되지 않고, updated_by는 flush 때 요청자의 clerk_id로 다시 채워진다.
+     * 그래서 회원 행의 마지막 변경을 flush한 뒤 native로 비운다.
      */
     @Modifying(flushAutomatically = true)
     @Query(value = "UPDATE member SET created_by = NULL, updated_by = NULL WHERE member_id = :id", nativeQuery = true)

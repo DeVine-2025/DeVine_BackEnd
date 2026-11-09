@@ -9,10 +9,6 @@ import com.umc.devine.infrastructure.outbox.payload.MemberExternalCleanupPayload
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * 탈퇴 외부 정리 2단계: Clerk 사용자 삭제(01-1 FUNC-MEM-005 2번). 사용자의 세션도 함께 끝난다.
- * 끝나면 S3 이미지 삭제를 기록한다.
- */
 @Component
 @RequiredArgsConstructor
 public class ClerkUserDeleteHandler implements OutboxTaskHandler {

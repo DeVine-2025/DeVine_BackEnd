@@ -19,14 +19,8 @@ import java.util.List;
 import java.util.Map;
 
 /**
- * 아웃박스 작업을 실행한다(01-1 FUNC-MEM-005).
- *
- * <ul>
- *     <li>작업마다 새 트랜잭션에서 행을 잠그고(SKIP LOCKED) 실행해, 한 작업의 실패가 다른 작업에 번지지 않게 한다.</li>
- *     <li>성공하면 행을 지운다(clerk_id 같은 식별값을 남기지 않기 위해).</li>
- *     <li>실패하면 1분부터 2배씩(최대 6시간) 늦춰 재시도하고, 한도를 넘으면 FAILED로 남기고 운영자에게 알린다.</li>
- *     <li>외부 정리가 실패해도 탈퇴 결과는 바꾸지 않는다.</li>
- * </ul>
+ * 성공한 행은 지운다(clerk_id 같은 식별값을 남기지 않기 위해).
+ * 외부 정리가 실패해도 탈퇴 결과는 바꾸지 않는다.
  */
 @Slf4j
 @Component
@@ -61,7 +55,6 @@ public class OutboxTaskProcessor {
         this.batchSize = batchSize;
     }
 
-    /** 지금 실행할 차례인 작업을 처리하고, 처리를 시도한 건수를 돌려준다. */
     public int processDue() {
         List<Long> ids = outboxTaskRepository.findDueIds(
                 OutboxTaskStatus.PENDING, LocalDateTime.now(), PageRequest.of(0, batchSize));

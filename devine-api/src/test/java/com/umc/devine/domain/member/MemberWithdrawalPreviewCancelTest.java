@@ -54,10 +54,7 @@ import java.util.List;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * 01-1 회원 탈퇴 FUNC-MEM-001(미리보기), FUNC-MEM-002(대기 건 일괄 취소).
- * 시나리오 T2, T3, 03 문서 P18.
- */
+/** 탈퇴 미리보기, 대기 건 일괄 취소. 시나리오 T2, T3, P18 */
 class MemberWithdrawalPreviewCancelTest extends IntegrationTestSupport {
 
     @Autowired private MemberWithdrawalQueryService queryService;

@@ -15,7 +15,7 @@ import com.umc.devine.domain.member.entity.Member;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
 
-    /** 회원 탈퇴용: 이 회원이 보낸 메시지만 지운다. 상대방이 보낸 메시지는 상대방 것이라 남긴다. */
+    /** 상대방이 보낸 메시지는 남긴다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM ChatMessage cm WHERE cm.sender = :member")
     int deleteAllBySender(@Param("member") Member member);

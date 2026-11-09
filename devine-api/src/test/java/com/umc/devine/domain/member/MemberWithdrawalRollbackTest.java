@@ -44,10 +44,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.BDDMockito.given;
 
-/**
- * T14: 탈퇴 처리 중 DB 오류가 나면 전체 롤백된다. 환불 신청 행도, 아웃박스 작업(운영자 메일/외부 정리)도 없고 회원 상태는 그대로다.
- * 롤백 여부를 실제 커밋 기준으로 보려고 테스트 트랜잭션을 쓰지 않고, 끝나면 직접 지운다.
- */
+/** 시나리오 T14. 롤백을 실제 커밋 기준으로 보려고 테스트 트랜잭션을 쓰지 않고, 끝나면 직접 지운다. */
 @Transactional(propagation = Propagation.NOT_SUPPORTED)
 class MemberWithdrawalRollbackTest extends IntegrationTestSupport {
 

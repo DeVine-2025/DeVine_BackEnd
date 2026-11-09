@@ -14,10 +14,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.function.Supplier;
 
-/**
- * 보관 만료 파기 배치(01-1 FUNC-MEM-007). 하루 1회 실행한다.
- * 단계마다 따로 실행해 한 단계가 실패해도 나머지는 진행하고, 실패하면 운영자에게 알린다(다음 날 다시 처리된다).
- */
+/** 한 단계가 실패해도 나머지는 진행하고, 실패하면 운영자에게 알린다. */
 @Slf4j
 @Component
 @RequiredArgsConstructor

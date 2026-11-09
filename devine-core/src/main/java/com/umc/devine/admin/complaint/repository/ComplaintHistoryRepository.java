@@ -11,7 +11,6 @@ import com.umc.devine.domain.member.entity.Member;
 
 public interface ComplaintHistoryRepository extends JpaRepository<ComplaintHistory, Long> {
 
-    /** 회원 탈퇴용: 처리자 칸을 비운다. */
     @Modifying(flushAutomatically = true)
     @Query("UPDATE ComplaintHistory h SET h.resolver = NULL WHERE h.resolver = :member")
     int clearResolver(@Param("member") Member member);

@@ -97,8 +97,7 @@ public class ReportCommandServiceImpl implements ReportCommandService {
             return;
         }
 
-        // 생성 중에 탈퇴한 회원(01-1 FUNC-MEM-003): 결과를 버리고 생성권은 돌려주지 않는다(쓴 것으로 본다).
-        // 탈퇴하면 리포트 행이 함께 지워져 보통은 위에서 REPORT_NOT_FOUND가 나지만, 행이 남은 경우를 위해 한 번 더 막는다.
+        // 탈퇴한 회원이면 결과를 버리고 생성권도 돌려주지 않는다. 보통은 리포트 행이 함께 지워져 위에서 404가 난다
         if (mainReport.getGitRepoUrl().getMember().isWithdrawn()) {
             log.warn("탈퇴한 회원의 리포트 콜백 - 결과 폐기, 생성권 미반환 - mainReportId: {}, detailReportId: {}",
                     request.mainReportId(), request.detailReportId());

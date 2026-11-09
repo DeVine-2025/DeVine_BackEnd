@@ -43,9 +43,6 @@ import java.time.LocalDateTime;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-/**
- * 01-1 FUNC-MEM-007 보관 만료 파기 배치.
- */
 class WithdrawalRetentionPurgeTest extends IntegrationTestSupport {
 
     @Autowired private WithdrawalRetentionPurgeService purgeService;

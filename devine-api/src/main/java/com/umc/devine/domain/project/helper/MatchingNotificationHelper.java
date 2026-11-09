@@ -84,10 +84,7 @@ public class MatchingNotificationHelper {
         );
     }
 
-    /**
-     * 회원 탈퇴 전 대기 건 일괄 취소(FUNC-MEM-002)에서 상대방에게 보내는 알림.
-     * 탈퇴한다는 사실은 알리지 않는다.
-     */
+    /** 탈퇴한다는 사실은 알리지 않는다. */
     public void notifyPendingCancelled(Matching matching, Member canceller, Member counterpart) {
         Project project = matching.getProject();
         boolean apply = matching.isApplyType();

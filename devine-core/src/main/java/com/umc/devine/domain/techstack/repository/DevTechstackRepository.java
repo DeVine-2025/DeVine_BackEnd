@@ -14,12 +14,11 @@ import java.util.List;
 public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long> {
     List<DevTechstack> findAllByMember(Member member);
 
-    /** GitHub 데이터 삭제용: GitHub(리포트 분석)에서 가져온 AUTO 행만 지우고, 직접 입력한 MANUAL은 남긴다. */
+    /** 리포트 분석으로 들어온 AUTO만 지우고 직접 입력한 MANUAL은 남긴다. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member AND dt.source = :source")
     int deleteAllByMemberAndSource(@Param("member") Member member, @Param("source") TechstackSource source);
 
-    /** 회원 탈퇴용: 보유 기술 전체 삭제. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);

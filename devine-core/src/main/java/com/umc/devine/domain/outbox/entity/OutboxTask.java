@@ -9,11 +9,7 @@ import org.hibernate.annotations.UpdateTimestamp;
 
 import java.time.LocalDateTime;
 
-/**
- * 트랜잭션 커밋 뒤에 실행할 외부 작업.
- * 같은 트랜잭션에서 저장하므로 롤백되면 작업도 사라진다. 스케줄러는 커밋된 행만 본다.
- * BaseEntity를 상속하지 않는다(created_by에 탈퇴 회원의 clerk_id가 남지 않도록).
- */
+/** created_by에 탈퇴 회원의 clerk_id가 남지 않도록 BaseEntity를 상속하지 않는다. */
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -68,14 +64,12 @@ public class OutboxTask {
                 .build();
     }
 
-    /** 실패를 기록하고 다음 시도 시각을 정한다. */
     public void recordFailure(String error, LocalDateTime nextAttemptAt) {
         this.attemptCount++;
         this.lastError = truncate(error);
         this.nextAttemptAt = nextAttemptAt;
     }
 
-    /** 재시도 한도를 넘겨 최종 실패로 남긴다. */
     public void markFailed(String error) {
         this.attemptCount++;
         this.lastError = truncate(error);

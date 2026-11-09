@@ -22,9 +22,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * 01-1 FUNC-MEM-008 채팅: 탈퇴한 회원은 "탈퇴한 회원"으로 보이고 대화할 수 없다. 시나리오 T7.
- */
+/** 시나리오 T7 */
 class ChatWithdrawnMemberTest extends IntegrationTestSupport {
 
     @Autowired private ChatCommandService chatCommandService;

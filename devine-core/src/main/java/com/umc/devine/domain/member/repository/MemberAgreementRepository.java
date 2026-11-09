@@ -13,7 +13,6 @@ import org.springframework.data.repository.query.Param;
 
 public interface MemberAgreementRepository extends JpaRepository<MemberAgreement, Long> {
 
-    /** 회원 탈퇴용. */
     @Modifying(flushAutomatically = true)
     @Query("DELETE FROM MemberAgreement ma WHERE ma.member = :member")
     int deleteAllByMemberBulk(@Param("member") Member member);

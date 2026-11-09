@@ -9,7 +9,7 @@ import java.util.List;
 
 public class ComplaintConverter {
 
-    // 탈퇴로 신고자/피신고자 칸이 비워진 신고(01-1 기능명세서 5장)
+    // 탈퇴로 신고자/피신고자 칸이 비워진 신고
     private static String nicknameOf(Member member) {
         return member == null ? Member.WITHDRAWN_DISPLAY_NAME : member.getNickname();
     }

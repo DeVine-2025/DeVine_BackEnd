@@ -40,9 +40,7 @@ import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.within;
 import static org.mockito.BDDMockito.given;
 
-/**
- * 01-1 FUNC-MEM-006 결정 C(플래그 ON). 시나리오 T12. 플래그 OFF(T11)는 MemberWithdrawalExecuteTest에서 본다.
- */
+/** 정지/소명 중 탈퇴자 재가입 제한(플래그 ON). 시나리오 T12 */
 @RecordApplicationEvents
 @TestPropertySource(properties = {
         "withdrawal.retain-sanctioned-member=true",

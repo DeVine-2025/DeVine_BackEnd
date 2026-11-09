@@ -20,7 +20,6 @@ public interface PaymentRefundRepository extends JpaRepository<PaymentRefund, Lo
 
     Optional<PaymentRefund> findTopByPaymentIdOrderByIdDesc(Long paymentId);
 
-    /** 탈퇴 환불 신청(REQUESTED)이 있는 결제는 관리자 결제 전체 환불을 막는다(과다 환불 방지). */
     boolean existsByPaymentIdAndStatus(Long paymentId, RefundStatus status);
 
     @Lock(LockModeType.PESSIMISTIC_WRITE)

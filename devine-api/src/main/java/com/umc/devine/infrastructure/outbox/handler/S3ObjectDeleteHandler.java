@@ -9,10 +9,7 @@ import com.umc.devine.infrastructure.s3.S3Service;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Component;
 
-/**
- * 탈퇴 외부 정리 3단계: 프로필, 프로젝트, 에디터 이미지 S3 객체 삭제(01-1 FUNC-MEM-005 3번).
- * S3 삭제는 없는 키도 성공이라, 재시도 때 이미 지운 키를 다시 지워도 된다.
- */
+/** S3 삭제는 없는 키도 성공이라 재시도해도 된다. */
 @Component
 @RequiredArgsConstructor
 public class S3ObjectDeleteHandler implements OutboxTaskHandler {

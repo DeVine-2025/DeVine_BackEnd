@@ -14,11 +14,7 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Component;
 import org.springframework.util.StringUtils;
 
-/**
- * 탈퇴 외부 정리 1단계: GitHub OAuth 앱 권한 회수(01-1 FUNC-MEM-005 1번).
- * Clerk에서 토큰을 받아야 하므로 Clerk 사용자 삭제보다 먼저 한다. 끝나면 Clerk 삭제를 기록한다.
- * OAuth 앱 client_id/secret이 설정되지 않았으면 회수를 건너뛴다.
- */
+/** Clerk에서 토큰을 받아야 하므로 Clerk 사용자 삭제보다 먼저 실행한다. */
 @Slf4j
 @Component
 public class GithubGrantRevokeHandler implements OutboxTaskHandler {

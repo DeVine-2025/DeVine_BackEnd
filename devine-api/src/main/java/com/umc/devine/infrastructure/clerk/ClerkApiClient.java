@@ -66,12 +66,6 @@ public class ClerkApiClient {
         }
     }
 
-    /**
-     * Clerk 사용자의 가입(기본) 이메일 조회(회원 탈퇴 FUNC-MEM-006 1번).
-     *
-     * @return 기본 이메일. 없으면 empty
-     * @throws IllegalStateException Clerk API 호출 실패
-     */
     @SuppressWarnings("unchecked")
     public Optional<String> getPrimaryEmail(String clerkUserId) {
         String clerkSecretKey = env.getProperty("clerk.secret-key");
@@ -106,12 +100,7 @@ public class ClerkApiClient {
                 .findFirst();
     }
 
-    /**
-     * Clerk 사용자 삭제(회원 탈퇴 FUNC-MEM-005). 소셜 이메일/프로필 사진이 Clerk에 남지 않도록 지우고, 세션도 함께 끝난다.
-     * 이미 지워진 사용자(404)는 성공으로 본다(재시도 멱등).
-     *
-     * @throws IllegalStateException 그 밖의 실패. 아웃박스가 재시도한다
-     */
+    /** 이미 지워진 사용자(404)는 성공으로 본다. */
     public void deleteUser(String clerkUserId) {
         String clerkSecretKey = env.getProperty("clerk.secret-key");
         String url = CLERK_API_BASE_URL + "/users/" + clerkUserId;

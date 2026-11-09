@@ -100,10 +100,7 @@ import java.util.Map;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
-/**
- * 01-1 회원 탈퇴 FUNC-MEM-003(탈퇴 실행), FUNC-MEM-004 1번(환불 신청 기록)과 기능명세서 5장 테이블별 처리.
- * 시나리오 T1, T2, T4, T6-3, T6-4, T13.
- */
+/** 회원 탈퇴 실행. 시나리오 T1, T2, T4, T6-3, T6-4, T13 */
 class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
 
     @Autowired private MemberWithdrawalCommandService withdrawalService;

@@ -144,7 +144,7 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
     // 삭제 시 매칭 이력이 있으면 프로젝트 행(이름)을 남긴다
     boolean existsByProject(Project project);
 
-    // 보관 만료 파기 배치용(01-1 FUNC-MEM-007 1번): 개발자 쪽이나 PM 쪽이 탈퇴한 매칭
+    // 보관 만료 파기 배치용: 개발자 쪽이나 PM 쪽이 탈퇴한 매칭
     @Query("SELECT m FROM Matching m " +
             "JOIN FETCH m.project p " +
             "JOIN FETCH p.member pm " +

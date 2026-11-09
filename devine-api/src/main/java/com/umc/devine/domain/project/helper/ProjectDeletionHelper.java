@@ -16,11 +16,7 @@ import org.springframework.stereotype.Component;
 
 import java.util.List;
 
-/**
- * 프로젝트 삭제 공통 함수(03 기능명세서 FUNC-PRJ-005 처리 표).
- * 프로젝트 삭제(상태 확인 뒤 호출)와 회원 탈퇴(01-1, 상태 확인 생략)에서 같이 쓴다.
- * DB만 바꾸고 외부 호출은 하지 않는다. 호출하는 쪽의 트랜잭션 안에서 실행된다.
- */
+/** 프로젝트 삭제와 회원 탈퇴에서 같이 쓴다. 탈퇴에서는 상태 확인 없이 부른다. */
 @Component
 @RequiredArgsConstructor
 public class ProjectDeletionHelper {

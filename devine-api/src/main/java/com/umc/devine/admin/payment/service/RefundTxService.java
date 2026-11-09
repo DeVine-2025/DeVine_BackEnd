@@ -40,7 +40,7 @@ public class RefundTxService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
         findPaidTransaction(payment);
-        // 탈퇴 환불은 신청 금액만 부분 취소해야 한다. 결제 전체 취소로 처리하면 과다 환불이 된다(01-1 PRD)
+        // 탈퇴 환불은 신청 금액만 부분 취소해야 한다. 결제 전체를 취소하면 과다 환불이 된다
         if (paymentRefundRepository.existsByPaymentIdAndStatus(paymentId, RefundStatus.REQUESTED)) {
             throw new PaymentException(PaymentErrorReason.WITHDRAWAL_REFUND_REQUESTED);
         }

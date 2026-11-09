@@ -477,13 +477,7 @@ public class GitHubApiClient {
         return null;
     }
 
-    /**
-     * OAuth 앱에 준 사용자의 권한(grant)을 회수한다(회원 탈퇴 FUNC-MEM-005).
-     * GitHub "Delete an app authorization" API: OAuth 앱의 client_id/secret으로 Basic 인증한다.
-     * 토큰이 이미 무효(404, 422)이면 회수할 것이 없으므로 성공으로 본다.
-     *
-     * @throws IllegalStateException 그 밖의 실패. 아웃박스가 재시도한다
-     */
+    /** OAuth 앱 client_id/secret으로 Basic 인증한다. 토큰이 이미 무효(404, 422)면 성공으로 본다. */
     public void revokeGrant(String clientId, String clientSecret, String accessToken) {
         String url = GITHUB_API_BASE_URL + "/applications/" + clientId + "/grant";
         String basic = Base64.getEncoder()

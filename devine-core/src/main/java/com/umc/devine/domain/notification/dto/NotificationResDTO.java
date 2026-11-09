@@ -24,7 +24,7 @@ public class NotificationResDTO {
             Long id,
             String nickname,
             String profileImageUrl,
-            // 탈퇴한 회원이면 true. 화면은 프로필 링크를 막는다(01-1 FUNC-MEM-008)
+            // 탈퇴한 회원이면 true. 화면은 프로필 링크를 막는다
             boolean withdrawn
     ) {}
 

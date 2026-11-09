@@ -22,7 +22,7 @@ public class ChatResDTO {
             String nickname,
             String image,
             String mainType,
-            // 탈퇴한 회원이면 true. 화면은 프로필 링크와 입력창을 막는다(01-1 FUNC-MEM-008)
+            // 탈퇴한 회원이면 true. 화면은 프로필 링크와 입력창을 막는다
             boolean withdrawn
     ) {}
 

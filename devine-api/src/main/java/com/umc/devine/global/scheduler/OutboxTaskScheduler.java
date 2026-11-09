@@ -7,9 +7,7 @@ import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
-/**
- * 아웃박스 안전망. 커밋 직후 실행을 놓쳤거나(서버 재시작 등) 재시도 시각이 된 작업을 주기적으로 실행한다.
- */
+/** 커밋 직후 실행을 놓친 작업(서버 재시작 등)과 재시도 시각이 된 작업을 잡는다. */
 @Slf4j
 @Component
 @RequiredArgsConstructor

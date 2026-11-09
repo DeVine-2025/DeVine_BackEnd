@@ -6,10 +6,7 @@ import lombok.*;
 
 import java.time.LocalDate;
 
-/**
- * 탈퇴 사유 통계(FUNC-MEM-003 5번).
- * 회원과 연결하지 않도록 member_id를 두지 않고, BaseEntity도 상속하지 않는다(created_by에 clerk_id가 들어가므로).
- */
+/** created_by에 clerk_id가 들어가지 않도록 BaseEntity를 상속하지 않고 member_id도 두지 않는다. */
 @Entity
 @Builder
 @NoArgsConstructor(access = AccessLevel.PROTECTED)

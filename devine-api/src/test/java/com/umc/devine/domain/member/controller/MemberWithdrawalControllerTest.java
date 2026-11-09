@@ -41,10 +41,7 @@ import static org.springframework.test.web.servlet.request.MockMvcRequestBuilder
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.jsonPath;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-/**
- * 회원 탈퇴 API를 HTTP 계층(보안 필터, 요청 검증, 예외 응답 JSON)까지 확인한다.
- * 테스트 트랜잭션이 커밋되지 않으므로 아웃박스 외부 작업(Clerk/S3)은 실행되지 않는다.
- */
+/** 테스트 트랜잭션이 커밋되지 않으므로 아웃박스 외부 작업은 실행되지 않는다. */
 class MemberWithdrawalControllerTest extends ControllerIntegrationTestSupport {
 
     @Autowired private MemberRepository memberRepository;

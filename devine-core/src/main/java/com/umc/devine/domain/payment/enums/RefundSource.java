@@ -1,8 +1,5 @@
 package com.umc.devine.domain.payment.enums;
 
-/**
- * 환불 신청 경로.
- */
 public enum RefundSource {
     /** 관리자가 결제 전체를 PG 취소한 환불. */
     ADMIN,
