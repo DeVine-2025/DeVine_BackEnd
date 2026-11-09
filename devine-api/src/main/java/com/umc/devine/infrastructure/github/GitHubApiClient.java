@@ -6,15 +6,18 @@ import com.umc.devine.infrastructure.github.dto.GitHubContributionDTO;
 import com.umc.devine.infrastructure.github.dto.GitHubRepositoryDTO;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.ParameterizedTypeReference;
+import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.stereotype.Component;
 import org.springframework.web.client.RestClient;
 
+import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
 import java.time.OffsetDateTime;
 import java.time.ZoneOffset;
 import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -472,5 +475,32 @@ public class GitHubApiClient {
         }
 
         return null;
+    }
+
+    /**
+     * OAuth 앱에 준 사용자의 권한(grant)을 회수한다(회원 탈퇴 FUNC-MEM-005).
+     * GitHub "Delete an app authorization" API: OAuth 앱의 client_id/secret으로 Basic 인증한다.
+     * 토큰이 이미 무효(404, 422)이면 회수할 것이 없으므로 성공으로 본다.
+     *
+     * @throws IllegalStateException 그 밖의 실패. 아웃박스가 재시도한다
+     */
+    public void revokeGrant(String clientId, String clientSecret, String accessToken) {
+        String url = GITHUB_API_BASE_URL + "/applications/" + clientId + "/grant";
+        String basic = Base64.getEncoder()
+                .encodeToString((clientId + ":" + clientSecret).getBytes(StandardCharsets.UTF_8));
+
+        restClient.method(HttpMethod.DELETE)
+                .uri(url)
+                .header("Authorization", "Basic " + basic)
+                .header("Accept", "application/vnd.github+json")
+                .header("X-GitHub-Api-Version", "2022-11-28")
+                .body(Map.of("access_token", accessToken))
+                .exchange((request, response) -> {
+                    int status = response.getStatusCode().value();
+                    if (response.getStatusCode().is2xxSuccessful() || status == 404 || status == 422) {
+                        return null;
+                    }
+                    throw new IllegalStateException("GitHub 권한 회수 실패: HTTP " + status);
+                });
     }
 }

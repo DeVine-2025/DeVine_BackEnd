@@ -37,6 +37,11 @@ integration:
     connect-timeout: 500
     read-timeout: 500
 
+# 아웃박스 스케줄러를 끄지 않으면 테스트 중 실제 Clerk·GitHub·S3를 호출할 수 있다. 테스트는 OutboxTaskProcessor를 직접 부른다.
+outbox:
+  scheduler:
+    enabled: false
+
 # Thread Pool Configuration
 executor:
   async:
