@@ -44,6 +44,10 @@ public class MemberReportCredit extends BaseEntity {
         return revoked;
     }
 
+    public void forfeitAll() {
+        this.remainingCount = 0;
+    }
+
     public void useCredit() {
         if (this.remainingCount <= 0) {
             throw new TicketException(TicketErrorReason.INSUFFICIENT_CREDITS);

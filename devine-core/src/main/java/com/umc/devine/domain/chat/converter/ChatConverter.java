@@ -16,9 +16,10 @@ public class ChatConverter {
     public static ChatResDTO.OtherMemberInfo toOtherMemberInfo(Member member) {
         return ChatResDTO.OtherMemberInfo.builder()
                 .clerkId(member.getClerkId())
-                .nickname(member.getNickname())
-                .image(member.getImage())
+                .nickname(member.getDisplayNickname())
+                .image(member.getDisplayImage())
                 .mainType(member.getMainType().name())
+                .withdrawn(member.isWithdrawn())
                 .build();
     }
 
@@ -34,11 +35,12 @@ public class ChatConverter {
         return ChatResDTO.ChatMessageDetail.builder()
                 .messageId(message.getId())
                 .senderClerkId(message.getSender().getClerkId())
-                .senderNickname(message.getSender().getNickname())
-                .senderImage(message.getSender().getImage())
+                .senderNickname(message.getSender().getDisplayNickname())
+                .senderImage(message.getSender().getDisplayImage())
                 .content(ChatMessageBlindPolicy.resolveContent(message, reportedByViewer))
                 .isRead(message.getIsRead())
                 .createdAt(message.getCreatedAt())
+                .senderWithdrawn(message.getSender().isWithdrawn())
                 .build();
     }
 

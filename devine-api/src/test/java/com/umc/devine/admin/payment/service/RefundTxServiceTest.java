@@ -145,7 +145,7 @@ class RefundTxServiceTest {
                 .amount(4900L)
                 .currency("KRW")
                 .build();
-        given(paymentRepository.findById(1L)).willReturn(Optional.of(unpaid));
+        given(paymentRepository.findByIdForUpdate(1L)).willReturn(Optional.of(unpaid));
 
         assertThatThrownBy(() -> refundTxService.claim(1L, "고객 요청"))
                 .isInstanceOf(PaymentException.class);

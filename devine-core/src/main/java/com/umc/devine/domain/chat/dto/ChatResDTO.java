@@ -21,7 +21,8 @@ public class ChatResDTO {
             String clerkId,
             String nickname,
             String image,
-            String mainType
+            String mainType,
+            boolean withdrawn
     ) {}
 
     @Builder
@@ -32,7 +33,8 @@ public class ChatResDTO {
             String senderImage,
             String content,
             Boolean isRead,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean senderWithdrawn
     ) {}
 
     @Builder

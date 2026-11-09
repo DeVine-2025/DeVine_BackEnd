@@ -1,13 +1,17 @@
 package com.umc.devine.domain.payment.entity;
 
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.payment.enums.TransactionStatus;
+import com.umc.devine.domain.payment.enums.TransactionType;
 import com.umc.devine.domain.ticket.entity.PaymentTicket;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
 import lombok.*;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 @Entity
 @Table(name = "payment")
@@ -52,5 +56,14 @@ public class Payment extends BaseEntity {
 
     public void addPaymentTicket(PaymentTicket paymentTicket) {
         this.paymentTickets.add(paymentTicket);
+    }
+
+    public LocalDateTime paidAtOrCreatedAt() {
+        return this.transactions.stream()
+                .filter(t -> t.getType() == TransactionType.PAYMENT && t.getStatus() == TransactionStatus.PAID)
+                .map(Transaction::getPaidAt)
+                .filter(Objects::nonNull)
+                .findFirst()
+                .orElse(getCreatedAt());
     }
 }

@@ -10,6 +10,7 @@ import com.umc.devine.domain.payment.enums.TransactionStatus;
 public enum AdminPaymentStatus {
     PAID,
     FAILED,
+    REFUND_REQUESTED,
     REFUND_IN_PROGRESS,
     REFUNDED,
     REFUND_FAILED,
@@ -21,6 +22,7 @@ public enum AdminPaymentStatus {
             return transactionStatus == TransactionStatus.PAID ? PAID : FAILED;
         }
         return switch (refundStatus) {
+            case REQUESTED -> REFUND_REQUESTED;
             case IN_PROGRESS -> REFUND_IN_PROGRESS;
             case COMPLETED -> REFUNDED;
             case FAILED -> REFUND_FAILED;

@@ -23,7 +23,8 @@ public class NotificationResDTO {
     public record SenderInfo(
             Long id,
             String nickname,
-            String profileImageUrl
+            String profileImageUrl,
+            boolean withdrawn
     ) {}
 
     @Builder

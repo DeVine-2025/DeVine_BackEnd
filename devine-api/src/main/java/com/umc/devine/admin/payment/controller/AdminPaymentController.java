@@ -4,6 +4,7 @@ import com.umc.devine.admin.payment.dto.AdminPaymentReqDTO;
 import com.umc.devine.admin.payment.dto.AdminPaymentResDTO;
 import com.umc.devine.admin.payment.service.AdminPaymentQueryService;
 import com.umc.devine.admin.payment.service.AdminPaymentRefundService;
+import com.umc.devine.admin.payment.service.AdminWithdrawalRefundService;
 import com.umc.devine.domain.payment.exception.code.PaymentSuccessCode;
 import com.umc.devine.global.apiPayload.ApiResponse;
 import com.umc.devine.global.dto.PageRequest;
@@ -22,6 +23,7 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
 
     private final AdminPaymentRefundService adminPaymentRefundService;
     private final AdminPaymentQueryService adminPaymentQueryService;
+    private final AdminWithdrawalRefundService adminWithdrawalRefundService;
 
     @Override
     @GetMapping
@@ -55,6 +57,17 @@ public class AdminPaymentController implements AdminPaymentControllerDocs {
         return ApiResponse.onSuccess(
                 PaymentSuccessCode.PAYMENT_REFUNDED,
                 adminPaymentRefundService.refund(paymentId, request.reason())
+        );
+    }
+
+    @Override
+    @PatchMapping("/refunds/{refundId}/complete")
+    public ApiResponse<AdminPaymentResDTO.WithdrawalRefundCompleteDTO> completeWithdrawalRefund(
+            @PathVariable Long refundId
+    ) {
+        return ApiResponse.onSuccess(
+                PaymentSuccessCode.WITHDRAWAL_REFUND_COMPLETED,
+                adminWithdrawalRefundService.complete(refundId)
         );
     }
 }

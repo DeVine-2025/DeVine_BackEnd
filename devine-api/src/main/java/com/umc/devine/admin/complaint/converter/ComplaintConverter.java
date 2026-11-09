@@ -3,19 +3,23 @@ package com.umc.devine.admin.complaint.converter;
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.domain.complaint.entity.Complaint;
 import com.umc.devine.domain.complaint.enums.ComplaintStatus;
-import com.umc.devine.domain.member.enums.MemberStatus;
+import com.umc.devine.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class ComplaintConverter {
 
+    private static String nicknameOf(Member member) {
+        return member == null ? Member.WITHDRAWN_DISPLAY_NAME : member.getDisplayNickname();
+    }
+
     public static ComplaintResDTO.ComplaintSummaryDTO toComplaintSummaryDTO(Complaint complaint, boolean slaExceeded) {
         return ComplaintResDTO.ComplaintSummaryDTO.builder()
                 .complaintId(complaint.getId())
                 .targetType(complaint.getTargetType())
-                .complainantNickname(complaint.getComplainant().getNickname())
-                .respondentNickname(complaint.getRespondentMember().getNickname())
+                .complainantNickname(nicknameOf(complaint.getComplainant()))
+                .respondentNickname(nicknameOf(complaint.getRespondentMember()))
                 .reasonCode(complaint.getReasonCode())
                 .createdAt(complaint.getCreatedAt())
                 .status(complaint.getStatus())
@@ -40,8 +44,8 @@ public class ComplaintConverter {
                 .complaintId(complaint.getId())
                 .targetType(complaint.getTargetType())
                 .targetId(complaint.getTargetId())
-                .complainantNickname(complaint.getComplainant().getNickname())
-                .respondentNickname(complaint.getRespondentMember().getNickname())
+                .complainantNickname(nicknameOf(complaint.getComplainant()))
+                .respondentNickname(nicknameOf(complaint.getRespondentMember()))
                 .reasonCode(complaint.getReasonCode())
                 .detail(complaint.getDetail())
                 .status(complaint.getStatus())
@@ -71,6 +75,7 @@ public class ComplaintConverter {
     }
 
     private static boolean isWithdrawn(Complaint complaint) {
-        return complaint.getRespondentMember().getUsed() == MemberStatus.DELETED;
+        Member respondent = complaint.getRespondentMember();
+        return respondent == null || respondent.isWithdrawn();
     }
 }

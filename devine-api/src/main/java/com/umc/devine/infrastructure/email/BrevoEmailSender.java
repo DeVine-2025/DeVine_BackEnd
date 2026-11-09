@@ -26,6 +26,14 @@ public class BrevoEmailSender implements EmailSender {
 
     @Override
     public void send(String to, String subject, String body) {
+        try {
+            sendOrThrow(to, subject, body);
+        } catch (EmailSendException e) {
+        }
+    }
+
+    @Override
+    public void sendOrThrow(String to, String subject, String body) {
         Map<String, Object> requestBody = Map.of(
                 "sender", Map.of("name", fromName, "email", fromEmail),
                 "to", List.of(Map.of("email", to)),
@@ -48,6 +56,7 @@ public class BrevoEmailSender implements EmailSender {
             log.info("[BrevoEmailSender] 이메일 발송 성공 - to: {}", to);
         } catch (Exception e) {
             log.error("[BrevoEmailSender] 이메일 발송 실패 - to: {}, error: {}", to, e.getMessage());
+            throw new EmailSendException("Brevo 이메일 발송 실패", e);
         }
     }
 }

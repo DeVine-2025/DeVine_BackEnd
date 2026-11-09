@@ -15,6 +15,7 @@ import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.infrastructure.email.EmailNotificationEvent;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.ApplicationEventPublisher;
 import org.springframework.stereotype.Service;
@@ -35,11 +36,14 @@ public class AdminMemberCommandServiceImpl implements AdminMemberCommandService 
     private final MemberStatusHistoryRepository memberStatusHistoryRepository;
     private final ContactRepository contactRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final EntityManager entityManager;
 
     @Override
     public AdminMemberResDTO.ChangeStatusRes changeStatus(String nickname, String processorClerkId, AdminMemberReqDTO.ChangeStatusReq request) {
         Member member = memberRepository.findByNicknameIncludingInactive(nickname)
                 .orElseThrow(() -> new MemberAdminException(MemberAdminErrorReason.MEMBER_NOT_FOUND));
+        memberRepository.findByIdForUpdate(member.getId());
+        entityManager.refresh(member);
 
         applyAction(member, request);
 

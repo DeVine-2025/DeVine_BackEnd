@@ -1,5 +1,6 @@
 package com.umc.devine.domain.payment.entity;
 
+import com.umc.devine.domain.payment.enums.RefundSource;
 import com.umc.devine.domain.payment.enums.RefundStatus;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -12,6 +13,8 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 public class PaymentRefund extends BaseEntity {
+
+    public static final String WITHDRAWAL_REASON = "회원 탈퇴";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +37,41 @@ public class PaymentRefund extends BaseEntity {
 
     @Column(name = "failure_reason", length = 255)
     private String failureReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private RefundSource source = RefundSource.ADMIN;
+
+    @Column(name = "refund_amount")
+    private Long refundAmount;
+
+    @Column(name = "refund_credit_count")
+    private Integer refundCreditCount;
+
+    @Column(name = "contact_email", length = 255)
+    private String contactEmail;
+
+    public static PaymentRefund requestForWithdrawal(Payment payment, long refundAmount, int refundCreditCount, String contactEmail) {
+        return PaymentRefund.builder()
+                .payment(payment)
+                .status(RefundStatus.REQUESTED)
+                .source(RefundSource.WITHDRAWAL)
+                .reason(WITHDRAWAL_REASON)
+                .refundAmount(refundAmount)
+                .refundCreditCount(refundCreditCount)
+                .contactEmail(contactEmail)
+                .build();
+    }
+
+    public void completeWithdrawalRequest() {
+        this.status = RefundStatus.COMPLETED;
+        this.contactEmail = null;
+    }
+
+    public boolean isWithdrawalRequest() {
+        return this.source == RefundSource.WITHDRAWAL;
+    }
 
     /** 외부 취소 호출 전 선점 레코드. 부분 유니크 인덱스가 활성 환불 중복을 막는다. */
     public static PaymentRefund claim(Payment payment, String reason) {

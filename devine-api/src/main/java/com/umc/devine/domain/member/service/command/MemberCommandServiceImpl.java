@@ -24,7 +24,9 @@ import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.ContactRepository;
 import com.umc.devine.domain.member.repository.GitRepoUrlRepository;
 import com.umc.devine.domain.member.repository.MemberAgreementRepository;
+import com.umc.devine.domain.member.helper.EmailHasher;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import com.umc.devine.domain.member.repository.MemberRestrictionRepository;
 import com.umc.devine.domain.member.repository.TermsRepository;
 import com.umc.devine.domain.techstack.converter.TechstackConverter;
 import com.umc.devine.domain.techstack.dto.TechstackResDTO;
@@ -47,6 +49,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.HashSet;
@@ -75,6 +78,8 @@ public class MemberCommandServiceImpl implements MemberCommandService {
     private final DevReportRepository devReportRepository;
     private final EntityManager entityManager;
     private final ReportCreditCommandService reportCreditCommandService;
+    private final EmailHasher emailHasher;
+    private final MemberRestrictionRepository memberRestrictionRepository;
 
     @Override
     public MemberResDTO.SignupResultDTO signup(ClerkPrincipal principal, MemberReqDTO.SignupDTO dto) {
@@ -82,6 +87,12 @@ public class MemberCommandServiceImpl implements MemberCommandService {
         if (memberRepository.existsByClerkId(principal.getClerkId())) {
             throw new MemberException(MemberErrorReason.ALREADY_REGISTERED);
         }
+
+        emailHasher.hash(principal.getEmail())
+                .filter(hash -> memberRestrictionRepository.existsByEmailHashAndExpiresAtAfter(hash, LocalDateTime.now()))
+                .ifPresent(hash -> {
+                    throw new MemberException(MemberErrorReason.RESTRICTED_FROM_SIGNUP);
+                });
 
         // 2. 프로필 이미지 검증 (선택사항)
         validateProfileImage(dto.imageUrl());

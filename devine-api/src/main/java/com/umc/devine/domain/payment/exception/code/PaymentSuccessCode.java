@@ -30,6 +30,9 @@ public enum PaymentSuccessCode implements BaseSuccessCode {
     PAYMENT_DETAIL_FOUND(HttpStatus.OK,
             "PAYMENT200_5",
             "결제 상세를 성공적으로 조회했습니다."),
+    WITHDRAWAL_REFUND_COMPLETED(HttpStatus.OK,
+            "PAYMENT200_6",
+            "회원 탈퇴 환불 신청을 완료 처리했습니다."),
     ;
 
     private final HttpStatus status;

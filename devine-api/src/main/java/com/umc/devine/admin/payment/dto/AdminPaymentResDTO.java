@@ -27,6 +27,25 @@ public class AdminPaymentResDTO {
             int revokedCredits
     ) {}
 
+    @Schema(description = "회원 탈퇴 환불 신청 완료 처리 결과")
+    @Builder
+    public record WithdrawalRefundCompleteDTO(
+            @Schema(description = "환불 신청 id", example = "12")
+            Long refundId,
+
+            @Schema(description = "결제 id", example = "3")
+            Long paymentId,
+
+            @Schema(description = "환불 상태", example = "COMPLETED")
+            RefundStatus status,
+
+            @Schema(description = "부분 취소한 환불 금액 (KRW)", example = "6600")
+            Long refundAmount,
+
+            @Schema(description = "환불한 생성권 수", example = "2")
+            Integer refundCreditCount
+    ) {}
+
     @Schema(description = "결제 목록 항목")
     @Builder
     public record PaymentSummaryDTO(

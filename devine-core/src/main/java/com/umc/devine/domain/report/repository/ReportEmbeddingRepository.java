@@ -2,9 +2,11 @@ package com.umc.devine.domain.report.repository;
 
 import com.umc.devine.domain.report.entity.ReportEmbedding;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
+import java.util.Collection;
 import java.util.Optional;
 
 public interface ReportEmbeddingRepository extends JpaRepository<ReportEmbedding, Long> {
@@ -12,6 +14,10 @@ public interface ReportEmbeddingRepository extends JpaRepository<ReportEmbedding
     Optional<ReportEmbedding> findByDevReportId(Long devReportId);
 
     boolean existsByDevReportId(Long devReportId);
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM ReportEmbedding e WHERE e.devReport.id IN :devReportIds")
+    int deleteAllByDevReportIdIn(@Param("devReportIds") Collection<Long> devReportIds);
 
     // 개발자의 최신 성공 상태 리포트 임베딩을 조회
     @Query(value = """

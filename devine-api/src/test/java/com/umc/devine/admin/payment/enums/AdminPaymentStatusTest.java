@@ -32,6 +32,8 @@ class AdminPaymentStatusTest {
     @Test
     @DisplayName("환불 상태가 있으면 결제 트랜잭션 상태와 무관하게 환불 상태를 따른다")
     void refundStatus_wins() {
+        assertThat(AdminPaymentStatus.of(TransactionStatus.PAID, RefundStatus.REQUESTED))
+                .isEqualTo(AdminPaymentStatus.REFUND_REQUESTED);
         assertThat(AdminPaymentStatus.of(TransactionStatus.PAID, RefundStatus.IN_PROGRESS))
                 .isEqualTo(AdminPaymentStatus.REFUND_IN_PROGRESS);
         assertThat(AdminPaymentStatus.of(TransactionStatus.PAID, RefundStatus.COMPLETED))

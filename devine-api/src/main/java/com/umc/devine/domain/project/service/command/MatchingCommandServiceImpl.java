@@ -19,6 +19,8 @@ import com.umc.devine.domain.project.repository.MatchingRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
 import com.umc.devine.domain.project.validator.MatchingValidator;
+import jakarta.persistence.EntityManager;
+import com.umc.devine.domain.member.enums.MemberStatus;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -35,9 +37,11 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private final MatchingValidator matchingValidator;
     private final MatchingNotificationHelper notificationHelper;
     private final ProjectLifecycleHelper lifecycleHelper;
+    private final EntityManager entityManager;
 
     @Override
-    public MatchingResDTO.ProposeResDTO applyToProject(Member member, Long projectId, ProjectPart part) {
+    public MatchingResDTO.ProposeResDTO applyToProject(Member current, Long projectId, ProjectPart part) {
+        Member member = lockActiveMember(current.getId());
         Project project = getProject(projectId);
 
         matchingValidator.validateForApply(member, project);
@@ -67,7 +71,7 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
 
     @Override
     public MatchingResDTO.ProposeResDTO proposeToMember(Member pmMember, String targetNickname, Long projectId, ProjectPart part, String content) {
-        Member targetMember = getMember(targetNickname);
+        Member targetMember = lockActiveMember(getMember(targetNickname).getId());
         Project project = getProject(projectId);
 
         matchingValidator.validateForPropose(pmMember, targetMember, project);
@@ -151,6 +155,16 @@ public class MatchingCommandServiceImpl implements MatchingCommandService {
     private Project getProject(Long projectId) {
         return projectRepository.findByIdForUpdate(projectId)
                 .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
+    }
+
+    private Member lockActiveMember(Long memberId) {
+        Member member = memberRepository.findByIdForUpdate(memberId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.MEMBER_NOT_FOUND));
+        entityManager.refresh(member);
+        if (member.getUsed() != MemberStatus.ACTIVE) {
+            throw new MatchingException(MatchingErrorReason.MEMBER_NOT_FOUND);
+        }
+        return member;
     }
 
     private Member getMember(String nickname) {

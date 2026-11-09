@@ -7,11 +7,15 @@ import com.umc.devine.domain.member.repository.querydsl.MemberQueryDsl;
 import com.umc.devine.domain.techstack.enums.TechName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
 import java.time.LocalDateTime;
+import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
 
@@ -41,8 +45,23 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Member> findByClerkId(@Param("clerkId") String clerkId);
 
+    @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used IN :statuses")
+    Optional<Member> findByClerkIdAndUsedIn(@Param("clerkId") String clerkId,
+                                            @Param("statuses") Collection<MemberStatus> statuses);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :id")
+    Optional<Member> findByIdForUpdate(@Param("id") Long id);
+
+    @Modifying(flushAutomatically = true)
+    @Query(value = "UPDATE member SET created_by = NULL, updated_by = NULL WHERE member_id = :id", nativeQuery = true)
+    int clearAuditColumns(@Param("id") Long id);
+
     @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     boolean existsByClerkId(@Param("clerkId") String clerkId);
+
+    @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.clerkId = :clerkId")
+    boolean existsByClerkIdInAnyStatus(@Param("clerkId") String clerkId);
 
     @Query("SELECT m.id FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     Optional<Long> findIdByClerkId(@Param("clerkId") String clerkId);

@@ -104,6 +104,10 @@ public class ChatCommandServiceImpl implements ChatCommandService {
         Member receiver = room.getOtherMember(memberId);
         Long receiverId = receiver.getId();
 
+        if (receiver.isWithdrawn()) {
+            throw new ChatException(ChatErrorReason.RECEIVER_WITHDRAWN);
+        }
+
         room.rejoin(receiverId);
 
         ChatMessage message = ChatMessage.builder()

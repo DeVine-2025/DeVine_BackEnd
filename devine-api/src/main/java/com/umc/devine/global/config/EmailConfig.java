@@ -5,6 +5,7 @@ import com.umc.devine.infrastructure.email.ConsoleEmailSender;
 import com.umc.devine.infrastructure.email.EmailSender;
 import com.umc.devine.infrastructure.email.SmtpEmailSender;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.beans.factory.annotation.Qualifier;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
@@ -19,7 +20,9 @@ public class EmailConfig {
 
     @Bean
     public EmailSender emailSender(
-            RestClient restClient,
+            @Qualifier("externalApiRestClient") RestClient restClient,
+            @Value("${external-api.connect-timeout:3000}") int connectTimeout,
+            @Value("${external-api.read-timeout:10000}") int readTimeout,
             @Value("${brevo.api-key:}") String brevoApiKey,
             @Value("${brevo.from-email:}") String brevoFromEmail,
             @Value("${brevo.from-name:}") String brevoFromName,
@@ -36,13 +39,14 @@ public class EmailConfig {
         }
         if (StringUtils.hasText(smtpUser)) {
             log.info("[EMAIL] SmtpEmailSender를 사용합니다.");
-            return new SmtpEmailSender(buildMailSender(smtpHost, smtpPort, smtpUser, smtpPass), smtpFrom, smtpFromName);
+            return new SmtpEmailSender(buildMailSender(smtpHost, smtpPort, smtpUser, smtpPass, connectTimeout, readTimeout), smtpFrom, smtpFromName);
         }
         log.warn("[EMAIL] brevo.api-key, smtp.user 모두 설정되지 않아 ConsoleEmailSender를 사용합니다.");
         return new ConsoleEmailSender();
     }
 
-    private JavaMailSenderImpl buildMailSender(String host, int port, String user, String pass) {
+    private JavaMailSenderImpl buildMailSender(String host, int port, String user, String pass,
+                                               int connectTimeout, int readTimeout) {
         JavaMailSenderImpl mailSender = new JavaMailSenderImpl();
         mailSender.setHost(host);
         mailSender.setPort(port);
@@ -53,6 +57,9 @@ public class EmailConfig {
         props.put("mail.transport.protocol", "smtp");
         props.put("mail.smtp.auth", "true");
         props.put("mail.smtp.starttls.enable", "true");
+        props.put("mail.smtp.connectiontimeout", String.valueOf(connectTimeout));
+        props.put("mail.smtp.timeout", String.valueOf(readTimeout));
+        props.put("mail.smtp.writetimeout", String.valueOf(readTimeout));
 
         return mailSender;
     }
