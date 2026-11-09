@@ -70,16 +70,22 @@ public class ComplaintModerationServiceImpl implements ComplaintModerationServic
     }
 
     private void applyChatResolution(Complaint complaint) {
-        if (!keepsBlinded(complaint)) {
+        ChatMessage message = targetReader.findChatMessage(complaint.getTargetId()).orElse(null);
+        if (message == null) {
             return;
         }
 
-        ChatMessage message = targetReader.findChatMessage(complaint.getTargetId()).orElse(null);
-        if (message == null || message.isHiddenByPolicy()) {
+        if (keepsBlinded(complaint)) {
+            if (!message.isHiddenByPolicy()) {
+                message.hideByPolicy();
+                complaint.markLinkedActionCompleted(LocalDateTime.now());
+            }
             return;
         }
-        message.hideByPolicy();
-        complaint.markLinkedActionCompleted(LocalDateTime.now());
+
+        if (message.isHiddenByPolicy() && canRestore(complaint)) {
+            message.showByPolicy();
+        }
     }
 
     private boolean canRestore(Complaint complaint) {

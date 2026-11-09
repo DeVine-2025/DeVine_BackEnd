@@ -53,6 +53,10 @@ public class ChatMessage extends BaseEntity {
         this.hiddenByPolicy = true;
     }
 
+    public void showByPolicy() {
+        this.hiddenByPolicy = false;
+    }
+
     public boolean isHiddenByPolicy() {
         return Boolean.TRUE.equals(this.hiddenByPolicy);
     }

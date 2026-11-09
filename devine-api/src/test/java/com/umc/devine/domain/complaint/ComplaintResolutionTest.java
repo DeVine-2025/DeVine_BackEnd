@@ -152,6 +152,36 @@ class ComplaintResolutionTest extends IntegrationTestSupport {
     }
 
     @Test
+    @DisplayName("삭제로 가린 채팅 메시지를 기각으로 재처리하면 다시 보인다")
+    void chatComplaint_dismissAfterDeleteRestoresMessage() {
+        ChatMessage message = saveMessage(respondent, "되돌릴 메시지");
+        Complaint complaint = saveComplaint(ComplaintTargetType.CHAT, message.getId(), ComplaintStatus.IN_REVIEW);
+        adminComplaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
+                completeWith(ComplaintAction.DELETE));
+
+        adminComplaintCommandService.updateStatus(complaint.getId(), admin.getClerkId(),
+                completeWith(ComplaintAction.DISMISS));
+
+        assertThat(chatMessageRepository.findById(message.getId()).orElseThrow().isHiddenByPolicy()).isFalse();
+    }
+
+    @Test
+    @DisplayName("다른 신고가 삭제로 확정돼 있으면 기각해도 채팅 메시지는 가려진 채 유지된다")
+    void chatComplaint_dismissKeepsHiddenWhenAnotherComplaintDeleted() {
+        ChatMessage message = saveMessage(respondent, "유지될 메시지");
+        Complaint first = saveComplaint(ComplaintTargetType.CHAT, message.getId(), ComplaintStatus.IN_REVIEW);
+        Complaint second = saveComplaintBy(saveMember("clerk_c4", "complainant4", MemberStatus.ACTIVE),
+                ComplaintTargetType.CHAT, message.getId(), ComplaintStatus.IN_REVIEW);
+        adminComplaintCommandService.updateStatus(second.getId(), admin.getClerkId(),
+                completeWith(ComplaintAction.DELETE));
+
+        adminComplaintCommandService.updateStatus(first.getId(), admin.getClerkId(),
+                completeWith(ComplaintAction.DISMISS));
+
+        assertThat(chatMessageRepository.findById(message.getId()).orElseThrow().isHiddenByPolicy()).isTrue();
+    }
+
+    @Test
     @DisplayName("다른 신고가 처리 중이면 기각해도 프로젝트 가림을 되돌리지 않는다")
     void dismiss_keepsBlindWhenAnotherComplaintIsInProgress() {
         Project project = saveProject();
