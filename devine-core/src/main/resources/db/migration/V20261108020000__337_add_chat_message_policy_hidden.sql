@@ -1,0 +1,1 @@
+ALTER TABLE chat_message ADD COLUMN hidden_by_policy BOOLEAN NOT NULL DEFAULT FALSE;

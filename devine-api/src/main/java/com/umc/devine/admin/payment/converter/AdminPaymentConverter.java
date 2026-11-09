@@ -40,7 +40,7 @@ public class AdminPaymentConverter {
         return AdminPaymentResDTO.PaymentDetailDTO.builder()
                 .paymentId(payment.getId())
                 .portonePaymentId(payment.getPortonePaymentId())
-                .memberNickname(payment.getMember().getNickname())
+                .memberNickname(payment.getMember().getDisplayNickname())
                 .orderName(payment.getOrderName())
                 .amount(payment.getAmount())
                 .currency(payment.getCurrency())

@@ -4,6 +4,7 @@ import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
@@ -33,7 +34,7 @@ public class MatchingConverter {
                 .matchingId(matching.getId())
                 .projectId(matching.getProject().getId())
                 .projectName(matching.getProject().getName())
-                .memberNickname(matching.getMember().getNickname())
+                .memberNickname(matching.getMember().getDisplayNickname())
                 .status(matching.getStatus())
                 .matchingType(matching.getMatchingType())
                 .createdAt(matching.getCreatedAt())
@@ -44,10 +45,19 @@ public class MatchingConverter {
     public static MatchingResDTO.DeveloperMatchingInfo toDeveloperMatchingInfo(
             Matching matching,
             List<MemberCategory> memberCategories,
-            List<DevTechstack> devTechstacks
+            List<DevTechstack> devTechstacks,
+            boolean canViewDetail
     ) {
         Member developer = matching.getMember();
         Project project = matching.getProject();
+        if (!canViewDetail) {
+            return MatchingResDTO.DeveloperMatchingInfo.builder()
+                    .matchingId(matching.getId()).projectName(project.getName())
+                    .developerNickname(developer.getNickname())
+                    .categories(List.of()).techStacks(List.of())
+                    .matchingType(matching.getMatchingType()).decision(matching.getDecision())
+                    .createdAt(matching.getCreatedAt()).canViewDetail(false).build();
+        }
 
         List<MatchingResDTO.CategoryInfo> categories = memberCategories.stream()
                 .map(mc -> MatchingResDTO.CategoryInfo.builder()
@@ -61,12 +71,14 @@ public class MatchingConverter {
                 .toList();
 
         return MatchingResDTO.DeveloperMatchingInfo.builder()
+                .canViewDetail(true)
                 .matchingId(matching.getId())
                 .projectId(project.getId())
                 .projectName(project.getName())
                 .developerId(developer.getId())
-                .developerNickname(developer.getNickname())
-                .developerImageUrl(developer.getImage())
+                .developerNickname(developer.getDisplayNickname())
+                .developerImageUrl(developer.getDisplayImage())
+                .developerWithdrawn(developer.isWithdrawn())
                 .part(matching.getPart())
                 .partName(matching.getPart() != null ? matching.getPart().getDisplayName() : null)
                 .categories(categories)
@@ -81,9 +93,17 @@ public class MatchingConverter {
     // 개발자용: 프로젝트 매칭 정보 변환
     public static MatchingResDTO.ProjectMatchingInfo toProjectMatchingInfo(
             Matching matching,
-            Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement
+            Map<Long, List<ProjectRequirementTechstack>> techstacksByRequirement,
+            boolean canViewDetail
     ) {
         Project project = matching.getProject();
+        if (!canViewDetail) {
+            return MatchingResDTO.ProjectMatchingInfo.builder()
+                    .matchingId(matching.getId()).projectName(project.getName()).positions(List.of())
+                    .matchingType(matching.getMatchingType()).decision(matching.getDecision())
+                    .projectDeleted(project.getStatus() == ProjectStatus.DELETED)
+                    .createdAt(matching.getCreatedAt()).canViewDetail(false).build();
+        }
 
         List<MatchingResDTO.PositionInfo> positions = project.getRequirements().stream()
                 .map(req -> {
@@ -107,6 +127,7 @@ public class MatchingConverter {
                 : project.getImages().get(0).getImageUrl();
 
         return MatchingResDTO.ProjectMatchingInfo.builder()
+                .canViewDetail(true)
                 .matchingId(matching.getId())
                 .projectId(project.getId())
                 .projectName(project.getName())
@@ -124,6 +145,7 @@ public class MatchingConverter {
                 .content(matching.getContent())
                 .matchingType(matching.getMatchingType())
                 .decision(matching.getDecision())
+                .projectDeleted(project.getStatus() == ProjectStatus.DELETED)
                 .createdAt(matching.getCreatedAt())
                 .build();
     }

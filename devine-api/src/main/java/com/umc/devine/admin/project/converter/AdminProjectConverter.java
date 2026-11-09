@@ -9,7 +9,7 @@ public class AdminProjectConverter {
         return AdminProjectResDTO.ProjectSummaryDTO.builder()
                 .projectId(project.getId())
                 .title(project.getName())
-                .authorNickname(project.getMember().getNickname())
+                .authorNickname(project.getMember().getDisplayNickname())
                 .createdAt(project.getCreatedAt())
                 .visible(!project.isHidden())
                 .build();

@@ -13,7 +13,8 @@ public class ChatResDTO {
             OtherMemberInfo otherMember,
             String lastMessage,
             LocalDateTime lastMessageAt,
-            long unreadCount
+            long unreadCount,
+            boolean canSend
     ) {}
 
     @Builder
@@ -21,7 +22,8 @@ public class ChatResDTO {
             String clerkId,
             String nickname,
             String image,
-            String mainType
+            String mainType,
+            boolean withdrawn
     ) {}
 
     @Builder
@@ -32,7 +34,8 @@ public class ChatResDTO {
             String senderImage,
             String content,
             Boolean isRead,
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean senderWithdrawn
     ) {}
 
     @Builder
@@ -50,7 +53,8 @@ public class ChatResDTO {
     public record MessageList(
             List<ChatMessageDetail> messages,
             Boolean hasNext,
-            Integer currentPage
+            Integer currentPage,
+            boolean canSend
     ) {}
 
     @Builder

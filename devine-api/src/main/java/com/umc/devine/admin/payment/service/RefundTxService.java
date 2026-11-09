@@ -4,6 +4,7 @@ import com.umc.devine.admin.payment.dto.AdminPaymentResDTO;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.entity.PaymentRefund;
 import com.umc.devine.domain.payment.entity.Transaction;
+import com.umc.devine.domain.payment.enums.RefundStatus;
 import com.umc.devine.domain.payment.enums.TransactionType;
 import com.umc.devine.domain.payment.enums.TransactionStatus;
 import com.umc.devine.domain.payment.exception.PaymentException;
@@ -36,9 +37,12 @@ public class RefundTxService {
      */
     @Transactional
     public RefundClaim claim(Long paymentId, String reason) {
-        Payment payment = paymentRepository.findById(paymentId)
+        Payment payment = paymentRepository.findByIdForUpdate(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
         findPaidTransaction(payment);
+        if (paymentRefundRepository.existsByPaymentIdAndStatus(paymentId, RefundStatus.REQUESTED)) {
+            throw new PaymentException(PaymentErrorReason.WITHDRAWAL_REFUND_REQUESTED);
+        }
         try {
             PaymentRefund refund = paymentRefundRepository.saveAndFlush(PaymentRefund.claim(payment, reason));
             return new RefundClaim(refund.getId(), payment.getPortonePaymentId());

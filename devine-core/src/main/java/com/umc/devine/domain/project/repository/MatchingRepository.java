@@ -18,6 +18,26 @@ import java.util.Optional;
 
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
 
+    String PENDING_BETWEEN = "m.status = com.umc.devine.domain.project.enums.mapping.MatchingStatus.PENDING AND " +
+            "((m.project.member.id = :firstId AND m.member.id = :secondId) OR " +
+            "(m.project.member.id = :secondId AND m.member.id = :firstId))";
+
+    @Query("SELECT COUNT(m) FROM Matching m WHERE " + PENDING_BETWEEN)
+    long countPendingBetween(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT DISTINCT m.project.id FROM Matching m WHERE " + PENDING_BETWEEN + " ORDER BY m.project.id")
+    List<Long> findPendingProjectIdsBetween(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT m FROM Matching m JOIN FETCH m.project JOIN FETCH m.member WHERE m.project.id = :projectId AND " + PENDING_BETWEEN)
+    List<Matching> findPendingBetweenInProject(@Param("projectId") Long projectId,
+            @Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT m.member.id FROM Matching m WHERE m.id = :id")
+    Optional<Long> findMemberIdById(@Param("id") Long id);
+
+    @Query("SELECT m.project.id FROM Matching m WHERE m.id = :id")
+    Optional<Long> findProjectIdById(@Param("id") Long id);
+
     @Query("SELECT m FROM Matching m JOIN FETCH m.project JOIN FETCH m.member " +
             "WHERE m.project = :project AND m.member = :member AND m.matchingType = :matchingType AND m.status <> :excludeStatus")
     Optional<Matching> findByProjectAndMemberAndMatchingTypeAndStatusNot(
@@ -128,4 +148,40 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
             @Param("memberId") Long memberId,
             @Param("matchingType") MatchingType matchingType,
             @Param("excludeStatus") MatchingStatus excludeStatus);
+
+    // 프로젝트 관리용: 대기 건(PENDING) 수와 목록. 마감·삭제 가능 여부 판단에 쓴다.
+    long countByProjectAndStatus(Project project, MatchingStatus status);
+
+    @Query("SELECT m FROM Matching m JOIN FETCH m.member " +
+            "WHERE m.project = :project AND m.status = :status ORDER BY m.createdAt ASC")
+    List<Matching> findAllByProjectAndStatusWithMember(
+            @Param("project") Project project,
+            @Param("status") MatchingStatus status);
+
+    // 삭제 시 매칭 이력이 있으면 프로젝트 행(이름)을 남긴다
+    boolean existsByProject(Project project);
+
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH p.member pm " +
+            "JOIN FETCH m.member dev " +
+            "WHERE dev.used = com.umc.devine.domain.member.enums.MemberStatus.DELETED " +
+            "OR pm.used = com.umc.devine.domain.member.enums.MemberStatus.DELETED")
+    List<Matching> findAllWithWithdrawnParticipant();
+
+    @Query("SELECT DISTINCT p.id FROM Matching m JOIN m.project p " +
+            "WHERE m.status = :status AND (m.member = :member OR p.member = :member)")
+    List<Long> findProjectIdsInvolvingMemberByStatus(
+            @Param("member") Member member,
+            @Param("status") MatchingStatus status);
+
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH p.member " +
+            "JOIN FETCH m.member " +
+            "WHERE m.status = :status AND (m.member = :member OR p.member = :member) " +
+            "ORDER BY m.createdAt ASC, m.id ASC")
+    List<Matching> findAllInvolvingMemberByStatus(
+            @Param("member") Member member,
+            @Param("status") MatchingStatus status);
 }

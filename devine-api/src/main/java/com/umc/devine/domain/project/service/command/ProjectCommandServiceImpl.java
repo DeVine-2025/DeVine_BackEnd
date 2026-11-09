@@ -8,6 +8,7 @@ import com.umc.devine.domain.image.enums.ImageType;
 import com.umc.devine.domain.image.exception.ImageException;
 import com.umc.devine.domain.image.exception.code.ImageErrorReason;
 import com.umc.devine.domain.image.repository.ImageRepository;
+import com.umc.devine.domain.complaint.service.command.ComplaintModerationService;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.project.converter.ProjectConverter;
 import com.umc.devine.domain.project.dto.ProjectReqDTO;
@@ -17,6 +18,8 @@ import com.umc.devine.domain.project.entity.ProjectImage;
 import com.umc.devine.domain.project.entity.ProjectRequirementMember;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.exception.ProjectException;
+import com.umc.devine.domain.project.helper.ProjectDeletionHelper;
+import com.umc.devine.domain.project.helper.ProjectLifecycleHelper;
 import com.umc.devine.domain.project.repository.ProjectImageRepository;
 import com.umc.devine.domain.project.repository.ProjectRepository;
 import com.umc.devine.domain.project.repository.ProjectRequirementMemberRepository;
@@ -40,6 +43,7 @@ import java.util.Map;
 import java.util.stream.Collectors;
 
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 
 import static com.umc.devine.domain.category.exception.code.CategoryErrorReason.CATEGORY_NOT_FOUND;
 import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.*;
@@ -51,6 +55,7 @@ import static com.umc.devine.domain.project.exception.code.ProjectErrorReason.*;
 public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     private final ProjectRepository projectRepository;
+    private final ComplaintModerationService complaintModerationService;
     private final ProjectImageRepository projectImageRepository;
     private final ProjectRequirementMemberRepository projectRequirementMemberRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
@@ -58,6 +63,8 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     private final CategoryRepository categoryRepository;
     private final ImageRepository imageRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final ProjectLifecycleHelper lifecycleHelper;
+    private final ProjectDeletionHelper projectDeletionHelper;
 
     @Override
     public ProjectResDTO.CreateProjectRes createProject(Member member, ProjectReqDTO.CreateProjectReq request) {
@@ -95,15 +102,22 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public ProjectResDTO.UpdateProjectRes updateProject(Member member, Long projectId, ProjectReqDTO.UpdateProjectReq request) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
-
-        validateOwner(project, member.getId());
+        // 숨긴 프로젝트도 작성자는 수정할 수 있다(숨김 중 마감일 연장 포함)
+        Project project = getOwnedProject(member, projectId);
+        validateNotLockedByComplaint(projectId);
 
         Category category = categoryRepository.findByGenre(request.category())
                 .orElseThrow(() -> new CategoryException(CATEGORY_NOT_FOUND));
 
-        validateRecruitmentDeadline(request.recruitmentDeadline());
+        // 마감일을 바꾼 경우에만 검사한다. 마감일이 지난 프로젝트의 소개만 고치는 것은 허용한다.
+        boolean deadlineChanged = !request.recruitmentDeadline().equals(project.getRecruitmentDeadline());
+        if (deadlineChanged) {
+            validateRecruitmentDeadline(request.recruitmentDeadline());
+            // 마감일을 오늘 이후로 늘리면 다시 모집한다
+            if (project.getStatus() == ProjectStatus.DEADLINE_PASSED || project.getStatus() == ProjectStatus.CLOSED) {
+                project.startRecruiting();
+            }
+        }
 
         project.updateProjectInfo(
                 request.projectField(),
@@ -164,13 +178,39 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     @Override
+    public void closeProject(Member member, Long projectId) {
+        Project project = getOwnedProject(member, projectId);
+
+        if (project.getStatus() == ProjectStatus.CLOSED) {
+            return;
+        }
+        validateNoPending(project);
+
+        project.close(member, LocalDateTime.now());
+    }
+
+    @Override
+    public void changeVisibility(Member member, Long projectId, boolean hidden) {
+        Project project = getOwnedProject(member, projectId);
+
+        if (project.isHiddenByModeration() && !hidden) {
+            throw new ProjectException(HIDDEN_BY_ADMIN);
+        }
+
+        project.changeVisibilityByOwner(hidden, member, LocalDateTime.now());
+    }
+
+    @Override
     public void deleteProject(Member member, Long projectId) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        Project project = getOwnedProject(member, projectId);
+        validateNotLockedByComplaint(projectId);
 
-        validateOwner(project, member.getId());
+        if (project.getStatus() != ProjectStatus.CLOSED) {
+            throw new ProjectException(NOT_DELETABLE);
+        }
+        validateNoPending(project);
 
-        project.delete();
+        projectDeletionHelper.delete(project);
     }
 
     private void saveTechstacks(Project project, List<ProjectReqDTO.RecruitmentDTO> recruitments) {
@@ -240,16 +280,44 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
 
     @Override
     public void changeProjectStatus(Member member, Long projectId, ProjectStatus status) {
-        Project project = projectRepository.findVisibleById(projectId)
-                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        Project project = getOwnedProject(member, projectId);
 
-        validateOwner(project, member.getId());
+        // 모집 단계를 벗어나는 전환은 마감과 같은 조건(대기 건 0건)을 따른다
+        if (project.isInRecruitingPhase() && status != ProjectStatus.RECRUITING) {
+            validateNoPending(project);
+        }
+
+        // 마감일이 지났으면 상태만 되돌려 모집할 수 없다. 마감일 수정으로 다시 모집한다.
+        if (status == ProjectStatus.RECRUITING) {
+            validateRecruitmentDeadline(project.getRecruitmentDeadline());
+        }
 
         switch (status) {
             case RECRUITING -> project.startRecruiting();
             case IN_PROGRESS -> project.startProgress();
             case COMPLETED -> project.complete();
             default -> throw new ProjectException(INVALID_STATUS_TRANSITION);
+        }
+    }
+
+    private Project getOwnedProject(Member member, Long projectId) {
+        Project project = projectRepository.findByIdForUpdate(projectId)
+                .filter(p -> p.getStatus() != ProjectStatus.DELETED)
+                .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+        validateOwner(project, member.getId());
+        return project;
+    }
+
+    // PM의 수정·삭제 요청에서만 검사한다. 공통 삭제 로직에 넣으면 회원 탈퇴까지 막힌다.
+    private void validateNotLockedByComplaint(Long projectId) {
+        if (complaintModerationService.isOwnerEditLocked(projectId)) {
+            throw new ProjectException(LOCKED_BY_COMPLAINT);
+        }
+    }
+
+    private void validateNoPending(Project project) {
+        if (lifecycleHelper.countPending(project) > 0) {
+            throw new ProjectException(PENDING_MATCHINGS_EXIST);
         }
     }
 
@@ -260,7 +328,7 @@ public class ProjectCommandServiceImpl implements ProjectCommandService {
     }
 
     private void validateRecruitmentDeadline(LocalDate recruitmentDeadline) {
-        if (recruitmentDeadline.isBefore(LocalDate.now())) {
+        if (recruitmentDeadline.isBefore(ProjectLifecycleHelper.today())) {
             throw new ProjectException(INVALID_RECRUITMENT_DEADLINE);
         }
     }

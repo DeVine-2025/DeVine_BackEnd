@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.service.query;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.category.enums.CategoryGenre;
@@ -57,6 +58,7 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class MemberQueryServiceImpl implements MemberQueryService {
 
+    private final MemberBlockRepository blockRepository;
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
     private final DevTechstackRepository devTechstackRepository;
@@ -98,10 +100,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(String nickname) {
+    public TechstackResDTO.DevTechstackListDTO findTechstacksByNickname(Member viewer, String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
@@ -111,10 +116,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public MemberResDTO.MemberProfileDTO findMemberByNickname(String nickname) {
+    public MemberResDTO.MemberProfileDTO findMemberByNickname(Member viewer, String nickname) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
@@ -152,10 +160,13 @@ public class MemberQueryServiceImpl implements MemberQueryService {
 
     @Override
     @Transactional
-    public MemberResDTO.ContributionListDTO findContributionsByNickname(String nickname, LocalDate from, LocalDate to) {
+    public MemberResDTO.ContributionListDTO findContributionsByNickname(Member viewer, String nickname, LocalDate from, LocalDate to) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
@@ -383,23 +394,29 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public ProjectResDTO.MyProjectsRes findProjectsByNickname(String nickname, List<ProjectStatus> statuses, Pageable pageable) {
+    public ProjectResDTO.MyProjectsRes findProjectsByNickname(Member viewer, String nickname, List<ProjectStatus> statuses, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
 
         // 비회원도 볼 수 있는 공개 프로필이므로 비노출 프로젝트가 나가면 안 된다.
-        return projectQueryService.getPublicProjectsOf(member, statuses, pageable);
+        return projectQueryService.getPublicProjectsOf(viewer, member, statuses, pageable);
     }
 
     @Override
-    public PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(String nickname, Pageable pageable) {
+    public PagedResponse<MemberResDTO.GitRepoDTO> findReposByNickname(Member viewer, String nickname, Pageable pageable) {
         Member member = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), member.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         if (!member.getDisclosure()) {
             throw new MemberException(MemberErrorReason.PROFILE_NOT_PUBLIC);
         }
@@ -421,13 +438,14 @@ public class MemberQueryServiceImpl implements MemberQueryService {
     }
 
     @Override
-    public PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(MemberReqDTO.SearchDeveloperDTO request) {
+    public PagedResponse<MemberResDTO.MemberListItemDTO> searchDevelopers(Member viewer, MemberReqDTO.SearchDeveloperDTO request) {
         List<CategoryGenre> categories = request.categories() != null && !request.categories().isEmpty()
                 ? request.categories() : null;
         List<TechName> techstackNames = request.techstackNames() != null && !request.techstackNames().isEmpty()
                 ? request.techstackNames() : null;
 
         Page<Member> developerPage = memberRepository.findDevelopersByFilters(
+                viewer != null ? viewer.getId() : null,
                 categories,
                 techstackNames,
                 request.toPageable()

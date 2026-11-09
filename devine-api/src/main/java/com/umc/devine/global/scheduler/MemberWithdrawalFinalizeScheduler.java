@@ -6,6 +6,7 @@ import com.umc.devine.admin.member.repository.MemberStatusHistoryRepository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
+import jakarta.persistence.EntityManager;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Scheduled;
@@ -25,6 +26,7 @@ public class MemberWithdrawalFinalizeScheduler {
 
     private final MemberRepository memberRepository;
     private final MemberStatusHistoryRepository memberStatusHistoryRepository;
+    private final EntityManager entityManager;
 
     @Scheduled(cron = "0 0 4 * * *", zone = "Asia/Seoul")
     @Transactional
@@ -37,14 +39,21 @@ public class MemberWithdrawalFinalizeScheduler {
             return;
         }
 
-        expired.forEach(member -> {
+        int finalized = 0;
+        for (Member member : expired) {
+            memberRepository.findByIdForUpdate(member.getId());
+            entityManager.refresh(member);
+            if (member.getUsed() != MemberStatus.PENDING_WITHDRAWAL) {
+                continue;
+            }
             member.finalizeWithdrawal();
             memberStatusHistoryRepository.save(MemberStatusHistory.builder()
                     .member(member)
                     .action(MemberStatusAction.WITHDRAWAL_FINALIZED)
                     .status(member.getUsed())
                     .build());
-        });
-        log.info("[MemberWithdrawalFinalize] 강제탈퇴 최종 확정 완료 - {}건", expired.size());
+            finalized++;
+        }
+        log.info("[MemberWithdrawalFinalize] 강제탈퇴 최종 확정 완료 - {}건", finalized);
     }
 }

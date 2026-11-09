@@ -11,8 +11,13 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.umc.devine.domain.member.entity.Member;
 
 public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> {
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM ChatMessage cm WHERE cm.sender = :member")
+    int deleteAllBySender(@Param("member") Member member);
 
     @Query("""
             SELECT cm FROM ChatMessage cm
@@ -77,6 +82,10 @@ public interface ChatMessageRepository extends JpaRepository<ChatMessage, Long> 
     );
 
     Optional<ChatMessage> findTopByChatRoomIdOrderByCreatedAtDesc(Long chatRoomId);
+
+    List<ChatMessage> findTop5ByChatRoomIdAndIdLessThanOrderByIdDesc(Long chatRoomId, Long id);
+
+    List<ChatMessage> findTop6ByChatRoomIdAndIdGreaterThanEqualOrderByIdAsc(Long chatRoomId, Long id);
 
     @Query("""
             SELECT cm FROM ChatMessage cm

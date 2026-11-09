@@ -3,12 +3,14 @@ package com.umc.devine.domain.project.service.query;
 import com.umc.devine.domain.category.entity.mapping.MemberCategory;
 import com.umc.devine.domain.category.repository.MemberCategoryRepository;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.member.exception.MemberException;
 import com.umc.devine.domain.member.exception.code.MemberErrorReason;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import com.umc.devine.domain.project.converter.MatchingConverter;
 import com.umc.devine.domain.project.dto.matching.MatchingResDTO;
 import com.umc.devine.domain.project.entity.Project;
+import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.entity.mapping.Matching;
 import com.umc.devine.domain.project.enums.mapping.MatchingStatus;
 import com.umc.devine.domain.project.enums.mapping.MatchingType;
@@ -29,6 +31,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
+import java.util.Set;
 import java.util.Map;
 import java.util.stream.Collectors;
 import java.util.Optional;
@@ -38,6 +41,7 @@ import java.util.Optional;
 @Transactional(readOnly = true)
 public class MatchingQueryServiceImpl implements MatchingQueryService {
 
+    private final MemberBlockRepository blockRepository;
     private final MatchingRepository matchingRepository;
     private final ProjectRepository projectRepository;
     private final MemberRepository memberRepository;
@@ -52,6 +56,7 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 pm, type, MatchingStatus.CANCELLED, pageable
         );
 
+        Set<Long> excluded = Set.copyOf(blockRepository.findExcludedMemberIds(pm.getId()));
         // 개발자 목록 추출
         List<Member> developers = matchingPage.getContent().stream()
                 .map(Matching::getMember)
@@ -75,7 +80,8 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                     Long devId = matching.getMember().getId();
                     List<MemberCategory> categories = categoryMap.getOrDefault(devId, List.of());
                     List<DevTechstack> techstacks = techstackMap.getOrDefault(devId, List.of());
-                    return MatchingConverter.toDeveloperMatchingInfo(matching, categories, techstacks);
+                    return MatchingConverter.toDeveloperMatchingInfo(matching, categories, techstacks,
+                            !excluded.contains(devId) && matching.getMember().getDisclosure());
                 })
                 .toList();
 
@@ -90,6 +96,7 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                 developer, type, MatchingStatus.CANCELLED, pageable
         );
 
+        Set<Long> excluded = Set.copyOf(blockRepository.findExcludedMemberIds(developer.getId()));
         // 배치 조회: 모든 프로젝트의 기술스택을 1번의 쿼리로 조회
         List<Long> projectIds = matchingPage.getContent().stream()
                 .map(matching -> matching.getProject().getId())
@@ -103,7 +110,10 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
                         .collect(Collectors.groupingBy(prt -> prt.getRequirement().getId()));
 
         List<MatchingResDTO.ProjectMatchingInfo> projectInfos = matchingPage.getContent().stream()
-                .map(matching -> MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement))
+                .map(matching -> MatchingConverter.toProjectMatchingInfo(matching, techstacksByRequirement,
+                        !excluded.contains(matching.getProject().getMember().getId())
+                                && !matching.getProject().isHidden()
+                                && matching.getProject().getStatus() != ProjectStatus.DELETED))
                 .toList();
 
         return MatchingResDTO.ProjectsRes.builder()
@@ -113,8 +123,9 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
 
     @Override
     public MatchingResDTO.MatchingStatusRes getMyApplyStatus(Member member, Long projectId) {
-        // 1. 프로젝트 존재 확인
-        if (!projectRepository.existsById(projectId)) {
+        Long ownerId = projectRepository.findOwnerIdById(projectId)
+                .orElseThrow(() -> new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND));
+        if (blockRepository.existsBetween(member.getId(), ownerId)) {
             throw new MatchingException(MatchingErrorReason.PROJECT_NOT_FOUND);
         }
 
@@ -144,6 +155,9 @@ public class MatchingQueryServiceImpl implements MatchingQueryService {
         Member targetMember = memberRepository.findByNickname(nickname)
                 .orElseThrow(() -> new MemberException(MemberErrorReason.NOT_FOUND));
 
+        if (blockRepository.existsBetween(pm.getId(), targetMember.getId())) {
+            throw new MemberException(MemberErrorReason.NOT_FOUND);
+        }
         // 4. PROPOSE 타입, CANCELLED 제외하고 매칭 조회
         Optional<Matching> matchingOpt = matchingRepository
                 .findByProjectIdAndMemberIdAndTypeAndStatusNot(

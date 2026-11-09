@@ -30,7 +30,7 @@ public class ProjectVisibilityCommandServiceImpl implements ProjectVisibilityCom
 
         Member processor = findProcessor(processorClerkId);
         LocalDateTime changedAt = LocalDateTime.now();
-        boolean changed = project.changeVisibility(visible, processor, changedAt);
+        boolean changed = project.changeVisibilityByAdmin(visible, processor, changedAt);
 
         return AdminProjectResDTO.UpdateVisibilityRes.builder()
                 .projectId(project.getId())
@@ -39,17 +39,6 @@ public class ProjectVisibilityCommandServiceImpl implements ProjectVisibilityCom
                 .processorMemberId(processor != null ? processor.getId() : null)
                 .changedAt(changedAt)
                 .build();
-    }
-
-    @Override
-    public boolean hideForModeration(Long projectId, String processorClerkId) {
-        Optional<Project> target = findChangeableProject(projectId);
-        if (target.isEmpty()) {
-            return false;
-        }
-
-        target.get().changeVisibility(false, findProcessor(processorClerkId), LocalDateTime.now());
-        return true;
     }
 
     // 삭제된 프로젝트는 노출 전환 대상이 아니다. 이미 비노출인 프로젝트는 멱등 처리를 위해 대상에 포함한다.

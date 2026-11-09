@@ -203,6 +203,12 @@ public class ProjectReqDTO {
             List<DurationRange> durationRanges
     ) {}
 
+    public record ChangeVisibilityReq(
+            @Schema(description = "숨길지 여부 (true: 숨기기, false: 다시 보이기)", example = "true")
+            @NotNull(message = "숨김 여부는 필수입니다.")
+            Boolean hidden
+    ) {}
+
     public record ChangeStatusReq(
             @Schema(description = "변경할 상태 (IN_PROGRESS, COMPLETED)", example = "IN_PROGRESS")
             @NotNull(message = "변경할 상태는 필수입니다.")

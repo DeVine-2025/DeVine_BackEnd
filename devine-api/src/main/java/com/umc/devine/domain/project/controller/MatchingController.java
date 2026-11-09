@@ -99,6 +99,16 @@ public class MatchingController implements MatchingControllerDocs {
     }
 
     @Override
+    @PatchMapping("/proposals/{matchingId}/cancel")
+    public ApiResponse<MatchingResDTO.ProposeResDTO> cancelProposal(
+            @CurrentMember Member member,
+            @PathVariable Long matchingId
+    ) {
+        MatchingResDTO.ProposeResDTO result = matchingCommandService.cancelProposal(member, matchingId);
+        return ApiResponse.onSuccess(MatchingSuccessCode.PROPOSAL_CANCELLED, result);
+    }
+
+    @Override
     @GetMapping("/pm/proposed-developers")
     public ApiResponse<MatchingResDTO.DevelopersRes> getProposedDevelopers(
             @CurrentMember Member member,

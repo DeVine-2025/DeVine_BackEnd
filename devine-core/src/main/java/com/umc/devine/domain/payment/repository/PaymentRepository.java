@@ -3,7 +3,9 @@ package com.umc.devine.domain.payment.repository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.repository.querydsl.PaymentQueryDsl;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -14,9 +16,21 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, Payment
 
     boolean existsByPortonePaymentId(String portonePaymentId);
 
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.id = :paymentId")
+    Optional<Payment> findByIdForUpdate(@Param("paymentId") Long paymentId);
+
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT p FROM Payment p WHERE p.member = :member ORDER BY p.id")
+    List<Payment> findAllByMemberForUpdate(@Param("member") Member member);
+
     @Query("SELECT DISTINCT p FROM Payment p JOIN FETCH p.member LEFT JOIN FETCH p.transactions t LEFT JOIN FETCH t.cardDetail LEFT JOIN FETCH t.easyPayDetail WHERE p.id = :paymentId")
     Optional<Payment> findByIdWithMemberAndTransactions(@Param("paymentId") Long paymentId);
 
     @Query("SELECT DISTINCT p FROM Payment p LEFT JOIN FETCH p.transactions t LEFT JOIN FETCH t.cardDetail LEFT JOIN FETCH t.easyPayDetail WHERE p.member = :member ORDER BY p.createdAt DESC")
     List<Payment> findAllByMemberWithTransactions(@Param("member") Member member);
+
+    @Query("SELECT p.id FROM Payment p WHERE p.member.used = com.umc.devine.domain.member.enums.MemberStatus.DELETED " +
+            "AND p.createdAt < :threshold")
+    List<Long> findIdsOfWithdrawnMembersCreatedBefore(@Param("threshold") java.time.LocalDateTime threshold);
 }

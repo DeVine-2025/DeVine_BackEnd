@@ -1,6 +1,7 @@
 package com.umc.devine.domain.payment.enums;
 
 public enum RefundStatus {
+    REQUESTED,
     /** 환불 시도 선점 — 외부 취소 호출 진행 중(비종료). */
     IN_PROGRESS,
     /** 환불 완료(종료). */

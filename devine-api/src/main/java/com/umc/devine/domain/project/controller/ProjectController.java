@@ -63,6 +63,36 @@ public class ProjectController implements ProjectControllerDocs {
     }
 
     @Override
+    @GetMapping("/{projectId}/manage")
+    public ApiResponse<ProjectResDTO.ManageRes> getManageInfo(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId
+    ) {
+        return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, projectQueryService.getManageInfo(member, projectId));
+    }
+
+    @Override
+    @PostMapping("/{projectId}/close")
+    public ApiResponse<Void> closeProject(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId
+    ) {
+        projectCommandService.closeProject(member, projectId);
+        return ApiResponse.onSuccess(ProjectSuccessCode.CLOSED, null);
+    }
+
+    @Override
+    @PatchMapping("/{projectId}/visibility")
+    public ApiResponse<Void> changeVisibility(
+            @CurrentMember Member member,
+            @PathVariable("projectId") Long projectId,
+            @RequestBody @Valid ProjectReqDTO.ChangeVisibilityReq request
+    ) {
+        projectCommandService.changeVisibility(member, projectId, request.hidden());
+        return ApiResponse.onSuccess(ProjectSuccessCode.VISIBILITY_CHANGED, null);
+    }
+
+    @Override
     @DeleteMapping("/{projectId}")
     public ApiResponse<Void> deleteProject(
             @CurrentMember Member member,
@@ -87,9 +117,9 @@ public class ProjectController implements ProjectControllerDocs {
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
     @Override
     @GetMapping("/weekly-best")
-    public ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects() {
+    public ApiResponse<ProjectResDTO.WeeklyBestProjectsRes> getWeeklyBestProjects(@CurrentMember(required = false) Member viewer) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        ProjectResDTO.WeeklyBestProjectsRes response = projectQueryService.getWeeklyBestProjects();
+        ProjectResDTO.WeeklyBestProjectsRes response = projectQueryService.getWeeklyBestProjects(viewer);
         return ApiResponse.onSuccess(code, response);
     }
 
@@ -97,10 +127,11 @@ public class ProjectController implements ProjectControllerDocs {
     @Override
     @GetMapping
     public ApiResponse<ProjectResDTO.SearchProjectsRes> searchProjects(
+            @CurrentMember(required = false) Member viewer,
             @ParameterObject @ModelAttribute @Valid ProjectReqDTO.SearchProjectReq request
     ) {
         ProjectSuccessCode code = ProjectSuccessCode.FOUND;
-        return ApiResponse.onSuccess(code, projectQueryService.searchProjects(request));
+        return ApiResponse.onSuccess(code, projectQueryService.searchProjects(viewer, request));
     }
 
     // 추천 프로젝트 미리보기 (메인 하단 / 프로젝트·개발자 보기 탭 상단)
@@ -135,7 +166,7 @@ public class ProjectController implements ProjectControllerDocs {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
-                member, List.of(ProjectStatus.RECRUITING), pageable
+                member, List.of(ProjectStatus.RECRUITING, ProjectStatus.DEADLINE_PASSED), pageable
         );
         return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }
@@ -172,7 +203,7 @@ public class ProjectController implements ProjectControllerDocs {
             @PageableDefault(size = 10) Pageable pageable
     ) {
         ProjectResDTO.MyProjectsRes response = projectQueryService.getMyProjects(
-                member, List.of(ProjectStatus.COMPLETED), pageable
+                member, List.of(ProjectStatus.COMPLETED, ProjectStatus.CLOSED), pageable
         );
         return ApiResponse.onSuccess(ProjectSuccessCode.FOUND, response);
     }

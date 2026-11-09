@@ -9,13 +9,16 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MemberErrorReason implements DomainErrorReason {
 
+    CANNOT_BLOCK_SELF(HttpStatus.BAD_REQUEST, "MEMBER400_6", "자기 자신을 차단할 수 없어요."),
+
     INVALID(HttpStatus.BAD_REQUEST, "MEMBER400_1", "비밀번호가 일치하지 않습니다."),
     NICKNAME_DUPLICATED(HttpStatus.BAD_REQUEST, "MEMBER400_2", "이미 존재하는 닉네임입니다."),
     EMAIL_DUPLICATED(HttpStatus.BAD_REQUEST, "MEMBER400_3", "이미 존재하는 이메일입니다."),
     LOGIN_REQUIRED(HttpStatus.UNAUTHORIZED, "MEMBER401_1", "로그인이 필요합니다."),
     FORBIDDEN(HttpStatus.FORBIDDEN, "MEMBER403_1", "접근 권한이 없습니다."),
-    PROFILE_NOT_PUBLIC(HttpStatus.FORBIDDEN, "MEMBER403_2", "비공개 프로필입니다."),
-    NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_1", "해당 사용자를 찾지 못했습니다."),
+    PROFILE_NOT_PUBLIC(HttpStatus.FORBIDDEN, "MEMBER403_2", "지금은 이 대상을 볼 수 없어요."),
+    RESTRICTED_FROM_SIGNUP(HttpStatus.FORBIDDEN, "MEMBER403_3", "이용이 제한된 계정이에요. 문의: projectdevine2025@gmail.com"),
+    NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_1", "지금은 이 대상을 볼 수 없어요."),
     TECHSTACK_ALREADY_EXISTS(HttpStatus.CONFLICT, "MEMBER409_1", "이미 보유한 기술 스택입니다."),
     ALREADY_REGISTERED(HttpStatus.CONFLICT, "MEMBER409_2", "이미 가입된 회원입니다."),
     TERMS_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_2", "해당 약관을 찾을 수 없습니다."),
@@ -24,6 +27,8 @@ public enum MemberErrorReason implements DomainErrorReason {
     TECHSTACK_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_4", "해당 기술 스택을 찾을 수 없습니다."),
     GITHUB_USERNAME_NOT_FOUND(HttpStatus.NOT_FOUND, "MEMBER404_5", "GitHub 사용자명이 등록되지 않았습니다."),
     CATEGORY_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER400_5", "관심 도메인은 최소 1개 이상 선택해야 합니다."),
+    REFUND_CONTACT_EMAIL_REQUIRED(HttpStatus.BAD_REQUEST, "MEMBER400_6", "환불을 신청하려면 환불 연락 이메일이 필요합니다."),
+    WITHDRAWAL_PENDING_MATCHINGS_EXIST(HttpStatus.CONFLICT, "MEMBER409_3", "진행 중인 지원이나 제안이 있어요. 정리한 뒤 탈퇴할 수 있어요."),
     ;
 
     private final HttpStatus status;

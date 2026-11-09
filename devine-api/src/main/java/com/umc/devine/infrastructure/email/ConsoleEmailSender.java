@@ -14,4 +14,9 @@ public class ConsoleEmailSender implements EmailSender {
                 Body: {}
                 -------------------------------------------""", to, subject, body);
     }
+
+    @Override
+    public void sendOrThrow(String to, String subject, String body) {
+        send(to, subject, body);
+    }
 }

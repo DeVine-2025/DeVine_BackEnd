@@ -7,6 +7,7 @@ import com.umc.devine.domain.techstack.enums.TechName;
 import com.umc.devine.domain.project.enums.ProjectPart;
 import com.umc.devine.domain.project.enums.ProjectStatus;
 import com.umc.devine.domain.project.enums.ProjectField;
+import com.umc.devine.domain.project.enums.mapping.MatchingType;
 import com.umc.devine.global.dto.PagedResponse;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
@@ -401,4 +402,58 @@ public class ProjectResDTO {
             PagedResponse<MyProjectInfo> projects
     ) {}
 
+    // PM 본인용 프로젝트 관리 정보: 상태와 대기 건으로 누를 수 있는 버튼을 계산한다
+    @Builder
+    public record ManageRes(
+            @Schema(description = "프로젝트 ID", example = "1")
+            Long projectId,
+
+            @Schema(description = "프로젝트 상태", example = "DEADLINE_PASSED")
+            ProjectStatus status,
+
+            @Schema(description = "프로젝트 상태 이름", example = "마감일 지남")
+            String statusName,
+
+            @Schema(description = "숨김 여부", example = "false")
+            boolean hidden,
+
+            @Schema(description = "관리자 비노출 또는 신고 가림 상태인지 (PM이 다시 보이게 할 수 없음)", example = "false")
+            boolean hiddenByAdmin,
+
+            @Schema(description = "신고 접수로 가려진 상태인지 (검토 중 배너 조건)", example = "false")
+            boolean reportBlinded,
+
+            @Schema(description = "삭제·정지로 끝난 신고가 있는지 (위반 확정 배너 조건)", example = "false")
+            boolean reportViolationConfirmed,
+
+            @Schema(description = "대기 중인 지원·제안 수", example = "2")
+            long pendingCount,
+
+            @Schema(description = "대기 중인 지원·제안 목록 (오래된 순)")
+            List<PendingMatchingInfo> pendingMatchings,
+
+            @Schema(description = "지금 마감할 수 있는지 (모집 중·마감일 지남 + 대기 0건)", example = "false")
+            boolean canClose,
+
+            @Schema(description = "지금 삭제할 수 있는지 (마감·진행 중·완료 + 대기 0건)", example = "false")
+            boolean canDelete,
+
+            @Schema(description = "숨기기를 켜고 끌 수 있는지 (관리자 숨김이면 false)", example = "true")
+            boolean canToggleHidden
+    ) {}
+
+    @Builder
+    public record PendingMatchingInfo(
+            @Schema(description = "매칭 ID", example = "10")
+            Long matchingId,
+
+            @Schema(description = "APPLY: 받은 지원(수락·거절), PROPOSE: 보낸 제안(제안 취소)", example = "APPLY")
+            MatchingType matchingType,
+
+            @Schema(description = "지원자 또는 제안받은 개발자 닉네임", example = "devuser")
+            String nickname,
+
+            @Schema(description = "파트", example = "BACKEND")
+            ProjectPart part
+    ) {}
 }

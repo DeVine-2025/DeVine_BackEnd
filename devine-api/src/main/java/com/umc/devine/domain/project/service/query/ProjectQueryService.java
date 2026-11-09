@@ -18,11 +18,13 @@ public interface ProjectQueryService {
      */
     ProjectResDTO.UpdateProjectRes getProjectDetail(Member viewer, Long projectId);
 
+    ProjectResDTO.ManageRes getManageInfo(Member member, Long projectId);
+
     // 이번 주 주목 프로젝트 조회 (메인 화면 상단 - 4개)
-    ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects();
+    ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects(Member viewer);
 
     // 프로젝트 필터링 조회 (프로젝트/개발자 보기 탭 하단 - 4개씩 페이징, 필터링O)
-    ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request);
+    ProjectResDTO.SearchProjectsRes searchProjects(Member viewer, ProjectReqDTO.SearchProjectReq request);
 
     // 추천 프로젝트 미리보기 (메인 하단 / 프로젝트·개발자 보기 탭 상단)
     ProjectResDTO.RecommendedProjectsRes getRecommendedProjectsPreview(
@@ -50,7 +52,7 @@ public interface ProjectQueryService {
      *
      * @param owner 프로필 주인. 조회자가 아니다.
      */
-    ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member owner, List<ProjectStatus> statuses, Pageable pageable);
+    ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member viewer, Member owner, List<ProjectStatus> statuses, Pageable pageable);
 
     // 내가 생성한 모집 중인 프로젝트 목록 조회 (매칭 수락된 프로젝트 제외, 개발자 추천 필터용)
     ProjectResDTO.MyProjectsRes getMyCreatedRecruitingProjects(Member member, Pageable pageable);

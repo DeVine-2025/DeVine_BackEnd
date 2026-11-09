@@ -3,7 +3,9 @@ package com.umc.devine.domain.techstack.repository;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.techstack.entity.Techstack;
 import com.umc.devine.domain.techstack.entity.mapping.DevTechstack;
+import com.umc.devine.domain.techstack.enums.TechstackSource;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -11,6 +13,14 @@ import java.util.List;
 
 public interface DevTechstackRepository extends JpaRepository<DevTechstack, Long> {
     List<DevTechstack> findAllByMember(Member member);
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member AND dt.source = :source")
+    int deleteAllByMemberAndSource(@Param("member") Member member, @Param("source") TechstackSource source);
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM DevTechstack dt WHERE dt.member = :member")
+    int deleteAllByMemberBulk(@Param("member") Member member);
     List<DevTechstack> findAllByMemberIn(List<Member> members);
     List<DevTechstack> findAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);
     void deleteAllByMemberAndTechstackIn(Member member, List<Techstack> techstacks);

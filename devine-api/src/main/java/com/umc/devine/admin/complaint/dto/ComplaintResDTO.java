@@ -1,8 +1,9 @@
 package com.umc.devine.admin.complaint.dto;
 
-import com.umc.devine.admin.complaint.enums.ComplaintAction;
-import com.umc.devine.admin.complaint.enums.ComplaintStatus;
-import com.umc.devine.admin.complaint.enums.ComplaintTargetType;
+import com.umc.devine.domain.complaint.enums.ComplaintAction;
+import com.umc.devine.domain.complaint.enums.ComplaintReasonCode;
+import com.umc.devine.domain.complaint.enums.ComplaintStatus;
+import com.umc.devine.domain.complaint.enums.ComplaintTargetType;
 import io.swagger.v3.oas.annotations.media.Schema;
 import lombok.Builder;
 
@@ -25,11 +26,20 @@ public class ComplaintResDTO {
             @Schema(description = "피신고자 닉네임", example = "respondent")
             String respondentNickname,
 
+            @Schema(description = "신고 사유 코드", example = "ABUSE")
+            ComplaintReasonCode reasonCode,
+
             @Schema(description = "접수일시")
             LocalDateTime createdAt,
 
             @Schema(description = "처리 상태", example = "PENDING")
             ComplaintStatus status,
+
+            @Schema(description = "세부 액션", nullable = true)
+            ComplaintAction action,
+
+            @Schema(description = "피신고자가 탈퇴했는지 여부", example = "false")
+            boolean respondentWithdrawn,
 
             @Schema(description = "접수 후 48시간 초과 여부", example = "false")
             boolean slaExceeded
@@ -52,8 +62,11 @@ public class ComplaintResDTO {
             @Schema(description = "피신고자 닉네임", example = "respondent")
             String respondentNickname,
 
-            @Schema(description = "신고 사유")
-            String reason,
+            @Schema(description = "신고 사유 코드", example = "ABUSE")
+            ComplaintReasonCode reasonCode,
+
+            @Schema(description = "신고자가 적은 상세 내용", nullable = true)
+            String detail,
 
             @Schema(description = "처리 상태", example = "PENDING")
             ComplaintStatus status,
@@ -61,8 +74,14 @@ public class ComplaintResDTO {
             @Schema(description = "세부 액션", nullable = true)
             ComplaintAction action,
 
-            @Schema(description = "처리 사유", nullable = true)
+            @Schema(description = "내부 처리 사유", nullable = true)
             String resolutionReason,
+
+            @Schema(description = "통보용 사유 요약", nullable = true)
+            String notifySummary,
+
+            @Schema(description = "피신고자가 탈퇴했는지 여부. true면 제재할 계정이 없어 \"대상 탈퇴로 종료\"로 처리한다.", example = "false")
+            boolean respondentWithdrawn,
 
             @Schema(description = "접수일시")
             LocalDateTime createdAt,

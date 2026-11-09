@@ -47,8 +47,11 @@ public class MatchingResDTO {
             @Schema(description = "개발자 닉네임", example = "devkim")
             String developerNickname,
 
-            @Schema(description = "개발자 프로필 이미지 URL")
+            @Schema(description = "개발자 프로필 이미지 URL. 탈퇴한 회원이면 null")
             String developerImageUrl,
+
+            @Schema(description = "탈퇴한 회원이면 true. 닉네임은 '탈퇴한 회원'으로 내려가고 프로필 링크를 막는다", example = "false")
+            boolean developerWithdrawn,
 
             @Schema(description = "지원/제안 파트", example = "BACKEND")
             ProjectPart part,
@@ -72,7 +75,8 @@ public class MatchingResDTO {
             MatchingDecision decision,
 
             @Schema(description = "생성 일시")
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean canViewDetail
     ) {}
 
     // 개발자용: 제안받은/지원한 프로젝트 정보
@@ -129,8 +133,12 @@ public class MatchingResDTO {
             @Schema(description = "수락/거절 상태", example = "PENDING")
             MatchingDecision decision,
 
+            @Schema(description = "삭제된 프로젝트 여부. true면 이름만 남아 있고 상세로 이동할 수 없음", example = "false")
+            boolean projectDeleted,
+
             @Schema(description = "생성 일시")
-            LocalDateTime createdAt
+            LocalDateTime createdAt,
+            boolean canViewDetail
     ) {}
 
     @Builder

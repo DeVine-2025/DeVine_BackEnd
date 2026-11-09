@@ -45,6 +45,7 @@ public interface AdminPaymentControllerDocs {
     @ApiResponses({
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 환불 성공"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "환불 사유 누락, 결제 완료 상태가 아님, 이미 환불되었거나 환불 진행 중"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "회원 탈퇴 환불 신청(REQUESTED)이 있는 결제. 신청 금액만 부분 취소해야 함"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "관리자 인증 실패"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
             @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "결제 내역을 찾을 수 없음"),
@@ -55,5 +56,20 @@ public interface AdminPaymentControllerDocs {
     ApiResponse<AdminPaymentResDTO.RefundResultDTO> refund(
             @Parameter(description = "결제 ID") Long paymentId,
             @Valid @RequestBody AdminPaymentReqDTO.RefundDTO request
+    );
+
+    @Operation(summary = "회원 탈퇴 환불 신청 완료 처리 API",
+            description = "운영자가 포트원 콘솔에서 신청 금액(refundAmount)만 부분 취소한 뒤 호출합니다. "
+                    + "신청 상태를 COMPLETED로 바꾸고 환불 연락 이메일을 지웁니다. PG 호출은 하지 않습니다. "
+                    + "관리자 '탈퇴 환불 신청 목록' 화면 전까지 쓰는 최소 API입니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 완료 처리"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "관리자 인증 실패"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "관리자 권한 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "404", description = "환불 신청을 찾을 수 없음"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "접수(REQUESTED) 상태의 탈퇴 환불 신청이 아님")
+    })
+    ApiResponse<AdminPaymentResDTO.WithdrawalRefundCompleteDTO> completeWithdrawalRefund(
+            @Parameter(description = "환불 신청 ID") Long refundId
     );
 }

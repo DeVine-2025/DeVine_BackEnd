@@ -9,9 +9,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MatchingErrorReason implements DomainErrorReason {
 
-    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_1", "프로젝트를 찾을 수 없습니다."),
-    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_2", "회원을 찾을 수 없습니다."),
-    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_3", "매칭 정보를 찾을 수 없습니다."),
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_1", "지금은 이 대상을 볼 수 없어요."),
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_2", "지금은 이 대상을 볼 수 없어요."),
+    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_3", "지금은 이 대상을 볼 수 없어요."),
     PROJECT_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "MATCHING400_1", "모집 중인 프로젝트가 아닙니다."),
     ALREADY_APPLIED(HttpStatus.CONFLICT, "MATCHING409_1", "이미 지원한 프로젝트입니다."),
     ALREADY_PROPOSED(HttpStatus.CONFLICT, "MATCHING409_2", "이미 제안한 회원입니다."),
@@ -21,6 +21,7 @@ public enum MatchingErrorReason implements DomainErrorReason {
     ALREADY_CANCELLED(HttpStatus.BAD_REQUEST, "MATCHING400_4", "이미 취소된 매칭입니다."),
     INVALID_STATUS_TRANSITION(HttpStatus.BAD_REQUEST, "MATCHING400_5", "이미 처리된 매칭입니다."),
     NOT_TARGET_MEMBER(HttpStatus.FORBIDDEN, "MATCHING403_5", "해당 매칭의 응답 대상이 아닙니다."),
+    NOT_PROPOSAL_OWNER(HttpStatus.FORBIDDEN, "MATCHING403_6", "본인 프로젝트에서 보낸 제안만 취소할 수 있습니다."),
     APPLY_MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_4", "지원 매칭 정보를 찾을 수 없습니다."),
     PROPOSE_MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_5", "제안 매칭 정보를 찾을 수 없습니다."),
     PART_REQUIRED(HttpStatus.BAD_REQUEST, "MATCHING400_7", "지원/제안 시 파트 선택은 필수입니다."),
@@ -29,6 +30,7 @@ public enum MatchingErrorReason implements DomainErrorReason {
     // 제안(propose) 전용. 요청자가 프로젝트 소유자라 비노출 사실을 알려도 제재 정보가 새지 않는다.
     // 지원(apply)은 제3자가 호출하므로 PROJECT_NOT_RECRUITING으로 응답해 제재 사실을 노출하지 않는다.
     PROJECT_HIDDEN(HttpStatus.BAD_REQUEST, "MATCHING400_9", "비노출 처리된 프로젝트에는 제안할 수 없습니다."),
+    CANNOT_ACCEPT_WHILE_HIDDEN(HttpStatus.CONFLICT, "MATCHING409_4", "지금은 수락할 수 없어요."),
     ;
 
     private final HttpStatus status;

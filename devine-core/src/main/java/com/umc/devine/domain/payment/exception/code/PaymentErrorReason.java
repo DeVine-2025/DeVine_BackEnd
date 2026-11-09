@@ -73,6 +73,18 @@ public enum PaymentErrorReason implements DomainErrorReason {
             "PAYMENT500_2",
             "환불 반영에 실패했습니다. 잠시 후 상태가 확정됩니다.",
             false),
+    WITHDRAWAL_REFUND_REQUESTED(HttpStatus.CONFLICT,
+            "PAYMENT409_1",
+            "회원 탈퇴 환불 신청이 접수된 결제입니다. 결제 전체를 환불하지 말고 신청 금액만 부분 취소해 주세요.",
+            false),
+    REFUND_NOT_FOUND(HttpStatus.NOT_FOUND,
+            "PAYMENT404_2",
+            "환불 신청을 찾을 수 없습니다.",
+            false),
+    NOT_WITHDRAWAL_REFUND_REQUEST(HttpStatus.CONFLICT,
+            "PAYMENT409_2",
+            "접수 상태의 회원 탈퇴 환불 신청이 아닙니다.",
+            false),
     ;
 
     private final HttpStatus status;
