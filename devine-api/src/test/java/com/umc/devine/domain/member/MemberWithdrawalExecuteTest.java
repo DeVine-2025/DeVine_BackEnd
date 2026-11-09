@@ -133,6 +133,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     @Autowired private PaymentRefundRepository paymentRefundRepository;
     @Autowired private OutboxTaskRepository outboxTaskRepository;
     @Autowired private WithdrawalReasonStatRepository withdrawalReasonStatRepository;
+    @Autowired private com.umc.devine.domain.member.repository.MemberRestrictionRepository memberRestrictionRepository;
     @Autowired private RefundTxService refundTxService;
     @Autowired private AdminWithdrawalRefundService adminWithdrawalRefundService;
     @Autowired private ReportCommandService reportCommandService;
@@ -458,6 +459,21 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         em.flush();
         assertThat(memberStatusHistoryRepository.findAll()).noneMatch(h ->
                 h.getMember().getId().equals(pending.getId()) && h.getAction() == MemberStatusAction.WITHDRAWAL_FINALIZED);
+    }
+
+    @Test
+    @DisplayName("T11: 정지 중인 회원도 플래그가 꺼져 있으면 일반 탈퇴와 같다. 보관 테이블에 행이 없다")
+    void t11_suspendedMemberFlagOff() {
+        Member suspended = saveMember("clerk_wx_susp", "wxsusp", MemberStatus.SUSPENDED);
+        memberStatusHistoryRepository.save(MemberStatusHistory.builder().member(suspended)
+                .action(MemberStatusAction.SUSPEND).status(MemberStatus.SUSPENDED).reason("정지").build());
+
+        withdrawalService.withdraw(suspended, confirmed());
+        em.flush();
+
+        assertThat(memberRestrictionRepository.findAll()).isEmpty();
+        assertThat(memberStatusHistoryRepository.findByMemberIdOrderByCreatedAtDesc(suspended.getId()))
+                .extracting(MemberStatusHistory::getAction).containsExactly(MemberStatusAction.SELF_WITHDRAW);
     }
 
     @Test
