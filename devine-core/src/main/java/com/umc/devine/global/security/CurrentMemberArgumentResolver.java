@@ -3,6 +3,7 @@ package com.umc.devine.global.security;
 import com.umc.devine.domain.auth.exception.AuthException;
 import com.umc.devine.domain.auth.exception.code.AuthErrorReason;
 import com.umc.devine.domain.member.entity.Member;
+import com.umc.devine.domain.member.enums.MemberStatus;
 import com.umc.devine.domain.member.repository.MemberRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.core.MethodParameter;
@@ -14,9 +15,15 @@ import org.springframework.web.context.request.NativeWebRequest;
 import org.springframework.web.method.support.HandlerMethodArgumentResolver;
 import org.springframework.web.method.support.ModelAndViewContainer;
 
+import java.util.List;
+
 @Component
 @RequiredArgsConstructor
 public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResolver {
+
+    // 회원 탈퇴 API에서만 허용하는 상태. 탈퇴(DELETED)·INACTIVE는 포함하지 않는다.
+    private static final List<MemberStatus> SANCTIONED_INCLUDED_STATUSES =
+            List.of(MemberStatus.ACTIVE, MemberStatus.SUSPENDED, MemberStatus.PENDING_WITHDRAWAL);
 
     private final MemberRepository memberRepository;
 
@@ -35,9 +42,10 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
     ) {
         CurrentMember annotation = parameter.getParameterAnnotation(CurrentMember.class);
         boolean required = annotation == null || annotation.required();
+        boolean includeSanctioned = annotation != null && annotation.includeSanctioned();
 
         try {
-            return resolveCurrentMember();
+            return resolveCurrentMember(includeSanctioned);
         } catch (AuthException e) {
             if (required) {
                 throw e;
@@ -46,7 +54,7 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
         }
     }
 
-    private Member resolveCurrentMember() {
+    private Member resolveCurrentMember(boolean includeSanctioned) {
         Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
 
         if (authentication == null || !authentication.isAuthenticated()) {
@@ -57,7 +65,10 @@ public class CurrentMemberArgumentResolver implements HandlerMethodArgumentResol
             throw new AuthException(AuthErrorReason.UNAUTHORIZED);
         }
 
-        return memberRepository.findByClerkId(clerkPrincipal.getClerkId())
+        String clerkId = clerkPrincipal.getClerkId();
+        return (includeSanctioned
+                ? memberRepository.findByClerkIdAndUsedIn(clerkId, SANCTIONED_INCLUDED_STATUSES)
+                : memberRepository.findByClerkId(clerkId))
                 .orElseThrow(() -> new AuthException(AuthErrorReason.NOT_REGISTERED));
     }
 }

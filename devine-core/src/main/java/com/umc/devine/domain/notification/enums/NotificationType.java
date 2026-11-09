@@ -13,6 +13,7 @@ public enum NotificationType {
     MATCHING_ACCEPTED("지원이 수락되었습니다", "matching"),
     MATCHING_REJECTED("지원이 거절되었습니다", "matching"),
     MATCHING_PROPOSAL_CANCELLED("프로젝트 제안이 취소되었습니다", "matching"),
+    MATCHING_APPLICATION_CANCELLED("프로젝트 지원이 취소되었습니다", "matching"),
 
     // 프로젝트 관련
     PROJECT_STATUS_CHANGED("프로젝트 상태가 변경되었습니다", "project"),

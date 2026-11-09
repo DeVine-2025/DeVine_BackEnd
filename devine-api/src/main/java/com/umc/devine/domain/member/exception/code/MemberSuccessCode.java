@@ -50,6 +50,12 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     FOUND_CONTRIBUTIONS(HttpStatus.OK,
             "MEMBER200_10",
             "GitHub 기여 기록을 성공적으로 조회했습니다."),
+    FOUND_WITHDRAWAL_PREVIEW(HttpStatus.OK,
+            "MEMBER200_11",
+            "탈퇴 미리보기를 조회했습니다."),
+    PENDING_MATCHINGS_CANCELED(HttpStatus.OK,
+            "MEMBER200_12",
+            "대기 중인 지원·제안을 모두 취소했습니다."),
     ;
 
     private final HttpStatus status;

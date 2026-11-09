@@ -143,4 +143,22 @@ public interface MatchingRepository extends JpaRepository<Matching, Long> {
 
     // 삭제 시 매칭 이력이 있으면 프로젝트 행(이름)을 남긴다
     boolean existsByProject(Project project);
+
+    // 회원 탈퇴용: 이 회원이 보냈거나 받은 건(개발자 쪽 matching.member, PM 쪽 project.member)이 걸린 프로젝트 ID
+    @Query("SELECT DISTINCT p.id FROM Matching m JOIN m.project p " +
+            "WHERE m.status = :status AND (m.member = :member OR p.member = :member)")
+    List<Long> findProjectIdsInvolvingMemberByStatus(
+            @Param("member") Member member,
+            @Param("status") MatchingStatus status);
+
+    // 회원 탈퇴용: 이 회원이 보냈거나 받은 건(개발자 쪽 matching.member, PM 쪽 project.member)
+    @Query("SELECT m FROM Matching m " +
+            "JOIN FETCH m.project p " +
+            "JOIN FETCH p.member " +
+            "JOIN FETCH m.member " +
+            "WHERE m.status = :status AND (m.member = :member OR p.member = :member) " +
+            "ORDER BY m.createdAt ASC, m.id ASC")
+    List<Matching> findAllInvolvingMemberByStatus(
+            @Param("member") Member member,
+            @Param("status") MatchingStatus status);
 }

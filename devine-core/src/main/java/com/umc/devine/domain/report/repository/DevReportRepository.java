@@ -61,6 +61,19 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
 
     boolean existsByGitRepoUrlId(Long gitRepoId);
 
+    /** 회원 탈퇴 미리보기용: 완료된 리포트 수. 생성권 1개로 MAIN·DETAIL 두 행이 생기므로 MAIN만 센다. */
+    @Query("SELECT COUNT(r) FROM DevReport r " +
+            "WHERE r.gitRepoUrl.member = :member " +
+            "AND r.reportType = com.umc.devine.domain.report.enums.ReportType.MAIN " +
+            "AND r.completedAt IS NOT NULL AND r.errorMessage IS NULL")
+    long countCompletedMainReportsByMember(@Param("member") Member member);
+
+    /** 회원 탈퇴 미리보기용: 생성 중(완료도 실패도 아닌) 리포트가 있는지. */
+    @Query("SELECT COUNT(r) > 0 FROM DevReport r " +
+            "WHERE r.gitRepoUrl.member = :member " +
+            "AND r.completedAt IS NULL AND r.errorMessage IS NULL")
+    boolean existsInProgressByMember(@Param("member") Member member);
+
     /**
      * 활성 리포트가 존재하는 gitRepoId 목록 반환 (배치 조회)
      */
