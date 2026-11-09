@@ -45,7 +45,7 @@ public class ChatConverter {
     }
 
     public static ChatResDTO.MessageList toMessageList(
-            Slice<ChatMessage> slice, Integer currentPage, Set<Long> reportedByViewer) {
+            Slice<ChatMessage> slice, Integer currentPage, Set<Long> reportedByViewer, boolean canSend) {
         List<ChatResDTO.ChatMessageDetail> messages = slice.getContent().stream()
                 .map(message -> toMessageDetail(message, reportedByViewer))
                 .toList();
@@ -53,12 +53,13 @@ public class ChatConverter {
                 .messages(messages)
                 .hasNext(slice.hasNext())
                 .currentPage(currentPage)
+                .canSend(canSend)
                 .build();
     }
 
     public static ChatResDTO.ChatRoomDetail toChatRoomDetail(
             ChatRoom room, Long memberId, String lastMessage,
-            LocalDateTime lastMessageAt, long unreadCount) {
+            LocalDateTime lastMessageAt, long unreadCount, boolean canSend) {
         Member other = room.getOtherMember(memberId);
         return ChatResDTO.ChatRoomDetail.builder()
                 .roomId(room.getId())
@@ -66,6 +67,7 @@ public class ChatConverter {
                 .lastMessage(lastMessage)
                 .lastMessageAt(lastMessageAt)
                 .unreadCount(unreadCount)
+                .canSend(canSend)
                 .build();
     }
 }

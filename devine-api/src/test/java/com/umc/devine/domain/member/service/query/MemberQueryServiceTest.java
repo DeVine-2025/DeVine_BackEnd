@@ -192,7 +192,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("닉네임으로 공개 프로필 회원을 조회한다")
         void findMemberByNickname_success() {
             // when
-            MemberResDTO.MemberProfileDTO result = memberQueryService.findMemberByNickname("testuser");
+            MemberResDTO.MemberProfileDTO result = memberQueryService.findMemberByNickname(null, "testuser");
 
             // then
             assertThat(result.member().nickname()).isEqualTo("testuser");
@@ -202,7 +202,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("존재하지 않는 닉네임 조회 시 예외 발생")
         void findMemberByNickname_notFound() {
             // when & then
-            assertThatThrownBy(() -> memberQueryService.findMemberByNickname("nonexistent"))
+            assertThatThrownBy(() -> memberQueryService.findMemberByNickname(null, "nonexistent"))
                     .isInstanceOf(MemberException.class);
         }
 
@@ -220,7 +220,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build());
 
             // when & then
-            assertThatThrownBy(() -> memberQueryService.findMemberByNickname("privateuser"))
+            assertThatThrownBy(() -> memberQueryService.findMemberByNickname(null, "privateuser"))
                     .isInstanceOf(MemberException.class);
         }
     }
@@ -715,7 +715,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(dto);
+            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(null, dto);
 
             // then
             assertThat(result.getContent()).isNotEmpty();
@@ -762,7 +762,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(dto);
+            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(null, dto);
 
             // then
             assertThat(result.getContent()).hasSize(3);
@@ -802,7 +802,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(dto);
+            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(null, dto);
 
             // then - NPE 발생하지 않고 정상 조회
             assertThat(result.getContent()).isNotEmpty();
@@ -827,7 +827,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(dto);
+            PagedResponse<MemberResDTO.MemberListItemDTO> result = memberQueryService.searchDevelopers(null, dto);
 
             // then
             assertThat(result.getContent()).isNotEmpty();
@@ -883,7 +883,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
             devTechstackRepository.save(devTechstack);
 
             // when
-            TechstackResDTO.DevTechstackListDTO result = memberQueryService.findTechstacksByNickname("testuser");
+            TechstackResDTO.DevTechstackListDTO result = memberQueryService.findTechstacksByNickname(null, "testuser");
 
             // then
             assertThat(result.techstacks()).hasSize(1);
@@ -893,7 +893,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
         @DisplayName("존재하지 않는 닉네임 조회 시 예외 발생")
         void findTechstacksByNickname_notFound() {
             // when & then
-            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname("nonexistent"))
+            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname(null, "nonexistent"))
                     .isInstanceOf(MemberException.class);
         }
 
@@ -911,7 +911,7 @@ class MemberQueryServiceTest extends IntegrationTestSupport {
                     .build());
 
             // when & then
-            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname("privateuser2"))
+            assertThatThrownBy(() -> memberQueryService.findTechstacksByNickname(null, "privateuser2"))
                     .isInstanceOf(MemberException.class);
         }
     }

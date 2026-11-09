@@ -207,7 +207,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent()).hasSize(3);
@@ -224,7 +224,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent()).hasSize(2);
@@ -243,7 +243,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent()).hasSize(2);
@@ -263,7 +263,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent()).hasSize(1);
@@ -282,7 +282,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent()).hasSize(2);
@@ -299,7 +299,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     .build();
 
             // when
-            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(request);
+            ProjectResDTO.SearchProjectsRes result = projectQueryService.searchProjects(null, request);
 
             // then
             assertThat(result.projects().getContent())
@@ -322,7 +322,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
             }
 
             // when
-            ProjectResDTO.WeeklyBestProjectsRes result = projectQueryService.getWeeklyBestProjects();
+            ProjectResDTO.WeeklyBestProjectsRes result = projectQueryService.getWeeklyBestProjects(null);
 
             // then
             assertThat(result.projects()).hasSizeLessThanOrEqualTo(4);
@@ -338,7 +338,7 @@ class ProjectQueryServiceTest extends IntegrationTestSupport {
                     ecommerceCategory, ProjectStatus.DELETED);
 
             // when
-            ProjectResDTO.WeeklyBestProjectsRes result = projectQueryService.getWeeklyBestProjects();
+            ProjectResDTO.WeeklyBestProjectsRes result = projectQueryService.getWeeklyBestProjects(null);
 
             // then
             assertThat(result.projects()).hasSize(1);

@@ -407,7 +407,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         em.clear();
 
         Matching kept = matchingRepository.findByIdWithDetails(history.getId()).orElseThrow();
-        assertThat(com.umc.devine.domain.project.converter.MatchingConverter.toDeveloperMatchingInfo(kept, List.of(), List.of()))
+        assertThat(com.umc.devine.domain.project.converter.MatchingConverter.toDeveloperMatchingInfo(kept, List.of(), List.of(), true))
                 .satisfies(info -> {
                     assertThat(info.developerNickname()).isEqualTo("탈퇴한 회원");
                     assertThat(info.developerImageUrl()).isNull();
@@ -476,7 +476,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
     void t1_goneFromSearch() {
         Project project = saveProject(me, "공개 프로젝트");
         em.flush();
-        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+        assertThat(memberRepository.findDevelopersByFilters(null, null, null, org.springframework.data.domain.Pageable.unpaged()))
                 .extracting(Member::getId).contains(me.getId());
         assertThat(projectRepository.findVisibleById(project.getId())).isPresent();
 
@@ -484,7 +484,7 @@ class MemberWithdrawalExecuteTest extends IntegrationTestSupport {
         em.flush();
         em.clear();
 
-        assertThat(memberRepository.findDevelopersByFilters(null, null, org.springframework.data.domain.Pageable.unpaged()))
+        assertThat(memberRepository.findDevelopersByFilters(null, null, null, org.springframework.data.domain.Pageable.unpaged()))
                 .extracting(Member::getId).doesNotContain(me.getId());
         assertThat(projectRepository.findVisibleById(project.getId())).isEmpty();
         assertThat(memberRepository.findByNickname("wxme")).isEmpty();

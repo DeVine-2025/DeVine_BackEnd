@@ -21,6 +21,10 @@ import java.util.Optional;
 
 public interface MemberRepository extends JpaRepository<Member, Long>, MemberQueryDsl {
 
+    @org.springframework.data.jpa.repository.Lock(jakarta.persistence.LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :firstId OR m.id = :secondId ORDER BY m.id")
+    List<Member> lockPair(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
     @Query("SELECT m FROM Member m WHERE m.nickname = :nickname AND m.used = 'ACTIVE'")
     Optional<Member> findByNickname(@Param("nickname") String nickname);
 
@@ -34,10 +38,12 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT DISTINCT m FROM Member m " +
            "WHERE m.disclosure = true " +
            "AND m.used = 'ACTIVE' " +
+           "AND NOT EXISTS (SELECT 1 FROM MemberBlock b WHERE (b.blocker.id = :viewerId AND b.target = m) OR (b.target.id = :viewerId AND b.blocker = m)) " +
            "AND (:categories IS NULL OR EXISTS (SELECT 1 FROM MemberCategory mc WHERE mc.member = m AND mc.category.genre IN :categories)) " +
            "AND (:techstackNames IS NULL OR EXISTS (SELECT 1 FROM DevTechstack dt WHERE dt.member = m AND dt.techstack.name IN :techstackNames)) " +
            "ORDER BY m.createdAt DESC")
     Page<Member> findDevelopersByFilters(
+            @Param("viewerId") Long viewerId,
             @Param("categories") List<CategoryGenre> categories,
             @Param("techstackNames") List<TechName> techstackNames,
             Pageable pageable);

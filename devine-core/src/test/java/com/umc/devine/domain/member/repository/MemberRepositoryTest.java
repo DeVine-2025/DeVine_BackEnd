@@ -154,7 +154,7 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
         @DisplayName("필터 없이 모든 개발자를 조회한다")
         void findDevelopersByFilters_noFilter() {
             // when
-            Page<Member> result = memberRepository.findDevelopersByFilters(
+            Page<Member> result = memberRepository.findDevelopersByFilters(null,
                     null,
                     null,
                     PageRequest.of(0, 10)
@@ -175,7 +175,7 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
             memberCategoryRepository.save(memberCategory);
 
             // when
-            Page<Member> result = memberRepository.findDevelopersByFilters(
+            Page<Member> result = memberRepository.findDevelopersByFilters(null,
                     List.of(CategoryGenre.HEALTHCARE),
                     null,
                     PageRequest.of(0, 10)
@@ -198,7 +198,7 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
             devTechstackRepository.save(devTechstack);
 
             // when
-            Page<Member> result = memberRepository.findDevelopersByFilters(
+            Page<Member> result = memberRepository.findDevelopersByFilters(null,
                     null,
                     List.of(TechName.JAVA),
                     PageRequest.of(0, 10)
@@ -222,7 +222,7 @@ class MemberRepositoryTest extends CoreIntegrationTestSupport {
                     .build());
 
             // when
-            Page<Member> result = memberRepository.findDevelopersByFilters(
+            Page<Member> result = memberRepository.findDevelopersByFilters(null,
                     null,
                     null,
                     PageRequest.of(0, 10)

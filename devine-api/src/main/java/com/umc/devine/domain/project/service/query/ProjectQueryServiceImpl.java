@@ -1,5 +1,6 @@
 package com.umc.devine.domain.project.service.query;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.querydsl.core.types.Predicate;
 import com.umc.devine.domain.complaint.service.command.ComplaintModerationService;
 import com.umc.devine.domain.member.entity.Member;
@@ -53,6 +54,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     private static final int WEEKLY_BEST_LIMIT = 4;
     private static final int RECOMMEND_LIMIT = 10;
 
+    private final MemberBlockRepository blockRepository;
     private final ProjectRepository projectRepository;
     private final MatchingRepository matchingRepository;
     private final ProjectRequirementTechstackRepository projectRequirementTechstackRepository;
@@ -67,6 +69,10 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
         Long viewerId = viewer != null ? viewer.getId() : null;
         Project project = projectRepository.findByIdWithMemberVisibleTo(projectId, viewerId)
                 .orElseThrow(() -> new ProjectException(PROJECT_NOT_FOUND));
+
+        if (viewer != null && blockRepository.existsBetween(viewer.getId(), project.getMember().getId())) {
+            throw new ProjectException(PROJECT_NOT_FOUND);
+        }
 
         // 비노출 프로젝트는 유저 화면에 노출되지 않으므로 조회수를 올리지 않는다.
         if (!project.isHidden()) {
@@ -116,9 +122,9 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects() {
+    public ProjectResDTO.WeeklyBestProjectsRes getWeeklyBestProjects(Member viewer) {
         boolean isMonday = LocalDate.now().getDayOfWeek() == DayOfWeek.MONDAY;
-        List<Project> projects = projectRepository.findWeeklyBestProjects(isMonday);
+        List<Project> projects = projectRepository.findWeeklyBestProjects(isMonday, viewer != null ? viewer.getId() : null);
 
         List<Project> limitedProjects = projects.stream().limit(WEEKLY_BEST_LIMIT).toList();
         List<Long> projectIds = limitedProjects.stream().map(Project::getId).toList();
@@ -134,7 +140,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     }
 
     @Override
-    public ProjectResDTO.SearchProjectsRes searchProjects(ProjectReqDTO.SearchProjectReq request) {
+    public ProjectResDTO.SearchProjectsRes searchProjects(Member viewer, ProjectReqDTO.SearchProjectReq request) {
         Pageable pageable = request.toPageable();
 
         Predicate predicate = ProjectPredicateBuilder.buildSearchPredicate(
@@ -144,6 +150,11 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 request.positions(),
                 request.techstackNames()
         );
+        List<Long> excluded = viewer == null ? List.of() : blockRepository.findExcludedMemberIds(viewer.getId());
+        if (!excluded.isEmpty()) {
+            predicate = new com.querydsl.core.BooleanBuilder(predicate)
+                    .and(com.umc.devine.domain.project.entity.QProject.project.member.id.notIn(excluded));
+        }
         Page<Project> projectPage = projectRepository.searchProjects(predicate, pageable);
 
         List<Long> projectIds = projectPage.getContent().stream().map(Project::getId).toList();
@@ -222,24 +233,26 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
     @Override
     public ProjectResDTO.MyProjectsRes getMyProjects(Member member, List<ProjectStatus> statuses, Pageable pageable) {
         // 작성자 본인이 자기 목록을 보는 경로이므로 비노출 프로젝트도 포함한다.
-        return buildProjectsOf(member, statuses, pageable, true);
+        return buildProjectsOf(member, member, statuses, pageable, true);
     }
 
     @Override
-    public ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member owner, List<ProjectStatus> statuses, Pageable pageable) {
+    public ProjectResDTO.MyProjectsRes getPublicProjectsOf(Member viewer, Member owner, List<ProjectStatus> statuses, Pageable pageable) {
         // 공개 프로필은 제3자가 보는 경로다. 비노출 프로젝트가 나가면 제재 사실이 노출된다.
-        return buildProjectsOf(owner, statuses, pageable, false);
+        return buildProjectsOf(viewer, owner, statuses, pageable, false);
     }
 
     private ProjectResDTO.MyProjectsRes buildProjectsOf(
-            Member member, List<ProjectStatus> statuses, Pageable pageable, boolean includeHidden
+            Member viewer, Member member, List<ProjectStatus> statuses, Pageable pageable, boolean includeHidden
     ) {
+        Set<Long> excluded = viewer == null ? Set.of() : Set.copyOf(blockRepository.findExcludedMemberIds(viewer.getId()));
         // 내가 등록한 프로젝트
         List<Project> createdProjects = includeHidden
                 ? projectRepository.findAllByMemberAndStatusInIncludingHidden(member, statuses)
                 : projectRepository.findAllByMemberAndStatusIn(member, statuses);
 
         List<ProjectResDTO.MyProjectInfo> createdInfos = createdProjects.stream()
+                .filter(project -> !excluded.contains(project.getMember().getId()))
                 .map(ProjectConverter::toMyProjectInfo)
                 .toList();
 
@@ -249,6 +262,7 @@ public class ProjectQueryServiceImpl implements ProjectQueryService {
                 : matchingRepository
                         .findAllByMemberAndDecisionAndProjectStatusIn(member, MatchingDecision.ACCEPT, statuses)
                         .stream()
+                        .filter(matching -> !excluded.contains(matching.getProject().getMember().getId()))
                         .map(ProjectConverter::toMyProjectInfo)
                         .toList();
 

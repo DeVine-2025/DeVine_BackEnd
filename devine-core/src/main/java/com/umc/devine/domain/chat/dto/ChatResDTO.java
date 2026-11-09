@@ -13,7 +13,8 @@ public class ChatResDTO {
             OtherMemberInfo otherMember,
             String lastMessage,
             LocalDateTime lastMessageAt,
-            long unreadCount
+            long unreadCount,
+            boolean canSend
     ) {}
 
     @Builder
@@ -52,7 +53,8 @@ public class ChatResDTO {
     public record MessageList(
             List<ChatMessageDetail> messages,
             Boolean hasNext,
-            Integer currentPage
+            Integer currentPage,
+            boolean canSend
     ) {}
 
     @Builder
