@@ -56,6 +56,9 @@ public enum MemberSuccessCode implements BaseSuccessCode {
     PENDING_MATCHINGS_CANCELED(HttpStatus.OK,
             "MEMBER200_12",
             "대기 중인 지원·제안을 모두 취소했습니다."),
+    WITHDRAWN(HttpStatus.OK,
+            "MEMBER200_13",
+            "탈퇴가 완료되었습니다."),
     ;
 
     private final HttpStatus status;

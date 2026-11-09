@@ -7,7 +7,10 @@ import com.umc.devine.domain.member.repository.querydsl.MemberQueryDsl;
 import com.umc.devine.domain.techstack.enums.TechName;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import jakarta.persistence.LockModeType;
 import org.springframework.data.jpa.repository.JpaRepository;
+import org.springframework.data.jpa.repository.Lock;
+import org.springframework.data.jpa.repository.Modifying;
 import org.springframework.data.jpa.repository.Query;
 import org.springframework.data.repository.query.Param;
 
@@ -46,6 +49,20 @@ public interface MemberRepository extends JpaRepository<Member, Long>, MemberQue
     @Query("SELECT m FROM Member m WHERE m.clerkId = :clerkId AND m.used IN :statuses")
     Optional<Member> findByClerkIdAndUsedIn(@Param("clerkId") String clerkId,
                                             @Param("statuses") Collection<MemberStatus> statuses);
+
+    /** 회원 탈퇴 실행용 행 잠금. 탈퇴 중복 요청을 차례로 처리한다. */
+    @Lock(LockModeType.PESSIMISTIC_WRITE)
+    @Query("SELECT m FROM Member m WHERE m.id = :id")
+    Optional<Member> findByIdForUpdate(@Param("id") Long id);
+
+    /**
+     * 회원 탈퇴용: 감사 칼럼에 남은 clerk_id를 비운다.
+     * created_by는 JPA로 갱신되지 않고(updatable = false), updated_by는 flush 때 요청자(탈퇴 회원)의 clerk_id로 다시 채워지므로
+     * 회원 행의 마지막 변경을 flush한 뒤 native로 비운다.
+     */
+    @Modifying(flushAutomatically = true)
+    @Query(value = "UPDATE member SET created_by = NULL, updated_by = NULL WHERE member_id = :id", nativeQuery = true)
+    int clearAuditColumns(@Param("id") Long id);
 
     @Query("SELECT COUNT(m) > 0 FROM Member m WHERE m.clerkId = :clerkId AND m.used = 'ACTIVE'")
     boolean existsByClerkId(@Param("clerkId") String clerkId);

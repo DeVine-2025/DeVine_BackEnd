@@ -24,12 +24,12 @@ public class GeneralExceptionAdvice {
 
     // 도메인 예외를 처리
     @ExceptionHandler(DomainException.class)
-    public ResponseEntity<ApiResponse<Void>> handleDomainException(DomainException ex) {
+    public ResponseEntity<ApiResponse<Object>> handleDomainException(DomainException ex) {
         DomainErrorReason reason = ex.getReason();
         log.error("DomainException 발생 - code: {}, message: {}", reason.getCode(), reason.getMessage(), ex);
 
         return ResponseEntity.status(reason.getStatus())
-                .body(ApiResponse.onFailure(reason, null));
+                .body(ApiResponse.onFailure(reason, ex.getResult()));
     }
 
     // 컨트롤러 메서드에서 @Valid 어노테이션을 사용하여 DTO의 유효성 검사를 수행 (400)

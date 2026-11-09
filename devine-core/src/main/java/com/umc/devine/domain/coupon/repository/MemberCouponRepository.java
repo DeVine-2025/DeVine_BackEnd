@@ -12,8 +12,14 @@ import org.springframework.data.repository.query.Param;
 
 import java.util.List;
 import java.util.Optional;
+import org.springframework.data.jpa.repository.Modifying;
 
 public interface MemberCouponRepository extends JpaRepository<MemberCoupon, Long> {
+
+    /** 회원 탈퇴용: 사용 여부와 상관없이 지운다. 쿠폰 할인 금액은 payment에 남는다. */
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM MemberCoupon mc WHERE mc.member = :member")
+    int deleteAllByMemberBulk(@Param("member") Member member);
 
     List<MemberCoupon> findByMemberOrderByCreatedAtDesc(Member member);
 

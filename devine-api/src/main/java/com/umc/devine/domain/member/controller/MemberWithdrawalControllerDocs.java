@@ -1,5 +1,6 @@
 package com.umc.devine.domain.member.controller;
 
+import com.umc.devine.domain.member.dto.WithdrawalReqDTO;
 import com.umc.devine.domain.member.dto.WithdrawalResDTO;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.global.apiPayload.ApiResponse;
@@ -9,6 +10,8 @@ import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.Parameter;
 import io.swagger.v3.oas.annotations.responses.ApiResponses;
 import io.swagger.v3.oas.annotations.tags.Tag;
+import jakarta.validation.Valid;
+import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 
 @Tag(name = "Member Withdrawal", description = "회원 탈퇴 API. 정지·강제탈퇴 예정 회원도 호출할 수 있습니다.")
@@ -37,5 +40,21 @@ public interface MemberWithdrawalControllerDocs {
     })
     ApiResponse<WithdrawalResDTO.CancelPendingResultDTO> cancelPendingMatchings(
             @Parameter(hidden = true) @CurrentMember(includeSanctioned = true) Member member
+    );
+
+    @Operation(summary = "탈퇴 실행 API",
+            description = "즉시 탈퇴합니다. 프로필·리포트·프로젝트·보낸 채팅 메시지·쿠폰을 지우고, 결제·환불 기록과 매칭 이력은 익명 상태로 보관합니다. "
+                    + "환불을 신청하면 남은 생성권 중 환불 가능분을 결제 건별로 신청하고 운영자에게 알립니다. "
+                    + "환불 여부와 상관없이 남은 생성권은 0이 됩니다. Clerk 계정·이미지 파일은 커밋 뒤 정리되며, 실패해도 탈퇴는 성공으로 처리됩니다.")
+    @ApiResponses({
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "200", description = "OK, 탈퇴 완료"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "400", description = "confirmed 누락·false, 환불 신청 시 연락 이메일 누락·형식 오류"),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "401", description = "인증이 필요합니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "403", description = "가입되지 않았거나 이미 탈퇴한 회원입니다."),
+            @io.swagger.v3.oas.annotations.responses.ApiResponse(responseCode = "409", description = "대기 중인 지원·제안이 남아 있음. result.pendingCount에 건수")
+    })
+    ApiResponse<WithdrawalResDTO.WithdrawResultDTO> withdraw(
+            @Parameter(hidden = true) @CurrentMember(includeSanctioned = true) Member member,
+            @RequestBody @Valid WithdrawalReqDTO.WithdrawReq request
     );
 }

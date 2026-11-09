@@ -165,6 +165,33 @@ public class Member extends BaseEntity {
         this.scheduledWithdrawalAt = null;
     }
 
+    // 닉네임 규칙(한글·영문·숫자·-·_)이 허용하지 않는 '#'을 넣어 실제 회원 닉네임과 겹치지 않게 한다
+    public static final String WITHDRAWN_NICKNAME_PREFIX = "deleted#";
+
+    /**
+     * 회원 자진 탈퇴(01-1 FUNC-MEM-003). 행은 결제·매칭 기록의 FK를 위해 남기고 개인정보만 비운다.
+     * 닉네임은 NOT NULL UNIQUE라 비우지 않고 회원 ID 기반 자리표시값으로 바꾼다. 화면에는 "탈퇴한 회원"으로 보인다.
+     * 예정된 강제탈퇴 확정도 함께 취소된다(상태가 DELETED라 확정 배치 대상에서 빠진다).
+     */
+    public void anonymizeForWithdrawal() {
+        this.name = null;
+        this.nickname = WITHDRAWN_NICKNAME_PREFIX + this.id;
+        this.address = null;
+        this.body = null;
+        this.image = null;
+        this.githubUsername = null;
+        this.clerkId = null;
+        this.scheduledWithdrawalAt = null;
+        this.disclosure = false;
+        this.proposalAlarm = false;
+        this.memberCategories.clear();
+        this.used = MemberStatus.DELETED;
+    }
+
+    public boolean isWithdrawn() {
+        return this.used == MemberStatus.DELETED;
+    }
+
     /**
      * 30일 소명 절차 만료 후 스케줄러가 호출하는 최종 탈퇴 확정.
      */

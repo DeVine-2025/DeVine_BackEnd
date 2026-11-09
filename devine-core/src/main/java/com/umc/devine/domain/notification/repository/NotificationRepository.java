@@ -12,8 +12,14 @@ import org.springframework.data.jpa.repository.EntityGraph;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import com.umc.devine.domain.member.entity.Member;
 
 public interface NotificationRepository extends JpaRepository<Notification, Long> {
+
+    /** 회원 탈퇴용: 받은 알림만 지운다. 남에게 보낸 알림과 sender_id는 그대로 둔다. */
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM Notification n WHERE n.receiver = :member")
+    int deleteAllByReceiver(@Param("member") Member member);
 
     @Query("SELECT n FROM Notification n WHERE n.receiver.id = :receiverId AND n.isRead = false ORDER BY n.createdAt DESC")
     @EntityGraph(attributePaths = { "sender" })

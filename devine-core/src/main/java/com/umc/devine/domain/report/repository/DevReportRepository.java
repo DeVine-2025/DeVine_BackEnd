@@ -61,6 +61,14 @@ public interface DevReportRepository extends JpaRepository<DevReport, Long> {
 
     boolean existsByGitRepoUrlId(Long gitRepoId);
 
+    /** GitHub 데이터 삭제(회원 탈퇴, GitHub 연동 해제)용: 이 회원의 리포트 ID(MAIN·DETAIL, 공개·생성 중 포함). */
+    @Query("SELECT r.id FROM DevReport r WHERE r.gitRepoUrl.member = :member")
+    List<Long> findIdsByMember(@Param("member") Member member);
+
+    @Modifying(flushAutomatically = true)
+    @Query("DELETE FROM DevReport r WHERE r.id IN :ids")
+    int deleteAllByIdIn(@Param("ids") List<Long> ids);
+
     /** 회원 탈퇴 미리보기용: 완료된 리포트 수. 생성권 1개로 MAIN·DETAIL 두 행이 생기므로 MAIN만 센다. */
     @Query("SELECT COUNT(r) FROM DevReport r " +
             "WHERE r.gitRepoUrl.member = :member " +

@@ -63,6 +63,23 @@ public class WithdrawalResDTO {
     }
 
     @Builder
+    @Schema(description = "탈퇴 실행 응답(FUNC-MEM-003)")
+    public record WithdrawResultDTO(
+            @Schema(description = "탈퇴 완료 여부", example = "true")
+            boolean withdrawn,
+
+            @Schema(description = "환불 신청이 접수됐는지. 환불 가능 생성권이 없었으면 false", example = "true")
+            boolean refundRequested
+    ) {}
+
+    @Builder
+    @Schema(description = "탈퇴 409 응답의 result: 남은 대기 건 수. 화면은 SCR-MEM-01로 돌아갑니다.")
+    public record PendingMatchingsRemainDTO(
+            @Schema(description = "대기 중인 지원·제안 수", example = "2")
+            int pendingCount
+    ) {}
+
+    @Builder
     @Schema(description = "대기 지원·제안 일괄 취소 응답(FUNC-MEM-002)")
     public record CancelPendingResultDTO(
             @Schema(description = "취소한 건수. 대기 건이 없으면 0", example = "2")

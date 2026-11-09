@@ -44,6 +44,11 @@ public class MemberReportCredit extends BaseEntity {
         return revoked;
     }
 
+    /** 회원 탈퇴: 환불 여부와 상관없이 남은 생성권은 없어진다(약관 제7조 6항). */
+    public void forfeitAll() {
+        this.remainingCount = 0;
+    }
+
     public void useCredit() {
         if (this.remainingCount <= 0) {
             throw new TicketException(TicketErrorReason.INSUFFICIENT_CREDITS);

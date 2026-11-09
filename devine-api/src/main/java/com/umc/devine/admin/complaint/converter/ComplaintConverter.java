@@ -2,18 +2,26 @@ package com.umc.devine.admin.complaint.converter;
 
 import com.umc.devine.admin.complaint.dto.ComplaintResDTO;
 import com.umc.devine.admin.complaint.entity.Complaint;
+import com.umc.devine.domain.member.entity.Member;
 
 import java.time.LocalDateTime;
 import java.util.List;
 
 public class ComplaintConverter {
 
+    // 탈퇴로 신고자·피신고자 칸이 비워진 신고(01-1 기능명세서 5장)
+    static final String WITHDRAWN_MEMBER_NICKNAME = "탈퇴한 회원";
+
+    private static String nicknameOf(Member member) {
+        return member == null ? WITHDRAWN_MEMBER_NICKNAME : member.getNickname();
+    }
+
     public static ComplaintResDTO.ComplaintSummaryDTO toComplaintSummaryDTO(Complaint complaint, boolean slaExceeded) {
         return ComplaintResDTO.ComplaintSummaryDTO.builder()
                 .complaintId(complaint.getId())
                 .targetType(complaint.getTargetType())
-                .complainantNickname(complaint.getComplainant().getNickname())
-                .respondentNickname(complaint.getRespondentMember().getNickname())
+                .complainantNickname(nicknameOf(complaint.getComplainant()))
+                .respondentNickname(nicknameOf(complaint.getRespondentMember()))
                 .createdAt(complaint.getCreatedAt())
                 .status(complaint.getStatus())
                 .slaExceeded(slaExceeded)
@@ -35,8 +43,8 @@ public class ComplaintConverter {
                 .complaintId(complaint.getId())
                 .targetType(complaint.getTargetType())
                 .targetId(complaint.getTargetId())
-                .complainantNickname(complaint.getComplainant().getNickname())
-                .respondentNickname(complaint.getRespondentMember().getNickname())
+                .complainantNickname(nicknameOf(complaint.getComplainant()))
+                .respondentNickname(nicknameOf(complaint.getRespondentMember()))
                 .reason(complaint.getReason())
                 .status(complaint.getStatus())
                 .action(complaint.getAction())

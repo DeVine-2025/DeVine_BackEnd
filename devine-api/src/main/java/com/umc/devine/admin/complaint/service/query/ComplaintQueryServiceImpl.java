@@ -74,6 +74,11 @@ public class ComplaintQueryServiceImpl implements ComplaintQueryService {
 
         String content = resolveContent(complaint);
 
+        // 피신고자가 탈퇴해 칸이 비워졌으면 누적 이력을 이어 볼 수 없다
+        if (complaint.getRespondentMember() == null) {
+            return ComplaintConverter.toComplaintDetailRes(complaint, content, 0, List.of());
+        }
+
         Long respondentMemberId = complaint.getRespondentMember().getId();
         long respondentComplaintCount = complaintRepository.countByRespondentMemberId(respondentMemberId);
         LocalDateTime now = LocalDateTime.now();

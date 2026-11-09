@@ -8,8 +8,12 @@ import org.springframework.data.repository.query.Param;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Optional;
+import com.umc.devine.domain.member.entity.Member;
 
 public interface ImageRepository extends JpaRepository<Image, Long> {
+
+    /** 회원 탈퇴용: 이 회원이 올린 이미지(프로필·프로젝트·에디터). S3 객체는 커밋 뒤 아웃박스로 지운다. */
+    List<Image> findAllByUploader(Member uploader);
 
     Optional<Image> findByImageUrl(String imageUrl);
 

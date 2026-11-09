@@ -8,4 +8,8 @@ public class MemberException extends DomainException {
     public MemberException(DomainErrorReason reason) {
         super(reason);
     }
+
+    public MemberException(DomainErrorReason reason, Object result) {
+        super(reason, result);
+    }
 }
