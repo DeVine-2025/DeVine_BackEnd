@@ -19,4 +19,9 @@ public interface PaymentRepository extends JpaRepository<Payment, Long>, Payment
 
     @Query("SELECT DISTINCT p FROM Payment p LEFT JOIN FETCH p.transactions t LEFT JOIN FETCH t.cardDetail LEFT JOIN FETCH t.easyPayDetail WHERE p.member = :member ORDER BY p.createdAt DESC")
     List<Payment> findAllByMemberWithTransactions(@Param("member") Member member);
+
+    /** 보관 만료 파기 배치용(01-1 FUNC-MEM-007 4번): 탈퇴 회원의 결제 중 결제일이 기준 시각 이전인 것. 환불 조건은 호출하는 쪽이 본다. */
+    @Query("SELECT p.id FROM Payment p WHERE p.member.used = com.umc.devine.domain.member.enums.MemberStatus.DELETED " +
+            "AND p.createdAt < :threshold")
+    List<Long> findIdsOfWithdrawnMembersCreatedBefore(@Param("threshold") java.time.LocalDateTime threshold);
 }

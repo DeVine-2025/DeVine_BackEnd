@@ -42,6 +42,11 @@ outbox:
   scheduler:
     enabled: false
 
+# 보관 만료 파기 배치는 테스트가 WithdrawalRetentionPurgeService를 직접 부른다
+withdrawal:
+  retention-purge:
+    enabled: false
+
 # Thread Pool Configuration
 executor:
   async:

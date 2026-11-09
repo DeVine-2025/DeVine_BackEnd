@@ -106,6 +106,11 @@ public class Matching extends BaseEntity {
         return this.status == MatchingStatus.PENDING;
     }
 
+    /** 보관 만료 파기(01-1 FUNC-MEM-007 1번): 탈퇴 1년이 지난 쪽이 쓴 내용을 비운다. 행은 상대 이력을 위해 남긴다. */
+    public void clearContent() {
+        this.content = null;
+    }
+
     public void changePart(ProjectPart part) {
         validatePendingStatus();
         this.part = part;
