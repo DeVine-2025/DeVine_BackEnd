@@ -1,6 +1,8 @@
 package com.umc.devine.domain.payment.enums;
 
 public enum RefundStatus {
+    /** 회원 탈퇴 환불 신청 접수 — 운영자가 부분 취소를 마치면 COMPLETED로 바뀐다(비종료). */
+    REQUESTED,
     /** 환불 시도 선점 — 외부 취소 호출 진행 중(비종료). */
     IN_PROGRESS,
     /** 환불 완료(종료). */

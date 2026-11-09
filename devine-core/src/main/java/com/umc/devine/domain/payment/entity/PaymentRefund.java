@@ -1,5 +1,6 @@
 package com.umc.devine.domain.payment.entity;
 
+import com.umc.devine.domain.payment.enums.RefundSource;
 import com.umc.devine.domain.payment.enums.RefundStatus;
 import com.umc.devine.global.entity.BaseEntity;
 import jakarta.persistence.*;
@@ -12,6 +13,8 @@ import lombok.*;
 @AllArgsConstructor(access = AccessLevel.PRIVATE)
 @Getter
 public class PaymentRefund extends BaseEntity {
+
+    public static final String WITHDRAWAL_REASON = "회원 탈퇴";
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -34,6 +37,46 @@ public class PaymentRefund extends BaseEntity {
 
     @Column(name = "failure_reason", length = 255)
     private String failureReason;
+
+    @Enumerated(EnumType.STRING)
+    @Column(nullable = false, length = 20)
+    @Builder.Default
+    private RefundSource source = RefundSource.ADMIN;
+
+    /** 탈퇴 환불 금액. 관리자 결제 전체 환불 행은 null이다. */
+    @Column(name = "refund_amount")
+    private Long refundAmount;
+
+    /** 탈퇴 환불 생성권 수량. 관리자 결제 전체 환불 행은 null이다. */
+    @Column(name = "refund_credit_count")
+    private Integer refundCreditCount;
+
+    /** 탈퇴 환불 연락 이메일. 환불이 끝나면 지운다. */
+    @Column(name = "contact_email", length = 255)
+    private String contactEmail;
+
+    /** 회원 탈퇴 시 남은 생성권 환불 신청. 운영자가 refundAmount만 부분 취소한 뒤 완료 처리한다. */
+    public static PaymentRefund requestForWithdrawal(Payment payment, long refundAmount, int refundCreditCount, String contactEmail) {
+        return PaymentRefund.builder()
+                .payment(payment)
+                .status(RefundStatus.REQUESTED)
+                .source(RefundSource.WITHDRAWAL)
+                .reason(WITHDRAWAL_REASON)
+                .refundAmount(refundAmount)
+                .refundCreditCount(refundCreditCount)
+                .contactEmail(contactEmail)
+                .build();
+    }
+
+    /** 탈퇴 환불 신청 완료 처리. 환불이 끝났으므로 연락 이메일을 지운다(결정 F). */
+    public void completeWithdrawalRequest() {
+        this.status = RefundStatus.COMPLETED;
+        this.contactEmail = null;
+    }
+
+    public boolean isWithdrawalRequest() {
+        return this.source == RefundSource.WITHDRAWAL;
+    }
 
     /** 외부 취소 호출 전 선점 레코드. 부분 유니크 인덱스가 활성 환불 중복을 막는다. */
     public static PaymentRefund claim(Payment payment, String reason) {
