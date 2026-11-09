@@ -173,8 +173,7 @@ class HiddenProjectAccessTest extends IntegrationTestSupport {
             createHiddenProject();
 
             // when: 프로필 주인이 아니라 제3자(비회원 포함)가 보는 경로
-            ProjectResDTO.MyProjectsRes result = memberQueryService.findProjectsByNickname(
-                    owner.getNickname(), List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
+            ProjectResDTO.MyProjectsRes result = memberQueryService.findProjectsByNickname(null, owner.getNickname(), List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
 
             // then
             assertThat(result.projects().getContent()).isEmpty();
@@ -187,8 +186,7 @@ class HiddenProjectAccessTest extends IntegrationTestSupport {
             createRecruitingProject();
 
             // when
-            ProjectResDTO.MyProjectsRes result = memberQueryService.findProjectsByNickname(
-                    owner.getNickname(), List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
+            ProjectResDTO.MyProjectsRes result = memberQueryService.findProjectsByNickname(null, owner.getNickname(), List.of(ProjectStatus.RECRUITING), PageRequest.of(0, 10));
 
             // then
             assertThat(result.projects().getContent()).hasSize(1);

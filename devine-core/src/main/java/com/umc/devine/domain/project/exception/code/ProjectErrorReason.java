@@ -9,7 +9,7 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ProjectErrorReason implements DomainErrorReason {
 
-    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT404_1", "존재하지 않는 프로젝트입니다."),
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "PROJECT404_1", "지금은 이 대상을 볼 수 없어요."),
     FORBIDDEN_PROJECT_ACCESS(HttpStatus.FORBIDDEN, "PROJECT403_2", "해당 프로젝트에 대한 권한이 없습니다."),
     INVALID_START_DATE(HttpStatus.BAD_REQUEST, "PROJECT400_1", "시작일은 오늘 이후여야 합니다."),
     INVALID_PROJECT_DATE(HttpStatus.BAD_REQUEST, "PROJECT400_2", "종료 예정일은 시작일 이후여야 합니다."),

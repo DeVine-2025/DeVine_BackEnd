@@ -9,9 +9,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MatchingErrorReason implements DomainErrorReason {
 
-    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_1", "프로젝트를 찾을 수 없습니다."),
-    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_2", "회원을 찾을 수 없습니다."),
-    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_3", "매칭 정보를 찾을 수 없습니다."),
+    PROJECT_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_1", "지금은 이 대상을 볼 수 없어요."),
+    MEMBER_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_2", "지금은 이 대상을 볼 수 없어요."),
+    MATCHING_NOT_FOUND(HttpStatus.NOT_FOUND, "MATCHING404_3", "지금은 이 대상을 볼 수 없어요."),
     PROJECT_NOT_RECRUITING(HttpStatus.BAD_REQUEST, "MATCHING400_1", "모집 중인 프로젝트가 아닙니다."),
     ALREADY_APPLIED(HttpStatus.CONFLICT, "MATCHING409_1", "이미 지원한 프로젝트입니다."),
     ALREADY_PROPOSED(HttpStatus.CONFLICT, "MATCHING409_2", "이미 제안한 회원입니다."),

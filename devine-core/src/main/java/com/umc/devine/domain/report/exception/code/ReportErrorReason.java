@@ -9,9 +9,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum ReportErrorReason implements DomainErrorReason {
 
-    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_1", "해당 리포트를 찾을 수 없습니다."),
+    REPORT_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_1", "지금은 이 대상을 볼 수 없어요."),
     GIT_REPO_NOT_FOUND(HttpStatus.NOT_FOUND, "REPORT404_2", "해당 Git 저장소를 찾을 수 없습니다."),
-    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "REPORT403_1", "해당 리포트에 대한 권한이 없습니다."),
+    UNAUTHORIZED_ACCESS(HttpStatus.FORBIDDEN, "REPORT403_1", "지금은 이 대상을 볼 수 없어요."),
     REPORT_ALREADY_EXISTS(HttpStatus.CONFLICT, "REPORT409_1", "해당 Git 저장소에 이미 리포트가 존재합니다."),
     INVALID_JSON_FORMAT(HttpStatus.BAD_REQUEST, "REPORT400_1", "유효하지 않은 JSON 형식입니다."),
     INVALID_REPORT_PAIR(HttpStatus.BAD_REQUEST, "REPORT400_4", "메인/상세 리포트 쌍이 올바르지 않습니다."),

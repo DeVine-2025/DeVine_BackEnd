@@ -16,7 +16,7 @@ public enum ComplaintErrorReason implements DomainErrorReason {
     ACTION_NOT_ALLOWED_FOR_TARGET(HttpStatus.BAD_REQUEST, "COMPLAINT400_4", "회원 신고에는 고를 수 없는 세부 액션입니다."),
     DETAIL_REQUIRED(HttpStatus.BAD_REQUEST, "COMPLAINT400_5", "사유가 기타일 때는 상세 내용을 입력해 주세요."),
 
-    TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "COMPLAINT404_2", "이미 삭제되어 신고할 수 없어요."),
+    TARGET_NOT_FOUND(HttpStatus.NOT_FOUND, "COMPLAINT404_2", "지금은 이 대상을 볼 수 없어요."),
     SELF_COMPLAINT(HttpStatus.BAD_REQUEST, "COMPLAINT400_6", "본인 항목은 신고할 수 없어요."),
     DUPLICATE_TARGET(HttpStatus.CONFLICT, "COMPLAINT409_1", "이미 신고한 항목이에요."),
     DUPLICATE_RESPONDENT(HttpStatus.CONFLICT, "COMPLAINT409_2", "이미 신고한 회원이에요. 처리 결과를 알림으로 알려 드려요."),

@@ -21,7 +21,7 @@ public class ComplaintResDTO {
             @Schema(description = "차단 제안 대상 회원의 닉네임 (프로젝트는 PM, 그 외는 상대)", example = "devine_user")
             String blockTargetNickname,
 
-            @Schema(description = "그 회원을 이미 차단했는지 여부. 차단 기능 추가 전까지는 항상 false다.", example = "false")
+            @Schema(description = "신고자가 그 회원을 직접 차단한 기록이 있는지 여부. 상대가 신고자를 차단한 기록만 있으면 false다.", example = "false")
             boolean blockTargetAlreadyBlocked
     ) {}
 }

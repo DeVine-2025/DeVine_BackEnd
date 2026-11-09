@@ -101,6 +101,9 @@ public class ProjectRecommendRepository {
                   AND p.is_hidden = false
                   AND p.recruitment_deadline >= CURRENT_DATE
                   AND p.member_id != :memberId
+                  AND NOT EXISTS (SELECT 1 FROM member_block b
+                      WHERE (b.blocker_id = :memberId AND b.target_id = p.member_id)
+                         OR (b.target_id = :memberId AND b.blocker_id = p.member_id))
                   AND EXISTS (
                     SELECT 1 FROM dev_techstack dt
                     JOIN techstack t ON dt.techstack_id = t.techstack_id

@@ -18,6 +18,9 @@ import java.util.List;
 import java.util.Optional;
 
 public interface ProjectRepository extends JpaRepository<Project, Long>, ProjectQueryDsl {
+    @Query("SELECT p.member.id FROM Project p WHERE p.id = :id")
+    Optional<Long> findOwnerIdById(@Param("id") Long id);
+
     // PM용: 본인 프로젝트를 상태별로 조회 (페이징)
     // 비노출 프로젝트는 제외한다. 제3자에게 보이는 경로에서도 쓰일 수 있으므로 안전한 쪽을 기본값으로 둔다.
     @Query(value = "SELECT p FROM Project p " +
@@ -99,10 +102,11 @@ public interface ProjectRepository extends JpaRepository<Project, Long>, Project
             "JOIN FETCH p.member " +
             "WHERE p.status <> com.umc.devine.domain.project.enums.ProjectStatus.DELETED " +
             "AND p.hidden = false " +
+            "AND NOT EXISTS (SELECT 1 FROM MemberBlock b WHERE (b.blocker.id = :viewerId AND b.target = p.member) OR (b.target.id = :viewerId AND b.blocker = p.member)) " +
             "AND p.recruitmentDeadline >= CURRENT_DATE " +
             "ORDER BY CASE WHEN :isMonday = true THEN p.previousWeekViewCount ELSE p.weeklyViewCount END DESC, " +
             "p.createdAt DESC")
-    List<Project> findWeeklyBestProjects(@Param("isMonday") boolean isMonday);
+    List<Project> findWeeklyBestProjects(@Param("isMonday") boolean isMonday, @Param("viewerId") Long viewerId);
 
     // 주간 조회수 리셋이 필요한 프로젝트 조회
     @Query("SELECT p FROM Project p " +

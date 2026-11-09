@@ -18,6 +18,23 @@ import java.util.Optional;
 
 public interface MatchingRepository extends JpaRepository<Matching, Long> {
 
+    String PENDING_BETWEEN = "m.status = com.umc.devine.domain.project.enums.mapping.MatchingStatus.PENDING AND " +
+            "((m.project.member.id = :firstId AND m.member.id = :secondId) OR " +
+            "(m.project.member.id = :secondId AND m.member.id = :firstId))";
+
+    @Query("SELECT COUNT(m) FROM Matching m WHERE " + PENDING_BETWEEN)
+    long countPendingBetween(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT DISTINCT m.project.id FROM Matching m WHERE " + PENDING_BETWEEN + " ORDER BY m.project.id")
+    List<Long> findPendingProjectIdsBetween(@Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT m FROM Matching m JOIN FETCH m.project JOIN FETCH m.member WHERE m.project.id = :projectId AND " + PENDING_BETWEEN)
+    List<Matching> findPendingBetweenInProject(@Param("projectId") Long projectId,
+            @Param("firstId") Long firstId, @Param("secondId") Long secondId);
+
+    @Query("SELECT m.member.id FROM Matching m WHERE m.id = :id")
+    Optional<Long> findMemberIdById(@Param("id") Long id);
+
     @Query("SELECT m.project.id FROM Matching m WHERE m.id = :id")
     Optional<Long> findProjectIdById(@Param("id") Long id);
 

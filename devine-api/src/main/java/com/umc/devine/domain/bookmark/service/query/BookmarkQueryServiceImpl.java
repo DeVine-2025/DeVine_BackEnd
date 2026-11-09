@@ -1,5 +1,6 @@
 package com.umc.devine.domain.bookmark.service.query;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.bookmark.converter.BookmarkConverter;
 import com.umc.devine.domain.bookmark.dto.BookmarkResDTO;
 import com.umc.devine.domain.bookmark.entity.Bookmark;
@@ -23,13 +24,14 @@ import java.util.stream.Collectors;
 @Transactional(readOnly = true)
 public class BookmarkQueryServiceImpl implements BookmarkQueryService {
 
+    private final MemberBlockRepository blockRepository;
     private final BookmarkRepository bookmarkRepository;
     private final MemberRepository memberRepository;
     private final ProjectRepository projectRepository;
 
     @Override
     public BookmarkResDTO.BookmarkListDTO findAllBookmarks(Member member) {
-        List<Bookmark> bookmarks = hideInvisibleProjects(bookmarkRepository.findAllByMember(member));
+        List<Bookmark> bookmarks = hideInvisibleProjects(member, bookmarkRepository.findAllByMember(member));
 
         // DEVELOPER 타입 북마크의 targetId를 일괄 조회하여 nickname 매핑
         List<Long> developerTargetIds = bookmarks.stream()
@@ -44,7 +46,10 @@ public class BookmarkQueryServiceImpl implements BookmarkQueryService {
         return BookmarkConverter.toBookmarkListDTO(bookmarks, nicknameMap);
     }
 
-    private List<Bookmark> hideInvisibleProjects(List<Bookmark> bookmarks) {
+    private List<Bookmark> hideInvisibleProjects(Member member, List<Bookmark> bookmarks) {
+        Set<Long> excluded = Set.copyOf(blockRepository.findExcludedMemberIds(member.getId()));
+        bookmarks = bookmarks.stream().filter(bookmark -> bookmark.getTargetType() != BookmarkType.DEVELOPER
+                || !excluded.contains(bookmark.getTargetId())).toList();
         List<Long> projectIds = bookmarks.stream()
                 .filter(bookmark -> bookmark.getTargetType() == BookmarkType.PROJECT)
                 .map(Bookmark::getTargetId)
@@ -55,6 +60,7 @@ public class BookmarkQueryServiceImpl implements BookmarkQueryService {
         }
 
         Set<Long> visibleProjectIds = projectRepository.findVisibleByIdIn(projectIds).stream()
+                .filter(project -> !excluded.contains(project.getMember().getId()))
                 .map(Project::getId)
                 .collect(Collectors.toSet());
 

@@ -57,7 +57,7 @@ public class ComplaintReqDTO {
             @NotNull(message = "상태는 필수입니다.")
             ComplaintStatus status,
 
-            @Schema(description = "세부 액션 (WARNING, DELETE, SUSPEND, DISMISS). 처리완료 시 필수", nullable = true)
+            @Schema(description = "세부 액션 (WARNING, DELETE, SUSPEND, DISMISS, WITHDRAWN). 처리완료 시 필수", nullable = true)
             ComplaintAction action,
 
             @Schema(description = "내부 처리 사유. 처리완료 시 필수. 알림·이메일에는 쓰이지 않는다", nullable = true)
