@@ -4,6 +4,7 @@ import com.umc.devine.admin.payment.dto.AdminPaymentResDTO;
 import com.umc.devine.domain.payment.entity.Payment;
 import com.umc.devine.domain.payment.entity.PaymentRefund;
 import com.umc.devine.domain.payment.entity.Transaction;
+import com.umc.devine.domain.payment.enums.RefundStatus;
 import com.umc.devine.domain.payment.enums.TransactionType;
 import com.umc.devine.domain.payment.enums.TransactionStatus;
 import com.umc.devine.domain.payment.exception.PaymentException;
@@ -39,6 +40,10 @@ public class RefundTxService {
         Payment payment = paymentRepository.findById(paymentId)
                 .orElseThrow(() -> new PaymentException(PaymentErrorReason.PAYMENT_NOT_FOUND));
         findPaidTransaction(payment);
+        // 탈퇴 환불은 신청 금액만 부분 취소해야 한다. 결제 전체 취소로 처리하면 과다 환불이 된다(01-1 PRD)
+        if (paymentRefundRepository.existsByPaymentIdAndStatus(paymentId, RefundStatus.REQUESTED)) {
+            throw new PaymentException(PaymentErrorReason.WITHDRAWAL_REFUND_REQUESTED);
+        }
         try {
             PaymentRefund refund = paymentRefundRepository.saveAndFlush(PaymentRefund.claim(payment, reason));
             return new RefundClaim(refund.getId(), payment.getPortonePaymentId());
