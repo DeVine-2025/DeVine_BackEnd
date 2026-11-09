@@ -9,6 +9,9 @@ import org.springframework.http.HttpStatus;
 @AllArgsConstructor
 public enum MemberSuccessCode implements BaseSuccessCode {
 
+    BLOCKED(HttpStatus.OK, "MEMBER200_20", "차단했어요."),
+    UNBLOCKED(HttpStatus.OK, "MEMBER200_21", "차단을 해제했어요."),
+
     //FOUND
     FOUND(HttpStatus.OK,
             "MEMBER200_1",

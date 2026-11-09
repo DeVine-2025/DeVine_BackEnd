@@ -1,5 +1,6 @@
 package com.umc.devine.domain.notification.service.command;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.umc.devine.domain.member.entity.Member;
 import com.umc.devine.domain.member.repository.MemberRepository;
@@ -29,6 +30,7 @@ import java.time.LocalDateTime;
 @Slf4j
 public class NotificationCommandServiceImpl implements NotificationCommandService {
 
+    private final MemberBlockRepository blockRepository;
     private final NotificationRepository notificationRepository;
     private final MemberRepository memberRepository;
     private final RedisTemplate<String, String> redisTemplate;
@@ -45,6 +47,12 @@ public class NotificationCommandServiceImpl implements NotificationCommandServic
             String content,
             Long referenceId
     ) {
+        boolean exempt = type.getCategory().equals("complaint")
+                || type == NotificationType.MATCHING_PROPOSAL_CANCELLED
+                || type == NotificationType.MATCHING_APPLICATION_CANCELLED;
+        if (!exempt && senderId != null && blockRepository.existsBetween(receiverId, senderId)) {
+            return null;
+        }
         Member receiver = memberRepository.findById(receiverId)
                 .orElseThrow(() -> new NotificationException(NotificationErrorReason.RECEIVER_NOT_FOUND));
 

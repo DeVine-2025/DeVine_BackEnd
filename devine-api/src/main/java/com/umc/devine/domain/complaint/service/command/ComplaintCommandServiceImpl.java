@@ -1,5 +1,6 @@
 package com.umc.devine.domain.complaint.service.command;
 
+import com.umc.devine.domain.member.repository.MemberBlockRepository;
 import com.umc.devine.domain.chat.entity.ChatMessage;
 import com.umc.devine.domain.chat.entity.ChatRoom;
 import com.umc.devine.domain.complaint.dto.ComplaintReqDTO;
@@ -41,6 +42,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
     private static final List<ComplaintStatus> IN_PROGRESS_STATUSES =
             List.of(ComplaintStatus.PENDING, ComplaintStatus.IN_REVIEW);
 
+    private final MemberBlockRepository blockRepository;
     private final ComplaintRepository complaintRepository;
     private final ComplaintEvidenceRepository complaintEvidenceRepository;
     private final MemberRepository memberRepository;
@@ -86,8 +88,7 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
                 .targetType(complaint.getTargetType())
                 .targetName(target.displayName())
                 .blockTargetNickname(target.blockTargetNickname())
-                // 차단 기능(#338) 전까지는 차단된 상태가 존재할 수 없다.
-                .blockTargetAlreadyBlocked(false)
+                .blockTargetAlreadyBlocked(blockRepository.existsByBlockerIdAndTargetId(complainant.getId(), target.respondent().getId()))
                 .build();
     }
 
@@ -115,6 +116,9 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
             throw new ComplaintException(ComplaintErrorReason.SELF_COMPLAINT);
         }
         Member pm = project.getMember();
+        if (blockRepository.existsBetween(complainant.getId(), pm.getId())) {
+            throw new ComplaintException(ComplaintErrorReason.TARGET_NOT_FOUND);
+        }
         return new Target(pm, project.getId(), project.getName(), pm.getNickname());
     }
 
@@ -126,6 +130,9 @@ public class ComplaintCommandServiceImpl implements ComplaintCommandService {
                 .orElseThrow(() -> new ComplaintException(ComplaintErrorReason.TARGET_NOT_FOUND));
         if (respondent.getId().equals(complainant.getId())) {
             throw new ComplaintException(ComplaintErrorReason.SELF_COMPLAINT);
+        }
+        if (blockRepository.existsBetween(complainant.getId(), respondent.getId())) {
+            throw new ComplaintException(ComplaintErrorReason.TARGET_NOT_FOUND);
         }
         return new Target(respondent, null, respondent.getNickname(), respondent.getNickname());
     }

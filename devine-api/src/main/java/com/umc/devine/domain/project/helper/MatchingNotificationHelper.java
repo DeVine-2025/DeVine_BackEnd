@@ -90,6 +90,17 @@ public class MatchingNotificationHelper {
                 : NotificationType.MATCHING_REJECTED;
     }
 
+    public void notifyCancelled(Matching matching, Long actorId) {
+        Project project = matching.getProject();
+        Long receiverId = project.getMember().getId().equals(actorId)
+                ? matching.getMember().getId() : project.getMember().getId();
+        send(matching.isApplyType() ? NotificationType.MATCHING_APPLICATION_CANCELLED
+                        : NotificationType.MATCHING_PROPOSAL_CANCELLED,
+                receiverId, actorId,
+                "'%s' 프로젝트 %s이 취소됐어요.".formatted(project.getName(), matching.isApplyType() ? "지원" : "제안"),
+                matching.getId());
+    }
+
     private void send(NotificationType type, Long receiverId, Long senderId, String content, Long matchingId) {
         notificationCommandService.create(type, receiverId, senderId, content, matchingId);
     }
